@@ -1,0 +1,143 @@
+<!--
+  파일명: boards/edit.ejs
+  목적: 게시글 수정 페이지
+  기능:
+  - 기존 게시글 데이터 로드
+  - 게시글 제목 및 내용 수정
+  - 파일 첨부 관리
+  - 익명 작성 옵션 수정
+  - 공지사항 설정 수정 (관리자만)
+  - 태그 수정
+  - 반응형 폼 디자인
+-->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>게시글 수정 - <%= board.name %></title>
+</head>
+<body>
+  <%- include('../header') %>
+  
+  <div class="container mt-4">
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <h2>
+            <% if (board.type === 'notice') { %>
+              <i class="fas fa-bullhorn text-danger"></i>
+            <% } else if (board.type === 'free') { %>
+              <i class="fas fa-comments text-primary"></i>
+            <% } else { %>
+              <i class="fas fa-users text-success"></i>
+            <% } %>
+            <%= board.name %> - 게시글 수정
+          </h2>
+          <a href="/boards/<%= board._id %>/<%= post._id %>" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> 취소
+          </a>
+        </div>
+
+        <div class="card">
+          <div class="card-body">
+            <form action="/boards/<%= board._id %>/<%= post._id %>?_method=PUT" method="POST" enctype="multipart/form-data">
+              <div class="mb-3">
+                <label for="title" class="form-label">제목 <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="title" name="title" required maxlength="200" value="<%= post.title %>">
+              </div>
+
+              <div class="mb-3">
+                <label for="content" class="form-label">내용 <span class="text-danger">*</span></label>
+                <textarea class="form-control" id="content" name="content" rows="15" required><%= post.content %></textarea>
+              </div>
+
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <label for="tags" class="form-label">태그</label>
+                  <input type="text" class="form-control" id="tags" name="tags" placeholder="태그1, 태그2, 태그3 (쉼표로 구분)" value="<%= post.tags ? post.tags.join(', ') : '' %>">
+                  <div class="form-text">쉼표로 구분하여 여러 태그를 입력할 수 있습니다.</div>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">첨부파일 추가</label>
+                  <input type="file" class="form-control" name="attachments" multiple accept=".jpg,.jpeg,.png,.gif,.pdf,.doc,.docx,.xls,.xlsx,.txt">
+                  <div class="form-text">최대 5개 파일, 각 파일 10MB 이하</div>
+                </div>
+              </div>
+
+              <!-- 기존 첨부파일 -->
+              <% if (post.attachments && post.attachments.length > 0) { %>
+                <div class="mb-3">
+                  <label class="form-label">기존 첨부파일</label>
+                  <% post.attachments.forEach((attachment, index) => { %>
+                    <div class="d-flex align-items-center mb-2">
+                      <a href="<%= attachment.path %>" class="text-decoration-none me-2" target="_blank">
+                        <i class="fas fa-file"></i> <%= attachment.originalName %>
+                      </a>
+                      <small class="text-muted">(<%= (attachment.size / 1024).toFixed(1) %>KB)</small>
+                    </div>
+                  <% }); %>
+                </div>
+              <% } %>
+
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="isAnonymous" name="isAnonymous" <%= post.isAnonymous ? 'checked' : '' %>>
+                    <label class="form-check-label" for="isAnonymous">
+                      익명으로 작성
+                    </label>
+                  </div>
+                </div>
+                <% if (session.userRole === 'admin' && board.type === 'notice') { %>
+                  <div class="col-md-6">
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" id="isNotice" name="isNotice" <%= post.isNotice ? 'checked' : '' %>>
+                      <label class="form-check-label" for="isNotice">
+                        공지사항으로 등록
+                      </label>
+                    </div>
+                  </div>
+                <% } %>
+              </div>
+
+              <div class="d-flex justify-content-between">
+                <a href="/boards/<%= board._id %>/<%= post._id %>" class="btn btn-secondary">
+                  <i class="fas fa-times"></i> 취소
+                </a>
+                <button type="submit" class="btn btn-primary">
+                  <i class="fas fa-save"></i> 수정
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <%- include('../footer') %>
+
+  <script>
+    // 파일 크기 체크
+    document.querySelector('input[type="file"]').addEventListener('change', function(e) {
+      const files = e.target.files;
+      const maxSize = 10 * 1024 * 1024; // 10MB
+      const maxFiles = 5;
+      
+      if (files.length > maxFiles) {
+        alert(`최대 ${maxFiles}개 파일만 업로드 가능합니다.`);
+        this.value = '';
+        return;
+      }
+      
+      for (let file of files) {
+        if (file.size > maxSize) {
+          alert(`파일 크기는 10MB 이하여야 합니다: ${file.name}`);
+          this.value = '';
+          return;
+        }
+      }
+    });
+  </script>
+</body>
+</html> 

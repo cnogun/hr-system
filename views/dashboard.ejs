@@ -1,0 +1,77 @@
+<!--
+  파일명: dashboard.ejs
+  목적: 관리자 대시보드 페이지
+  기능:
+  - 시스템 통계 정보 표시
+  - 최근 활동 현황
+  - 빠른 액세스 메뉴
+  - 관리자 권한 검증
+  - 반응형 대시보드 디자인
+-->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>대시보드</title>
+  <style>
+    .dashboard-card {
+      transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    }
+    .dashboard-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
+    }
+    .stats-icon {
+      font-size: 2rem;
+    }
+    @media (max-width: 768px) {
+      .dashboard-card {
+        margin-bottom: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <%- include('header') %>
+  
+  <div class="container mt-4">
+    <div class="row">
+      <div class="col-12">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4">
+          <h2 class="mb-3 mb-md-0">
+            <i class="fas fa-chart-line text-primary me-2"></i>대시보드
+          </h2>
+        </div>
+        
+        <div class="row mb-4">
+          <div class="col-md-4">
+            <div class="card text-center dashboard-card">
+              <div class="card-body">
+                <h5 class="card-title">총 직원 수</h5>
+                <p class="display-6 fw-bold text-primary"><%= totalEmployees %></p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-8">
+            <div class="card dashboard-card">
+              <div class="card-body">
+                <h5 class="card-title">부서별 인원</h5>
+                <ul class="list-group list-group-flush">
+                  <% for (const dept in departmentCounts) { %>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                      <span><%= dept %></span>
+                      <span class="badge bg-secondary rounded-pill"><%= departmentCounts[dept] %>명</span>
+                    </li>
+                  <% } %>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <%- include('footer') %>
+</body>
+</html> 

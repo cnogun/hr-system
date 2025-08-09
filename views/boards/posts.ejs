@@ -1,0 +1,238 @@
+<!--
+  파일명: boards/posts.ejs
+  목적: 게시판별 게시글 목록 페이지
+  기능:
+  - 게시글 목록 표시 및 페이징
+  - 게시글 검색 및 정렬
+  - 게시글 작성 버튼 (권한별)
+  - 공지사항 우선 표시
+  - 반응형 테이블 디자인
+-->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title><%= board.name %></title>
+</head>
+<body>
+  <%- include('../header') %>
+  
+  <div class="container mt-4">
+    <div class="row">
+      <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <h2>
+            <% if (board.type === 'notice') { %>
+              <i class="fas fa-bullhorn text-danger"></i>
+            <% } else if (board.type === 'free') { %>
+              <i class="fas fa-comments text-primary"></i>
+            <% } else { %>
+              <i class="fas fa-users text-success"></i>
+            <% } %>
+            <%= board.name %>
+          </h2>
+          <div>
+            <a href="/boards" class="btn btn-secondary btn-sm">
+              <i class="fas fa-arrow-left"></i> 목록
+            </a>
+            <% if (board.type !== 'notice' || session.userRole === 'admin') { %>
+            <a href="/boards/<%= board._id %>/write" class="btn btn-primary btn-sm">
+              <i class="fas fa-pen"></i> 글쓰기
+            </a>
+            <% } %>
+          </div>
+        </div>
+
+        <% if (session.message) { %>
+          <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <%= session.message %>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+          <% delete session.message; %>
+        <% } %>
+
+        <!-- 검색 및 정렬 -->
+        <div class="card mb-4">
+          <div class="card-body">
+            <form method="GET" class="row g-3">
+              <div class="col-md-5">
+                <div class="input-group">
+                  <span class="input-group-text">
+                    <i class="fas fa-search"></i>
+                  </span>
+                  <input type="text" name="search" class="form-control" placeholder="제목, 내용, 작성자, 태그 검색" value="<%= search %>">
+                  <button type="submit" class="btn btn-outline-primary">
+                    검색
+                  </button>
+                </div>
+                <small class="text-muted">여러 단어로 검색 가능 (예: 보안 업무)</small>
+              </div>
+              <div class="col-md-3">
+                <select name="sort" class="form-select">
+                  <option value="latest" <%= sort === 'latest' ? 'selected' : '' %>>최신순</option>
+                  <option value="views" <%= sort === 'views' ? 'selected' : '' %>>조회순</option>
+                  <option value="likes" <%= sort === 'likes' ? 'selected' : '' %>>추천순</option>
+                </select>
+              </div>
+              <div class="col-md-2">
+                <a href="/boards/<%= board._id %>" class="btn btn-outline-secondary w-100">
+                  <i class="fas fa-refresh"></i> 초기화
+                </a>
+              </div>
+              <div class="col-md-2">
+                <button type="button" class="btn btn-outline-info w-100" data-bs-toggle="modal" data-bs-target="#searchHelpModal">
+                  <i class="fas fa-question-circle"></i> 검색도움말
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- 검색 도움말 모달 -->
+        <div class="modal fade" id="searchHelpModal" tabindex="-1">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title">검색 도움말</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+              </div>
+              <div class="modal-body">
+                <h6>검색 방법:</h6>
+                <ul>
+                  <li><strong>단어 검색:</strong> "보안", "업무" 등</li>
+                  <li><strong>복합 검색:</strong> "보안 업무" (여러 단어)</li>
+                  <li><strong>태그 검색:</strong> 게시글에 설정된 태그로 검색</li>
+                  <li><strong>작성자 검색:</strong> 작성자 이름으로 검색</li>
+                </ul>
+                <h6>검색 범위:</h6>
+                <ul>
+                  <li>게시글 제목</li>
+                  <li>게시글 내용</li>
+                  <li>작성자 이름</li>
+                  <li>태그</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 게시글 목록 -->
+        <div class="card">
+          <div class="card-header">
+            <div class="row align-items-center">
+              <div class="col-md-6">
+                <strong>총 <%= posts.length %>개의 게시글</strong>
+              </div>
+              <div class="col-md-6 text-end">
+                <small class="text-muted">
+                  <% if (board.writePermission === 'admin') { %>
+                    <i class="fas fa-lock"></i> 관리자만 글쓰기
+                  <% } else if (board.writePermission === 'department') { %>
+                    <i class="fas fa-users"></i> 부서원만 글쓰기
+                  <% } else { %>
+                    <i class="fas fa-globe"></i> 모든 직원 글쓰기
+                  <% } %>
+                </small>
+              </div>
+            </div>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th style="width: 10%;">번호</th>
+                    <th style="width: 50%;">제목</th>
+                    <th style="width: 15%;">작성자</th>
+                    <th style="width: 10%;">조회</th>
+                    <th style="width: 10%;">추천</th>
+                    <th style="width: 15%;">작성일</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% posts.forEach((post, index) => { %>
+                    <tr>
+                      <td>
+                        <% if (post.isNotice) { %>
+                          <span class="badge bg-danger">공지</span>
+                        <% } else { %>
+                          <%= (currentPage - 1) * 10 + index + 1 %>
+                        <% } %>
+                      </td>
+                      <td>
+                        <a href="/boards/<%= board._id %>/<%= post._id %>" class="text-decoration-none">
+                          <%= post.title %>
+                          <% if (post.attachments && post.attachments.length > 0) { %>
+                            <i class="fas fa-paperclip text-muted"></i>
+                          <% } %>
+                          <% if (post.comments && post.comments.length > 0) { %>
+                            <span class="text-primary">[<%= post.comments.length %>]</span>
+                          <% } %>
+                        </a>
+                        <% if (post.isAnonymous) { %>
+                          <span class="badge bg-secondary">익명</span>
+                        <% } %>
+                      </td>
+                      <td><%= post.authorName %></td>
+                      <td><%= post.views %></td>
+                      <td>
+                        <span class="text-success">👍 <%= post.likes ? post.likes.length : 0 %></span>
+                        <span class="text-danger">👎 <%= post.dislikes ? post.dislikes.length : 0 %></span>
+                      </td>
+                      <td><%= new Date(post.createdAt).toLocaleDateString() %></td>
+                    </tr>
+                  <% }); %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <% if (posts.length === 0) { %>
+          <div class="text-center py-5">
+            <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+            <h5 class="text-muted">등록된 게시글이 없습니다.</h5>
+            <p class="text-muted">첫 번째 게시글을 작성해보세요!</p>
+            <a href="/boards/<%= board._id %>/write" class="btn btn-primary">
+              <i class="fas fa-pen"></i> 글쓰기
+            </a>
+          </div>
+        <% } %>
+
+        <!-- 페이지네이션 -->
+        <% if (totalPages > 1) { %>
+          <nav aria-label="게시글 페이지네이션" class="mt-4">
+            <ul class="pagination justify-content-center">
+              <% if (currentPage > 1) { %>
+                <li class="page-item">
+                  <a class="page-link" href="/boards/<%= board._id %>?page=<%= currentPage - 1 %>&search=<%= search %>&sort=<%= sort %>">
+                    <i class="fas fa-chevron-left"></i>
+                  </a>
+                </li>
+              <% } %>
+              
+              <% for (let i = Math.max(1, currentPage - 2); i <= Math.min(totalPages, currentPage + 2); i++) { %>
+                <li class="page-item <%= i === currentPage ? 'active' : '' %>">
+                  <a class="page-link" href="/boards/<%= board._id %>?page=<%= i %>&search=<%= search %>&sort=<%= sort %>">
+                    <%= i %>
+                  </a>
+                </li>
+              <% } %>
+              
+              <% if (currentPage < totalPages) { %>
+                <li class="page-item">
+                  <a class="page-link" href="/boards/<%= board._id %>?page=<%= currentPage + 1 %>&search=<%= search %>&sort=<%= sort %>">
+                    <i class="fas fa-chevron-right"></i>
+                  </a>
+                </li>
+              <% } %>
+            </ul>
+          </nav>
+        <% } %>
+      </div>
+    </div>
+  </div>
+
+  <%- include('../footer') %>
+</body>
+</html> 

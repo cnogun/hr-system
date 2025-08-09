@@ -1,0 +1,869 @@
+<!--
+  파일명: editEmployee.ejs
+  목적: 기존 직원 정보 수정 페이지
+  기능:
+  - 기존 직원 데이터 로드
+  - 직원 기본 정보 수정
+  - 연락처 정보 수정
+  - 유니폼/장구류 사이즈 정보 수정
+  - 데이터 유효성 검사
+  - 반응형 폼 디자인
+  - 저장 및 목록 버튼
+-->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>직원 수정</title>
+</head>
+<body>
+  <%- include('header') %>
+  <div class="container" style="max-width:80%; font-size:0.9em; margin-top:2rem; margin-bottom:2rem;">
+    <div class="d-flex justify-content-center">
+      <div style="max-width:1200px; width:100%;">
+        <h2 class="fw-bold text-center" style="margin-bottom:2rem;">기존 직원 정보 수정</h2>
+        <form id="employeeForm" action="/employees/<%= employee._id %>?_method=PUT" method="POST" enctype="multipart/form-data">
+          <!-- 기본정보 박스 -->
+          <div class="row justify-content-center">
+            <div class="col-lg-12">
+              <div class="card shadow-sm mb-2" style="min-height:1px;">
+                <div class="card-header bg-primary text-white py-1 fw-semibold" style="font-size:0.9rem;">기본 정보</div>
+                <div class="card-body row g-2 py-3" style="flex-wrap: nowrap; overflow-x: auto; width: 100%;">
+                  <div class="col" style="min-width: 100px; max-width: 120px; flex: 1;">
+                    <label class="form-label small mb-1">이름 <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control form-control-sm py-1" id="name" name="name" required placeholder="홍길동" maxlength="20" value="<%= employee.name %>">
+                  </div>
+                  <div class="col" style="min-width: 100px; max-width: 120px; flex: 1;">
+                    <label class="form-label small mb-1">소속 <span class="text-danger">*</span></label>
+                    <select id="orgType" name="orgType" class="form-select form-select-sm py-1" required>
+                      <option value="">선택</option>
+                      <option value="본사" <%= employee.orgType === '본사' ? 'selected' : '' %>>본사</option>
+                      <option value="지사" <%= employee.orgType === '지사' ? 'selected' : '' %>>지사</option>
+                    </select>
+                  </div>
+                  <div class="col" style="min-width: 120px; max-width: 150px; flex: 1.2;">
+                    <label class="form-label small mb-1">부서 <span class="text-danger">*</span></label>
+                    <select id="department" name="department" class="form-select form-select-sm py-1" required>
+                      <option value="">선택</option>
+                      <option value="보안1팀" <%= employee.department === '보안1팀' ? 'selected' : '' %>>보안1팀</option>
+                      <option value="보안2팀" <%= employee.department === '보안2팀' ? 'selected' : '' %>>보안2팀</option>
+                      <option value="보안3팀" <%= employee.department === '보안3팀' ? 'selected' : '' %>>보안3팀</option>
+                      <option value="관리팀" <%= employee.department === '관리팀' ? 'selected' : '' %>>관리팀</option>
+                      <option value="인사팀" <%= employee.department === '인사팀' ? 'selected' : '' %>>인사팀</option>
+                      <option value="영업팀" <%= employee.department === '영업팀' ? 'selected' : '' %>>영업팀</option>
+                      <option value="지원팀" <%= employee.department === '지원팀' ? 'selected' : '' %>>지원팀</option>
+                    </select>
+                  </div>
+                  <div class="col" style="min-width: 100px; max-width: 120px; flex: 1;">
+                    <label class="form-label small mb-1">직급</label>
+                    <select id="position" name="position" class="form-select form-select-sm py-1">
+                      <option value="">선택</option>
+                      <option value="인턴" <%= employee.position === '인턴' ? 'selected' : '' %>>인턴</option>
+                      <option value="사원" <%= employee.position === '사원' ? 'selected' : '' %>>사원</option>
+                      <option value="주임" <%= employee.position === '주임' ? 'selected' : '' %>>주임</option>
+                      <option value="대리" <%= employee.position === '대리' ? 'selected' : '' %>>대리</option>
+                      <option value="과장" <%= employee.position === '과장' ? 'selected' : '' %>>과장</option>
+                      <option value="차장" <%= employee.position === '차장' ? 'selected' : '' %>>차장</option>
+                      <option value="팀장" <%= employee.position === '팀장' ? 'selected' : '' %>>팀장</option>
+                      <option value="실장" <%= employee.position === '실장' ? 'selected' : '' %>>실장</option>
+                      <option value="임원" <%= employee.position === '임원' ? 'selected' : '' %>>임원</option>
+                    </select>
+                  </div>
+                  <div class="col" style="min-width: 130px; max-width: 160px; flex: 1.3;">
+                    <label class="form-label small mb-1">입사일 <span class="text-danger">*</span></label>
+                    <input type="date" name="hireDate" class="form-control form-control-sm py-1" required value="<%= employee.hireDate ? employee.hireDate.toISOString().slice(0,10) : '' %>">
+                  </div>
+                  <div class="col" style="min-width: 100px; max-width: 120px; flex: 1;">
+                    <label class="form-label small mb-1">사번</label>
+                    <input type="text" class="form-control form-control-sm py-1" name="empNo" value="<%= employee.empNo || '' %>" readonly>
+                  </div>
+                  <div class="col" style="min-width: 100px; max-width: 120px; flex: 1;">
+                    <label class="form-label small mb-1">상태</label>
+                    <select name="status" class="form-select form-select-sm py-1">
+                      <option value="재직" <%= employee.status === '재직' ? 'selected' : '' %>>재직</option>
+                      <option value="휴직" <%= employee.status === '휴직' ? 'selected' : '' %>>휴직</option>
+                      <option value="산재" <%= employee.status === '산재' ? 'selected' : '' %>>산재</option>
+                      <option value="병가" <%= employee.status === '병가' ? 'selected' : '' %>>병가</option>
+                      <option value="정직" <%= employee.status === '정직' ? 'selected' : '' %>>정직</option>
+                      <option value="퇴직" <%= employee.status === '퇴직' ? 'selected' : '' %>>퇴직</option>
+                    </select>
+                  </div>
+                  <div class="col" style="min-width: 250px; max-width: 300px; flex: 2;">
+                    <label class="form-label small mb-1">이메일 <span class="text-danger">*</span></label>
+                    <input type="email" name="email" class="form-control form-control-sm py-1" required placeholder="example@company.com" maxlength="50" value="<%= employee.email %>">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 프로필 이미지와 상세정보/유니폼 -->
+          <div class="row justify-content-center align-items-start">
+            <!-- 프로필 이미지: 좌측 -->
+            <div class="col-lg-3 d-flex flex-column align-items-center justify-content-center" style="min-width:180px;">
+              <div class="card shadow-sm mb-2 w-100" style="min-height:1px;">
+                <div class="card-header bg-secondary text-white py-2 fw-semibold text-center" style="font-size:0.95rem;">프로필 이미지</div>
+                <div class="card-body d-flex flex-column align-items-center justify-content-center py-3">
+                  <!-- 이미지 미리보기 컨테이너 -->
+                  <div class="position-relative mb-3">
+                    <div id="profileImageContainer" class="position-relative" style="width: 120px; height: 120px; cursor: pointer;">
+                      <!-- 기본 아이콘 -->
+                      <div id="defaultProfileIcon" class="rounded-circle bg-secondary d-flex align-items-center justify-content-center position-absolute top-0 start-0 w-100 h-100" style="display:<%= employee.profileImage ? 'none' : 'flex' %>; border: 3px solid #e9ecef; z-index: 1;">
+                        <i class="fa-solid fa-user fa-3x text-white"></i>
+                      </div>
+                      <!-- 이미지 미리보기 -->
+                      <img id="profilePreview" src="<%= employee.profileImage || '' %>" alt="프로필 사진" class="rounded-circle position-absolute top-0 start-0 w-100 h-100" style="object-fit: cover; border: 3px solid #e9ecef; z-index: 2; display: <%= employee.profileImage ? 'block' : 'none' %>;">
+                      <!-- 이미지 변경 버튼 -->
+                      <div id="imageChangeOverlay" class="position-absolute top-0 start-0 w-100 h-100 rounded-circle d-flex align-items-center justify-content-center" style="display:none; background: rgba(0,0,0,0.5); cursor: pointer; z-index: 3;">
+                        <i class="fa-solid fa-camera text-white fa-lg"></i>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- 파일 입력 컨테이너 -->
+                  <div id="profileImageInputBox" style="width:100%; display:flex; justify-content:center; flex-direction:column; align-items:center;">
+                    <div class="text-center mb-2">
+                      <small class="text-muted">권장 크기: 300x300px</small>
+                    </div>
+                    <!-- 실제 파일 입력 필드 (숨김) -->
+                    <input type="file" name="profileImage" id="profileImageInput" accept="image/*" style="display: none;">
+                  </div>
+                  
+                  <!-- 부서/이름 표시 -->
+                  <div class="text-center mt-2">
+                    <span class="fw-bold d-block" id="profileDeptName" style="font-size:1.1em; color: #495057;"></span>
+                    <small class="text-muted" id="imageStatus"><%= employee.profileImage ? '이미지가 설정되어 있습니다' : '이미지를 선택해주세요' %></small>
+                  </div>
+                </div>
+              </div>
+              <!-- 저장/목록 버튼 - 프로필 이미지 밑 -->
+              <div class="d-flex justify-content-center mt-3 mb-3">
+                <button type="submit" form="employeeForm" class="btn btn-primary px-4 py-2 me-2">저장</button>
+                <a href="/employees" class="btn btn-secondary px-4 py-2">목록</a>
+              </div>
+            </div>
+            <!-- 우측: 상세정보 + 유니폼 -->
+            <div class="col-lg-9">
+          <!-- 상세 정보 카드 -->
+          <div class="card shadow-sm mb-2" style="min-height:1px;">
+            <div class="card-header bg-secondary text-white py-1 fw-semibold" style="font-size:0.8rem;">상세 정보</div>
+            <div class="card-body row g-1 py-0">
+              <div class="col-md-2">
+                <label class="form-label small mb-1" style="font-size:0.75rem;">주민등록번호</label>
+                <input type="text" name="residentNumber" id="residentNumber" class="form-control form-control-sm py-1" style="font-size:0.75rem;" placeholder="000000-0000000" value="<%= employee.residentNumber || '' %>" maxlength="14">
+                <div id="residentNumberError" class="text-danger small" style="display:none;"></div>
+              </div>
+              <div class="col-md-2">
+                <label class="form-label small mb-1">생년월일</label>
+                <input type="date" name="birth" class="form-control form-control-sm py-1" value="<%= employee.birth ? employee.birth.toISOString().slice(0,10) : '' %>">
+              </div>
+              <div class="col-md-1" style="width: 16%;">
+                <label class="form-label small mb-1">성별</label>
+                <select name="gender" class="form-select form-select-sm py-1">
+                  <option value="">선택</option>
+                  <option value="남" <%= employee.gender === '남' ? 'selected' : '' %>>남</option>
+                  <option value="여" <%= employee.gender === '여' ? 'selected' : '' %>>여</option>
+                </select>
+              </div>
+              <div class="col-md-1" style="width: 16%;">
+                <label class="form-label small mb-1">국적</label>
+                <input type="text" name="nationality" class="form-control form-control-sm py-1" value="<%= employee.nationality || '' %>">
+              </div>
+              <div class="col-md-2">
+                <label class="form-label small mb-1">휴대폰</label>
+                <input type="text" name="mobile" class="form-control form-control-sm py-1" placeholder="예: 010-1234-5678" value="<%= employee.mobile || '' %>">
+              </div>
+              <div class="col-md-2">
+                <label class="form-label small mb-1">연락처</label>
+                <input type="text" name="phone" class="form-control form-control-sm py-1" placeholder="예: 02-1234-5678" value="<%= employee.phone || '' %>">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label small mb-0">주소</label>
+                <input type="text" name="address" class="form-control form-control-sm py-1" value="<%= employee.address || '' %>">
+              </div>
+              <div class="col-md-2">
+                <label class="form-label small mb-1">학력</label>
+                <input type="text" name="education" class="form-control form-control-sm py-1" value="<%= employee.education || '' %>">
+              </div>
+              <div class="col-md-2">
+                <label class="form-label small mb-1">비상연락처</label>
+                <input type="text" name="emergencyContact" class="form-control form-control-sm py-1" value="<%= employee.emergencyContact || '' %>">
+              </div>
+              <div class="col-md-2">
+                <label class="form-label small mb-1">고용형태</label>
+                <select name="employmentType" class="form-select form-select-sm py-1">
+                  <option value="">선택</option>
+                  <option value="정규직" <%= employee.employmentType === '정규직' ? 'selected' : '' %>>정규직</option>
+                  <option value="파견직" <%= employee.employmentType === '파견직' ? 'selected' : '' %>>파견직</option>
+                  <option value="계약직" <%= employee.employmentType === '계약직' ? 'selected' : '' %>>계약직</option>
+                </select>
+              </div>
+              <div class="col-md-2">
+                <label class="form-label small mb-1">급여은행</label>
+                <input type="text" name="salaryBank" class="form-control form-control-sm py-1" value="<%= employee.salaryBank || '' %>">
+              </div>
+              <div class="col-md-2">
+                <label class="form-label small mb-1">급여계좌</label>
+                <input type="text" name="salaryAccount" class="form-control form-control-sm py-1" value="<%= employee.salaryAccount || '' %>">
+              </div>
+              <div class="col-md-1">
+                <label class="form-label small mb-1">신장(cm)</label>
+                <input type="number" name="height" class="form-control form-control-sm py-1" value="<%= employee.height || '' %>">
+              </div>
+              <div class="col-md-1">
+                <label class="form-label small mb-1">체중(kg)</label>
+                <input type="number" name="weight" class="form-control form-control-sm py-1" value="<%= employee.weight || '' %>">
+              </div>
+              <div class="col-md-1">
+                <label class="form-label small mb-1">혈액형</label>
+                <input type="text" name="bloodType" class="form-control form-control-sm py-1" value="<%= employee.bloodType || '' %>">
+              </div>
+
+              <div class="col-md-2">
+                <label class="form-label small mb-1">군별</label>
+                <input type="text" name="militaryBranch" class="form-control form-control-sm py-1" value="<%= employee.militaryBranch || '' %>" placeholder="예: 육군, 해군, 공군">
+              </div>
+              <div class="col-md-2">
+                <label class="form-label small mb-1">계급</label>
+                <input type="text" name="militaryRank" class="form-control form-control-sm py-1" value="<%= employee.militaryRank || '' %>" placeholder="예: 병장, 상병, 일병">
+              </div>
+              <div class="col-md-2">
+                <label class="form-label small mb-1">군번</label>
+                <input type="text" name="militaryNumber" class="form-control form-control-sm py-1" value="<%= employee.militaryNumber || '' %>" placeholder="예: 12-345678">
+              </div>
+              <div class="col-md-2">
+                <label class="form-label small mb-1">복무기간</label>
+                <input type="text" name="militaryServicePeriod" class="form-control form-control-sm py-1" value="<%= employee.militaryServicePeriod || '' %>" placeholder="예: 2020.01-2021.12">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label small mb-1">미필사유</label>
+                <input type="text" name="militaryExemptionReason" class="form-control form-control-sm py-1" value="<%= employee.militaryExemptionReason || '' %>" placeholder="예: 면제, 제외, 기타사유">
+              </div>
+              <div class="col-md-12">
+                <label class="form-label small mb-1">경력사항</label>
+                <textarea name="career" class="form-control form-control-sm py-1" rows="3" placeholder="경력사항을 입력하세요"><%= employee.career || '' %></textarea>
+              </div>
+              <div class="col-md-12">
+                <label class="form-label small mb-1">특이사항</label>
+                <input type="text" name="specialNotes" class="form-control form-control-sm py-1" value="<%= employee.specialNotes || '' %>" placeholder="특이사항을 입력하세요">
+      </div>
+      </div>
+      </div>
+          <div class="card shadow-sm mb-2" style="min-height:1px;">
+                                            <div class="card-header bg-info text-white py-1 fw-semibold" style="font-size:0.8rem;">유니폼/장구류</div>
+                <div class="card-body py-2">
+                  <!-- 첫 번째 줄 -->
+                  <div class="uniform-category mb-2">
+                    <div class="row g-2">
+                      <div class="col-md-2">
+                        <label class="form-label small mb-1 fw-semibold">하복 상의</label>
+                        <select name="uniformSummerTop" class="form-select form-select-sm py-1">
+                          <option value="">선택</option>
+                          <option value="2별대" <%= employee.uniformSummerTop === '2별대' ? 'selected' : '' %>>2별대</option>
+                          <option value="별대" <%= employee.uniformSummerTop === '별대' ? 'selected' : '' %>>별대</option>
+                          <option value="특대" <%= employee.uniformSummerTop === '특대' ? 'selected' : '' %>>특대</option>
+                          <option value="대" <%= employee.uniformSummerTop === '대' ? 'selected' : '' %>>대</option>
+                          <option value="중" <%= employee.uniformSummerTop === '중' ? 'selected' : '' %>>중</option>
+                        </select>
+                      </div>
+                      <div class="col-md-2">
+                        <label class="form-label small mb-1 fw-semibold">동복 상의</label>
+                        <select name="uniformWinterTop" class="form-select form-select-sm py-1">
+                          <option value="">선택</option>
+                          <option value="2별대" <%= employee.uniformWinterTop === '2별대' ? 'selected' : '' %>>2별대</option>
+                          <option value="별대" <%= employee.uniformWinterTop === '별대' ? 'selected' : '' %>>별대</option>
+                          <option value="특대" <%= employee.uniformWinterTop === '특대' ? 'selected' : '' %>>특대</option>
+                          <option value="대" <%= employee.uniformWinterTop === '대' ? 'selected' : '' %>>대</option>
+                          <option value="중" <%= employee.uniformWinterTop === '중' ? 'selected' : '' %>>중</option>
+                        </select>
+                      </div>
+                      <div class="col-md-2">
+                        <label class="form-label small mb-1 fw-semibold">춘추복</label>
+                        <select name="springAutumnUniform" class="form-select form-select-sm py-1">
+                          <option value="">선택</option>
+                          <option value="2별대" <%= employee.springAutumnUniform === '2별대' ? 'selected' : '' %>>2별대</option>
+                          <option value="별대" <%= employee.springAutumnUniform === '별대' ? 'selected' : '' %>>별대</option>
+                          <option value="특대" <%= employee.springAutumnUniform === '특대' ? 'selected' : '' %>>특대</option>
+                          <option value="대" <%= employee.springAutumnUniform === '대' ? 'selected' : '' %>>대</option>
+                          <option value="중" <%= employee.springAutumnUniform === '중' ? 'selected' : '' %>>중</option>
+                        </select>
+                      </div>
+                      <div class="col-md-2">
+                        <label class="form-label small mb-1 fw-semibold">방한외투</label>
+                        <select name="uniformWinterCoat" class="form-select form-select-sm py-1">
+                          <option value="">선택</option>
+                          <option value="2별대" <%= employee.uniformWinterCoat === '2별대' ? 'selected' : '' %>>2별대</option>
+                          <option value="별대" <%= employee.uniformWinterCoat === '별대' ? 'selected' : '' %>>별대</option>
+                          <option value="특대" <%= employee.uniformWinterCoat === '특대' ? 'selected' : '' %>>특대</option>
+                          <option value="대" <%= employee.uniformWinterCoat === '대' ? 'selected' : '' %>>대</option>
+                          <option value="중" <%= employee.uniformWinterCoat === '중' ? 'selected' : '' %>>중</option>
+                        </select>
+                      </div>
+                      <div class="col-md-2">
+                        <label class="form-label small mb-1 fw-semibold">우의</label>
+                        <select name="raincoat" class="form-select form-select-sm py-1">
+                          <option value="">선택</option>
+                          <option value="2별대" <%= employee.raincoat === '2별대' ? 'selected' : '' %>>2별대</option>
+                          <option value="별대" <%= employee.raincoat === '별대' ? 'selected' : '' %>>별대</option>
+                          <option value="특대" <%= employee.raincoat === '특대' ? 'selected' : '' %>>특대</option>
+                          <option value="대" <%= employee.raincoat === '대' ? 'selected' : '' %>>대</option>
+                          <option value="중" <%= employee.raincoat === '중' ? 'selected' : '' %>>중</option>
+                        </select>
+                      </div>
+                      <div class="col-md-2">
+                        <div class="d-flex align-items-center mb-1">
+                          <input type="radio" id="winterJacketRadio" name="jacketType" value="winterJacket" <%= employee.winterJacket && !employee.doubleJacket ? 'checked' : '' %>>
+                          <label for="winterJacketRadio" class="form-label small mb-0 me-2 ms-1">동점퍼</label>
+                          <input type="radio" id="doubleJacketRadio" name="jacketType" value="doubleJacket" <%= employee.doubleJacket && !employee.winterJacket ? 'checked' : '' %>>
+                          <label for="doubleJacketRadio" class="form-label small mb-0 me-2 ms-1">겹점퍼</label>
+                        </div>
+                        <select id="jacketSizeSelect" name="" class="form-select form-select-sm py-1" style="display:block;">
+                          <option value="">선택</option>
+                          <option value="2별대">2별대</option>
+                          <option value="별대">별대</option>
+                          <option value="특대">특대</option>
+                          <option value="대">대</option>
+                          <option value="중">중</option>
+                        </select>
+                        <input type="hidden" id="jacketTypeHidden" name="jacketTypeSelected" value="">
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- 두 번째 줄 -->
+                  <div class="uniform-category">
+                    <div class="row g-2">
+                      <div class="col-md-2">
+                        <label class="form-label small mb-1 fw-semibold">하복 하의</label>
+                        <select name="uniformSummerBottom" class="form-select form-select-sm py-1">
+                          <option value="">선택</option>
+                          <option value="38" <%= employee.uniformSummerBottom === '38' ? 'selected' : '' %>>38</option>
+                          <option value="36" <%= employee.uniformSummerBottom === '36' ? 'selected' : '' %>>36</option>
+                          <option value="35" <%= employee.uniformSummerBottom === '35' ? 'selected' : '' %>>35</option>
+                          <option value="34" <%= employee.uniformSummerBottom === '34' ? 'selected' : '' %>>34</option>
+                          <option value="33" <%= employee.uniformSummerBottom === '33' ? 'selected' : '' %>>33</option>
+                          <option value="32" <%= employee.uniformSummerBottom === '32' ? 'selected' : '' %>>32</option>
+                          <option value="31" <%= employee.uniformSummerBottom === '31' ? 'selected' : '' %>>31</option>
+                          <option value="30" <%= employee.uniformSummerBottom === '30' ? 'selected' : '' %>>30</option>
+                        </select>
+                      </div>
+                      <div class="col-md-2">
+                        <label class="form-label small mb-1 fw-semibold">동복 하의</label>
+                        <select name="uniformWinterBottom" class="form-select form-select-sm py-1">
+                          <option value="">선택</option>
+                          <option value="38" <%= employee.uniformWinterBottom === '38' ? 'selected' : '' %>>38</option>
+                          <option value="36" <%= employee.uniformWinterBottom === '36' ? 'selected' : '' %>>36</option>
+                          <option value="35" <%= employee.uniformWinterBottom === '35' ? 'selected' : '' %>>35</option>
+                          <option value="34" <%= employee.uniformWinterBottom === '34' ? 'selected' : '' %>>34</option>
+                          <option value="33" <%= employee.uniformWinterBottom === '33' ? 'selected' : '' %>>33</option>
+                          <option value="32" <%= employee.uniformWinterBottom === '32' ? 'selected' : '' %>>32</option>
+                          <option value="31" <%= employee.uniformWinterBottom === '31' ? 'selected' : '' %>>31</option>
+                          <option value="30" <%= employee.uniformWinterBottom === '30' ? 'selected' : '' %>>30</option>
+                        </select>
+                      </div>
+                      <div class="col-md-2">
+                        <label class="form-label small mb-1 fw-semibold">방한하의</label>
+                        <select name="uniformWinterPants" class="form-select form-select-sm py-1">
+                          <option value="">선택</option>
+                          <option value="38" <%= employee.uniformWinterPants === '38' ? 'selected' : '' %>>38</option>
+                          <option value="36" <%= employee.uniformWinterPants === '36' ? 'selected' : '' %>>36</option>
+                          <option value="35" <%= employee.uniformWinterPants === '35' ? 'selected' : '' %>>35</option>
+                          <option value="34" <%= employee.uniformWinterPants === '34' ? 'selected' : '' %>>34</option>
+                          <option value="33" <%= employee.uniformWinterPants === '33' ? 'selected' : '' %>>33</option>
+                          <option value="32" <%= employee.uniformWinterPants === '32' ? 'selected' : '' %>>32</option>
+                          <option value="31" <%= employee.uniformWinterPants === '31' ? 'selected' : '' %>>31</option>
+                          <option value="30" <%= employee.uniformWinterPants === '30' ? 'selected' : '' %>>30</option>
+                        </select>
+                      </div>
+                      <div class="col-md-2">
+                        <label class="form-label small mb-1 fw-semibold">모자</label>
+                        <select name="cap" class="form-select form-select-sm py-1">
+                          <option value="">선택</option>
+                          <option value="별대" <%= employee.cap === '별대' ? 'selected' : '' %>>별대</option>
+                          <option value="특대" <%= employee.cap === '특대' ? 'selected' : '' %>>특대</option>
+                          <option value="대" <%= employee.cap === '대' ? 'selected' : '' %>>대</option>
+                          <option value="중" <%= employee.cap === '중' ? 'selected' : '' %>>중</option>
+                          <option value="소" <%= employee.cap === '소' ? 'selected' : '' %>>소</option>
+                        </select>
+                      </div>
+                      <div class="col-md-2">
+                        <label class="form-label small mb-1 fw-semibold">신발(안전화)</label>
+                        <select name="safetyShoes" class="form-select form-select-sm py-1">
+                          <option value="">선택</option>
+                          <option value="290" <%= employee.safetyShoes === '290' ? 'selected' : '' %>>290</option>
+                          <option value="285" <%= employee.safetyShoes === '285' ? 'selected' : '' %>>285</option>
+                          <option value="280" <%= employee.safetyShoes === '280' ? 'selected' : '' %>>280</option>
+                          <option value="275" <%= employee.safetyShoes === '275' ? 'selected' : '' %>>275</option>
+                          <option value="270" <%= employee.safetyShoes === '270' ? 'selected' : '' %>>270</option>
+                          <option value="265" <%= employee.safetyShoes === '265' ? 'selected' : '' %>>265</option>
+                          <option value="260" <%= employee.safetyShoes === '260' ? 'selected' : '' %>>260</option>
+                          <option value="255" <%= employee.safetyShoes === '255' ? 'selected' : '' %>>255</option>
+                          <option value="250" <%= employee.safetyShoes === '250' ? 'selected' : '' %>>250</option>
+                        </select>
+                      </div>
+                      <div class="col-md-2">
+                        <label class="form-label small mb-1 fw-semibold">장화</label>
+                        <select name="rainBoots" class="form-select form-select-sm py-1">
+                          <option value="">선택</option>
+                          <option value="290" <%= employee.rainBoots === '290' ? 'selected' : '' %>>290</option>
+                          <option value="285" <%= employee.rainBoots === '285' ? 'selected' : '' %>>285</option>
+                          <option value="280" <%= employee.rainBoots === '280' ? 'selected' : '' %>>280</option>
+                          <option value="275" <%= employee.rainBoots === '275' ? 'selected' : '' %>>275</option>
+                          <option value="270" <%= employee.rainBoots === '270' ? 'selected' : '' %>>270</option>
+                          <option value="265" <%= employee.rainBoots === '265' ? 'selected' : '' %>>265</option>
+                          <option value="260" <%= employee.rainBoots === '260' ? 'selected' : '' %>>260</option>
+                          <option value="255" <%= employee.rainBoots === '255' ? 'selected' : '' %>>255</option>
+                          <option value="250" <%= employee.rainBoots === '250' ? 'selected' : '' %>>250</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </form>
+  
+  <%- include('footer') %>
+  <style>
+    footer {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      width: 100%;
+      z-index: 100;
+    }
+    
+    /* 상세정보와 유니폼 섹션 텍스트 크기 축소 (10% 추가 축소) */
+    .card-body .form-label {
+      font-size: 0.68rem !important;
+      margin-bottom: 0.2rem !important;
+    }
+    
+    .card-body .form-control,
+    .card-body .form-select {
+      font-size: 0.68rem !important;
+    }
+    
+    .card-body textarea {
+      font-size: 0.68rem !important;
+    }
+    
+    /* 상세정보와 유니폼 섹션 여백 축소 (10% 추가 축소) */
+    .card-body .col-md-1,
+    .card-body .col-md-2,
+    .card-body .col-md-3,
+    .card-body .col-md-4,
+    .card-body .col-md-12 {
+      margin-bottom: 0.45rem !important;
+    }
+    
+    /* 기본 정보 섹션 최적화 */
+    .card-header.bg-primary + .card-body .form-label {
+      font-size: 0.8rem !important;
+      margin-bottom: 0.4rem !important;
+    }
+    
+    .card-header.bg-primary + .card-body .form-control,
+    .card-header.bg-primary + .card-body .form-select {
+      font-size: 0.8rem !important;
+      padding: 0.5rem 0.6rem !important;
+      height: auto !important;
+      min-height: 36px !important;
+    }
+    
+    .card-header.bg-primary + .card-body .col-md-1,
+    .card-header.bg-primary + .card-body .col-md-2 {
+      margin-bottom: 0 !important;
+    }
+    
+    /* 입력칸 크기 최적화 */
+    .card-header.bg-primary + .card-body .col-md-1 {
+      min-width: 100px !important;
+      max-width: 130px !important;
+    }
+    
+    .card-header.bg-primary + .card-body .col-md-2 {
+      min-width: 180px !important;
+      max-width: 240px !important;
+    }
+    
+    .card-header.bg-primary + .card-body .col-md-3 {
+      min-width: 250px !important;
+      max-width: 320px !important;
+    }
+    
+    .card-header.bg-primary + .card-body input[type="date"] {
+      min-width: 140px !important;
+    }
+    
+    .card-header.bg-primary + .card-body input[type="email"] {
+      min-width: 250px !important;
+    }
+  </style>
+  <script>
+  function goEditEmployee(employeeId) {
+    if (employeeId) {
+      window.location.href = '/employees/' + employeeId + '/edit';
+    }
+  }
+  
+  document.addEventListener('DOMContentLoaded', function() {
+    function toggleJacketSelect() {
+      const type = document.querySelector('input[name="jacketType"]:checked');
+      const select = document.getElementById('jacketSizeSelect');
+      const hidden = document.getElementById('jacketTypeHidden');
+      if(type) {
+        select.style.display = 'block';
+        select.name = type.value === 'winterJacket' ? 'winterJacket' : 'doubleJacket';
+        hidden.value = type.value;
+        // 기존 값 세팅
+        if(type.value === 'winterJacket') {
+          select.value = "<%= employee.winterJacket && !employee.doubleJacket ? employee.winterJacket : '' %>";
+        } else {
+          select.value = "<%= employee.doubleJacket && !employee.winterJacket ? employee.doubleJacket : '' %>";
+        }
+      } else {
+        select.style.display = 'block';
+        select.name = '';
+        hidden.value = '';
+      }
+    }
+    document.querySelectorAll('input[name="jacketType"]').forEach(radio => {
+      radio.addEventListener('change', toggleJacketSelect);
+    });
+    toggleJacketSelect();
+
+    // 실제 HTML 파일 입력 필드 사용
+    const hiddenInput = document.getElementById('profileImageInput');
+    
+    const inputBox = document.getElementById('profileImageInputBox');
+    const preview = document.getElementById('profilePreview');
+    const defaultIcon = document.getElementById('defaultProfileIcon');
+    const imageChangeOverlay = document.getElementById('imageChangeOverlay');
+    const imageStatus = document.getElementById('imageStatus');
+    const profileImageContainer = document.getElementById('profileImageContainer');
+    
+    // 이미지 컨테이너 클릭 시 파일 선택
+    profileImageContainer.addEventListener('click', function() {
+      hiddenInput.click();
+    });
+    
+    // 이미지 변경 오버레이 표시/숨김
+    profileImageContainer.addEventListener('mouseenter', function() {
+      if (preview.style.display !== 'none') {
+        imageChangeOverlay.style.display = 'flex';
+      }
+    });
+    
+    profileImageContainer.addEventListener('mouseleave', function() {
+      imageChangeOverlay.style.display = 'none';
+    });
+    
+    hiddenInput.addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      
+      if (file) {
+        // 파일 크기 및 타입 검증
+        const maxSize = 5 * 1024 * 1024; // 5MB
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+        
+        if (file.size > maxSize) {
+          alert('파일 크기는 5MB 이하여야 합니다.');
+          return;
+        }
+        
+        if (!allowedTypes.includes(file.type)) {
+          alert('JPG, PNG, GIF 파일만 업로드 가능합니다.');
+          return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+          preview.src = ev.target.result;
+          preview.style.display = 'block';
+          defaultIcon.style.display = 'none';
+          imageStatus.textContent = file.name;
+          imageStatus.className = 'text-success';
+        };
+        reader.readAsDataURL(file);
+      } else {
+        preview.src = '';
+        preview.style.display = 'none';
+        defaultIcon.style.display = 'flex';
+        imageStatus.textContent = '이미지를 선택해주세요';
+        imageStatus.className = 'text-muted';
+      }
+    });
+    // 부서/이름 중앙 표시
+    const dept = document.getElementById('department');
+    const name = document.getElementById('name');
+    const deptName = document.getElementById('profileDeptName');
+    function updateDeptName() {
+      deptName.textContent = (dept.value ? dept.value + ' / ' : '') + (name.value || '');
+    }
+    dept.addEventListener('change', updateDeptName);
+    name.addEventListener('input', updateDeptName);
+    updateDeptName();
+
+    // 주민등록번호 유효성검사
+    const residentNumberInput = document.getElementById('residentNumber');
+    const residentNumberError = document.getElementById('residentNumberError');
+
+    function validateResidentNumber(value) {
+      if (!value || value.trim() === '') {
+        residentNumberError.style.display = 'none';
+        residentNumberInput.classList.remove('is-invalid');
+        return true;
+      }
+
+      // 형식 검사 (000000-0000000)
+      const pattern = /^\d{6}-\d{7}$/;
+      if (!pattern.test(value)) {
+        residentNumberError.textContent = '주민등록번호 형식이 올바르지 않습니다. (예: 123456-1234567)';
+        residentNumberError.style.display = 'block';
+        residentNumberInput.classList.add('is-invalid');
+        return false;
+      }
+
+      // 유효성 검사
+      const numbers = value.replace('-', '').split('').map(Number);
+      const weights = [2, 3, 4, 5, 6, 7, 8, 9, 2, 3, 4, 5];
+      let sum = 0;
+      
+      for (let i = 0; i < 12; i++) {
+        sum += numbers[i] * weights[i];
+      }
+      
+      const remainder = sum % 11;
+      const checkDigit = remainder < 2 ? 0 : 11 - remainder;
+      
+      if (numbers[12] !== checkDigit) {
+        residentNumberError.textContent = '유효하지 않은 주민등록번호입니다.';
+        residentNumberError.style.display = 'block';
+        residentNumberInput.classList.add('is-invalid');
+        return false;
+      }
+
+      residentNumberError.style.display = 'none';
+      residentNumberInput.classList.remove('is-invalid');
+      return true;
+    }
+
+    // 자동 하이픈 추가
+    residentNumberInput.addEventListener('input', function(e) {
+      let value = e.target.value.replace(/[^0-9]/g, '');
+      if (value.length > 6) {
+        value = value.slice(0, 6) + '-' + value.slice(6);
+      }
+      e.target.value = value;
+      validateResidentNumber(value);
+    });
+
+    // 포커스 아웃시 유효성검사
+    residentNumberInput.addEventListener('blur', function() {
+      validateResidentNumber(this.value);
+    });
+
+    // 페이지 로드시 기존 값 유효성검사
+    if (residentNumberInput.value) {
+      validateResidentNumber(residentNumberInput.value);
+    }
+    
+    // 프로필 이미지 미리보기 기능
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('이미지 미리보기 초기화 시작');
+      
+      // 실제 HTML 파일 입력 필드 사용
+      const hiddenInput = document.getElementById('profileImageInput');
+      
+      const preview = document.getElementById('profilePreview');
+      const defaultIcon = document.getElementById('defaultProfileIcon');
+      const imageChangeOverlay = document.getElementById('imageChangeOverlay');
+      const imageStatus = document.getElementById('imageStatus');
+      const profileImageContainer = document.getElementById('profileImageContainer');
+      
+      // 요소 존재 확인
+      console.log('프로필 컨테이너:', profileImageContainer);
+      console.log('미리보기:', preview);
+      console.log('기본 아이콘:', defaultIcon);
+      console.log('상태 텍스트:', imageStatus);
+      
+      // 이미지 컨테이너 클릭 시 파일 선택
+      if (profileImageContainer) {
+        profileImageContainer.addEventListener('click', function() {
+          console.log('이미지 컨테이너 클릭됨');
+          hiddenInput.click();
+        });
+        
+                 // 이미지 변경 오버레이 표시/숨김
+         profileImageContainer.addEventListener('mouseenter', function() {
+           if (preview && preview.style.display !== 'none') {
+             imageChangeOverlay.style.display = 'flex';
+           }
+         });
+        
+        profileImageContainer.addEventListener('mouseleave', function() {
+          if (imageChangeOverlay) {
+            imageChangeOverlay.style.display = 'none';
+          }
+        });
+      }
+      
+      hiddenInput.addEventListener('change', function(e) {
+        console.log('파일 선택됨:', e.target.files);
+        const file = e.target.files[0];
+        
+        if (file) {
+          console.log('선택된 파일:', file.name, file.type, file.size);
+          
+          // 파일 크기 및 타입 검증
+          const maxSize = 5 * 1024 * 1024; // 5MB
+          const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+          
+          if (file.size > maxSize) {
+            alert('파일 크기는 5MB 이하여야 합니다.');
+            return;
+          }
+          
+          if (!allowedTypes.includes(file.type)) {
+            alert('JPG, PNG, GIF 파일만 업로드 가능합니다.');
+            return;
+          }
+          
+          const reader = new FileReader();
+          reader.onload = function(ev) {
+            console.log('파일 읽기 완료');
+            if (preview) {
+              preview.src = ev.target.result;
+              preview.style.display = 'block';
+              preview.classList.remove('d-none');
+            }
+            if (defaultIcon) {
+              defaultIcon.style.display = 'none';
+            }
+            if (imageStatus) {
+              imageStatus.textContent = file.name;
+              imageStatus.className = 'text-success';
+            }
+          };
+          reader.onerror = function() {
+            console.error('파일 읽기 오류');
+            alert('이미지 파일을 읽을 수 없습니다.');
+          };
+          reader.readAsDataURL(file);
+        } else {
+          console.log('파일 선택 취소됨');
+          if (preview) {
+            preview.src = '';
+            preview.style.display = 'none';
+            preview.classList.add('d-none');
+          }
+          if (defaultIcon) {
+            defaultIcon.style.display = 'flex';
+          }
+          if (imageStatus) {
+            imageStatus.textContent = '이미지를 선택해주세요';
+            imageStatus.className = 'text-muted';
+          }
+        }
+      });
+    });
+  });
+  </script>
+  <style>
+    /* 상세정보와 유니폼 섹션 세로 길이 최적화 */
+    .card-body .form-label {
+      font-size: 0.7rem !important;
+      margin-bottom: 0.05rem !important;
+      line-height: 1.1 !important;
+    }
+    
+    .card-body .form-control,
+    .card-body .form-select {
+      font-size: 0.7rem !important;
+      padding: 0.15rem 0.3rem !important;
+      height: 24px !important;
+      line-height: 1.1 !important;
+    }
+    
+    .card-body textarea {
+      font-size: 0.7rem !important;
+      line-height: 1.1 !important;
+    }
+    
+    /* 상세정보와 유니폼 섹션 여백 최소화 */
+    .card-body .col-md-1,
+    .card-body .col-md-2,
+    .card-body .col-md-3,
+    .card-body .col-md-4,
+    .card-body .col-md-12 {
+      margin-bottom: 0.1rem !important;
+    }
+    
+    /* 기본 정보 섹션 최적화 */
+    .card-header.bg-primary + .card-body .form-label {
+      font-size: 0.8rem !important;
+      margin-bottom: 0.2rem !important;
+      line-height: 1.2 !important;
+    }
+    
+    .card-header.bg-primary + .card-body .form-control,
+    .card-header.bg-primary + .card-body .form-select {
+      font-size: 0.8rem !important;
+      padding: 0.3rem 0.5rem !important;
+      height: 32px !important;
+      line-height: 1.2 !important;
+    }
+    
+    .card-header.bg-primary + .card-body .col-md-1,
+    .card-header.bg-primary + .card-body .col-md-2 {
+      margin-bottom: 0.3rem !important;
+    }
+    
+    /* 카드 헤더 최적화 */
+    .card-header {
+      padding: 0.4rem 0.8rem !important;
+      font-size: 0.85rem !important;
+      line-height: 1.2 !important;
+    }
+    
+    /* 카드 바디 패딩 최적화 */
+    .card-body {
+      padding: 0.3rem 0.6rem !important;
+    }
+    
+    /* 입력 필드 높이 최적화 */
+    .form-control-sm,
+    .form-select-sm {
+      padding: 0.15rem 0.3rem !important;
+      height: 24px !important;
+      line-height: 1.1 !important;
+    }
+    
+    /* 유니폼 섹션 최적화 */
+    .uniform-section .form-label {
+      font-size: 0.65rem !important;
+      margin-bottom: 0.05rem !important;
+      line-height: 1.1 !important;
+    }
+    
+    .uniform-section .form-control,
+    .uniform-section .form-select {
+      font-size: 0.65rem !important;
+      padding: 0.1rem 0.25rem !important;
+      height: 22px !important;
+      line-height: 1.1 !important;
+    }
+    
+    .uniform-section .col-md-1,
+    .uniform-section .col-md-2,
+    .uniform-section .col-md-3 {
+      margin-bottom: 0.08rem !important;
+    }
+  </style>
+</body>
+</html> 

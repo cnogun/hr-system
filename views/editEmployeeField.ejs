@@ -1,0 +1,49 @@
+<%- include('header') %>
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <div class="card shadow">
+        <div class="card-body">
+          <h4 class="mb-4"><%= employee.name %> - <%= field %> <%= value ? '수정' : '등록' %></h4>
+          <form action="/admin/employees/<%= employee._id %>/editField/<%= field %>" method="POST">
+            <% let inputType = 'text'; let options = null;
+              if (field === 'gender') { inputType = 'select'; options = ['남','여']; }
+              else if (field === 'employmentType') { inputType = 'select'; options = ['정규직','파견직','계약직']; }
+              else if (field === 'hireDate') { inputType = 'date'; }
+              else if (field === 'age') { inputType = 'number'; }
+              else if (field === 'education' || field === 'rewardPunishment') { inputType = 'textarea'; }
+            %>
+            <div class="mb-3">
+              <label class="form-label"><%= field %></label>
+              <% if (inputType === 'select') { %>
+                <select name="value" class="form-select">
+                  <% options.forEach(function(opt) { %>
+                    <option value="<%= opt %>" <%= value === opt ? 'selected' : '' %>><%= opt %></option>
+                  <% }) %>
+                </select>
+              <% } else if (inputType === 'date') { %>
+                <input type="date" name="value" class="form-control" value="<%= value ? value.toISOString ? value.toISOString().slice(0,10) : value : '' %>">
+              <% } else if (inputType === 'number') { %>
+                <input type="number" name="value" class="form-control" value="<%= value || '' %>">
+              <% } else if (inputType === 'textarea') { %>
+                <textarea name="value" class="form-control" rows="3"><%= value || '' %></textarea>
+              <% } else { %>
+                <input type="text" name="value" class="form-control" value="<%= value || '' %>">
+              <% } %>
+            </div>
+            <div class="d-flex justify-content-between">
+              <button type="submit" class="btn btn-primary">저장</button>
+              <a href="/admin/employees/<%= employee._id %>" class="btn btn-secondary">취소</a>
+              <% if (value) { %>
+                <form action="/admin/employees/<%= employee._id %>/deleteField/<%= field %>" method="POST" style="display:inline;">
+                  <button type="submit" class="btn btn-danger" onclick="return confirm('정말 삭제하시겠습니까?');">삭제</button>
+                </form>
+              <% } %>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<%- include('footer') %> 

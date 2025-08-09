@@ -1,0 +1,40 @@
+<!--
+  파일명: notice.ejs
+  목적: 시스템 알림 목록 페이지 (로그인 전)
+  기능:
+  - 최신 시스템 알림 표시
+  - 알림 제목 및 내용 표시
+  - 작성자 및 작성일 표시
+  - 로그인 페이지 연결
+  - 반응형 디자인 적용
+-->
+<%- include('noticeHeader') %>
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card shadow-lg">
+        <div class="card-body">
+          <h3 class="fw-bold mb-4 text-center">시스템 알림</h3>
+          <% if (notices.length === 0) { %>
+            <div class="alert alert-info text-center">등록된 시스템 알림이 없습니다.</div>
+          <% } else { %>
+            <% notices.forEach(function(notice) { %>
+              <div class="mb-4 pb-3 border-bottom">
+                <h5 class="fw-bold mb-2"><%= notice.title %></h5>
+                <div class="mb-2 text-muted small">
+                  <%= notice.createdAt.toISOString().slice(0,10) %>
+                  <% if (notice.author) { %> | <%= notice.author.username || notice.author.email %><% } %>
+                </div>
+                <div class="mb-2"><%- notice.content.replace(/\n/g, '<br>') %></div>
+              </div>
+            <% }) %>
+          <% } %>
+          <div class="text-center mt-4">
+            <a href="/auth/login" class="btn btn-primary px-5">확인</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<%- include('footer') %> 

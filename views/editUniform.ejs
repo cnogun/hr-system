@@ -1,0 +1,229 @@
+<!--
+  파일명: editUniform.ejs
+  목적: 유니폼/장구류 정보 수정 페이지
+  기능:
+  - 기존 유니폼 사이즈 정보 로드
+  - 유니폼 사이즈 선택 (드롭다운)
+  - 장구류 사이즈 선택
+  - 수량 입력
+  - 저장 및 목록 버튼
+  - 반응형 폼 디자인
+-->
+<%- include('header') %>
+<div class="container" style="max-width:80%; font-size:1em; margin-top:5rem; margin-bottom:5rem;">
+  <h2 class="fw-bold text-center" style="margin-bottom:3.75rem;">유니폼/장구류 사이즈 정보 수정</h2>
+  <div class="row justify-content-center align-items-start">
+    <!-- 프로필 이미지: 좌측 중앙 -->
+    <div class="col-lg-3 d-flex flex-column align-items-center justify-content-center" style="min-width:180px;">
+      <div class="card shadow-sm mb-3 w-100" style="min-height:1px;">
+        <div class="card-header bg-secondary text-white py-2 fw-semibold text-center" style="font-size:0.95rem;">프로필 이미지</div>
+        <div class="card-body d-flex flex-column align-items-center justify-content-center py-3">
+          <% if (employee.profileImage) { %>
+            <img src="<%= employee.profileImage %>" alt="프로필 사진" class="rounded-circle mb-2" width="90" height="90"><br>
+          <% } %>
+          <span class="fw-bold d-block text-center mt-2" style="font-size:1.1em;"> <%= employee.department ? employee.department + ' / ' : '' %><%= employee.name %></span>
+        </div>
+      </div>
+    </div>
+    <!-- 우측: 유니폼 카드 -->
+    <div class="col-lg-9">
+      <% if (typeof session !== 'undefined' && session.userRole === 'admin' && employee._id) { %>
+        <form action="/uniform/<%= employee._id %>/edit" method="POST">
+          <input type="hidden" name="employeeId" value="<%= employee._id %>">
+      <% } else { %>
+        <form action="/uniform/edit" method="POST">
+      <% } %>
+        <div class="card shadow-sm mb-2" style="min-height:1px;">
+          <div class="card-header bg-info text-white py-2 fw-semibold" style="font-size:0.95rem;">유니폼/장구류</div>
+          <div class="card-body">
+            <div class="row g-1 align-items-center gy-10">
+              <div class="col-md-2">
+                <label class="form-label small mb-1">모자</label>
+                <select name="cap" class="form-select form-select-sm py-1" style="width:80%;">
+                  <option value="">선택</option>
+                  <% ['별대','특대','대','중','소'].forEach(opt => { %>
+                    <option value="<%= opt %>" <%= employee.cap===opt?'selected':'' %>><%= opt %></option>
+                  <% }) %>
+                </select>
+              </div>
+              <div class="col-md-2">
+                <label class="form-label small mb-1">하복 상의</label>
+                <select name="uniformSummerTop" class="form-select form-select-sm py-1" style="width:80%;">
+                  <option value="">선택</option>
+                  <% ['2별대','별대','특대','대','중'].forEach(opt => { %>
+                    <option value="<%= opt %>" <%= employee.uniformSummerTop===opt?'selected':'' %>><%= opt %></option>
+                  <% }) %>
+                </select>
+              </div>
+              <div class="col-md-2">
+                <label class="form-label small mb-1">하복 하의</label>
+                <select name="uniformSummerBottom" class="form-select form-select-sm py-1" style="width:80%;">
+                  <option value="">선택</option>
+                  <% ['38','36','35','34','33','32','31','30'].forEach(opt => { %>
+                    <option value="<%= opt %>" <%= employee.uniformSummerBottom===opt?'selected':'' %>><%= opt %></option>
+                  <% }) %>
+                </select>
+              </div>
+              <div class="col-md-2">
+                <label class="form-label small mb-1">동복 상의</label>
+                <select name="uniformWinterTop" class="form-select form-select-sm py-1" style="width:80%;">
+                  <option value="">선택</option>
+                  <% ['2별대','별대','특대','대','중'].forEach(opt => { %>
+                    <option value="<%= opt %>" <%= employee.uniformWinterTop===opt?'selected':'' %>><%= opt %></option>
+                  <% }) %>
+                </select>
+              </div>
+              <div class="col-md-2">
+                <label class="form-label small mb-1">동복 하의</label>
+                <select name="uniformWinterBottom" class="form-select form-select-sm py-1" style="width:80%;">
+                  <option value="">선택</option>
+                  <% ['38','36','35','34','33','32','31','30'].forEach(opt => { %>
+                    <option value="<%= opt %>" <%= employee.uniformWinterBottom===opt?'selected':'' %>><%= opt %></option>
+                  <% }) %>
+                </select>
+              </div>
+              <div class="col-md-2">
+                <label class="form-label small mb-1">방한하의</label>
+                <select name="uniformWinterPants" class="form-select form-select-sm py-1" style="width:80%;">
+                  <option value="">선택</option>
+                  <% ['38','36','35','34','33','32','31','30'].forEach(opt => { %>
+                    <option value="<%= opt %>" <%= employee.uniformWinterPants===opt?'selected':'' %>><%= opt %></option>
+                  <% }) %>
+                </select>
+              </div>
+              <div class="col-md-2">
+                <label class="form-label small mb-1">춘추복</label>
+                <select name="springAutumnUniform" class="form-select form-select-sm py-1" style="width:80%;">
+                  <option value="">선택</option>
+                  <% ['2별대','별대','특대','대','중'].forEach(opt => { %>
+                    <option value="<%= opt %>" <%= employee.springAutumnUniform===opt?'selected':'' %>><%= opt %></option>
+                  <% }) %>
+                </select>
+              </div>
+              <div class="col-md-2 d-flex flex-column justify-content-end align-items-start">
+                <label class="form-label small mb-1" style="margin-bottom:0.25rem;">방한외투</label>
+                <select name="uniformWinterCoat" class="form-select form-select-sm py-1" style="width:80%;">
+                  <option value="">선택</option>
+                  <% ['2별대','별대','특대','대','중'].forEach(opt => { %>
+                    <option value="<%= opt %>" <%= employee.uniformWinterCoat===opt?'selected':'' %>><%= opt %></option>
+                  <% }) %>
+                </select>
+              </div>
+                             <!-- 동점퍼/겹점퍼 항목 -->
+               <div class="col-md-2 d-flex flex-column justify-content-end align-items-start">
+                 <div class="d-flex align-items-center mb-1">
+                   <input type="radio" id="winterJacketRadio" name="jacketType" value="winterJacket" <%= employee.winterJacket && !employee.doubleJacket ? 'checked' : '' %>>
+                   <label for="winterJacketRadio" class="form-label small mb-0 me-2 ms-1">동점퍼</label>
+                   <input type="radio" id="doubleJacketRadio" name="jacketType" value="doubleJacket" <%= employee.doubleJacket && !employee.winterJacket ? 'checked' : '' %>>
+                   <label for="doubleJacketRadio" class="form-label small mb-0 me-2 ms-1">겹점퍼</label>
+                 </div>
+                 <select id="winterJacketSelect" name="winterJacket" class="form-select form-select-sm py-1" style="width:80%; display:none;">
+                   <option value="">사이즈 선택</option>
+                   <% ['2별대','별대','특대','대','중'].forEach(opt => { %>
+                     <option value="<%= opt %>" <%= employee.winterJacket===opt?'selected':'' %>><%= opt %></option>
+                   <% }) %>
+                 </select>
+                 <select id="doubleJacketSelect" name="doubleJacket" class="form-select form-select-sm py-1" style="width:80%; display:none;" autocomplete="off">
+                   <option value="">사이즈 선택</option>
+                   <% ['2별대','별대','특대','대','중'].forEach(opt => { %>
+                     <option value="<%= opt %>" <%= employee.doubleJacket===opt?'selected':'' %>><%= opt %></option>
+                   <% }) %>
+                 </select>
+               </div>
+              <!-- 장화 항목 -->
+              <div class="col-md-2 d-flex flex-column justify-content-end align-items-start">
+                <label class="form-label small mb-1" style="margin-bottom:0.25rem;">장화</label>
+                <select name="rainBoots" class="form-select form-select-sm py-1" style="width:80%;">
+                  <option value="">선택</option>
+                  <% ['290','285','280','275','270','265','260','255','250'].forEach(opt => { %>
+                    <option value="<%= opt %>" <%= employee.rainBoots===opt?'selected':'' %>><%= opt %></option>
+                  <% }) %>
+                </select>
+              </div>
+              <div class="col-md-2 d-flex flex-column justify-content-end align-items-start">
+                <label class="form-label small mb-1" style="margin-bottom:0.25rem;">우의</label>
+                <select name="raincoat" class="form-select form-select-sm py-1" style="width:80%;">
+                  <option value="">선택</option>
+                  <% ['2별대','별대','특대','대','중'].forEach(opt => { %>
+                    <option value="<%= opt %>" <%= employee.raincoat===opt?'selected':'' %>><%= opt %></option>
+                  <% }) %>
+                </select>
+              </div>
+              <div class="col-md-2 d-flex flex-column justify-content-end align-items-start">
+                <label class="form-label small mb-1" style="margin-bottom:0.25rem;">신발(안전화)</label>
+                <select name="safetyShoes" class="form-select form-select-sm py-1" style="width:80%;">
+                  <option value="">선택</option>
+                  <% ['290','285','280','275','270','265','260','255','250'].forEach(opt => { %>
+                    <option value="<%= opt %>" <%= employee.safetyShoes===opt?'selected':'' %>><%= opt %></option>
+                  <% }) %>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- 저장/목록 버튼: 유니폼 카드 바로 아래, 페이지 중앙, 마진 50px -->
+        <div class="d-flex gap-2 mt-4 justify-content-center">
+          <button type="submit" class="btn btn-primary px-3 py-1">저장</button>
+          <a href="/employees" class="btn btn-secondary px-3 py-1">목록</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<style>
+  html, body {
+    height: 100%;
+  }
+  body {
+    min-height: 100vh;
+    position: relative;
+    margin: 0;
+    padding-bottom: 60px; /* footer 높이만큼 */
+  }
+  footer {
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    z-index: 100;
+  }
+</style>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  function toggleJacketSelect() {
+    const type = document.querySelector('input[name="jacketType"]:checked');
+    const winterSel = document.getElementById('winterJacketSelect');
+    const doubleSel = document.getElementById('doubleJacketSelect');
+    if(type && type.value === 'winterJacket') {
+      winterSel.style.display = '';
+      doubleSel.style.display = 'none';
+    } else if(type && type.value === 'doubleJacket') {
+      winterSel.style.display = 'none';
+      doubleSel.style.display = '';
+    } else {
+      winterSel.style.display = 'none';
+      doubleSel.style.display = 'none';
+    }
+  }
+  document.querySelectorAll('input[name="jacketType"]').forEach(radio => {
+    radio.addEventListener('change', toggleJacketSelect);
+  });
+  
+  // 페이지 로드 시 초기 상태 설정
+  const winterJacket = '<%= employee.winterJacket %>';
+  const doubleJacket = '<%= employee.doubleJacket %>';
+  
+  if (winterJacket && !doubleJacket) {
+    document.getElementById('winterJacketRadio').checked = true;
+    document.getElementById('winterJacketSelect').style.display = '';
+    document.getElementById('doubleJacketSelect').style.display = 'none';
+  } else if (doubleJacket && !winterJacket) {
+    document.getElementById('doubleJacketRadio').checked = true;
+    document.getElementById('winterJacketSelect').style.display = 'none';
+    document.getElementById('doubleJacketSelect').style.display = '';
+  }
+  
+  toggleJacketSelect();
+});
+</script>
+<%- include('footer') %> 

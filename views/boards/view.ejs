@@ -1,0 +1,301 @@
+<!--
+  파일명: boards/view.ejs
+  목적: 게시글 상세보기 페이지
+  기능:
+  - 게시글 제목 및 내용 표시
+  - 작성자 및 작성일 표시
+  - 첨부파일 다운로드
+  - 댓글 목록 및 작성
+  - 좋아요/싫어요 기능
+  - 신고 기능
+  - 수정/삭제 버튼 (권한별)
+-->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title><%= post.title %> - <%= board.name %></title>
+</head>
+<body>
+  <%- include('../header') %>
+  
+  <div class="container mt-4">
+    <div class="row justify-content-center">
+      <div class="col-lg-10">
+        <!-- 게시글 헤더 -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <h2>
+            <% if (board.type === 'notice') { %>
+              <i class="fas fa-bullhorn text-danger"></i>
+            <% } else if (board.type === 'free') { %>
+              <i class="fas fa-comments text-primary"></i>
+            <% } else { %>
+              <i class="fas fa-users text-success"></i>
+            <% } %>
+            <%= board.name %>
+          </h2>
+          <div>
+            <a href="/boards/<%= board._id %>" class="btn btn-secondary btn-sm">
+              <i class="fas fa-arrow-left"></i> 목록
+            </a>
+            <% if (session.userRole === 'admin' || post.author.toString() === session.userId) { %>
+              <a href="/boards/<%= board._id %>/<%= post._id %>/edit" class="btn btn-warning btn-sm">
+                <i class="fas fa-edit"></i> 수정
+              </a>
+              <button class="btn btn-danger btn-sm" onclick="deletePost()">
+                <i class="fas fa-trash"></i> 삭제
+              </button>
+            <% } %>
+          </div>
+        </div>
+
+        <% if (session.message) { %>
+          <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <%= session.message %>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+          <% delete session.message; %>
+        <% } %>
+
+        <!-- 게시글 내용 -->
+        <div class="card mb-4">
+          <div class="card-header">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <h4 class="mb-1">
+                  <% if (post.isNotice) { %>
+                    <span class="badge bg-danger me-2">공지</span>
+                  <% } %>
+                  <%= post.title %>
+                </h4>
+                <div class="text-muted small">
+                  <span><i class="fas fa-user"></i> <%= post.authorName %></span>
+                  <span class="ms-3"><i class="fas fa-calendar"></i> <%= new Date(post.createdAt).toLocaleString() %></span>
+                  <span class="ms-3"><i class="fas fa-eye"></i> <%= post.views %></span>
+                  <% if (post.isAnonymous) { %>
+                    <span class="badge bg-secondary ms-2">익명</span>
+                  <% } %>
+                </div>
+              </div>
+              <div class="text-end">
+                <div class="btn-group" role="group">
+                  <button class="btn btn-outline-success btn-sm" onclick="toggleLike()">
+                    <i class="fas fa-thumbs-up"></i> 👍 <span id="likeCount"><%= post.likes ? post.likes.length : 0 %></span>
+                  </button>
+                  <button class="btn btn-outline-danger btn-sm" onclick="toggleDislike()">
+                    <i class="fas fa-thumbs-down"></i> 👎 <span id="dislikeCount"><%= post.dislikes ? post.dislikes.length : 0 %></span>
+                  </button>
+                  <button class="btn btn-outline-warning btn-sm" onclick="showReportModal()">
+                    <i class="fas fa-flag"></i> 신고
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card-body">
+            <!-- 태그 -->
+            <% if (post.tags && post.tags.length > 0) { %>
+              <div class="mb-3">
+                <% post.tags.forEach(tag => { %>
+                  <span class="badge bg-info me-1"><%= tag %></span>
+                <% }); %>
+              </div>
+            <% } %>
+
+            <!-- 첨부파일 -->
+            <% if (post.attachments && post.attachments.length > 0) { %>
+              <div class="mb-3">
+                <h6><i class="fas fa-paperclip"></i> 첨부파일</h6>
+                <% post.attachments.forEach(attachment => { %>
+                  <div class="mb-1">
+                    <a href="<%= attachment.path %>" class="text-decoration-none" target="_blank">
+                      <i class="fas fa-file"></i> <%= attachment.originalName %>
+                      <small class="text-muted">(<%= (attachment.size / 1024).toFixed(1) %>KB)</small>
+                    </a>
+                  </div>
+                <% }); %>
+              </div>
+            <% } %>
+
+            <!-- 게시글 내용 -->
+            <div class="post-content">
+              <%- post.content.replace(/\n/g, '<br>') %>
+            </div>
+          </div>
+        </div>
+
+        <!-- 댓글 섹션 -->
+        <div class="card">
+          <div class="card-header">
+            <h5><i class="fas fa-comments"></i> 댓글 (<%= comments.length %>)</h5>
+          </div>
+          <div class="card-body">
+            <!-- 댓글 작성 폼 -->
+            <form action="/boards/<%= board._id %>/<%= post._id %>/comment" method="POST" class="mb-4">
+              <div class="mb-3">
+                <textarea class="form-control" name="content" rows="3" placeholder="댓글을 입력하세요..." required></textarea>
+              </div>
+              <div class="d-flex justify-content-between align-items-center">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="commentAnonymous" name="isAnonymous">
+                  <label class="form-check-label" for="commentAnonymous">
+                    익명으로 작성
+                  </label>
+                </div>
+                <button type="submit" class="btn btn-primary btn-sm">
+                  <i class="fas fa-paper-plane"></i> 댓글 작성
+                </button>
+              </div>
+            </form>
+
+            <!-- 댓글 목록 -->
+            <% if (comments.length > 0) { %>
+              <% comments.forEach(comment => { %>
+                <div class="border-bottom pb-3 mb-3">
+                  <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                      <strong><%= comment.authorName %></strong>
+                      <% if (comment.isAnonymous) { %>
+                        <span class="badge bg-secondary ms-1">익명</span>
+                      <% } %>
+                      <small class="text-muted ms-2"><%= new Date(comment.createdAt).toLocaleString() %></small>
+                    </div>
+                    <% if (session.userRole === 'admin' || comment.author.toString() === session.userId) { %>
+                      <form action="/boards/<%= board._id %>/<%= post._id %>/comment/<%= comment._id %>?_method=DELETE" method="POST" style="display: inline;">
+                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('댓글을 삭제하시겠습니까?')">
+                          <i class="fas fa-trash"></i>
+                        </button>
+                      </form>
+                    <% } %>
+                  </div>
+                  <div class="mt-2">
+                    <%= comment.content.replace(/\n/g, '<br>') %>
+                  </div>
+                </div>
+              <% }); %>
+            <% } else { %>
+              <div class="text-center text-muted py-4">
+                <i class="fas fa-comments fa-2x mb-2"></i>
+                <p>첫 번째 댓글을 작성해보세요!</p>
+              </div>
+            <% } %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 신고 모달 -->
+  <div class="modal fade" id="reportModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">게시글 신고</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="reportForm">
+            <div class="mb-3">
+              <label class="form-label">신고 사유</label>
+              <select class="form-select" name="reason" required>
+                <option value="">사유를 선택하세요</option>
+                <option value="spam">스팸/광고성 게시글</option>
+                <option value="inappropriate">부적절한 내용</option>
+                <option value="harassment">욕설/비방/괴롭힘</option>
+                <option value="copyright">저작권 침해</option>
+                <option value="other">기타</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">상세 설명</label>
+              <textarea class="form-control" name="description" rows="3" placeholder="신고 사유를 자세히 설명해주세요..."></textarea>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+          <button type="button" class="btn btn-warning" onclick="submitReport()">신고하기</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <%- include('../footer') %>
+
+  <script>
+    function deletePost() {
+      if (confirm('게시글을 삭제하시겠습니까?')) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/boards/<%= board._id %>/<%= post._id %>?_method=DELETE';
+        document.body.appendChild(form);
+        form.submit();
+      }
+    }
+
+    function showReportModal() {
+      const modal = new bootstrap.Modal(document.getElementById('reportModal'));
+      modal.show();
+    }
+
+    function submitReport() {
+      const form = document.getElementById('reportForm');
+      const formData = new FormData(form);
+      
+      fetch('/boards/<%= board._id %>/<%= post._id %>/report', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams(formData)
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          alert('신고가 접수되었습니다.');
+          bootstrap.Modal.getInstance(document.getElementById('reportModal')).hide();
+          form.reset();
+        } else {
+          alert(data.error || '신고 처리 중 오류가 발생했습니다.');
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('신고 처리 중 오류가 발생했습니다.');
+      });
+    }
+
+    function toggleLike() {
+      fetch('/boards/<%= board._id %>/<%= post._id %>/like', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: 'action=like'
+      })
+      .then(response => response.json())
+      .then(data => {
+        document.getElementById('likeCount').textContent = data.likes;
+        document.getElementById('dislikeCount').textContent = data.dislikes;
+      })
+      .catch(error => console.error('Error:', error));
+    }
+
+    function toggleDislike() {
+      fetch('/boards/<%= board._id %>/<%= post._id %>/like', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: 'action=dislike'
+      })
+      .then(response => response.json())
+      .then(data => {
+        document.getElementById('likeCount').textContent = data.likes;
+        document.getElementById('dislikeCount').textContent = data.dislikes;
+      })
+      .catch(error => console.error('Error:', error));
+    }
+  </script>
+</body>
+</html> 

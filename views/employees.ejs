@@ -1,0 +1,271 @@
+<!--
+  파일명: employees.ejs
+  목적: 직원 목록 페이지
+  기능:
+  - 직원 목록 표시 및 페이징
+  - 직원 검색 및 필터링
+  - 직원 정보 추가/수정/삭제
+  - 엑셀 파일 업로드/다운로드
+  - 권한별 기능 표시/숨김
+  - 반응형 테이블 디자인
+-->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>직원 목록</title>
+  <style>
+    .employee-card {
+      transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    }
+    .employee-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
+    }
+    .table-responsive {
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .table thead th {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      font-weight: 600;
+      font-size: 0.85rem;
+    }
+    .table tbody tr:hover {
+      background-color: #f8f9fa;
+    }
+    .search-form {
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .btn-xs {
+      padding: 0.25rem 0.5rem;
+      font-size: 0.75rem;
+      border-radius: 0.2rem;
+    }
+    @media (max-width: 768px) {
+      .employee-card {
+        margin-bottom: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <%- include('header') %>
+  
+  <div class="container mt-4">
+    <div class="row justify-content-center">
+      <div class="col-12 col-lg-10">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4">
+          <h2 class="mb-3 mb-md-0">
+            <i class="fa-solid fa-search text-primary me-2"></i>직원 찾기
+          </h2>
+          <div class="d-flex gap-2">
+            <% if (session && session.userRole === 'admin') { %>
+            <a href="/employees/excel-manager" class="btn btn-outline-primary btn-sm">
+              <i class="fa-solid fa-file-excel me-1"></i>엑셀 관리
+            </a>
+            <div class="dropdown">
+              <button class="btn btn-outline-success btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                <i class="fa-solid fa-download me-1"></i>다운로드
+              </button>
+              <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="/employees/excel?format=xlsx">
+                  <i class="fa-solid fa-file-excel me-2"></i>Excel (.xlsx)
+                </a></li>
+                <li><a class="dropdown-item" href="/employees/excel?format=csv">
+                  <i class="fa-solid fa-file-csv me-2"></i>CSV (.csv)
+                </a></li>
+              </ul>
+            </div>
+            <% } %>
+          </div>
+        </div>
+        
+        <% if (typeof message !== 'undefined' && message) { %>
+          <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <%= message %>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        <% } %>
+
+        <div class="search-form">
+          <form method="get" action="/employees" class="row g-3">
+            <div class="col-md-2">
+              <input type="text" name="search" class="form-control" placeholder="이름 검색" value="<%= query.search || '' %>">
+            </div>
+            <div class="col-md-2">
+              <select name="department" class="form-select">
+                <option value="">전체 부서</option>
+                <% departments.forEach(function(dept) { %>
+                  <option value="<%= dept %>" <%= query.department === dept ? 'selected' : '' %>><%= dept %></option>
+                <% }) %>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <select name="position" class="form-select">
+                <option value="">전체 직급</option>
+                <% positions.forEach(function(pos) { %>
+                  <option value="<%= pos %>" <%= query.position === pos ? 'selected' : '' %>><%= pos %></option>
+                <% }) %>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <select name="sort" class="form-select">
+                <option value="">정렬 선택</option>
+                <option value="name" <%= query.sort === 'name' ? 'selected' : '' %>>이름</option>
+                <option value="department" <%= query.sort === 'department' ? 'selected' : '' %>>부서</option>
+                <option value="position" <%= query.sort === 'position' ? 'selected' : '' %>>직급</option>
+                <option value="hireDate" <%= query.sort === 'hireDate' ? 'selected' : '' %>>입사일</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <select name="order" class="form-select">
+                <option value="asc" <%= query.order === 'asc' ? 'selected' : '' %>>오름차순</option>
+                <option value="desc" <%= query.order === 'desc' ? 'selected' : '' %>>내림차순</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <button type="submit" class="btn btn-primary w-100">
+                <i class="fa-solid fa-magnifying-glass me-1"></i>검색
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <div class="card employee-card">
+          <div class="card-body p-0">
+            <form id="bulkDeleteForm" method="POST">
+              <input type="hidden" name="_method" value="DELETE">
+              <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0 small text-center">
+                  <thead>
+                    <tr>
+                      <% if (session && session.userRole === 'admin') { %>
+                      <th style="width: 40px;" class="text-center"><input type="checkbox" id="selectAll"></th>
+                      <% } %>
+                      <th style="width: 50px;" class="text-center">프로필</th>
+                      <th style="width: 100px;" class="text-center">이름</th>
+                      <th style="width: 80px;" class="text-center">사번</th>
+                      <th style="width: 90px;" class="text-center">부서</th>
+                      <th style="width: 70px;" class="text-center">직급</th>
+                      <th style="width: 180px;" class="text-center">이메일</th>
+                      <th style="width: 110px;" class="text-center">휴대폰</th>
+                      <th style="width: 90px;" class="text-center">입사일</th>
+                      <th style="width: 120px;" class="text-center">관리</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <% if (query && (query.search || query.department || query.position)) { %>
+                      <% if (employees && employees.length > 0) { %>
+                        <% employees.forEach(function(employee) { %>
+                          <tr>
+                            <% if (session && session.userRole === 'admin') { %>
+                            <td class="text-center"><input type="checkbox" name="ids" value="<%= employee._id %>"></td>
+                            <% } %>
+                            <td class="text-center">
+                              <% if (employee.profileImage) { %>
+                                <img src="<%= employee.profileImage %>" alt="프로필 사진" class="rounded-circle border border-2" style="width: 32px; height: 32px; object-fit: cover;">
+                              <% } else { %>
+                                <span class="fa-stack text-secondary" style="font-size: 0.8em;">
+                                  <i class="fa-solid fa-circle fa-stack-2x"></i>
+                                  <i class="fa-solid fa-user fa-stack-1x fa-inverse"></i>
+                                </span>
+                              <% } %>
+                            </td>
+                            <td class="text-center"><a href="/admin/employees/<%= employee._id %>" class="text-decoration-none fw-bold text-dark" style="font-size: 1.1rem;"><%= employee.name %></a></td>
+                            <td class="text-center small"><%= employee.empNo || '-' %></td>
+                            <td class="text-center small"><%= employee.department %></td>
+                            <td class="text-center small"><%= employee.position %></td>
+                            <td class="text-center small"><%= employee.email %></td>
+                            <td class="text-center small"><%= employee.mobile || '-' %></td>
+                            <td class="text-center small"><%= employee.hireDate.toISOString().slice(0,10) %></td>
+                            <td class="text-center">
+                              <% if (session && session.userRole === 'admin') { %>
+                                <a href="/uniform/<%= employee._id %>/edit" class="btn btn-xs btn-outline-success">유니폼</a>
+                              <% } else if (employee.userId && employee.userId.toString() === (session && session.userId)) { %>
+                                <a href="/uniform" class="btn btn-xs btn-outline-success">유니폼</a>
+                              <% } %>
+                            </td>
+                          </tr>
+                        <% }) %>
+                      <% } else { %>
+                        <tr>
+                          <td colspan="<%= session && session.userRole === 'admin' ? 10 : 9 %>" class="text-center py-4">
+                            <div class="text-muted">
+                              <i class="fas fa-search fa-2x mb-2"></i>
+                              <h5>검색 결과가 없습니다</h5>
+                              <% if (query.search) { %>
+                                <p>검색어: "<%= query.search %>"</p>
+                              <% } %>
+                              <p class="small">다른 검색어를 입력하거나 검색 조건을 변경해보세요.</p>
+                            </div>
+                          </td>
+                        </tr>
+                      <% } %>
+                    <% } else { %>
+                      <tr>
+                        <td colspan="<%= session && session.userRole === 'admin' ? 10 : 9 %>" class="text-center py-4">
+                          <div class="text-muted">
+                            <i class="fas fa-search fa-3x mb-3"></i>
+                            <h4 class="mb-3">직원 검색</h4>
+                            <p>위의 검색 조건을 입력하고 검색 버튼을 클릭하여 직원을 찾아보세요.</p>
+                          </div>
+                        </td>
+                      </tr>
+                    <% } %>
+                  </tbody>
+                </table>
+              </div>
+            </form>
+          </div>
+        </div>
+        
+        <% if (query && (query.search || query.department || query.position) && employees && employees.length > 0) { %>
+        <div class="d-flex justify-content-center align-items-center mt-3">
+          <nav aria-label="페이지네이션">
+            <ul class="pagination pagination-sm mb-0">
+              <% if (page > 1) { %>
+                <li class="page-item">
+                  <a class="page-link" href="/employees?page=<%= page - 1 %><%= query.search ? '&search=' + query.search : '' %><%= query.department ? '&department=' + query.department : '' %><%= query.position ? '&position=' + query.position : '' %><%= query.sort ? '&sort=' + query.sort : '' %><%= query.order ? '&order=' + query.order : '' %>">이전</a>
+                </li>
+              <% } %>
+              
+              <% for (let i = Math.max(1, page - 2); i <= Math.min(totalPages, page + 2); i++) { %>
+                <li class="page-item <%= i === page ? 'active' : '' %>">
+                  <a class="page-link" href="/employees?page=<%= i %><%= query.search ? '&search=' + query.search : '' %><%= query.department ? '&department=' + query.department : '' %><%= query.position ? '&position=' + query.position : '' %><%= query.sort ? '&sort=' + query.sort : '' %><%= query.order ? '&order=' + query.order : '' %>"><%= i %></a>
+                </li>
+              <% } %>
+              
+              <% if (page < totalPages) { %>
+                <li class="page-item">
+                  <a class="page-link" href="/employees?page=<%= page + 1 %><%= query.search ? '&search=' + query.search : '' %><%= query.department ? '&department=' + query.department : '' %><%= query.position ? '&position=' + query.position : '' %><%= query.sort ? '&sort=' + query.sort : '' %><%= query.order ? '&order=' + query.order : '' %>">다음</a>
+                </li>
+              <% } %>
+            </ul>
+          </nav>
+        </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+  
+  <%- include('footer') %>
+  
+  <script>
+    // 전체 선택 체크박스
+    document.getElementById('selectAll').addEventListener('change', function() {
+      const checkboxes = document.querySelectorAll('input[name="ids"]');
+      checkboxes.forEach(checkbox => {
+        checkbox.checked = this.checked;
+      });
+    });
+  </script>
+</body>
+</html> 

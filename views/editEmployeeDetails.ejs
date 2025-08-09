@@ -1,0 +1,348 @@
+<%- include('header') %>
+<div class="container" style="max-width:95%; font-size:0.85em; margin-top:0.5rem; margin-bottom:1rem;">
+  <div class="d-flex justify-content-center">
+    <div style="max-width:1400px; width:100%;">
+              <h2 class="fw-bold text-center mb-2" style="font-size:1.5rem;">상세정보 일괄 관리</h2>
+        <div class="row justify-content-center mb-2">
+          <div class="col-12">
+            <h5 class="fw-semibold text-center text-primary mb-2" style="font-size:1.1rem;">
+            <%= employee.department ? employee.department + ' / ' : '' %><%= employee.name %>
+          </h5>
+    </div>
+  </div>
+      
+          <form action="/admin/employees/<%= employee._id %>/editDetails" method="POST">
+        <div class="row">
+          <!-- 기본 정보 카드 -->
+          <div class="col-lg-6 mb-2">
+            <div class="card shadow-sm h-100">
+              <div class="card-header bg-primary text-white py-1 fw-semibold">
+                <i class="fas fa-user me-2"></i>기본 정보
+              </div>
+              <div class="card-body py-2">
+                <div class="row g-2">
+                  <div class="col-md-6">
+                    <label class="form-label small mb-1">소속</label>
+                    <select name="orgType" class="form-select form-select-sm py-1">
+                      <option value="">선택</option>
+                      <option value="본사" <%= employee.orgType === '본사' ? 'selected' : '' %>>본사</option>
+                      <option value="지사" <%= employee.orgType === '지사' ? 'selected' : '' %>>지사</option>
+                    </select>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label small mb-1">국적</label>
+                    <input type="text" name="nationality" class="form-control form-control-sm py-1" value="<%= employee.nationality || '' %>">
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label small mb-1">주민등록번호</label>
+                    <input type="text" name="ssn" id="residentNumber" class="form-control form-control-sm py-1" value="<%= employee.ssn || '' %>" placeholder="000000-0000000" maxlength="14">
+                    <div id="residentNumberError" class="text-danger small" style="display:none;"></div>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label small mb-1">성별</label>
+                    <select name="gender" class="form-select form-select-sm py-1">
+                      <option value="">선택</option>
+                      <option value="남" <%= employee.gender === '남' ? 'selected' : '' %>>남</option>
+                      <option value="여" <%= employee.gender === '여' ? 'selected' : '' %>>여</option>
+                    </select>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label small mb-1">나이</label>
+                    <input type="number" name="age" class="form-control form-control-sm py-1" value="<%= employee.age || '' %>">
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label small mb-1">생일</label>
+                    <input type="date" name="birth" class="form-control form-control-sm py-1" value="<%= employee.birth ? (employee.birth.toISOString ? employee.birth.toISOString().slice(0,10) : employee.birth) : '' %>">
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label small mb-1">혈액형</label>
+                    <select name="bloodType" class="form-select form-select-sm py-1">
+                      <option value="">선택</option>
+                      <option value="A" <%= employee.bloodType === 'A' ? 'selected' : '' %>>A</option>
+                      <option value="B" <%= employee.bloodType === 'B' ? 'selected' : '' %>>B</option>
+                      <option value="O" <%= employee.bloodType === 'O' ? 'selected' : '' %>>O</option>
+                      <option value="AB" <%= employee.bloodType === 'AB' ? 'selected' : '' %>>AB</option>
+                    </select>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label small mb-1">상태</label>
+                    <select name="status" class="form-select form-select-sm py-1">
+                      <option value="재직" <%= employee.status === '재직' ? 'selected' : '' %>>재직</option>
+                      <option value="휴직" <%= employee.status === '휴직' ? 'selected' : '' %>>휴직</option>
+                      <option value="산재" <%= employee.status === '산재' ? 'selected' : '' %>>산재</option>
+                      <option value="병가" <%= employee.status === '병가' ? 'selected' : '' %>>병가</option>
+                      <option value="정직" <%= employee.status === '정직' ? 'selected' : '' %>>정직</option>
+                      <option value="퇴직" <%= employee.status === '퇴직' ? 'selected' : '' %>>퇴직</option>
+                  </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 연락처 정보 카드 -->
+          <div class="col-lg-6 mb-2">
+            <div class="card shadow-sm h-100">
+              <div class="card-header bg-info text-white py-1 fw-semibold">
+                <i class="fas fa-phone me-2"></i>연락처 정보
+              </div>
+              <div class="card-body py-2">
+                <div class="row g-2">
+                  <div class="col-md-6">
+                    <label class="form-label small mb-1">연락처</label>
+                    <input type="text" name="phone" class="form-control form-control-sm py-1" value="<%= employee.phone || '' %>">
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label small mb-1">핸드폰</label>
+                    <input type="text" name="mobile" class="form-control form-control-sm py-1" value="<%= employee.mobile || '' %>">
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label small mb-1">주소</label>
+                    <input type="text" name="address" class="form-control form-control-sm py-1" value="<%= employee.address || '' %>">
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label small mb-1">근무위치</label>
+                    <input type="text" name="workLocation" class="form-control form-control-sm py-1" value="<%= employee.workLocation || '' %>">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 신체 정보 카드 -->
+          <div class="col-lg-6 mb-2">
+            <div class="card shadow-sm h-100">
+              <div class="card-header bg-success text-white py-1 fw-semibold">
+                <i class="fas fa-heartbeat me-2"></i>신체 정보
+              </div>
+              <div class="card-body py-2">
+                <div class="row g-2">
+                  <div class="col-md-6">
+                    <label class="form-label small mb-1">신장(cm)</label>
+                    <input type="number" name="height" class="form-control form-control-sm py-1" value="<%= employee.height || '' %>">
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label small mb-1">체중(kg)</label>
+                    <input type="number" name="weight" class="form-control form-control-sm py-1" value="<%= employee.weight || '' %>">
+                  </div>
+
+                  <div class="col-md-6">
+                    <label class="form-label small mb-1">군별</label>
+                    <input type="text" name="militaryBranch" class="form-control form-control-sm py-1" value="<%= employee.militaryBranch || '' %>" placeholder="예: 육군, 해군, 공군">
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label small mb-1">계급</label>
+                    <input type="text" name="militaryRank" class="form-control form-control-sm py-1" value="<%= employee.militaryRank || '' %>" placeholder="예: 병장, 상병, 일병">
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label small mb-1">군번</label>
+                    <input type="text" name="militaryNumber" class="form-control form-control-sm py-1" value="<%= employee.militaryNumber || '' %>" placeholder="예: 12-345678">
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label small mb-1">복무기간</label>
+                    <input type="text" name="militaryServicePeriod" class="form-control form-control-sm py-1" value="<%= employee.militaryServicePeriod || '' %>" placeholder="예: 2020.01-2021.12">
+                  </div>
+                  <div class="col-md-12">
+                    <label class="form-label small mb-1">미필사유</label>
+                    <input type="text" name="militaryExemptionReason" class="form-control form-control-sm py-1" value="<%= employee.militaryExemptionReason || '' %>" placeholder="예: 면제, 제외, 기타사유">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 고용 정보 카드 -->
+          <div class="col-lg-6 mb-2">
+            <div class="card shadow-sm h-100">
+              <div class="card-header bg-warning text-dark py-1 fw-semibold">
+                <i class="fas fa-briefcase me-2"></i>고용 정보
+              </div>
+              <div class="card-body py-2">
+                <div class="row g-2">
+                  <div class="col-md-6">
+                    <label class="form-label small mb-1">채용구분</label>
+                    <select name="employmentType" class="form-select form-select-sm py-1">
+                      <option value="">선택</option>
+                      <option value="정규직" <%= employee.employmentType === '정규직' ? 'selected' : '' %>>정규직</option>
+                      <option value="파견직" <%= employee.employmentType === '파견직' ? 'selected' : '' %>>파견직</option>
+                      <option value="계약직" <%= employee.employmentType === '계약직' ? 'selected' : '' %>>계약직</option>
+                    </select>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label small mb-1">입사날짜</label>
+                    <input type="date" name="hireDate" class="form-control form-control-sm py-1" value="<%= employee.hireDate ? (employee.hireDate.toISOString ? employee.hireDate.toISOString().slice(0,10) : employee.hireDate) : '' %>">
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label small mb-1">급여은행</label>
+                    <input type="text" name="salaryBank" class="form-control form-control-sm py-1" value="<%= employee.salaryBank || '' %>">
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label small mb-1">급여계좌</label>
+                    <input type="text" name="salaryAccount" class="form-control form-control-sm py-1" value="<%= employee.salaryAccount || '' %>">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 추가 정보 카드 -->
+          <div class="col-12 mb-2">
+            <div class="card shadow-sm">
+              <div class="card-header bg-secondary text-white py-1 fw-semibold">
+                <i class="fas fa-info-circle me-2"></i>추가 정보
+              </div>
+              <div class="card-body py-2">
+                <div class="row g-2">
+                  <div class="col-md-6">
+                    <label class="form-label small mb-1">학력</label>
+                    <textarea name="education" class="form-control form-control-sm py-1" rows="2" style="resize: none;"><%= employee.education || '' %></textarea>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label small mb-1">상벌사항</label>
+                    <textarea name="rewardPunishment" class="form-control form-control-sm py-1" rows="2" style="resize: none;"><%= employee.rewardPunishment || '' %></textarea>
+                  </div>
+                           <div class="col-md-12">
+           <label class="form-label small mb-1">특이사항</label>
+           <textarea name="specialNotes" class="form-control form-control-sm py-1" rows="2" style="resize: none;"><%= employee.specialNotes || '' %></textarea>
+         </div>
+         <div class="col-md-12">
+           <label class="form-label small mb-1">경력사항</label>
+           <textarea name="career" class="form-control form-control-sm py-1" rows="3" style="resize: none;"><%= employee.career || '' %></textarea>
+         </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 버튼 영역 -->
+        <div class="d-flex justify-content-center align-items-center mt-2 mb-2">
+          <button type="submit" class="btn btn-primary px-4 py-2 me-3">
+            <i class="fas fa-save me-2"></i>저장
+          </button>
+          <a href="/admin/employees/<%= employee._id %>" class="btn btn-secondary px-4 py-2">
+            <i class="fas fa-times me-2"></i>취소
+          </a>
+      </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<style>
+  .card {
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+  }
+  .card-header {
+    border-radius: 8px 8px 0 0 !important;
+  }
+  .form-control, .form-select {
+    border-radius: 6px;
+    border: 1px solid #ced4da;
+  }
+  .form-control:focus, .form-select:focus {
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+  }
+  .btn {
+    border-radius: 6px;
+    font-weight: 500;
+  }
+  /* 푸터가 보이도록 하단 여백 추가 */
+  body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .container {
+    flex: 1;
+    padding-bottom: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  /* 카드 내부 패딩 줄이기 */
+  .card-body {
+    padding: 0.5rem;
+  }
+  /* 폼 요소 간격 줄이기 */
+  .form-label {
+    margin-bottom: 0.25rem;
+  }
+  .form-control, .form-select {
+    padding: 0.25rem 0.5rem;
+  }
+</style>
+
+<%- include('footer') %> 
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // 주민등록번호 유효성검사
+  const residentNumberInput = document.getElementById('residentNumber');
+  const residentNumberError = document.getElementById('residentNumberError');
+
+  function validateResidentNumber(value) {
+    if (!value || value.trim() === '') {
+      residentNumberError.style.display = 'none';
+      residentNumberInput.classList.remove('is-invalid');
+      return true;
+    }
+
+    // 형식 검사 (000000-0000000)
+    const pattern = /^\d{6}-\d{7}$/;
+    if (!pattern.test(value)) {
+      residentNumberError.textContent = '주민등록번호 형식이 올바르지 않습니다. (예: 123456-1234567)';
+      residentNumberError.style.display = 'block';
+      residentNumberInput.classList.add('is-invalid');
+      return false;
+    }
+
+    // 유효성 검사
+    const numbers = value.replace('-', '').split('').map(Number);
+    const weights = [2, 3, 4, 5, 6, 7, 8, 9, 2, 3, 4, 5];
+    let sum = 0;
+    
+    for (let i = 0; i < 12; i++) {
+      sum += numbers[i] * weights[i];
+    }
+    
+    const remainder = sum % 11;
+    const checkDigit = remainder < 2 ? 0 : 11 - remainder;
+    
+    if (numbers[12] !== checkDigit) {
+      residentNumberError.textContent = '유효하지 않은 주민등록번호입니다.';
+      residentNumberError.style.display = 'block';
+      residentNumberInput.classList.add('is-invalid');
+      return false;
+    }
+
+    residentNumberError.style.display = 'none';
+    residentNumberInput.classList.remove('is-invalid');
+    return true;
+  }
+
+  // 자동 하이픈 추가
+  residentNumberInput.addEventListener('input', function(e) {
+    let value = e.target.value.replace(/[^0-9]/g, '');
+    if (value.length > 6) {
+      value = value.slice(0, 6) + '-' + value.slice(6);
+    }
+    e.target.value = value;
+    validateResidentNumber(value);
+  });
+
+  // 포커스 아웃시 유효성검사
+  residentNumberInput.addEventListener('blur', function() {
+    validateResidentNumber(this.value);
+  });
+
+  // 페이지 로드시 기존 값 유효성검사
+  if (residentNumberInput.value) {
+    validateResidentNumber(residentNumberInput.value);
+  }
+});
+</script> 

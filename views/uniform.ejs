@@ -1,0 +1,108 @@
+<!--
+  파일명: uniform.ejs
+  목적: 개인 유니폼/장구류 정보 조회 페이지
+  기능:
+  - 개인 유니폼 사이즈 정보 표시
+  - 장구류 사이즈 정보 표시
+  - 수량 정보 표시
+  - 수정 버튼 연결
+  - 반응형 카드 디자인
+-->
+<%- include('header') %>
+<div class="container" style="max-width:80%; font-size:1em; margin-top:5rem; margin-bottom:5rem;">
+  <% if (typeof message !== 'undefined' && message) { %>
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+      <%= message %>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  <% } %>
+  <h2 class="fw-bold text-center" style="margin-bottom:3.75rem;">유니폼/장구류 사이즈 정보</h2>
+  <div class="row justify-content-center align-items-start">
+    <!-- 프로필 이미지: 좌측 중앙 -->
+    <div class="col-lg-3 d-flex flex-column align-items-center justify-content-center" style="min-width:180px;">
+      <div class="card shadow-sm mb-3 w-100" style="min-height:1px;">
+        <div class="card-header bg-secondary text-white py-2 fw-semibold text-center" style="font-size:0.95rem;">프로필 이미지</div>
+        <div class="card-body d-flex flex-column align-items-center justify-content-center py-3">
+          <% if (employee.profileImage) { %>
+            <img src="<%= employee.profileImage %>" alt="프로필 사진" class="rounded-circle mb-2" width="90" height="90"><br>
+          <% } %>
+          <span class="fw-bold d-block text-center mt-2" style="font-size:1.1em;"> <%= employee.department ? employee.department + ' / ' : '' %><%= employee.name %></span>
+        </div>
+      </div>
+    </div>
+    <!-- 우측: 유니폼 카드 -->
+    <div class="col-lg-9">
+      <div class="card shadow-sm mb-2" style="min-height:1px;">
+        <div class="card-header bg-info text-white py-2 fw-semibold" style="font-size:0.95rem;">유니폼/장구류</div>
+        <div class="card-body">
+          <div class="row g-1 align-items-center gy-10">
+            <div class="col-md-2">
+              <label class="form-label small mb-1">모자</label>
+              <input type="text" class="form-control form-control-sm py-1" value="<%= employee.cap || '-' %>" readonly style="width:80%;">
+            </div>
+            <div class="col-md-2">
+              <label class="form-label small mb-1">하복 상의</label>
+              <input type="text" class="form-control form-control-sm py-1" value="<%= employee.uniformSummerTop || '-' %>" readonly style="width:80%;">
+            </div>
+            <div class="col-md-2">
+              <label class="form-label small mb-1">하복 하의</label>
+              <input type="text" class="form-control form-control-sm py-1" value="<%= employee.uniformSummerBottom || '-' %>" readonly style="width:80%;">
+            </div>
+            <div class="col-md-2">
+              <label class="form-label small mb-1">동복 상의</label>
+              <input type="text" class="form-control form-control-sm py-1" value="<%= employee.uniformWinterTop || '-' %>" readonly style="width:80%;">
+            </div>
+            <div class="col-md-2">
+              <label class="form-label small mb-1">동복 하의</label>
+              <input type="text" class="form-control form-control-sm py-1" value="<%= employee.uniformWinterBottom || '-' %>" readonly style="width:80%;">
+            </div>
+            <div class="col-md-2">
+              <label class="form-label small mb-1">방한하의</label>
+              <input type="text" class="form-control form-control-sm py-1" value="<%= employee.uniformWinterPants || '-' %>" readonly style="width:80%;">
+            </div>
+            <div class="col-md-2">
+              <label class="form-label small mb-1">춘추복</label>
+              <input type="text" class="form-control form-control-sm py-1" value="<%= employee.springAutumnUniform || '-' %>" readonly style="width:80%;">
+            </div>
+            <div class="col-md-2 d-flex flex-column justify-content-end align-items-start">
+              <label class="form-label small mb-1" style="margin-bottom:0.25rem;">방한외투</label>
+              <input type="text" class="form-control form-control-sm py-1" value="<%= employee.uniformWinterCoat || '-' %>" readonly style="width:80%;">
+            </div>
+            <!-- 동점퍼/겹점퍼 항목 -->
+            <div class="col-md-2 d-flex flex-column justify-content-end align-items-start">
+              <div class="d-flex align-items-center mb-1">
+                <input type="radio" id="winterJacketRadio" name="jacketType" value="winterJacket" <%= employee.winterJacket && !employee.doubleJacket ? 'checked' : '' %> disabled>
+                <label for="winterJacketRadio" class="form-label small mb-0 me-2 ms-1">동점퍼</label>
+                <input type="radio" id="doubleJacketRadio" name="jacketType" value="doubleJacket" <%= employee.doubleJacket && !employee.winterJacket ? 'checked' : '' %> disabled>
+                <label for="doubleJacketRadio" class="form-label small mb-0 me-2 ms-1">겹점퍼</label>
+              </div>
+              <input type="text" class="form-control form-control-sm py-1" style="width:80%;" value="<%= employee.winterJacket ? employee.winterJacket : (employee.doubleJacket ? employee.doubleJacket : '-') %>" readonly>
+            </div>
+            <!-- 장화 항목 -->
+            <div class="col-md-2 d-flex flex-column justify-content-end align-items-start">
+              <label class="form-label small mb-1" style="margin-bottom:0.25rem;">장화</label>
+              <input type="text" class="form-control form-control-sm py-1" value="<%= employee.rainBoots || '-' %>" readonly style="width:80%;">
+            </div>
+            <div class="col-md-2 d-flex flex-column justify-content-end align-items-start">
+              <label class="form-label small mb-1" style="margin-bottom:0.25rem;">우의</label>
+              <input type="text" class="form-control form-control-sm py-1" value="<%= employee.raincoat || '-' %>" readonly style="width:80%;">
+            </div>
+            <div class="col-md-2 d-flex flex-column justify-content-end align-items-start">
+              <label class="form-label small mb-1" style="margin-bottom:0.25rem;">신발(안전화)</label>
+              <input type="text" class="form-control form-control-sm py-1" value="<%= employee.safetyShoes || '-' %>" readonly style="width:80%;">
+            </div>
+          </div>
+    </div>
+  </div>
+      <div class="d-flex gap-2 mt-4 justify-content-center">
+    <% if (session && session.userRole === 'admin') { %>
+      <a href="/uniform/<%= employee._id %>/edit" class="btn btn-primary">수정</a>
+    <% } else { %>
+      <a href="/uniform/edit" class="btn btn-primary">수정</a>
+    <% } %>
+    <a href="/employees" class="btn btn-secondary">목록</a>
+      </div>
+    </div>
+  </div>
+</div>
+<%- include('footer') %> 

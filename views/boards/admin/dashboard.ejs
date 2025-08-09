@@ -1,0 +1,339 @@
+<!--
+  파일명: boards/admin/dashboard.ejs
+  목적: 게시판 관리자 대시보드
+  기능:
+  - 전체 통계 정보 표시
+  - 게시판별 통계 차트
+  - 인기 게시글 목록
+  - 신고 통계
+  - 최근 활동 현황
+  - 반응형 대시보드 디자인
+-->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>통계 대시보드 - 관리자</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <%- include('../../header') %>
+  
+  <div class="container-fluid mt-4">
+    <div class="row">
+      <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <h2><i class="fas fa-chart-bar"></i> 통계 대시보드</h2>
+          <div>
+            <a href="/boards" class="btn btn-secondary btn-sm">
+              <i class="fas fa-arrow-left"></i> 게시판 목록
+            </a>
+            <a href="/boards/admin/reports" class="btn btn-warning btn-sm">
+              <i class="fas fa-flag"></i> 신고 관리
+            </a>
+          </div>
+        </div>
+
+        <!-- 전체 통계 카드 -->
+        <div class="row mb-4">
+          <div class="col-md-3">
+            <div class="card bg-primary text-white">
+              <div class="card-body">
+                <div class="d-flex justify-content-between">
+                  <div>
+                    <h4 class="card-title"><%= stats.total.posts %></h4>
+                    <p class="card-text">전체 게시글</p>
+                  </div>
+                  <div class="align-self-center">
+                    <i class="fas fa-file-alt fa-2x"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card bg-success text-white">
+              <div class="card-body">
+                <div class="d-flex justify-content-between">
+                  <div>
+                    <h4 class="card-title"><%= stats.total.comments %></h4>
+                    <p class="card-text">전체 댓글</p>
+                  </div>
+                  <div class="align-self-center">
+                    <i class="fas fa-comments fa-2x"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card bg-warning text-white">
+              <div class="card-body">
+                <div class="d-flex justify-content-between">
+                  <div>
+                    <h4 class="card-title"><%= stats.total.reports %></h4>
+                    <p class="card-text">전체 신고</p>
+                  </div>
+                  <div class="align-self-center">
+                    <i class="fas fa-flag fa-2x"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card bg-danger text-white">
+              <div class="card-body">
+                <div class="d-flex justify-content-between">
+                  <div>
+                    <h4 class="card-title"><%= stats.total.pendingReports %></h4>
+                    <p class="card-text">대기중 신고</p>
+                  </div>
+                  <div class="align-self-center">
+                    <i class="fas fa-clock fa-2x"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 최근 7일 통계 -->
+        <div class="row mb-4">
+          <div class="col-md-12">
+            <div class="card">
+              <div class="card-header">
+                <h5><i class="fas fa-calendar-week"></i> 최근 7일 활동</h5>
+              </div>
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-md-4">
+                    <div class="text-center">
+                      <h3 class="text-primary"><%= stats.recent.posts %></h3>
+                      <p class="text-muted">새 게시글</p>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="text-center">
+                      <h3 class="text-success"><%= stats.recent.comments %></h3>
+                      <p class="text-muted">새 댓글</p>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="text-center">
+                      <h3 class="text-warning"><%= stats.recent.reports %></h3>
+                      <p class="text-muted">새 신고</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 게시판별 통계 -->
+        <div class="row mb-4">
+          <div class="col-md-8">
+            <div class="card">
+              <div class="card-header">
+                <h5><i class="fas fa-chart-pie"></i> 게시판별 통계</h5>
+              </div>
+              <div class="card-body">
+                <div class="table-responsive">
+                  <table class="table table-hover">
+                    <thead>
+                      <tr>
+                        <th>게시판</th>
+                        <th>게시글 수</th>
+                        <th>총 조회수</th>
+                        <th>총 추천수</th>
+                        <th>총 비추천수</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <% stats.boardStats.forEach(board => { %>
+                        <tr>
+                          <td>
+                            <strong><%= board.boardName %></strong>
+                            <br>
+                            <small class="text-muted">
+                              <% if (board.boardType === 'notice') { %>
+                                <span class="badge bg-danger">공지사항</span>
+                              <% } else if (board.boardType === 'free') { %>
+                                <span class="badge bg-primary">자유게시판</span>
+                              <% } else { %>
+                                <span class="badge bg-success">부서게시판</span>
+                              <% } %>
+                            </small>
+                          </td>
+                          <td><%= board.postCount %></td>
+                          <td><%= board.totalViews %></td>
+                          <td><span class="text-success"><%= board.totalLikes %></span></td>
+                          <td><span class="text-danger"><%= board.totalDislikes %></span></td>
+                        </tr>
+                      <% }); %>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="card">
+              <div class="card-header">
+                <h5><i class="fas fa-fire"></i> 인기 게시글</h5>
+              </div>
+              <div class="card-body">
+                <% if (stats.popularPosts.length > 0) { %>
+                  <% stats.popularPosts.slice(0, 5).forEach((post, index) => { %>
+                    <div class="mb-3">
+                      <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                          <h6 class="mb-1">
+                            <span class="badge bg-warning me-2"><%= index + 1 %></span>
+                            <%= post.title.length > 30 ? post.title.substring(0, 30) + '...' : post.title %>
+                          </h6>
+                          <small class="text-muted">
+                            <%= post.authorName %> | <%= post.boardId.name %>
+                          </small>
+                        </div>
+                        <div class="text-end">
+                          <small class="text-muted">
+                            <i class="fas fa-eye"></i> <%= post.views %>
+                          </small>
+                        </div>
+                      </div>
+                    </div>
+                  <% }); %>
+                <% } else { %>
+                  <p class="text-muted text-center">인기 게시글이 없습니다.</p>
+                <% } %>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 신고 통계 -->
+        <div class="row mb-4">
+          <div class="col-md-6">
+            <div class="card">
+              <div class="card-header">
+                <h5><i class="fas fa-chart-bar"></i> 신고 상태별 통계</h5>
+              </div>
+              <div class="card-body">
+                <canvas id="reportStatusChart" width="400" height="200"></canvas>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card">
+              <div class="card-header">
+                <h5><i class="fas fa-chart-pie"></i> 신고 사유별 통계</h5>
+              </div>
+              <div class="card-body">
+                <canvas id="reportReasonChart" width="400" height="200"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <%- include('../../footer') %>
+
+  <script>
+    // 신고 상태별 차트
+    const reportStatusCtx = document.getElementById('reportStatusChart').getContext('2d');
+    const reportStatusChart = new Chart(reportStatusCtx, {
+      type: 'bar',
+      data: {
+        labels: [
+          <% stats.reportStats.forEach(stat => { %>
+            '<%= stat._id === 'pending' ? '대기중' : 
+                stat._id === 'reviewed' ? '검토중' : 
+                stat._id === 'resolved' ? '해결됨' : 
+                stat._id === 'dismissed' ? '기각됨' : stat._id %>',
+          <% }); %>
+        ],
+        datasets: [{
+          label: '신고 수',
+          data: [
+            <% stats.reportStats.forEach(stat => { %>
+              <%= stat.count %>,
+            <% }); %>
+          ],
+          backgroundColor: [
+            'rgba(255, 206, 86, 0.8)',
+            'rgba(54, 162, 235, 0.8)',
+            'rgba(75, 192, 192, 0.8)',
+            'rgba(153, 102, 255, 0.8)'
+          ],
+          borderColor: [
+            'rgba(255, 206, 86, 1)',
+            'rgba(54, 162, 235, 1)',
+            'rgba(75, 192, 192, 1)',
+            'rgba(153, 102, 255, 1)'
+          ],
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: {
+            beginAtZero: true
+          }
+        }
+      }
+    });
+
+    // 신고 사유별 차트
+    const reportReasonCtx = document.getElementById('reportReasonChart').getContext('2d');
+    const reportReasonChart = new Chart(reportReasonCtx, {
+      type: 'doughnut',
+      data: {
+        labels: [
+          <% stats.reportReasonStats.forEach(stat => { %>
+            '<%= stat._id === 'spam' ? '스팸/광고' : 
+                stat._id === 'inappropriate' ? '부적절한 내용' : 
+                stat._id === 'harassment' ? '욕설/비방/괴롭힘' : 
+                stat._id === 'copyright' ? '저작권 침해' : 
+                stat._id === 'other' ? '기타' : stat._id %>',
+          <% }); %>
+        ],
+        datasets: [{
+          data: [
+            <% stats.reportReasonStats.forEach(stat => { %>
+              <%= stat.count %>,
+            <% }); %>
+          ],
+          backgroundColor: [
+            'rgba(255, 99, 132, 0.8)',
+            'rgba(54, 162, 235, 0.8)',
+            'rgba(255, 206, 86, 0.8)',
+            'rgba(75, 192, 192, 0.8)',
+            'rgba(153, 102, 255, 0.8)'
+          ],
+          borderColor: [
+            'rgba(255, 99, 132, 1)',
+            'rgba(54, 162, 235, 1)',
+            'rgba(255, 206, 86, 1)',
+            'rgba(75, 192, 192, 1)',
+            'rgba(153, 102, 255, 1)'
+          ],
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            position: 'bottom'
+          }
+        }
+      }
+    });
+  </script>
+</body>
+</html> 

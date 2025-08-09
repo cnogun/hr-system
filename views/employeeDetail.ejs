@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>직원 상세보기</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: #f8f9fa;
+      color: #212529;
+      line-height: 1.4;
+      font-size: 13px;
+      padding-bottom: 80px; /* 푸터 공간 확보 */
+      min-height: 100vh;
+      overflow-y: hidden;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 12px;
+    }
+
+    /* 기본정보 섹션 (맨 위) */
+    .basic-info-section {
+      background: white;
+      padding: 15px;
+      border-radius: 6px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      margin-bottom: 12px;
+    }
+
+    .basic-info-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #212529;
+      margin-bottom: 12px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #e9ecef;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+         .basic-info-grid {
+       display: grid;
+       grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+       gap: 20px;
+     }
+
+           .basic-info-item.email-item {
+        grid-column: span 2;
+      }
+
+
+
+    .basic-info-item {
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+      padding: 8px 0;
+      font-size: 12px;
+      gap: 8px;
+    }
+
+    .basic-info-label {
+      font-weight: 500;
+      color: #495057;
+      flex-shrink: 0;
+    }
+
+    .basic-info-value {
+      font-weight: 600;
+      color: #212529;
+      text-align: right;
+    }
+
+    /* 메인 레이아웃 (프로필 + 상세정보) */
+    .main-layout {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 12px;
+    }
+
+    /* 우측: 상세정보 + 추가 섹션들 */
+    .right-section {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* 좌측: 프로필 섹션 */
+    .profile-section {
+      background: white;
+      padding: 15px;
+      border-radius: 6px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      height: fit-content;
+    }
+
+    .profile-image-container {
+      text-align: center;
+      margin-bottom: 12px;
+    }
+
+         .profile-image {
+       width: 180px;
+       height: 180px;
+       border-radius: 50%;
+       border: 2px solid #e9ecef;
+       object-fit: cover;
+     }
+
+     .profile-placeholder {
+       width: 180px;
+       height: 180px;
+       border-radius: 50%;
+       background: #6c757d;
+       display: flex;
+       align-items: center;
+       justify-content: center;
+       color: white;
+       font-size: 60px;
+       margin: 0 auto;
+     }
+
+    .profile-info {
+      text-align: center;
+      margin-bottom: 12px;
+    }
+
+    .profile-name {
+      font-size: 16px;
+      font-weight: 600;
+      color: #212529;
+      margin-bottom: 2px;
+    }
+
+    .profile-empno {
+      font-size: 11px;
+      color: #6c757d;
+      margin-bottom: 10px;
+    }
+
+    .profile-details {
+      text-align: left;
+    }
+
+    .profile-detail-item {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 4px 0;
+      font-size: 12px;
+      gap: 12px;
+    }
+
+    .profile-detail-label {
+      font-weight: 500;
+      color: #495057;
+      flex-shrink: 0;
+    }
+
+    .profile-detail-value {
+      font-weight: 600;
+      color: #212529;
+      text-align: center;
+    }
+
+    .back-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: #007bff;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 4px;
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 11px;
+      transition: background-color 0.2s;
+      margin-top: 12px;
+      width: 100%;
+      justify-content: center;
+    }
+
+    .back-button:hover {
+      background: #0056b3;
+      color: white;
+      text-decoration: none;
+    }
+
+    /* 우측: 상세정보 섹션 */
+    .detail-section {
+      background: white;
+      padding: 15px;
+      border-radius: 6px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .detail-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #212529;
+      margin-bottom: 12px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #e9ecef;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+         .detail-grid {
+       display: grid;
+       grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+       gap: 6px;
+     }
+
+         .detail-item {
+       display: flex;
+       justify-content: space-between;
+       align-items: flex-start;
+       padding: 3px 0;
+       font-size: 12px;
+       gap: 8px;
+     }
+
+    .detail-label {
+      font-weight: 500;
+      color: #495057;
+      min-width: 70px;
+      flex-shrink: 0;
+    }
+
+    .detail-value {
+      font-weight: 600;
+      color: #212529;
+      text-align: left;
+      word-break: break-all;
+      flex: 1;
+    }
+
+         /* 긴 내용을 위한 특별한 스타일 */
+     .detail-item.long-content {
+       flex-direction: column;
+       align-items: flex-start;
+       gap: 2px;
+     }
+
+     .detail-item.long-content .detail-label {
+       min-width: auto;
+       margin-bottom: 1px;
+     }
+
+     .detail-item.long-content .detail-value {
+       text-align: left;
+       width: 100%;
+     }
+
+     /* 주소 항목을 위한 특별한 스타일 */
+     .detail-item.address-item {
+       grid-column: span 2;
+       flex-direction: row;
+       align-items: flex-start;
+     }
+
+     .detail-item.address-item .detail-value {
+       flex: 1;
+       word-break: break-all;
+     }
+
+     /* 급여 항목을 위한 특별한 스타일 */
+     .detail-item.salary-item {
+       grid-column: span 1;
+     }
+
+    .uniform-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .uniform-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px 6px;
+      background: #f8f9fa;
+      border-radius: 3px;
+      border-left: 2px solid #007bff;
+      font-size: 11px;
+    }
+
+    .uniform-label {
+      font-weight: 500;
+      color: #495057;
+    }
+
+    .uniform-value {
+      font-weight: 600;
+      color: #212529;
+    }
+
+                   .text-content {
+        background: #f8f9fa;
+        padding: 8px 12px;
+        border-radius: 3px;
+        border-left: 2px solid #007bff;
+        font-size: 11px;
+        line-height: 1.4;
+        white-space: normal;
+        margin-top: 2px;
+        min-height: calc(1.4em * 2);
+        max-height: calc(1.4em * 2);
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        -webkit-box-orient: vertical;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+      }
+
+    /* 푸터 스타일 개선 */
+    footer {
+      background: white;
+      border-top: 1px solid #e9ecef;
+      box-shadow: 0 -1px 3px rgba(0,0,0,0.1);
+    }
+
+    footer p {
+      color: #6c757d;
+      font-size: 0.8rem;
+      margin: 0;
+      padding: 8px 0;
+    }
+
+    @media (max-width: 768px) {
+      .main-layout {
+        grid-template-columns: 1fr;
+      }
+      
+      .basic-info-grid,
+      .detail-grid,
+      .uniform-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      body {
+        padding-bottom: 100px; /* 모바일에서 더 많은 공간 */
+      }
+    }
+  </style>
+</head>
+<body>
+  <%- include('header') %>
+  
+  <div class="container">
+    <!-- 기본정보 섹션 (맨 위) -->
+    <div class="basic-info-section">
+      <div class="basic-info-title">
+        <i class="fas fa-user"></i>
+        기본정보
+      </div>
+             <div class="basic-info-grid">
+                   <div class="basic-info-item">
+            <span class="basic-info-label">주민등록번호</span>
+            <span class="basic-info-value"><%= employee.residentNumber || '-' %></span>
+          </div>
+                   <div class="basic-info-item email-item">
+            <span class="basic-info-label">이메일</span>
+            <span class="basic-info-value"><%= employee.email || '-' %></span>
+          </div>
+         <div class="basic-info-item">
+           <span class="basic-info-label">휴대폰</span>
+           <span class="basic-info-value"><%= employee.mobile || '-' %></span>
+         </div>
+         <div class="basic-info-item">
+           <span class="basic-info-label">입사일</span>
+           <span class="basic-info-value"><%= employee.hireDate ? employee.hireDate.toISOString().slice(0,10) : '-' %></span>
+         </div>
+         <div class="basic-info-item">
+           <span class="basic-info-label">고용형태</span>
+           <span class="basic-info-value"><%= employee.employmentType || '-' %></span>
+         </div>
+         <div class="basic-info-item">
+           <span class="basic-info-label">소속</span>
+           <span class="basic-info-value"><%= employee.orgType || '-' %></span>
+         </div>
+       </div>
+    </div>
+
+    <!-- 메인 레이아웃 (프로필 + 상세정보) -->
+    <div class="main-layout">
+      <!-- 좌측: 프로필 섹션 -->
+      <div class="profile-section">
+        <div class="profile-image-container">
+          <% if (employee.profileImage) { %>
+            <img src="<%= employee.profileImage %>" alt="프로필 사진" class="profile-image">
+          <% } else { %>
+            <div class="profile-placeholder">
+              <i class="fas fa-user"></i>
+            </div>
+          <% } %>
+
+        </div>
+        
+        <div class="profile-info">
+          <div class="profile-name"><%= employee.name %></div>
+          <div class="profile-empno">(<%= employee.empNo || '사번 없음' %>)</div>
+        </div>
+        
+                          <div class="profile-details">
+            <div class="profile-detail-item">
+              <span class="profile-detail-label">부서</span>
+              <span class="profile-detail-value"><%= employee.department || '-' %></span>
+            </div>
+            <div class="profile-detail-item">
+              <span class="profile-detail-label">직급</span>
+              <span class="profile-detail-value"><%= employee.position || '-' %></span>
+            </div>
+            <div class="profile-detail-item">
+              <span class="profile-detail-label">상태</span>
+              <span class="profile-detail-value"><%= employee.status || '재직' %></span>
+            </div>
+          </div>
+
+                   <a href="/employees" class="back-button">
+            <i class="fas fa-arrow-left"></i>
+            직원 찾기
+          </a>
+       </div>
+
+             <!-- 우측: 상세정보 + 추가 섹션들 -->
+       <div class="right-section">
+         <!-- 상세정보 섹션 -->
+         <div class="detail-section">
+           <div class="detail-title">
+             <i class="fas fa-id-card"></i>
+             상세정보
+           </div>
+           <div class="detail-grid">
+             <div class="detail-item">
+               <span class="detail-label">생년월일</span>
+               <span class="detail-value"><%= employee.birth ? employee.birth.toISOString().slice(0,10) : '-' %></span>
+             </div>
+             <div class="detail-item">
+               <span class="detail-label">성별</span>
+               <span class="detail-value"><%= employee.gender || '-' %></span>
+             </div>
+             <div class="detail-item">
+               <span class="detail-label">국적</span>
+               <span class="detail-value"><%= employee.nationality || '-' %></span>
+             </div>
+                           <div class="detail-item address-item">
+                <span class="detail-label">주소</span>
+                <span class="detail-value"><%= employee.address || '-' %></span>
+              </div>
+             <div class="detail-item">
+               <span class="detail-label">집전화</span>
+               <span class="detail-value"><%= employee.phone || '-' %></span>
+             </div>
+             <div class="detail-item">
+               <span class="detail-label">비상연락처</span>
+               <span class="detail-value"><%= employee.emergencyContact || '-' %></span>
+             </div>
+             <div class="detail-item">
+               <span class="detail-label">학력</span>
+               <span class="detail-value"><%= employee.education || '-' %></span>
+             </div>
+             <div class="detail-item">
+               <span class="detail-label">신장</span>
+               <span class="detail-value"><%= employee.height ? employee.height + 'cm' : '-' %></span>
+             </div>
+             <div class="detail-item">
+               <span class="detail-label">체중</span>
+               <span class="detail-value"><%= employee.weight ? employee.weight + 'kg' : '-' %></span>
+             </div>
+             <div class="detail-item">
+               <span class="detail-label">혈액형</span>
+               <span class="detail-value"><%= employee.bloodType || '-' %></span>
+             </div>
+                           <div class="detail-item salary-item">
+                <span class="detail-label">급여은행</span>
+                <span class="detail-value"><%= employee.salaryBank || '-' %></span>
+              </div>
+              <div class="detail-item salary-item">
+                <span class="detail-label">급여계좌</span>
+                <span class="detail-value"><%= employee.salaryAccount || '-' %></span>
+              </div>
+            </div>
+
+            <!-- 병역정보 (맨 아래) -->
+            <div class="detail-grid" style="margin-top: 6px;">
+              <div class="detail-item">
+                <span class="detail-label">군별</span>
+                <span class="detail-value"><%= employee.militaryBranch || '-' %></span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">계급</span>
+                <span class="detail-value"><%= employee.militaryRank || '-' %></span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">군번</span>
+                <span class="detail-value"><%= employee.militaryNumber || '-' %></span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">복무기간</span>
+                <span class="detail-value"><%= employee.militaryServicePeriod || '-' %></span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">미필사유</span>
+                <span class="detail-value"><%= employee.militaryExemptionReason || '-' %></span>
+              </div>
+           </div>
+         </div>
+
+                   <!-- 경력사항 섹션 -->
+          <div class="detail-section">
+            <div class="detail-title">
+              <i class="fas fa-briefcase"></i>
+              경력사항
+            </div>
+            <div class="text-content">
+              <% if (employee.career && String(employee.career).trim() !== '') { %>
+                <%= employee.career %>
+              <% } else { %>
+                등록된 경력사항이 없습니다.
+              <% } %>
+            </div>
+          </div>
+
+                                       <!-- 특이사항 섹션 -->
+           <div class="detail-section">
+             <div class="detail-title">
+               <i class="fas fa-sticky-note"></i>
+               자격사항/특이사항
+             </div>
+            <div class="text-content">
+              <% if (employee.specialNotes && String(employee.specialNotes).trim() !== '') { %>
+                <%= employee.specialNotes %>
+              <% } else { %>
+                등록된 특이사항이 없습니다.
+              <% } %>
+            </div>
+          </div>
+
+         <!-- 유니폼 정보 섹션 -->
+         <div class="detail-section">
+           <div class="detail-title">
+             <i class="fas fa-tshirt"></i>
+             유니폼정보
+           </div>
+           <div class="uniform-grid">
+             <div class="uniform-item">
+               <span class="uniform-label">하복 상의</span>
+               <span class="uniform-value"><%= employee.uniformSummerTop || '-' %></span>
+             </div>
+             <div class="uniform-item">
+               <span class="uniform-label">동복 상의</span>
+               <span class="uniform-value"><%= employee.uniformWinterTop || '-' %></span>
+             </div>
+             <div class="uniform-item">
+               <span class="uniform-label">춘추복</span>
+               <span class="uniform-value"><%= employee.springAutumnUniform || '-' %></span>
+             </div>
+             <div class="uniform-item">
+               <span class="uniform-label">방한외투</span>
+               <span class="uniform-value"><%= employee.uniformWinterCoat || '-' %></span>
+             </div>
+             <div class="uniform-item">
+               <span class="uniform-label">우의</span>
+               <span class="uniform-value"><%= employee.raincoat || '-' %></span>
+             </div>
+             <div class="uniform-item">
+               <span class="uniform-label">하복 하의</span>
+               <span class="uniform-value"><%= employee.uniformSummerBottom || '-' %></span>
+             </div>
+             <div class="uniform-item">
+               <span class="uniform-label">동복 하의</span>
+               <span class="uniform-value"><%= employee.uniformWinterBottom || '-' %></span>
+             </div>
+             <div class="uniform-item">
+               <span class="uniform-label">방한하의</span>
+               <span class="uniform-value"><%= employee.uniformWinterPants || '-' %></span>
+             </div>
+             <div class="uniform-item">
+               <span class="uniform-label">모자</span>
+               <span class="uniform-value"><%= employee.cap || '-' %></span>
+             </div>
+             <div class="uniform-item">
+               <span class="uniform-label">신발(안전화)</span>
+               <span class="uniform-value"><%= employee.safetyShoes || '-' %></span>
+             </div>
+             <div class="uniform-item">
+               <span class="uniform-label">장화</span>
+               <span class="uniform-value"><%= employee.rainBoots || '-' %></span>
+             </div>
+             <div class="uniform-item">
+               <span class="uniform-label">동점퍼</span>
+               <span class="uniform-value"><%= employee.winterJacket && !employee.doubleJacket ? employee.winterJacket : '-' %></span>
+             </div>
+             <div class="uniform-item">
+               <span class="uniform-label">겹점퍼</span>
+               <span class="uniform-value"><%= employee.doubleJacket && !employee.winterJacket ? employee.doubleJacket : '-' %></span>
+             </div>
+           </div>
+         </div>
+       </div>
+     </div>
+  </div>
+  
+  <%- include('footer') %>
+</body>
+</html> 

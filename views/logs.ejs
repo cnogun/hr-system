@@ -1,0 +1,44 @@
+<%- include('header') %>
+<div class="container py-5">
+  <div class="row mb-4">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+      <h2 class="fw-bold mb-0">활동 로그</h2>
+      <a href="/auth/logs/excel" class="btn btn-success">엑셀 출력</a>
+    </div>
+  </div>
+  <div class="card shadow-sm">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>일시</th>
+              <th>사용자</th>
+              <th>이메일</th>
+              <th>권한</th>
+              <th>액션</th>
+              <th>상세</th>
+              <th>IP</th>
+              <th>UserAgent</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% logs.forEach(function(log) { %>
+              <tr>
+                <td><%= log.createdAt.toISOString().replace('T',' ').slice(0,19) %></td>
+                <td><%= log.userId?.username || '-' %></td>
+                <td><%= log.userId?.email || '-' %></td>
+                <td><%= log.userId?.role || '-' %></td>
+                <td><%= log.action %></td>
+                <td><%= log.detail %></td>
+                <td><%= log.ip %></td>
+                <td class="text-truncate" style="max-width:180px"><%= log.userAgent %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+<%- include('footer') %> 

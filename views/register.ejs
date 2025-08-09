@@ -1,0 +1,165 @@
+<!--
+  파일명: register.ejs
+  목적: 회원가입 페이지
+  기능:
+  - 사용자 정보 입력 (이름, 이메일, 비밀번호)
+  - 부서 및 직급 선택
+  - 비밀번호 확인
+  - 데이터 유효성 검사
+  - 로그인 페이지 연결
+  - 반응형 폼 디자인
+-->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>회원가입</title>
+  <!-- Bootstrap CSS CDN -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    body {
+      background: linear-gradient(135deg, #f8fafc 0%, #e2eafc 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .register-card {
+      max-width: 400px;
+      width: 100%;
+      margin: auto;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+      border-radius: 16px;
+      padding: 2.5rem 2rem 2rem 2rem;
+      background: #fff;
+    }
+    .register-title {
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+      text-align: center;
+      color: #2d3a4b;
+    }
+    .form-label {
+      font-weight: 500;
+    }
+    .btn-primary {
+      width: 100%;
+      font-weight: 600;
+      letter-spacing: 1px;
+    }
+    .register-links {
+      margin-top: 1.2rem;
+      text-align: center;
+    }
+    .register-links a {
+      color: #4f8cff;
+      text-decoration: none;
+      margin: 0 0.5rem;
+    }
+    .register-links a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="register-card">
+    <h2 class="register-title">회원가입</h2>
+    <form action="/auth/register" method="POST">
+      <div class="mb-3">
+        <label for="username" class="form-label">아이디</label>
+        <input type="text" class="form-control" id="username" name="username" required autofocus>
+      </div>
+      <div class="mb-3">
+        <label for="email" class="form-label">이메일</label>
+        <input type="email" class="form-control" id="email" name="email" required>
+      </div>
+      <div class="mb-3">
+        <label for="password" class="form-label">비밀번호</label>
+        <input type="password" class="form-control" id="password" name="password" required>
+        <div class="form-text small mt-1">
+          <div id="password-requirements" class="text-muted">
+            <div class="requirement" id="length"><i class="fas fa-circle text-muted"></i> 6자리 이상</div>
+            <div class="requirement" id="uppercase"><i class="fas fa-circle text-muted"></i> 대문자 포함</div>
+            <div class="requirement" id="lowercase"><i class="fas fa-circle text-muted"></i> 소문자 포함</div>
+            <div class="requirement" id="number"><i class="fas fa-circle text-muted"></i> 숫자 포함</div>
+            <div class="requirement" id="special"><i class="fas fa-circle text-muted"></i> 특수문자 포함</div>
+          </div>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary">가입</button>
+    </form>
+    <div class="register-links">
+      <a href="/auth/login">로그인</a>
+    </div>
+  </div>
+  <!-- Bootstrap JS (Optional) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const passwordInput = document.getElementById('password');
+      const form = document.querySelector('form');
+      
+      // 비밀번호 요구사항 검증 함수
+      function validatePassword(password) {
+        const requirements = {
+          length: password.length >= 6,
+          uppercase: /[A-Z]/.test(password),
+          lowercase: /[a-z]/.test(password),
+          number: /[0-9]/.test(password),
+          special: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)
+        };
+        
+        return requirements;
+      }
+      
+      // 요구사항 표시 업데이트 함수
+      function updateRequirements(requirements) {
+        Object.keys(requirements).forEach(req => {
+          const element = document.getElementById(req);
+          const icon = element.querySelector('i');
+          
+          if (requirements[req]) {
+            element.classList.remove('text-muted');
+            element.classList.add('text-success');
+            icon.classList.remove('fa-circle', 'text-muted');
+            icon.classList.add('fa-check-circle', 'text-success');
+          } else {
+            element.classList.remove('text-success');
+            element.classList.add('text-muted');
+            icon.classList.remove('fa-check-circle', 'text-success');
+            icon.classList.add('fa-circle', 'text-muted');
+          }
+        });
+      }
+      
+      // 비밀번호 입력 이벤트
+      passwordInput.addEventListener('input', function() {
+        const password = this.value;
+        const requirements = validatePassword(password);
+        updateRequirements(requirements);
+      });
+      
+      // 폼 제출 검증
+      form.addEventListener('submit', function(e) {
+        const password = passwordInput.value;
+        const requirements = validatePassword(password);
+        
+        // 모든 요구사항이 충족되지 않으면 제출 중단
+        if (!Object.values(requirements).every(req => req)) {
+          e.preventDefault();
+          alert('비밀번호가 모든 요구사항을 충족하지 않습니다.\n\n' +
+                '• 6자리 이상\n' +
+                '• 대문자 포함\n' +
+                '• 소문자 포함\n' +
+                '• 숫자 포함\n' +
+                '• 특수문자 포함');
+          passwordInput.focus();
+        }
+      });
+    });
+  </script>
+</body>
+</html> 

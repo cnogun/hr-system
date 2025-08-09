@@ -1,0 +1,287 @@
+<!--
+  파일명: boards/admin/reports.ejs
+  목적: 신고 관리 페이지 (관리자용)
+  기능:
+  - 신고 목록 표시 및 페이징
+  - 신고 상태별 필터링
+  - 신고 처리 기능
+  - 신고 상세 정보 표시
+  - 관리자 메모 기능
+  - 반응형 테이블 디자인
+-->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>신고 관리 - 관리자</title>
+</head>
+<body>
+  <%- include('../../header') %>
+  
+  <div class="container mt-4" style="min-height: calc(100vh - 200px);">
+    <div class="row">
+      <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <h2><i class="fas fa-flag"></i> 신고 관리</h2>
+          <div>
+            <a href="/boards" class="btn btn-secondary btn-sm">
+              <i class="fas fa-arrow-left"></i> 게시판 목록
+            </a>
+            <a href="/boards/admin/dashboard" class="btn btn-info btn-sm">
+              <i class="fas fa-chart-bar"></i> 통계 대시보드
+            </a>
+          </div>
+        </div>
+
+        <!-- 필터 -->
+        <div class="card mb-4">
+          <div class="card-body">
+            <form method="GET" class="row g-3">
+              <div class="col-md-3">
+                <select name="status" class="form-select">
+                  <option value="">모든 상태</option>
+                  <option value="pending" <%= status === 'pending' ? 'selected' : '' %>>대기중</option>
+                  <option value="reviewed" <%= status === 'reviewed' ? 'selected' : '' %>>검토중</option>
+                  <option value="resolved" <%= status === 'resolved' ? 'selected' : '' %>>해결됨</option>
+                  <option value="dismissed" <%= status === 'dismissed' ? 'selected' : '' %>>기각됨</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <select name="type" class="form-select">
+                  <option value="">모든 타입</option>
+                  <option value="post" <%= type === 'post' ? 'selected' : '' %>>게시글</option>
+                  <option value="comment" <%= type === 'comment' ? 'selected' : '' %>>댓글</option>
+                </select>
+              </div>
+              <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">
+                  <i class="fas fa-filter"></i> 필터
+                </button>
+              </div>
+              <div class="col-md-2">
+                <a href="/boards/admin/reports" class="btn btn-outline-secondary w-100">
+                  <i class="fas fa-refresh"></i> 초기화
+                </a>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- 신고 목록 -->
+        <div class="card" style="min-height: 400px;">
+          <div class="card-header">
+            <div class="row align-items-center">
+              <div class="col-md-6">
+                <strong>총 <%= reports.length %>개의 신고</strong>
+              </div>
+              <div class="col-md-6 text-end">
+                <small class="text-muted">
+                  페이지 <%= currentPage %> / <%= totalPages %>
+                </small>
+              </div>
+            </div>
+          </div>
+          <div class="card-body p-0" style="max-height: 500px; overflow-y: auto;">
+            <div class="table-responsive">
+              <table class="table table-hover mb-0" style="font-size: 0.97em;">
+                <thead class="table-light">
+                  <tr>
+                    <th style="padding: 0.6rem 0.5rem;">신고자</th>
+                    <th style="padding: 0.6rem 0.5rem;">대상</th>
+                    <th style="padding: 0.6rem 0.5rem;">사유</th>
+                    <th style="padding: 0.6rem 0.5rem;">상태</th>
+                    <th style="padding: 0.6rem 0.5rem;">신고일</th>
+                    <th style="padding: 0.6rem 0.5rem;">처리</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% reports.forEach(report => { %>
+                    <tr>
+                      <td style="padding: 0.6rem 0.5rem;">
+                        <strong><%= report.reporterName %></strong>
+                        <br>
+                        <small class="text-muted"><%= report.reporter.username %></small>
+                      </td>
+                      <td style="padding: 0.6rem 0.5rem;">
+                        <span class="badge <%= report.targetType === 'post' ? 'bg-primary' : 'bg-info' %>">
+                          <%= report.targetType === 'post' ? '게시글' : '댓글' %>
+                        </span>
+                        <br>
+                        <small class="text-muted">ID: <%= report.targetId %></small>
+                      </td>
+                      <td style="padding: 0.6rem 0.5rem;">
+                        <% 
+                          const reasonLabels = {
+                            'spam': '스팸/광고',
+                            'inappropriate': '부적절한 내용',
+                            'harassment': '욕설/비방/괴롭힘',
+                            'copyright': '저작권 침해',
+                            'other': '기타'
+                          };
+                        %>
+                        <span class="badge bg-warning">
+                          <%= reasonLabels[report.reason] || report.reason %>
+                        </span>
+                        <% if (report.description) { %>
+                          <br>
+                          <small class="text-muted"><%= report.description.substring(0, 50) %><%= report.description.length > 50 ? '...' : '' %></small>
+                        <% } %>
+                      </td>
+                      <td style="padding: 0.6rem 0.5rem;">
+                        <% 
+                          const statusLabels = {
+                            'pending': '대기중',
+                            'reviewed': '검토중',
+                            'resolved': '해결됨',
+                            'dismissed': '기각됨'
+                          };
+                          const statusColors = {
+                            'pending': 'bg-warning',
+                            'reviewed': 'bg-info',
+                            'resolved': 'bg-success',
+                            'dismissed': 'bg-secondary'
+                          };
+                        %>
+                        <span class="badge <%= statusColors[report.status] %>">
+                          <%= statusLabels[report.status] %>
+                        </span>
+                      </td>
+                      <td style="padding: 0.6rem 0.5rem;">
+                        <%= new Date(report.createdAt).toLocaleDateString() %>
+                        <br>
+                        <small class="text-muted"><%= new Date(report.createdAt).toLocaleTimeString() %></small>
+                      </td>
+                      <td style="padding: 0.6rem 0.5rem;">
+                        <% if (report.status === 'pending') { %>
+                          <div class="btn-group btn-group-sm" role="group">
+                            <button class="btn btn-outline-info btn-sm" onclick="processReport('<%= report._id %>', 'reviewed')">
+                              검토
+                            </button>
+                            <button class="btn btn-outline-success btn-sm" onclick="processReport('<%= report._id %>', 'resolved')">
+                              해결
+                            </button>
+                            <button class="btn btn-outline-secondary btn-sm" onclick="processReport('<%= report._id %>', 'dismissed')">
+                              기각
+                            </button>
+                          </div>
+                        <% } else { %>
+                          <small class="text-muted">
+                            <%= report.processedBy ? report.processedBy.username : '' %>
+                            <br>
+                            <%= report.processedAt ? new Date(report.processedAt).toLocaleDateString() : '' %>
+                          </small>
+                        <% } %>
+                      </td>
+                    </tr>
+                  <% }); %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- 페이징 -->
+        <% if (totalPages > 1) { %>
+          <nav aria-label="신고 목록 페이징" class="mt-4 mb-4">
+            <ul class="pagination justify-content-center">
+              <% if (currentPage > 1) { %>
+                <li class="page-item">
+                  <a class="page-link" href="?page=1&status=<%= status %>&type=<%= type %>">처음</a>
+                </li>
+                <li class="page-item">
+                  <a class="page-link" href="?page=<%= currentPage - 1 %>&status=<%= status %>&type=<%= type %>">이전</a>
+                </li>
+              <% } %>
+              
+              <% for (let i = Math.max(1, currentPage - 2); i <= Math.min(totalPages, currentPage + 2); i++) { %>
+                <li class="page-item <%= i === currentPage ? 'active' : '' %>">
+                  <a class="page-link" href="?page=<%= i %>&status=<%= status %>&type=<%= type %>"><%= i %></a>
+                </li>
+              <% } %>
+              
+              <% if (currentPage < totalPages) { %>
+                <li class="page-item">
+                  <a class="page-link" href="?page=<%= currentPage + 1 %>&status=<%= status %>&type=<%= type %>">다음</a>
+                </li>
+                <li class="page-item">
+                  <a class="page-link" href="?page=<%= totalPages %>&status=<%= status %>&type=<%= type %>">마지막</a>
+                </li>
+              <% } %>
+            </ul>
+          </nav>
+        <% } %>
+      </div>
+    </div>
+  </div>
+  
+  <!-- 하단 여백 -->
+  <div style="height: 50px;"></div>
+
+  <!-- 신고 처리 모달 -->
+  <div class="modal fade" id="processReportModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">신고 처리</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="processReportForm">
+            <input type="hidden" id="reportId" name="reportId">
+            <input type="hidden" id="action" name="action">
+            <div class="mb-3">
+              <label class="form-label">처리 사유</label>
+              <textarea class="form-control" name="adminNote" rows="3" placeholder="처리 사유를 입력하세요..."></textarea>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+          <button type="button" class="btn btn-primary" onclick="submitProcessReport()">처리하기</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <%- include('../../footer') %>
+
+  <script>
+    function processReport(reportId, action) {
+      document.getElementById('reportId').value = reportId;
+      document.getElementById('action').value = action;
+      
+      const modal = new bootstrap.Modal(document.getElementById('processReportModal'));
+      modal.show();
+    }
+
+    function submitProcessReport() {
+      const form = document.getElementById('processReportForm');
+      const formData = new FormData(form);
+      
+      const reportId = document.getElementById('reportId').value;
+      const action = document.getElementById('action').value;
+      
+      fetch(`/boards/admin/reports/${reportId}/process`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams(formData)
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          alert('신고가 처리되었습니다.');
+          location.reload();
+        } else {
+          alert(data.error || '처리 중 오류가 발생했습니다.');
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('처리 중 오류가 발생했습니다.');
+      });
+    }
+  </script>
+</body>
+</html> 

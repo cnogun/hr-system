@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>기존 직원 선택</title>
+</head>
+<body>
+  <%- include('header') %>
+  <div class="container" style="max-width:600px; font-size:0.95em; margin-top:5rem; margin-bottom:5rem;">
+    <h2 class="fw-bold text-center" style="margin-bottom:3rem;">기존 직원 정보 수정</h2>
+    <div class="row justify-content-center">
+      <div class="col-md-8">
+        <div class="card shadow-sm">
+          <div class="card-header bg-primary text-white py-3 fw-semibold text-center">
+            직원 정보 수정
+          </div>
+          <div class="card-body p-4">
+            <div class="d-flex flex-column align-items-center">
+              <label for="employeeSelect" class="form-label mb-3" style="font-size:1.1rem;">수정할 직원을 선택하세요:</label>
+              <select id="employeeSelect" class="form-select form-select-lg mb-4" onchange="goEditEmployee(this.value)" style="width:100%; max-width:400px;">
+                <option value="">직원 선택</option>
+                <% if (typeof employees !== 'undefined') { employees.forEach(function(emp) { %>
+                  <option value="<%= emp._id %>"><%= emp.name %> (<%= emp.empNo || '-' %>, <%= emp.department || '' %>)</option>
+                <% }); } %>
+              </select>
+              <a href="/employees" class="btn btn-secondary">목록으로</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <%- include('footer') %>
+  <style>
+    footer {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      width: 100%;
+      z-index: 100;
+    }
+  </style>
+  <script>
+    function goEditEmployee(id) {
+      if (id) {
+        window.location.href = '/employees/' + id + '/edit';
+      }
+    }
+  </script>
+</body>
+</html> 

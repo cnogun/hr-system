@@ -1,0 +1,36 @@
+<%- include('header') %>
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <div class="card shadow-lg">
+        <div class="card-body">
+          <h3 class="fw-bold mb-4 text-center">로그인 정보</h3>
+          <ul class="list-group list-group-flush mb-3">
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <span class="fw-semibold">이름</span>
+              <span><%= user.name || '-' %></span>
+            </li>
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <span class="fw-semibold">이메일</span>
+              <span><%= user.email || '-' %></span>
+            </li>
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <span class="fw-semibold">권한</span>
+              <span><%= user.role || '-' %></span>
+            </li>
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <span class="fw-semibold">아이디</span>
+              <span><%= user._id %></span>
+            </li>
+          </ul>
+          <div class="text-center">
+            <a href="/dashboard" class="btn btn-primary">대시보드로</a>
+            <a href="/employees" class="btn btn-secondary ms-2">직원 목록</a>
+            <a href="/auth/info/excel" class="btn btn-success ms-2">엑셀 다운로드</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<%- include('footer') %> 
