@@ -88,3 +88,4 @@ uploads/
 downloads
 *.exe
 
+.env.backup 
