@@ -5,10 +5,15 @@ services:
     plan: free
     autoDeploy: true
     buildCommand: npm install
-    startCommand: node app.js
+    startCommand: npm start
     envVars:
       - key: MONGODB_URI
         sync: false
       - key: SESSION_SECRET
         generateValue: true
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+    healthCheckPath: /healthz
 
