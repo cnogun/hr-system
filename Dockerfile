@@ -25,11 +25,7 @@ COPY . .
 RUN mkdir -p uploads
 
 # 포트 설정
-EXPOSE 8080
-
-# 환경변수 설정
-ENV NODE_ENV=production
-ENV PORT=8080
+EXPOSE 10000
 
 # 애플리케이션 실행
 CMD ["npm", "start"] 
