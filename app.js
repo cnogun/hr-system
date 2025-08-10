@@ -25,7 +25,7 @@ const app = express();
 // 환경변수 설정
 const PORT = process.env.PORT || 3000;
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/hr_system';
-const SESSION_SECRET = process.env.SESSION_SECRET || 'secret-key';
+const SESSION_SECRET = process.env.SESSION_SECRET || 'hr_system_session_secret_key_2025';
 
 // MongoDB 연결
 mongoose.connect(MONGODB_URI, {
