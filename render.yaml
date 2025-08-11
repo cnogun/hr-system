@@ -5,7 +5,7 @@ services:
     plan: free
     autoDeploy: true
     buildCommand: npm install
-    startCommand: npm start
+    startCommand: node app.js
     envVars:
       - key: MONGODB_URI
         sync: false
