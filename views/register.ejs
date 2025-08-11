@@ -27,7 +27,7 @@
       justify-content: center;
     }
     .register-card {
-      max-width: 400px;
+      max-width: 450px;
       width: 100%;
       margin: auto;
       box-shadow: 0 4px 24px rgba(0,0,0,0.08);
@@ -61,12 +61,48 @@
     .register-links a:hover {
       text-decoration: underline;
     }
+    .password-field {
+      position: relative;
+    }
+    .password-toggle {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: #6c757d;
+      cursor: pointer;
+      padding: 5px;
+    }
+    .password-toggle:hover {
+      color: #495057;
+    }
+    .password-match {
+      margin-top: 0.5rem;
+      font-size: 0.875rem;
+    }
+    .password-match.match {
+      color: #198754;
+    }
+    .password-match.no-match {
+      color: #dc3545;
+    }
+    .password-match.pending {
+      color: #6c757d;
+    }
+    .form-text {
+      margin-top: 0.5rem;
+    }
+    .requirement {
+      margin-bottom: 0.25rem;
+    }
   </style>
 </head>
 <body>
   <div class="register-card">
     <h2 class="register-title">회원가입</h2>
-    <form action="/auth/register" method="POST">
+    <form action="/auth/register" method="POST" id="registerForm">
       <div class="mb-3">
         <label for="username" class="form-label">아이디</label>
         <input type="text" class="form-control" id="username" name="username" required autofocus>
@@ -77,8 +113,13 @@
       </div>
       <div class="mb-3">
         <label for="password" class="form-label">비밀번호</label>
-        <input type="password" class="form-control" id="password" name="password" required>
-        <div class="form-text small mt-1">
+        <div class="password-field">
+          <input type="password" class="form-control" id="password" name="password" required>
+          <button type="button" class="password-toggle" onclick="togglePassword('password')">
+            <i class="fas fa-eye"></i>
+          </button>
+        </div>
+        <div class="form-text small">
           <div id="password-requirements" class="text-muted">
             <div class="requirement" id="length"><i class="fas fa-circle text-muted"></i> 6자리 이상</div>
             <div class="requirement" id="uppercase"><i class="fas fa-circle text-muted"></i> 대문자 포함</div>
@@ -88,7 +129,19 @@
           </div>
         </div>
       </div>
-      <button type="submit" class="btn btn-primary">가입</button>
+      <div class="mb-3">
+        <label for="confirmPassword" class="form-label">비밀번호 확인</label>
+        <div class="password-field">
+          <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" required>
+          <button type="button" class="password-toggle" onclick="togglePassword('confirmPassword')">
+            <i class="fas fa-eye"></i>
+          </button>
+        </div>
+        <div class="password-match pending" id="passwordMatch">
+          <i class="fas fa-circle"></i> 비밀번호를 입력해주세요
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary" id="submitBtn" disabled>가입</button>
     </form>
     <div class="register-links">
       <a href="/auth/login">로그인</a>
@@ -100,7 +153,27 @@
   <script>
     document.addEventListener('DOMContentLoaded', function() {
       const passwordInput = document.getElementById('password');
-      const form = document.querySelector('form');
+      const confirmPasswordInput = document.getElementById('confirmPassword');
+      const form = document.getElementById('registerForm');
+      const submitBtn = document.getElementById('submitBtn');
+      const passwordMatch = document.getElementById('passwordMatch');
+      
+      // 비밀번호 보기/숨기기 토글 함수
+      window.togglePassword = function(fieldId) {
+        const field = document.getElementById(fieldId);
+        const toggle = field.nextElementSibling;
+        const icon = toggle.querySelector('i');
+        
+        if (field.type === 'password') {
+          field.type = 'text';
+          icon.classList.remove('fa-eye');
+          icon.classList.add('fa-eye-slash');
+        } else {
+          field.type = 'password';
+          icon.classList.remove('fa-eye-slash');
+          icon.classList.add('fa-eye');
+        }
+      };
       
       // 비밀번호 요구사항 검증 함수
       function validatePassword(password) {
@@ -135,16 +208,64 @@
         });
       }
       
+      // 비밀번호 일치 확인 함수
+      function checkPasswordMatch() {
+        const password = passwordInput.value;
+        const confirmPassword = confirmPasswordInput.value;
+        
+        if (!password) {
+          passwordMatch.className = 'password-match pending';
+          passwordMatch.innerHTML = '<i class="fas fa-circle"></i> 비밀번호를 입력해주세요';
+          return false;
+        }
+        
+        if (!confirmPassword) {
+          passwordMatch.className = 'password-match pending';
+          passwordMatch.innerHTML = '<i class="fas fa-circle"></i> 비밀번호 확인을 입력해주세요';
+          return false;
+        }
+        
+        if (password === confirmPassword) {
+          passwordMatch.className = 'password-match match';
+          passwordMatch.innerHTML = '<i class="fas fa-check-circle"></i> 비밀번호가 일치합니다';
+          return true;
+        } else {
+          passwordMatch.className = 'password-match no-match';
+          passwordMatch.innerHTML = '<i class="fas fa-times-circle"></i> 비밀번호가 일치하지 않습니다';
+          return false;
+        }
+      }
+      
+      // 폼 제출 가능 여부 확인 함수
+      function updateSubmitButton() {
+        const password = passwordInput.value;
+        const confirmPassword = confirmPasswordInput.value;
+        const requirements = validatePassword(password);
+        const allRequirementsMet = Object.values(requirements).every(req => req);
+        const passwordsMatch = password === confirmPassword && password !== '';
+        
+        submitBtn.disabled = !(allRequirementsMet && passwordsMatch);
+      }
+      
       // 비밀번호 입력 이벤트
       passwordInput.addEventListener('input', function() {
         const password = this.value;
         const requirements = validatePassword(password);
         updateRequirements(requirements);
+        checkPasswordMatch();
+        updateSubmitButton();
+      });
+      
+      // 비밀번호 확인 입력 이벤트
+      confirmPasswordInput.addEventListener('input', function() {
+        checkPasswordMatch();
+        updateSubmitButton();
       });
       
       // 폼 제출 검증
       form.addEventListener('submit', function(e) {
         const password = passwordInput.value;
+        const confirmPassword = confirmPasswordInput.value;
         const requirements = validatePassword(password);
         
         // 모든 요구사항이 충족되지 않으면 제출 중단
@@ -157,6 +278,15 @@
                 '• 숫자 포함\n' +
                 '• 특수문자 포함');
           passwordInput.focus();
+          return;
+        }
+        
+        // 비밀번호가 일치하지 않으면 제출 중단
+        if (password !== confirmPassword) {
+          e.preventDefault();
+          alert('비밀번호가 일치하지 않습니다.');
+          confirmPasswordInput.focus();
+          return;
         }
       });
     });
