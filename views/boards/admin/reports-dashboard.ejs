@@ -1,0 +1,321 @@
+<!--
+  파일명: boards/admin/reports-dashboard.ejs
+  목적: 신고 전용 통계 대시보드
+  기능:
+  - 신고 상태별 통계
+  - 신고 사유별 통계
+  - 최근 신고 현황
+  - 컴팩트한 디자인
+-->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>신고 통계 - 관리자</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    .compact-card {
+      margin-bottom: 0.75rem !important;
+    }
+    .compact-card .card-body {
+      padding: 0.75rem !important;
+    }
+    .compact-card .card-header {
+      padding: 0.75rem !important;
+    }
+    .stats-number {
+      font-size: 1.5rem !important;
+      font-weight: bold;
+    }
+    .stats-label {
+      font-size: 0.875rem !important;
+    }
+    .compact-table {
+      font-size: 0.9rem !important;
+    }
+    .compact-table th,
+    .compact-table td {
+      padding: 0.375rem !important;
+    }
+    .compact-badge {
+      font-size: 0.8rem !important;
+    }
+  </style>
+</head>
+<body>
+  <%- include('../../header') %>
+  
+  <div class="container mt-3">
+    <div class="row">
+      <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h3 class="mb-0"><i class="fas fa-chart-bar"></i> 신고 통계</h3>
+          <div>
+                         <a href="/boards/admin/reports" class="btn btn-primary btn-sm">
+               <i class="fas fa-flag"></i> 게시판 신고 관리
+             </a>
+            <a href="/boards" class="btn btn-secondary btn-sm">
+              <i class="fas fa-arrow-left"></i> 게시판 목록
+            </a>
+          </div>
+        </div>
+
+        <!-- 신고 상태별 통계 카드 -->
+        <div class="row mb-3">
+          <div class="col-md-2">
+            <div class="card bg-primary text-white compact-card">
+              <div class="card-body text-center">
+                <div class="stats-number"><%= stats.total %></div>
+                <div class="stats-label">전체 신고</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-2">
+            <div class="card bg-warning text-white compact-card">
+              <div class="card-body text-center">
+                <div class="stats-number"><%= stats.pending %></div>
+                <div class="stats-label">대기중</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-2">
+            <div class="card bg-info text-white compact-card">
+              <div class="card-body text-center">
+                <div class="stats-number"><%= stats.reviewed %></div>
+                <div class="stats-label">검토중</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-2">
+            <div class="card bg-success text-white compact-card">
+              <div class="card-body text-center">
+                <div class="stats-number"><%= stats.resolved %></div>
+                <div class="stats-label">해결됨</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-2">
+            <div class="card bg-secondary text-white compact-card">
+              <div class="card-body text-center">
+                <div class="stats-number"><%= stats.dismissed %></div>
+                <div class="stats-label">기각됨</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-2">
+            <div class="card bg-danger text-white compact-card">
+              <div class="card-body text-center">
+                <div class="stats-number"><%= stats.recent %></div>
+                <div class="stats-label">최근 7일</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 차트와 최근 신고 -->
+        <div class="row">
+          <!-- 신고 상태별 차트 -->
+          <div class="col-md-6 mb-3">
+            <div class="card compact-card">
+              <div class="card-header">
+                <h6 class="mb-0" style="font-size: 0.85em;"><i class="fas fa-chart-pie"></i> 신고 상태별 분포</h6>
+              </div>
+              <div class="card-body">
+                <canvas id="statusChart" height="150"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- 신고 사유별 차트 -->
+          <div class="col-md-6 mb-3">
+            <div class="card compact-card">
+              <div class="card-header">
+                <h6 class="mb-0" style="font-size: 0.85em;"><i class="fas fa-chart-bar"></i> 신고 사유별 통계</h6>
+              </div>
+              <div class="card-body">
+                <canvas id="reasonChart" height="150"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 최근 신고 목록 -->
+        <div class="row">
+          <div class="col-12">
+            <div class="card compact-card">
+              <div class="card-header">
+                <h6 class="mb-0" style="font-size: 0.85em;"><i class="fas fa-clock"></i> 최근 신고 현황</h6>
+              </div>
+              <div class="card-body p-0">
+                <% if (recentReportList && recentReportList.length > 0) { %>
+                  <div class="table-responsive">
+                    <table class="table table-hover mb-0 compact-table">
+                      <thead class="table-light">
+                        <tr>
+                          <th>신고자</th>
+                          <th>사유</th>
+                          <th>상태</th>
+                          <th>신고일</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <% recentReportList.forEach(report => { %>
+                          <tr>
+                            <td>
+                              <%= report.reporter && report.reporter.name ? report.reporter.name : '알 수 없음' %>
+                            </td>
+                            <td>
+                              <% if (report.reason === 'spam') { %>
+                                <span class="badge bg-warning compact-badge">스팸/광고</span>
+                              <% } else if (report.reason === 'inappropriate') { %>
+                                <span class="badge bg-danger compact-badge">부적절한 내용</span>
+                              <% } else if (report.reason === 'harassment') { %>
+                                <span class="badge bg-danger compact-badge">욕설/비방</span>
+                              <% } else if (report.reason === 'copyright') { %>
+                                <span class="badge bg-info compact-badge">저작권 침해</span>
+                              <% } else { %>
+                                <span class="badge bg-secondary compact-badge"><%= report.reason %></span>
+                              <% } %>
+                            </td>
+                            <td>
+                              <% if (report.status === 'pending') { %>
+                                <span class="badge bg-warning compact-badge">대기중</span>
+                              <% } else if (report.status === 'reviewed') { %>
+                                <span class="badge bg-info compact-badge">검토중</span>
+                              <% } else if (report.status === 'resolved') { %>
+                                <span class="badge bg-success compact-badge">해결됨</span>
+                              <% } else if (report.status === 'dismissed') { %>
+                                <span class="badge bg-secondary compact-badge">기각됨</span>
+                              <% } %>
+                            </td>
+                            <td>
+                              <small class="text-muted">
+                                <%= new Date(report.createdAt).toLocaleDateString('ko-KR') %>
+                              </small>
+                            </td>
+                          </tr>
+                        <% }); %>
+                      </tbody>
+                    </table>
+                  </div>
+                <% } else { %>
+                  <p class="text-muted text-center py-2" style="font-size: 0.85em;">최근 신고가 없습니다.</p>
+                <% } %>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <%- include('../../footer') %>
+
+  <script>
+    // 차트 초기화 함수
+    function initializeCharts() {
+      // 신고 상태별 차트
+      const statusChartElement = document.getElementById('statusChart');
+      if (statusChartElement) {
+        <% if (reportStatusStats && reportStatusStats.length > 0) { %>
+          const statusCtx = statusChartElement.getContext('2d');
+          new Chart(statusCtx, {
+            type: 'doughnut',
+            data: {
+              labels: [
+                <% reportStatusStats.forEach(stat => { %>
+                  '<%= stat._id === 'pending' ? '대기중' : 
+                      stat._id === 'reviewed' ? '검토중' : 
+                      stat._id === 'resolved' ? '해결됨' : 
+                      stat._id === 'dismissed' ? '기각됨' : stat._id %>',
+                <% }); %>
+              ],
+              datasets: [{
+                data: [
+                  <% reportStatusStats.forEach(stat => { %>
+                    <%= stat.count %>,
+                  <% }); %>
+                ],
+                backgroundColor: [
+                  'rgba(255, 206, 86, 0.8)',
+                  'rgba(54, 162, 235, 0.8)',
+                  'rgba(75, 192, 192, 0.8)',
+                  'rgba(153, 102, 255, 0.8)'
+                ]
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                legend: { 
+                  position: 'bottom',
+                  labels: { font: { size: 10 } }
+                }
+              }
+            }
+          });
+        <% } else { %>
+          statusChartElement.parentNode.innerHTML = '<p class="text-muted text-center" style="font-size: 0.85em;">신고 상태 데이터가 없습니다.</p>';
+        <% } %>
+      }
+
+      // 신고 사유별 차트
+      const reasonChartElement = document.getElementById('reasonChart');
+      if (reasonChartElement) {
+        <% if (reportReasonStats && reportReasonStats.length > 0) { %>
+          const reasonCtx = reasonChartElement.getContext('2d');
+          new Chart(reasonCtx, {
+            type: 'bar',
+            data: {
+              labels: [
+                <% reportReasonStats.forEach(stat => { %>
+                  '<%= stat._id === 'spam' ? '스팸/광고' : 
+                      stat._id === 'inappropriate' ? '부적절한 내용' : 
+                      stat._id === 'harassment' ? '욕설/비방' : 
+                      stat._id === 'copyright' ? '저작권 침해' : 
+                      stat._id === 'other' ? '기타' : stat._id %>',
+                <% }); %>
+              ],
+              datasets: [{
+                label: '신고 수',
+                data: [
+                  <% reportReasonStats.forEach(stat => { %>
+                    <%= stat.count %>,
+                  <% }); %>
+                ],
+                backgroundColor: 'rgba(255, 99, 132, 0.8)'
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              scales: {
+                y: { 
+                  beginAtZero: true,
+                  ticks: { font: { size: 10 } }
+                },
+                x: {
+                  ticks: { font: { size: 10 } }
+                }
+              },
+              plugins: {
+                legend: { 
+                  labels: { font: { size: 10 } }
+                }
+              }
+            }
+          });
+        <% } else { %>
+          reasonChartElement.parentNode.innerHTML = '<p class="text-muted text-center" style="font-size: 0.85em;">신고 사유 데이터가 없습니다.</p>';
+        <% } %>
+      }
+    }
+
+    // 페이지 로드 완료 후 차트 초기화
+    document.addEventListener('DOMContentLoaded', function() {
+      initializeCharts();
+    });
+  </script>
+</body>
+</html>

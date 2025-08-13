@@ -121,11 +121,34 @@ app.get('/dashboard', async (req, res) => {
   const Employee = require('./models/Employee');
   const employees = await Employee.find();
   const totalEmployees = employees.length;
+  
+  // 부서별 인원 수 계산
   const departmentCounts = {};
   employees.forEach(emp => {
-    departmentCounts[emp.department] = (departmentCounts[emp.department] || 0) + 1;
+    if (emp.department) {
+      departmentCounts[emp.department] = (departmentCounts[emp.department] || 0) + 1;
+    }
   });
-  res.render('dashboard', { totalEmployees, departmentCounts, session: req.session });
+  
+  // 원하는 부서 순서 정의
+  const departmentOrder = [
+    '보안1팀', '보안2팀', '보안3팀', 
+    '관리팀', '지원팀'
+  ];
+  
+  // 정의된 순서대로 정렬된 부서별 인원 수 객체 생성
+  const orderedDepartmentCounts = {};
+  departmentOrder.forEach(dept => {
+    if (departmentCounts[dept]) {
+      orderedDepartmentCounts[dept] = departmentCounts[dept];
+    }
+  });
+  
+  res.render('dashboard', { 
+    totalEmployees, 
+    departmentCounts: orderedDepartmentCounts, 
+    session: req.session 
+  });
 });
 
 // 헬스 체크 엔드포인트 (Render/모니터링용)

@@ -23,21 +23,54 @@
     <div class="row">
       <div class="col-12">
         <div class="d-flex justify-content-between align-items-center mb-4">
-          <h2><i class="fas fa-chart-bar"></i> 통계 대시보드</h2>
+          <h2><i class="fas fa-chart-bar"></i> 관리자 통계 대시보드</h2>
           <div>
+            <a href="/dashboard" class="btn btn-primary btn-sm">
+              <i class="fas fa-chart-line"></i> 일반 대시보드
+            </a>
             <a href="/boards" class="btn btn-secondary btn-sm">
               <i class="fas fa-arrow-left"></i> 게시판 목록
             </a>
             <a href="/boards/admin/reports" class="btn btn-warning btn-sm">
-              <i class="fas fa-flag"></i> 신고 관리
+                              <i class="fas fa-flag"></i> 게시판 신고 관리
             </a>
           </div>
         </div>
 
-        <!-- 전체 통계 카드 -->
+                <!-- 전체 통계 카드 -->
         <div class="row mb-4">
-          <div class="col-md-3">
+          <div class="col-md-2">
             <div class="card bg-primary text-white">
+              <div class="card-body">
+                <div class="d-flex justify-content-between">
+                  <div>
+                    <h4 class="card-title"><%= stats.total.employees %></h4>
+                    <p class="card-text">전체 직원</p>
+                  </div>
+                  <div class="align-self-center">
+                    <i class="fas fa-users fa-2x"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-2">
+            <div class="card bg-info text-white">
+              <div class="card-body">
+                <div class="d-flex justify-content-between">
+                  <div>
+                    <h4 class="card-title"><%= stats.total.users %></h4>
+                    <p class="card-text">전체 사용자</p>
+                  </div>
+                  <div class="align-self-center">
+                    <i class="fas fa-user fa-2x"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-2">
+            <div class="card bg-success text-white">
               <div class="card-body">
                 <div class="d-flex justify-content-between">
                   <div>
@@ -51,8 +84,8 @@
               </div>
             </div>
           </div>
-          <div class="col-md-3">
-            <div class="card bg-success text-white">
+          <div class="col-md-2">
+            <div class="card bg-warning text-white">
               <div class="card-body">
                 <div class="d-flex justify-content-between">
                   <div>
@@ -66,8 +99,8 @@
               </div>
             </div>
           </div>
-          <div class="col-md-3">
-            <div class="card bg-warning text-white">
+          <div class="col-md-2">
+            <div class="card bg-danger text-white">
               <div class="card-body">
                 <div class="d-flex justify-content-between">
                   <div>
@@ -81,8 +114,8 @@
               </div>
             </div>
           </div>
-          <div class="col-md-3">
-            <div class="card bg-danger text-white">
+          <div class="col-md-2">
+            <div class="card bg-secondary text-white">
               <div class="card-body">
                 <div class="d-flex justify-content-between">
                   <div>
@@ -151,27 +184,33 @@
                       </tr>
                     </thead>
                     <tbody>
-                      <% stats.boardStats.forEach(board => { %>
+                      <% if (stats.boardStats && stats.boardStats.length > 0) { %>
+                        <% stats.boardStats.forEach(board => { %>
+                          <tr>
+                            <td>
+                              <strong><%= board.boardName || '알 수 없음' %></strong>
+                              <br>
+                              <small class="text-muted">
+                                <% if (board.boardType === 'notice') { %>
+                                  <span class="badge bg-danger">공지사항</span>
+                                <% } else if (board.boardType === 'free') { %>
+                                  <span class="badge bg-primary">자유게시판</span>
+                                <% } else { %>
+                                  <span class="badge bg-success">부서게시판</span>
+                                <% } %>
+                              </small>
+                            </td>
+                            <td><%= board.postCount %></td>
+                            <td><%= board.totalViews || 0 %></td>
+                            <td><span class="text-success"><%= board.totalLikes || 0 %></span></td>
+                            <td><span class="text-danger"><%= board.totalDislikes || 0 %></span></td>
+                          </tr>
+                        <% }); %>
+                      <% } else { %>
                         <tr>
-                          <td>
-                            <strong><%= board.boardName %></strong>
-                            <br>
-                            <small class="text-muted">
-                              <% if (board.boardType === 'notice') { %>
-                                <span class="badge bg-danger">공지사항</span>
-                              <% } else if (board.boardType === 'free') { %>
-                                <span class="badge bg-primary">자유게시판</span>
-                              <% } else { %>
-                                <span class="badge bg-success">부서게시판</span>
-                              <% } %>
-                            </small>
-                          </td>
-                          <td><%= board.postCount %></td>
-                          <td><%= board.totalViews %></td>
-                          <td><span class="text-success"><%= board.totalLikes %></span></td>
-                          <td><span class="text-danger"><%= board.totalDislikes %></span></td>
+                          <td colspan="5" class="text-center text-muted">게시판 데이터가 없습니다.</td>
                         </tr>
-                      <% }); %>
+                      <% } %>
                     </tbody>
                   </table>
                 </div>
@@ -184,17 +223,18 @@
                 <h5><i class="fas fa-fire"></i> 인기 게시글</h5>
               </div>
               <div class="card-body">
-                <% if (stats.popularPosts.length > 0) { %>
+                <% if (stats.popularPosts && stats.popularPosts.length > 0) { %>
                   <% stats.popularPosts.slice(0, 5).forEach((post, index) => { %>
                     <div class="mb-3">
                       <div class="d-flex justify-content-between align-items-start">
                         <div class="flex-grow-1">
                           <h6 class="mb-1">
                             <span class="badge bg-warning me-2"><%= index + 1 %></span>
-                            <%= post.title.length > 30 ? post.title.substring(0, 30) + '...' : post.title %>
+                            <%= post.title && post.title.length > 30 ? post.title.substring(0, 30) + '...' : (post.title || '제목 없음') %>
                           </h6>
                           <small class="text-muted">
-                            <%= post.authorName %> | <%= post.boardId.name %>
+                            <%= post.author && post.author.name ? post.author.name : '알 수 없음' %> | 
+                            <%= post.boardId && post.boardId.name ? post.boardId.name : '알 수 없음' %>
                           </small>
                         </div>
                         <div class="text-end">
@@ -242,98 +282,108 @@
 
   <%- include('../../footer') %>
 
-  <script>
-    // 신고 상태별 차트
-    const reportStatusCtx = document.getElementById('reportStatusChart').getContext('2d');
-    const reportStatusChart = new Chart(reportStatusCtx, {
-      type: 'bar',
-      data: {
-        labels: [
-          <% stats.reportStats.forEach(stat => { %>
-            '<%= stat._id === 'pending' ? '대기중' : 
-                stat._id === 'reviewed' ? '검토중' : 
-                stat._id === 'resolved' ? '해결됨' : 
-                stat._id === 'dismissed' ? '기각됨' : stat._id %>',
-          <% }); %>
-        ],
-        datasets: [{
-          label: '신고 수',
-          data: [
-            <% stats.reportStats.forEach(stat => { %>
-              <%= stat.count %>,
-            <% }); %>
-          ],
-          backgroundColor: [
-            'rgba(255, 206, 86, 0.8)',
-            'rgba(54, 162, 235, 0.8)',
-            'rgba(75, 192, 192, 0.8)',
-            'rgba(153, 102, 255, 0.8)'
-          ],
-          borderColor: [
-            'rgba(255, 206, 86, 1)',
-            'rgba(54, 162, 235, 1)',
-            'rgba(75, 192, 192, 1)',
-            'rgba(153, 102, 255, 1)'
-          ],
-          borderWidth: 1
-        }]
-      },
-      options: {
-        responsive: true,
-        scales: {
-          y: {
-            beginAtZero: true
-          }
-        }
-      }
-    });
+     <script>
+     // 신고 상태별 차트 (데이터가 있을 때만 생성)
+     <% if (stats.reportStats && stats.reportStats.length > 0) { %>
+       const reportStatusCtx = document.getElementById('reportStatusChart').getContext('2d');
+       const reportStatusChart = new Chart(reportStatusCtx, {
+         type: 'bar',
+         data: {
+           labels: [
+             <% stats.reportStats.forEach(stat => { %>
+               '<%= stat._id === 'pending' ? '대기중' : 
+                   stat._id === 'reviewed' ? '검토중' : 
+                   stat._id === 'resolved' ? '해결됨' : 
+                   stat._id === 'dismissed' ? '기각됨' : stat._id %>',
+             <% }); %>
+           ],
+           datasets: [{
+             label: '신고 수',
+             data: [
+               <% stats.reportStats.forEach(stat => { %>
+                 <%= stat.count %>,
+               <% }); %>
+             ],
+             backgroundColor: [
+               'rgba(255, 206, 86, 0.8)',
+               'rgba(54, 162, 235, 0.8)',
+               'rgba(75, 192, 192, 0.8)',
+               'rgba(153, 102, 255, 0.8)'
+             ],
+             borderColor: [
+               'rgba(255, 206, 86, 1)',
+               'rgba(54, 162, 235, 1)',
+               'rgba(75, 192, 192, 1)',
+               'rgba(153, 102, 255, 1)'
+             ],
+             borderWidth: 1
+           }]
+         },
+         options: {
+           responsive: true,
+           scales: {
+             y: {
+               beginAtZero: true
+             }
+           }
+         }
+       });
+     <% } else { %>
+       // 차트 데이터가 없을 때 메시지 표시
+       document.getElementById('reportStatusChart').parentNode.innerHTML = '<p class="text-muted text-center">신고 데이터가 없습니다.</p>';
+     <% } %>
 
-    // 신고 사유별 차트
-    const reportReasonCtx = document.getElementById('reportReasonChart').getContext('2d');
-    const reportReasonChart = new Chart(reportReasonCtx, {
-      type: 'doughnut',
-      data: {
-        labels: [
-          <% stats.reportReasonStats.forEach(stat => { %>
-            '<%= stat._id === 'spam' ? '스팸/광고' : 
-                stat._id === 'inappropriate' ? '부적절한 내용' : 
-                stat._id === 'harassment' ? '욕설/비방/괴롭힘' : 
-                stat._id === 'copyright' ? '저작권 침해' : 
-                stat._id === 'other' ? '기타' : stat._id %>',
-          <% }); %>
-        ],
-        datasets: [{
-          data: [
-            <% stats.reportReasonStats.forEach(stat => { %>
-              <%= stat.count %>,
-            <% }); %>
-          ],
-          backgroundColor: [
-            'rgba(255, 99, 132, 0.8)',
-            'rgba(54, 162, 235, 0.8)',
-            'rgba(255, 206, 86, 0.8)',
-            'rgba(75, 192, 192, 0.8)',
-            'rgba(153, 102, 255, 0.8)'
-          ],
-          borderColor: [
-            'rgba(255, 99, 132, 1)',
-            'rgba(54, 162, 235, 1)',
-            'rgba(255, 206, 86, 1)',
-            'rgba(75, 192, 192, 1)',
-            'rgba(153, 102, 255, 1)'
-          ],
-          borderWidth: 1
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          legend: {
-            position: 'bottom'
-          }
-        }
-      }
-    });
-  </script>
+     // 신고 사유별 차트 (데이터가 있을 때만 생성)
+     <% if (stats.reportReasonStats && stats.reportReasonStats.length > 0) { %>
+       const reportReasonCtx = document.getElementById('reportReasonChart').getContext('2d');
+       const reportReasonChart = new Chart(reportReasonCtx, {
+         type: 'doughnut',
+         data: {
+           labels: [
+             <% stats.reportReasonStats.forEach(stat => { %>
+               '<%= stat._id === 'spam' ? '스팸/광고' : 
+                   stat._id === 'inappropriate' ? '부적절한 내용' : 
+                   stat._id === 'harassment' ? '욕설/비방/괴롭힘' : 
+                   stat._id === 'copyright' ? '저작권 침해' : 
+                   stat._id === 'other' ? '기타' : stat._id %>',
+             <% }); %>
+           ],
+           datasets: [{
+             data: [
+               <% stats.reportReasonStats.forEach(stat => { %>
+                 <%= stat.count %>,
+               <% }); %>
+             ],
+             backgroundColor: [
+               'rgba(255, 99, 132, 0.8)',
+               'rgba(54, 162, 235, 0.8)',
+               'rgba(255, 206, 86, 0.8)',
+               'rgba(75, 192, 192, 0.8)',
+               'rgba(153, 102, 255, 0.8)'
+             ],
+             borderColor: [
+               'rgba(255, 99, 132, 1)',
+               'rgba(54, 162, 235, 1)',
+               'rgba(255, 206, 86, 1)',
+               'rgba(75, 192, 192, 1)',
+               'rgba(153, 102, 255, 1)'
+             ],
+             borderWidth: 1
+           }]
+         },
+         options: {
+           responsive: true,
+           plugins: {
+             legend: {
+               position: 'bottom'
+             }
+           }
+         }
+       });
+     <% } else { %>
+       // 차트 데이터가 없을 때 메시지 표시
+       document.getElementById('reportReasonChart').parentNode.innerHTML = '<p class="text-muted text-center">신고 사유 데이터가 없습니다.</p>';
+     <% } %>
+   </script>
 </body>
 </html> 

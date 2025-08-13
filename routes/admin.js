@@ -52,23 +52,98 @@ router.get('/employees/:id', adminOnly, async (req, res) => {
 // 관리자 대시보드
 router.get('/dashboard', adminOnly, async (req, res) => {
   try {
-    // 전체 통계
-    const totalEmployees = await Employee.countDocuments();
-    const totalUsers = await User.countDocuments();
-    const totalPosts = await Post.countDocuments();
-    const totalComments = await Comment.countDocuments();
-    const totalReports = await Report.countDocuments();
-    const pendingReports = await Report.countDocuments({ status: 'pending' });
-
-    // 최근 7일 통계
+    // 전체 통계 (안전하게 처리)
+    const totalEmployees = await Employee.countDocuments().catch(() => 0);
+    const totalUsers = await User.countDocuments().catch(() => 0);
+    
+    // 게시판 관련 통계 (컬렉션이 없을 수 있음)
+    let totalPosts = 0, totalComments = 0, totalReports = 0, pendingReports = 0;
+    let recentPosts = 0, recentComments = 0, recentReports = 0;
+    let boardStats = [], popularPosts = [], reportStats = [], reportReasonStats = [];
+    
+    try {
+      totalPosts = await Post.countDocuments();
+      totalComments = await Comment.countDocuments();
+      totalReports = await Report.countDocuments();
+      pendingReports = await Report.countDocuments({ status: 'pending' });
+      
+      // 최근 7일 통계
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      
+      recentPosts = await Post.countDocuments({ createdAt: { $gte: sevenDaysAgo } });
+      recentComments = await Comment.countDocuments({ createdAt: { $gte: sevenDaysAgo } });
+      recentReports = await Report.countDocuments({ createdAt: { $gte: sevenDaysAgo } });
+      
+      // 게시판별 통계
+      boardStats = await Post.aggregate([
+        {
+          $group: {
+            _id: '$boardId',
+            count: { $sum: 1 },
+            totalViews: { $sum: { $ifNull: ['$views', 0] } },
+            totalLikes: { $sum: { $size: { $ifNull: ['$likes', []] } } },
+            totalDislikes: { $sum: { $size: { $ifNull: ['$dislikes', []] } } }
+          }
+        },
+        {
+          $lookup: {
+            from: 'boards',
+            localField: '_id',
+            foreignField: '_id',
+            as: 'board'
+          }
+        },
+        {
+          $unwind: { path: '$board', preserveNullAndEmptyArrays: true }
+        },
+        {
+          $project: {
+            boardName: { $ifNull: ['$board.name', '알 수 없음'] },
+            boardType: { $ifNull: ['$board.type', 'unknown'] },
+            postCount: '$count',
+            totalViews: '$totalViews',
+            totalLikes: '$totalLikes',
+            totalDislikes: '$totalDislikes'
+          }
+        }
+      ]);
+      
+      // 인기 게시글 (조회수 기준)
+      popularPosts = await Post.find({ isHidden: { $ne: true } })
+        .populate('author', 'username name')
+        .populate('boardId', 'name')
+        .sort({ views: -1 })
+        .limit(10);
+      
+      // 신고 통계
+      reportStats = await Report.aggregate([
+        {
+          $group: {
+            _id: '$status',
+            count: { $sum: 1 }
+          }
+        }
+      ]);
+      
+      reportReasonStats = await Report.aggregate([
+        {
+          $group: {
+            _id: '$reason',
+            count: { $sum: 1 }
+          }
+        }
+      ]);
+    } catch (boardError) {
+      console.log('게시판 데이터 없음:', boardError.message);
+      // 게시판 데이터가 없어도 계속 진행
+    }
+    
+    // 최근 7일 직원 통계
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const recentEmployees = await Employee.countDocuments({ createdAt: { $gte: sevenDaysAgo } }).catch(() => 0);
     
-    const recentEmployees = await Employee.countDocuments({ createdAt: { $gte: sevenDaysAgo } });
-    const recentPosts = await Post.countDocuments({ createdAt: { $gte: sevenDaysAgo } });
-    const recentComments = await Comment.countDocuments({ createdAt: { $gte: sevenDaysAgo } });
-    const recentReports = await Report.countDocuments({ createdAt: { $gte: sevenDaysAgo } });
-
     // 부서별 직원 통계
     const departmentStats = await Employee.aggregate([
       {
@@ -80,91 +155,126 @@ router.get('/dashboard', adminOnly, async (req, res) => {
       {
         $sort: { count: -1 }
       }
-    ]);
+    ]).catch(() => []);
 
-    // 게시판별 통계
-    const boardStats = await Post.aggregate([
-      {
-        $group: {
-          _id: '$boardId',
-          count: { $sum: 1 },
-          totalViews: { $sum: '$views' },
-          totalLikes: { $sum: { $size: '$likes' } },
-          totalDislikes: { $sum: { $size: '$dislikes' } }
-        }
-      },
-      {
-        $lookup: {
-          from: 'boards',
-          localField: '_id',
-          foreignField: '_id',
-          as: 'board'
-        }
-      },
-      {
-        $unwind: '$board'
-      },
-      {
-        $project: {
-          boardName: '$board.name',
-          boardType: '$board.type',
-          postCount: '$count',
-          totalViews: '$totalViews',
-          totalLikes: '$totalLikes',
-          totalDislikes: '$totalDislikes'
-        }
-      }
-    ]);
-
-    // 인기 게시글 (조회수 기준)
-    const popularPosts = await Post.find({ isHidden: false })
-      .populate('author', 'username name')
-      .populate('boardId', 'name')
-      .sort({ views: -1 })
-      .limit(10);
-
-    // 신고 통계
-    const reportStats = await Report.aggregate([
-      {
-        $group: {
-          _id: '$status',
-          count: { $sum: 1 }
-        }
-      }
-    ]);
-
-    const reportReasonStats = await Report.aggregate([
-      {
-        $group: {
-          _id: '$reason',
-          count: { $sum: 1 }
-        }
-      }
-    ]);
-
-    res.render('admin/dashboard', {
+    res.render('boards/admin/dashboard', {
       stats: {
-        totalEmployees,
-        totalUsers,
-        totalPosts,
-        totalComments,
-        totalReports,
-        pendingReports,
-        recentEmployees,
-        recentPosts,
-        recentComments,
-        recentReports
+        total: {
+          employees: totalEmployees,
+          users: totalUsers,
+          posts: totalPosts,
+          comments: totalComments,
+          reports: totalReports,
+          pendingReports: pendingReports
+        },
+        recent: {
+          employees: recentEmployees,
+          posts: recentPosts,
+          comments: recentComments,
+          reports: recentReports
+        },
+        boardStats: boardStats,
+        popularPosts: popularPosts,
+        reportStats: reportStats,
+        reportReasonStats: reportReasonStats
       },
       departmentStats,
-      boardStats,
-      popularPosts,
-      reportStats,
-      reportReasonStats,
       session: req.session
     });
   } catch (error) {
     console.error('관리자 대시보드 오류:', error);
     res.status(500).send('대시보드를 불러오는 중 오류가 발생했습니다.');
+  }
+});
+
+// 신고 전용 통계 대시보드
+router.get('/reports/dashboard', adminOnly, async (req, res) => {
+  try {
+    // Report 모델이 존재하는지 확인
+    if (!Report) {
+      console.log('Report 모델을 찾을 수 없음');
+      return res.render('boards/admin/reports-dashboard', {
+        stats: {
+          total: 0,
+          pending: 0,
+          reviewed: 0,
+          resolved: 0,
+          dismissed: 0,
+          recent: 0
+        },
+        reportReasonStats: [],
+        reportStatusStats: [],
+        recentReportList: [],
+        session: req.session
+      });
+    }
+
+    // 신고 통계만 집중 (안전하게 처리)
+    let totalReports = 0, pendingReports = 0, reviewedReports = 0, resolvedReports = 0, dismissedReports = 0;
+    let recentReports = 0;
+    let reportReasonStats = [], reportStatusStats = [], recentReportList = [];
+
+    try {
+      // 기본 통계
+      totalReports = await Report.countDocuments();
+      pendingReports = await Report.countDocuments({ status: 'pending' });
+      reviewedReports = await Report.countDocuments({ status: 'reviewed' });
+      resolvedReports = await Report.countDocuments({ status: 'resolved' });
+      dismissedReports = await Report.countDocuments({ status: 'dismissed' });
+
+      // 최근 7일 신고 통계
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      recentReports = await Report.countDocuments({ createdAt: { $gte: sevenDaysAgo } });
+
+      // 신고 사유별 통계
+      reportReasonStats = await Report.aggregate([
+        {
+          $group: {
+            _id: '$reason',
+            count: { $sum: 1 }
+          }
+        }
+      ]);
+
+      // 신고 상태별 통계
+      reportStatusStats = await Report.aggregate([
+        {
+          $group: {
+            _id: '$status',
+            count: { $sum: 1 }
+          }
+        }
+      ]);
+
+      // 최근 신고 목록 (상위 5개)
+      recentReportList = await Report.find()
+        .populate('reporter', 'username name')
+        .sort({ createdAt: -1 })
+        .limit(5);
+
+    } catch (reportError) {
+      console.log('신고 데이터 처리 중 오류:', reportError.message);
+      // 오류가 발생해도 기본값으로 계속 진행
+    }
+
+    res.render('boards/admin/reports-dashboard', {
+      stats: {
+        total: totalReports,
+        pending: pendingReports,
+        reviewed: reviewedReports,
+        resolved: resolvedReports,
+        dismissed: dismissedReports,
+        recent: recentReports
+      },
+      reportReasonStats,
+      reportStatusStats,
+      recentReportList,
+      session: req.session
+    });
+  } catch (error) {
+    console.error('신고 통계 대시보드 오류:', error);
+    res.status(500).send('신고 통계를 불러오는 중 오류가 발생했습니다.');
   }
 });
 

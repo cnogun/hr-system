@@ -56,18 +56,28 @@
     }
 
     .basic-info-item.resident-item {
-      flex: 1.5;
-      min-width: 250px;
+      flex: 1.2;
+      min-width: 230px;
     }
 
     .basic-info-item.email-item {
-      flex: 1.3;
-      min-width: 220px;
+      flex: 1.2;
+      min-width: 240px;
     }
 
+    .basic-info-item.phone-item {
+      flex: 1.2;
+      min-width: 230px;
+}
+
+    .basic-info-item.employment-item {
+      flex: 0.5;
+      min-width: 145px;
+}
+
     .basic-info-item.org-item {
-      flex: 0.8;
-      min-width: 160px;
+      flex: 0.2;
+      min-width: 140px;
     }
 
     .basic-info-item {
@@ -308,9 +318,10 @@
 
     .uniform-item {
       display: flex;
-      justify-content: space-between;
+      justify-content: flex-start;
       align-items: center;
       padding: 4px 6px;
+      gap:  8px;
       background: #f8f9fa;
       border-radius: 3px;
       border-left: 2px solid #007bff;
@@ -327,7 +338,7 @@
       color: #212529;
     }
 
-                   .text-content {
+      .text-content {
         background: #f8f9fa;
         padding: 8px 12px;
         border-radius: 3px;
@@ -397,7 +408,7 @@
             <span class="basic-info-label">이메일</span>
             <span class="basic-info-value"><%= employee.email || '-' %></span>
           </div>
-         <div class="basic-info-item">
+         <div class="basic-info-item phone-item">
            <span class="basic-info-label">휴대폰</span>
            <span class="basic-info-value"><%= employee.mobile || '-' %></span>
          </div>
@@ -405,7 +416,7 @@
            <span class="basic-info-label">입사일</span>
            <span class="basic-info-value"><%= employee.hireDate ? employee.hireDate.toISOString().slice(0,10) : '-' %></span>
          </div>
-         <div class="basic-info-item">
+         <div class="basic-info-item employment-item">
            <span class="basic-info-label">고용형태</span>
            <span class="basic-info-value"><%= employee.employmentType || '-' %></span>
          </div>
