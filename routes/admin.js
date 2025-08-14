@@ -28,7 +28,58 @@ const { Board, Post, Comment, Report } = require('../models/Board');
 // 관리자용 직원 상세보기
 router.get('/employees/:id', adminOnly, async (req, res) => {
   try {
-    const employee = await Employee.findById(req.params.id);
+    const employee = await Employee.findById(req.params.id).select({
+      userId: 1,
+      orgType: 1,
+      department: 1,
+      team: 1,
+      position: 1,
+      name: 1,
+      age: 1,
+      birth: 1,
+      residentNumber: 1,
+      gender: 1,
+      nationality: 1,
+      education: 1,
+      phone: 1,
+      mobile: 1,
+      email: 1,
+      address: 1,
+      emergencyContact: 1,
+      empNo: 1,
+      status: 1,
+      employmentType: 1,
+      hireDate: 1,
+      salaryBank: 1,
+      salaryAccount: 1,
+      workLocation: 1,
+      rewardPunishment: 1,
+      uniformSummerTop: 1,
+      uniformSummerBottom: 1,
+      uniformWinterTop: 1,
+      uniformWinterBottom: 1,
+      uniformWinterPants: 1,
+      uniformWinterCoat: 1,
+      raincoat: 1,
+      cap: 1,
+      safetyShoes: 1,
+      rainBoots: 1,
+      winterJacket: 1,
+      doubleJacket: 1,
+      springAutumnUniform: 1,
+      profileImage: 1,
+      bloodType: 1,
+      height: 1,
+      weight: 1,
+      militaryBranch: 1,
+      militaryRank: 1,
+      militaryNumber: 1,
+      militaryServicePeriod: 1,
+      militaryExemptionReason: 1,
+      specialNotes: 1,
+      career: 1
+    });
+    
     if (!employee) {
       return res.status(404).send('직원을 찾을 수 없습니다.');
     }
@@ -37,6 +88,12 @@ router.get('/employees/:id', adminOnly, async (req, res) => {
     console.log('관리자 직원 상세보기 데이터:', {
       id: employee._id,
       name: employee.name,
+      birth: employee.birth,
+      gender: employee.gender,
+      nationality: employee.nationality,
+      education: employee.education,
+      phone: employee.phone,
+      address: employee.address,
       career: employee.career,
       specialNotes: employee.specialNotes,
       profileImage: employee.profileImage

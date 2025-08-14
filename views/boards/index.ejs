@@ -59,7 +59,8 @@
         <% } %>
 
         <div class="row">
-          <% boards.forEach(board => { %>
+          <!-- 모든 게시판 표시 -->
+          <% boards.forEach((board, index) => { %>
             <div class="col-12 col-sm-6 col-lg-4 mb-4">
               <div class="card h-100 shadow-sm board-card">
                 <div class="card-header d-flex justify-content-between align-items-center">
@@ -73,7 +74,7 @@
                     <% } %>
                     <span class="ms-2"><%= board.name %></span>
                   </h5>
-                  <% if (board.type === 'department') { %>
+                  <% if (board.department) { %>
                     <span class="badge bg-secondary"><%= board.department %></span>
                   <% } %>
                 </div>
@@ -82,9 +83,8 @@
                   <div class="mt-auto">
                     <div class="d-flex justify-content-between align-items-center mb-2">
                       <small class="text-muted board-stats">
-                        <% if (board.type === 'notice' && session.userRole !== 'admin') { %>
-                          <i class="fas fa-lock"></i> 관리자만 글쓰기
-                        <% } else if (board.writePermission === 'admin') { %>
+                        타입: <%= board.type %> | 
+                        <% if (board.writePermission === 'admin') { %>
                           <i class="fas fa-lock"></i> 관리자만 글쓰기
                         <% } else if (board.writePermission === 'department') { %>
                           <i class="fas fa-users"></i> 부서원만 글쓰기

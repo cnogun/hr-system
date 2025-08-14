@@ -43,32 +43,143 @@ db.once('open', async () => {
         readPermission: 'all',
         order: 2
       },
+      // 보안1팀 업무 게시판들
       {
-        name: '보안1팀 게시판',
+        name: '보안1팀 업무',
         type: 'department',
         department: '보안1팀',
-        description: '보안1팀 전용 게시판',
+        description: '보안1팀 업무 관련 게시판',
         writePermission: 'department',
         readPermission: 'department',
         order: 3
       },
       {
-        name: '보안2팀 게시판',
+        name: '보안1팀 팀 게시판',
         type: 'department',
-        department: '보안2팀',
-        description: '보안2팀 전용 게시판',
+        department: '보안1팀',
+        description: '보안1팀 내부 소통 및 공지사항',
         writePermission: 'department',
         readPermission: 'department',
         order: 4
       },
       {
-        name: '보안3팀 게시판',
+        name: '보안1팀 근무명령서',
         type: 'department',
-        department: '보안3팀',
-        description: '보안3팀 전용 게시판',
+        department: '보안1팀',
+        description: '보안1팀 근무 명령서 및 지침',
         writePermission: 'department',
         readPermission: 'department',
         order: 5
+      },
+      {
+        name: '보안1팀 인계사항',
+        type: 'department',
+        department: '보안1팀',
+        description: '보안1팀 인계 및 업무 전달 사항',
+        writePermission: 'department',
+        readPermission: 'department',
+        order: 6
+      },
+      {
+        name: '보안1팀 지시사항',
+        type: 'department',
+        department: '보안1팀',
+        description: '보안1팀 지시사항 및 업무 지침',
+        writePermission: 'department',
+        readPermission: 'department',
+        order: 7
+      },
+      // 보안2팀 업무 게시판들
+      {
+        name: '보안2팀 업무',
+        type: 'department',
+        department: '보안2팀',
+        description: '보안2팀 업무 관련 게시판',
+        writePermission: 'department',
+        readPermission: 'department',
+        order: 8
+      },
+      {
+        name: '보안2팀 팀 게시판',
+        type: 'department',
+        department: '보안2팀',
+        description: '보안2팀 내부 소통 및 공지사항',
+        writePermission: 'department',
+        readPermission: 'department',
+        order: 9
+      },
+      {
+        name: '보안2팀 근무명령서',
+        type: 'department',
+        department: '보안2팀',
+        description: '보안2팀 근무 명령서 및 지침',
+        writePermission: 'department',
+        readPermission: 'department',
+        order: 10
+      },
+      {
+        name: '보안2팀 인계사항',
+        type: 'department',
+        department: '보안2팀',
+        description: '보안2팀 인계 및 업무 전달 사항',
+        writePermission: 'department',
+        readPermission: 'department',
+        order: 11
+      },
+      {
+        name: '보안2팀 지시사항',
+        type: 'department',
+        department: '보안2팀',
+        description: '보안2팀 지시사항 및 업무 지침',
+        writePermission: 'department',
+        readPermission: 'department',
+        order: 12
+      },
+      // 보안3팀 업무 게시판들
+      {
+        name: '보안3팀 업무',
+        type: 'department',
+        department: '보안3팀',
+        description: '보안3팀 업무 관련 게시판',
+        writePermission: 'department',
+        readPermission: 'department',
+        order: 13
+      },
+      {
+        name: '보안3팀 팀 게시판',
+        type: 'department',
+        department: '보안3팀',
+        description: '보안3팀 내부 소통 및 공지사항',
+        writePermission: 'department',
+        readPermission: 'department',
+        order: 14
+      },
+      {
+        name: '보안3팀 근무명령서',
+        type: 'department',
+        department: '보안3팀',
+        description: '보안3팀 근무 명령서 및 지침',
+        writePermission: 'department',
+        readPermission: 'department',
+        order: 15
+      },
+      {
+        name: '보안3팀 인계사항',
+        type: 'department',
+        department: '보안3팀',
+        description: '보안3팀 인계 및 업무 전달 사항',
+        writePermission: 'department',
+        readPermission: 'department',
+        order: 16
+      },
+      {
+        name: '보안3팀 지시사항',
+        type: 'department',
+        department: '보안3팀',
+        description: '보안3팀 지시사항 및 업무 지침',
+        writePermission: 'department',
+        readPermission: 'department',
+        order: 17
       }
     ];
 

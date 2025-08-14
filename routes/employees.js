@@ -101,12 +101,56 @@ router.get('/', isLoggedIn, async (req, res) => {
   console.log('- query:', query);
   console.log('- search term:', req.query.search);
   
+  // 추가 통계 데이터
+  const totalEmployees = await Employee.countDocuments();
+  const activeEmployees = await Employee.countDocuments({ status: '재직' });
+  const newEmployees = await Employee.countDocuments({
+    hireDate: { 
+      $gte: new Date(new Date().setMonth(new Date().getMonth() - 3)) 
+    }
+  });
+  
+  // 헤더에 필요한 변수들 설정
+  if (req.session && req.session.userId) {
+    const User = require('../models/User');
+    const Employee = require('../models/Employee');
+    
+    const user = await User.findById(req.session.userId);
+    if (user) {
+      if (user.role === 'admin') {
+        res.locals.position = '관리자';
+        res.locals.name = user.username;
+        res.locals.department = '시스템 관리';
+        res.locals.employeePosition = '관리자';
+        res.locals.userRole = 'admin';
+      } else {
+        const employee = await Employee.findOne({ userId: req.session.userId });
+        if (employee) {
+          res.locals.position = `${employee.department || '부서미정'} / ${employee.position || '직급미정'}`;
+          res.locals.name = employee.name;
+          res.locals.department = employee.department || '부서미정';
+          res.locals.employeePosition = employee.position || '직급미정';
+          res.locals.userRole = 'user';
+        } else {
+          res.locals.position = '일반 사용자';
+          res.locals.name = user.username;
+          res.locals.department = '부서미정';
+          res.locals.employeePosition = '직급미정';
+          res.locals.userRole = 'user';
+        }
+      }
+    }
+  }
+  
   res.render('employees', {
     employees,
     departments,
     positions,
     totalPages,
     page,
+    totalEmployees,
+    activeEmployees,
+    newEmployees,
     query: req.query,
     message: req.session.message,
     session: req.session
@@ -117,12 +161,78 @@ router.get('/', isLoggedIn, async (req, res) => {
 router.get('/new', isLoggedIn, adminOnly, async (req, res) => {
   const employees = await Employee.find().sort({ name: 1 });
   const users = await User.find().sort({ username: 1 });
+  
+  // 헤더에 필요한 변수들 설정
+  if (req.session && req.session.userId) {
+    const User = require('../models/User');
+    const Employee = require('../models/Employee');
+    
+    const user = await User.findById(req.session.userId);
+    if (user) {
+      if (user.role === 'admin') {
+        res.locals.position = '관리자';
+        res.locals.name = user.username;
+        res.locals.department = '시스템 관리';
+        res.locals.employeePosition = '관리자';
+        res.locals.userRole = 'admin';
+      } else {
+        const employee = await Employee.findOne({ userId: req.session.userId });
+        if (employee) {
+          res.locals.position = `${employee.department || '부서미정'} / ${employee.position || '직급미정'}`;
+          res.locals.name = employee.name;
+          res.locals.department = employee.department || '부서미정';
+          res.locals.employeePosition = employee.position || '직급미정';
+          res.locals.userRole = 'user';
+        } else {
+          res.locals.position = '일반 사용자';
+          res.locals.name = user.username;
+          res.locals.department = '부서미정';
+          res.locals.employeePosition = '직급미정';
+          res.locals.userRole = 'user';
+        }
+      }
+    }
+  }
+  
   res.render('addEmployee', { employees, users, session: req.session });
 });
 
 // 기존 직원 선택 폼
 router.get('/existing', isLoggedIn, adminOnly, async (req, res) => {
   const employees = await Employee.find().sort({ name: 1 });
+  
+  // 헤더에 필요한 변수들 설정
+  if (req.session && req.session.userId) {
+    const User = require('../models/User');
+    const Employee = require('../models/Employee');
+    
+    const user = await User.findById(req.session.userId);
+    if (user) {
+      if (user.role === 'admin') {
+        res.locals.position = '관리자';
+        res.locals.name = user.username;
+        res.locals.department = '시스템 관리';
+        res.locals.employeePosition = '관리자';
+        res.locals.userRole = 'admin';
+      } else {
+        const employee = await Employee.findOne({ userId: req.session.userId });
+        if (employee) {
+          res.locals.position = `${employee.department || '부서미정'} / ${employee.position || '직급미정'}`;
+          res.locals.name = employee.name;
+          res.locals.department = employee.department || '부서미정';
+          res.locals.employeePosition = employee.position || '직급미정';
+          res.locals.userRole = 'user';
+        } else {
+          res.locals.position = '일반 사용자';
+          res.locals.name = user.username;
+          res.locals.department = '부서미정';
+          res.locals.employeePosition = '직급미정';
+          res.locals.userRole = 'user';
+        }
+      }
+    }
+  }
+  
   res.render('existingEmployee', { employees, session: req.session });
 });
 
@@ -199,6 +309,50 @@ router.post('/', isLoggedIn, adminOnly, upload.single('profileImage'), async (re
     // 사번 자동 생성
     const empNo = await generateEmpNo(orgType, department);
     
+    // 디버깅: 전송된 모든 데이터 로깅
+    console.log('=== 신입정보 저장 디버깅 ===');
+    console.log('req.body 전체:', req.body);
+    console.log('기본 정보:', { name, email, userId, empNo, orgType, department, position, status: req.body.status || '재직', hireDate });
+    console.log('상세 정보:', {
+      birth: req.body.birth,
+      gender: req.body.gender,
+      nationality: req.body.nationality,
+      education: req.body.education,
+      phone: req.body.phone,
+      mobile: req.body.mobile,
+      address: req.body.address,
+      emergencyContact: req.body.emergencyContact,
+      employmentType: req.body.employmentType,
+      salaryBank: req.body.salaryBank,
+      salaryAccount: req.body.salaryAccount,
+      height: req.body.height,
+      weight: req.body.weight,
+      bloodType: req.body.bloodType,
+      militaryBranch: req.body.militaryBranch,
+      militaryRank: req.body.militaryRank,
+      militaryNumber: req.body.militaryNumber,
+      militaryServicePeriod: req.body.militaryServicePeriod,
+      militaryExemptionReason: req.body.militaryExemptionReason,
+      career: req.body.career,
+      specialNotes: req.body.specialNotes
+    });
+    console.log('유니폼 정보:', {
+      cap: req.body.cap,
+      uniformSummerTop: req.body.uniformSummerTop,
+      uniformSummerBottom: req.body.uniformSummerBottom,
+      uniformWinterTop: req.body.uniformWinterTop,
+      uniformWinterBottom: req.body.uniformWinterBottom,
+      uniformWinterPants: req.body.uniformWinterPants,
+      springAutumnUniform: req.body.springAutumnUniform,
+      uniformWinterCoat: req.body.uniformWinterCoat,
+      raincoat: req.body.raincoat,
+      safetyShoes: req.body.safetyShoes,
+      rainBoots: req.body.rainBoots,
+      winterJacket: req.body.winterJacket,
+      doubleJacket: req.body.doubleJacket
+    });
+    console.log('=== 디버깅 끝 ===');
+    
     const employee = new Employee({
       name,
       email,
@@ -253,6 +407,35 @@ router.post('/', isLoggedIn, adminOnly, upload.single('profileImage'), async (re
     
     await employee.save();
     
+    // 디버깅: 저장된 직원 데이터 확인
+    console.log('=== 저장된 직원 데이터 확인 ===');
+    const savedEmployee = await Employee.findById(employee._id);
+    console.log('저장된 직원 ID:', savedEmployee._id);
+    console.log('저장된 상세정보:', {
+      birth: savedEmployee.birth,
+      gender: savedEmployee.gender,
+      nationality: savedEmployee.nationality,
+      education: savedEmployee.education,
+      phone: savedEmployee.phone,
+      mobile: savedEmployee.mobile,
+      address: savedEmployee.address,
+      emergencyContact: savedEmployee.emergencyContact,
+      employmentType: savedEmployee.employmentType,
+      salaryBank: savedEmployee.salaryBank,
+      salaryAccount: savedEmployee.salaryAccount,
+      height: savedEmployee.height,
+      weight: savedEmployee.weight,
+      bloodType: savedEmployee.bloodType,
+      militaryBranch: savedEmployee.militaryBranch,
+      militaryRank: savedEmployee.militaryRank,
+      militaryNumber: savedEmployee.militaryNumber,
+      militaryServicePeriod: savedEmployee.militaryServicePeriod,
+      militaryExemptionReason: savedEmployee.militaryExemptionReason,
+      career: savedEmployee.career,
+      specialNotes: savedEmployee.specialNotes
+    });
+    console.log('=== 저장된 데이터 확인 끝 ===');
+    
     // 로그 기록
     await Log.create({
       userId: req.session.userId,
@@ -280,6 +463,39 @@ router.post('/', isLoggedIn, adminOnly, upload.single('profileImage'), async (re
 router.get('/:id/edit', isLoggedIn, adminOnly, async (req, res) => {
   const employeeData = await Employee.findById(req.params.id);
   const employees = await Employee.find().sort({ name: 1 });
+  
+  // 헤더에 필요한 변수들 설정
+  if (req.session && req.session.userId) {
+    const User = require('../models/User');
+    const Employee = require('../models/Employee');
+    
+    const user = await User.findById(req.session.userId);
+    if (user) {
+      if (user.role === 'admin') {
+        res.locals.position = '관리자';
+        res.locals.name = user.username;
+        res.locals.department = '시스템 관리';
+        res.locals.employeePosition = '관리자';
+        res.locals.userRole = 'admin';
+      } else {
+        const employee = await Employee.findOne({ userId: req.session.userId });
+        if (employee) {
+          res.locals.position = `${employee.department || '부서미정'} / ${employee.position || '직급미정'}`;
+          res.locals.name = employee.name;
+          res.locals.department = employee.department || '부서미정';
+          res.locals.employeePosition = employee.position || '직급미정';
+          res.locals.userRole = 'user';
+        } else {
+          res.locals.position = '일반 사용자';
+          res.locals.name = user.username;
+          res.locals.department = '부서미정';
+          res.locals.employeePosition = '직급미정';
+          res.locals.userRole = 'user';
+        }
+      }
+    }
+  }
+  
   res.render('editEmployee', { employee: employeeData, employees, session: req.session });
 });
 

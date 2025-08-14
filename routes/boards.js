@@ -231,19 +231,88 @@ router.get('/', isLoggedIn, async (req, res) => {
   try {
     let boards = await Board.find({ isActive: true }).sort({ order: 1, createdAt: 1 });
     
+    console.log('🔍 데이터베이스에서 조회된 모든 게시판:', boards.length, '개');
+    boards.forEach((board, index) => {
+      console.log(`${index + 1}. ${board.name} (${board.type}) - 부서: ${board.department || '없음'}`);
+    });
+    
+    // 사용자의 부서 정보 가져오기
+    let userDepartment = req.session.userDepartment;
+    
+    // 세션에 부서 정보가 없으면 직원 정보에서 조회
+    if (!userDepartment && req.session.userId) {
+      try {
+        const Employee = require('../models/Employee');
+        const employee = await Employee.findOne({ userId: req.session.userId });
+        if (employee && employee.department) {
+          userDepartment = employee.department;
+          // 세션에 부서 정보 저장
+          req.session.userDepartment = userDepartment;
+        }
+      } catch (empError) {
+        console.log('직원 정보 조회 실패:', empError.message);
+      }
+    }
+    
+    console.log('게시판 목록 조회 - 사용자 정보:', {
+      userId: req.session.userId,
+      userRole: req.session.userRole,
+      userDepartment: userDepartment
+    });
+    
     // 관리자가 아닌 경우 게시판 필터링
     if (req.session.userRole !== 'admin') {
+      const beforeFilter = boards.length;
       boards = boards.filter(board => {
         // 공지사항과 자유게시판은 모든 사용자에게 표시
         if (board.type === 'notice' || board.type === 'free') {
           return true;
         }
         // 부서별 게시판은 본인 부서만 표시
-        if (board.type === 'department' && board.department === req.session.userDepartment) {
+        if (board.type === 'department' && board.department === userDepartment) {
           return true;
         }
         return false;
       });
+      
+      console.log('필터링 결과:', beforeFilter, '개 →', boards.length, '개');
+      console.log('표시될 게시판들:', boards.map(b => b.name));
+    } else {
+      console.log('관리자이므로 모든 게시판 표시');
+    }
+    
+    console.log('📤 템플릿에 전달할 게시판 수:', boards.length);
+    
+    // 헤더에 필요한 변수들 설정
+    if (req.session && req.session.userId) {
+      const User = require('../models/User');
+      const Employee = require('../models/Employee');
+      
+      const user = await User.findById(req.session.userId);
+      if (user) {
+        if (user.role === 'admin') {
+          res.locals.position = '관리자';
+          res.locals.name = user.username;
+          res.locals.department = '시스템 관리';
+          res.locals.employeePosition = '관리자';
+          res.locals.userRole = 'admin';
+        } else {
+          const employee = await Employee.findOne({ userId: req.session.userId });
+          if (employee) {
+            res.locals.position = `${employee.department || '부서미정'} / ${employee.position || '직급미정'}`;
+            res.locals.name = employee.name;
+            res.locals.department = employee.department || '부서미정';
+            res.locals.employeePosition = employee.position || '직급미정';
+            res.locals.userRole = 'user';
+          } else {
+            res.locals.position = '일반 사용자';
+            res.locals.name = user.username;
+            res.locals.department = '부서미정';
+            res.locals.employeePosition = '직급미정';
+            res.locals.userRole = 'user';
+          }
+        }
+      }
     }
     
     res.render('boards/index', { boards, session: req.session });
@@ -315,6 +384,38 @@ router.get('/:boardId', isLoggedIn, async (req, res) => {
 
     const totalPosts = await Post.countDocuments(query);
     const totalPages = Math.ceil(totalPosts / limit);
+
+    // 헤더에 필요한 변수들 설정
+    if (req.session && req.session.userId) {
+      const User = require('../models/User');
+      const Employee = require('../models/Employee');
+      
+      const user = await User.findById(req.session.userId);
+      if (user) {
+        if (user.role === 'admin') {
+          res.locals.position = '관리자';
+          res.locals.name = user.username;
+          res.locals.department = '시스템 관리';
+          res.locals.employeePosition = '관리자';
+          res.locals.userRole = 'admin';
+        } else {
+          const employee = await Employee.findOne({ userId: req.session.userId });
+          if (employee) {
+            res.locals.position = `${employee.department || '부서미정'} / ${employee.position || '직급미정'}`;
+            res.locals.name = employee.name;
+            res.locals.department = employee.department || '부서미정';
+            res.locals.employeePosition = employee.position || '직급미정';
+            res.locals.userRole = 'user';
+          } else {
+            res.locals.position = '일반 사용자';
+            res.locals.name = user.username;
+            res.locals.department = '부서미정';
+            res.locals.employeePosition = '직급미정';
+            res.locals.userRole = 'user';
+          }
+        }
+      }
+    }
 
     res.render('boards/posts', { 
       board, 

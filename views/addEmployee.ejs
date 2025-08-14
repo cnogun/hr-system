@@ -450,20 +450,76 @@
       const type = document.querySelector('input[name="jacketType"]:checked');
       const select = document.getElementById('jacketSizeSelect');
       const hidden = document.getElementById('jacketTypeHidden');
+      
       if(type) {
         select.style.display = 'block';
-        select.name = type.value === 'winterJacket' ? 'winterJacket' : 'doubleJacket';
+        // 선택된 타입에 따라 name 속성 설정
+        if(type.value === 'winterJacket') {
+          select.name = 'winterJacket';
+          select.id = 'winterJacketSelect';
+        } else if(type.value === 'doubleJacket') {
+          select.name = 'doubleJacket';
+          select.id = 'doubleJacketSelect';
+        }
         hidden.value = type.value;
       } else {
         select.style.display = 'block';
         select.name = '';
+        select.id = 'jacketSizeSelect';
         hidden.value = '';
       }
     }
+    
+    // 라디오 버튼 변경 이벤트 리스너
     document.querySelectorAll('input[name="jacketType"]').forEach(radio => {
       radio.addEventListener('change', toggleJacketSelect);
     });
+    
+    // 초기 상태 설정
     toggleJacketSelect();
+    
+    // 폼 제출 전 데이터 검증 및 로깅
+    document.getElementById('employeeForm').addEventListener('submit', function(e) {
+      console.log('=== 폼 제출 데이터 검증 ===');
+      
+      // FormData 객체 생성
+      const formData = new FormData(this);
+      
+      // 모든 필드 데이터 로깅
+      console.log('기본 정보:');
+      console.log('- 이름:', formData.get('name'));
+      console.log('- 소속:', formData.get('orgType'));
+      console.log('- 부서:', formData.get('department'));
+      console.log('- 직급:', formData.get('position'));
+      console.log('- 입사일:', formData.get('hireDate'));
+      console.log('- 연결 사용자:', formData.get('userId'));
+      console.log('- 이메일:', formData.get('email'));
+      
+      console.log('상세 정보:');
+      console.log('- 생년월일:', formData.get('birth'));
+      console.log('- 성별:', formData.get('gender'));
+      console.log('- 국적:', formData.get('nationality'));
+      console.log('- 학력:', formData.get('education'));
+      console.log('- 신장:', formData.get('height'));
+      console.log('- 체중:', formData.get('weight'));
+      console.log('- 혈액형:', formData.get('bloodType'));
+      console.log('- 집전화:', formData.get('phone'));
+      console.log('- 비상연락처:', formData.get('emergencyContact'));
+      console.log('- 급여은행:', formData.get('salaryBank'));
+      console.log('- 급여계좌:', formData.get('salaryAccount'));
+      console.log('- 주소:', formData.get('address'));
+      console.log('- 경력사항:', formData.get('career'));
+      console.log('- 특이사항:', formData.get('specialNotes'));
+      
+      console.log('유니폼 정보:');
+      console.log('- 하복 상의:', formData.get('uniformSummerTop'));
+      console.log('- 동복 상의:', formData.get('uniformWinterTop'));
+      console.log('- 춘추복:', formData.get('springAutumnUniform'));
+      console.log('- 동점퍼:', formData.get('winterJacket'));
+      console.log('- 겹점퍼:', formData.get('doubleJacket'));
+      
+      console.log('=== 폼 제출 데이터 검증 끝 ===');
+    });
 
     // 프로필 이미지 미리보기 기능
     document.addEventListener('DOMContentLoaded', function() {

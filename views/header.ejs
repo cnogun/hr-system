@@ -7,191 +7,477 @@
   - 권한별 메뉴 표시/숨김
   - 로그아웃 기능
   - 반응형 디자인 적용
+  - 현대적인 UI/UX
 -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<header class="sticky-top shadow-sm bg-white">
-  <div class="container-fluid py-2 d-flex justify-content-between align-items-center">
-    <div class="d-flex align-items-center gap-3">
-      <i class="fa-solid fa-users-gear fa-2x text-primary"></i>
-      <h2 class="mb-0 fw-bold text-primary">인사관리 시스템</h2>
-      <% if (session && session.userId) { %>
-      <nav class="nav nav-pills ms-4">
-        <a class="nav-link d-flex align-items-center" href="/dashboard"><i class="fa-solid fa-chart-line me-1"></i> 대시보드</a>
-        <a class="nav-link d-flex align-items-center" href="/employees"><i class="fa-solid fa-search me-1"></i> 직원 찾기</a>
-        <a class="nav-link d-flex align-items-center" href="/boards"><i class="fa-solid fa-comments me-1"></i> 게시판</a>
-        <% if (session && session.userRole === 'admin') { %>
-        <div class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="adminDropdown" role="button">
-            <i class="fa-solid fa-cog me-1"></i> 관리자
-          </a>
-          <ul class="dropdown-menu" id="adminDropdownMenu" style="display: none;">
 
-                          <li><a class="dropdown-item" href="/boards/admin/reports"><i class="fa-solid fa-flag me-2"></i> 게시판 신고 관리</a></li>
-            <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item" href="/employees/excel"><i class="fa-solid fa-file-arrow-down me-2"></i> 직원 목록 다운로드</a></li>
-            <li><a class="dropdown-item" href="/uniform/excel-qty"><i class="fa-solid fa-file-arrow-down me-2"></i> 유니폼 통계</a></li>
-            <li><a class="dropdown-item" href="/auth/logs/excel"><i class="fa-solid fa-file-arrow-down me-2"></i> 활동 로그</a></li>
+<header class="sticky-top shadow-lg bg-white border-bottom">
+  <div class="container-fluid py-3">
+    <div class="d-flex justify-content-between align-items-center">
+      <!-- 로고 및 브랜드 -->
+      <div class="d-flex align-items-center gap-3">
+        <div class="brand-logo">
+          <i class="fa-solid fa-users-gear fa-2x text-primary"></i>
+        </div>
+        <div class="brand-text">
+          <h2 class="mb-0 fw-bold text-primary">인사관리 시스템</h2>
+          <small class="text-muted">Human Resource Management System</small>
+        </div>
+      </div>
+      
+      <% if (session && session.userId) { %>
+      <!-- 네비게이션 메뉴 -->
+      <nav class="navbar navbar-expand-lg">
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav me-auto">
+            <li class="nav-item">
+              <a class="nav-link d-flex align-items-center" href="/dashboard">
+                <i class="fa-solid fa-chart-line me-2"></i> 대시보드
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link d-flex align-items-center" href="/employees">
+                <i class="fa-solid fa-users me-2"></i>직원 찾기
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link d-flex align-items-center" href="/boards">
+                <i class="fa-solid fa-comments me-2"></i> 게시판
+              </a>
+            </li>
+            
+
+            
+            <% if ((session && session.userRole === 'admin') || (typeof userRole !== 'undefined' && userRole === 'admin')) { %>
+            <!-- 관리자 메뉴 -->
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown">
+                <i class="fa-solid fa-cog me-2"></i> 관리자
+              </a>
+              <ul class="dropdown-menu dropdown-menu-end">
+                <li><h6 class="dropdown-header">시스템 관리</h6></li>
+                <li><a class="dropdown-item" href="/boards/admin/reports">
+                  <i class="fa-solid fa-flag me-2"></i> 게시판 신고 관리
+                </a></li>
+                <li><a class="dropdown-item" href="/employees/excel">
+                  <i class="fa-solid fa-file-arrow-down me-2"></i> 직원 목록 다운로드
+                </a></li>
+                <li><a class="dropdown-item" href="/uniform/excel-qty">
+                  <i class="fa-solid fa-tshirt me-2"></i> 유니폼 통계
+                </a></li>
+                <li><a class="dropdown-item" href="/auth/logs/excel">
+                  <i class="fa-solid fa-history me-2"></i> 활동 로그
+                </a></li>
+              </ul>
+            </li>
+            
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="employeeInputDropdown" role="button" data-bs-toggle="dropdown">
+                <i class="fa-solid fa-user-plus me-2"></i> 직원 정보
+              </a>
+              <ul class="dropdown-menu dropdown-menu-end">
+                <li><h6 class="dropdown-header">직원 등록</h6></li>
+                <li><a class="dropdown-item" href="/employees/new">
+                  <i class="fa-solid fa-user-plus me-2"></i>신입 직원
+                </a></li>
+                <li><a class="dropdown-item" href="/employees/existing">
+                  <i class="fa-solid fa-user-edit me-2"></i>기존 직원
+                </a></li>
+              </ul>
+            </li>
+            
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="securityWorkDropdown" role="button" data-bs-toggle="dropdown">
+                <i class="fa-solid fa-shield-alt me-2"></i> 보안업무
+              </a>
+              <ul class="dropdown-menu dropdown-menu-end">
+                <li><h6 class="dropdown-header">보안 관리</h6></li>
+                <li><a class="dropdown-item" href="/security/duty-orders">
+                  <i class="fa-solid fa-clipboard-list me-2"></i> 근무명령서
+                </a></li>
+                <li><a class="dropdown-item" href="/security/handover">
+                  <i class="fa-solid fa-exchange-alt me-2"></i> 인계사항
+                </a></li>
+                <li><a class="dropdown-item" href="/security/schedule">
+                  <i class="fa-solid fa-calendar-alt me-2"></i> 일정
+                </a></li>
+              </ul>
+            </li>
+            <% } %>
           </ul>
         </div>
-        <div class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="employeeInputDropdown" role="button">
-            <i class="fa-solid fa-user-plus me-1"></i> 직원 정보 입력
-          </a>
-          <ul class="dropdown-menu" id="employeeInputDropdownMenu" style="display: none;">
-            <li><a class="dropdown-item" href="/employees/new">신입 직원</a></li>
-            <li><a class="dropdown-item" href="/employees/existing">기존 직원</a></li>
-          </ul>
-        </div>
-        <% } %>
-        <% if (typeof session !== 'undefined' && session.userRole === 'admin') { %>
-          <a href="/notice/new" class="btn btn-warning ms-2">시스템 알림</a>
-        <% } %>
       </nav>
       <% } %>
-    </div>
-    <div class="text-end">
-      <% if (session && session.userId) { %>
-        <div class="d-flex align-items-center gap-3">
-          <div class="text-end">
-            <div class="fw-semibold text-primary" style="font-size: 0.85rem;"><%= position %></div>
-            <div class="fw-semibold text-dark" style="font-size: 0.85rem;"><%= name %></div>
+      
+      <!-- 사용자 정보 및 액션 -->
+      <div class="d-flex align-items-center gap-3">
+        <% if (session && session.userId) { %>
+          <div class="user-info text-end">
+            <div class="fw-semibold text-primary" style="font-size: 0.9rem;">
+              <i class="fa-solid fa-user-tie me-1"></i><%= position %>
+            </div>
+            <div class="fw-semibold text-dark" style="font-size: 0.9rem;">
+              <i class="fa-solid fa-user me-1"></i><%= name %>
+            </div>
           </div>
+          
           <div class="vr mx-2" style="height: 35px; opacity: 0.3;"></div>
-          <a href="/auth/logout" class="btn btn-outline-danger btn-sm px-3 py-1" style="font-size: 0.8rem;">
-            <i class="fa-solid fa-right-from-bracket me-1"></i> 로그아웃
-          </a>
-        </div>
-      <% } %>
+          
+          <div class="user-actions">
+            <a href="/notice/new" class="btn btn-warning btn-sm me-2">
+              <i class="fa-solid fa-bullhorn me-1"></i> 공지
+            </a>
+            <a href="/auth/logout" class="btn btn-outline-danger btn-sm">
+              <i class="fa-solid fa-right-from-bracket me-1"></i> 로그아웃
+            </a>
+          </div>
+        <% } else { %>
+          <div class="auth-actions">
+            <a href="/auth/login" class="btn btn-primary btn-sm me-2">
+              <i class="fa-solid fa-sign-in-alt me-1"></i> 로그인
+            </a>
+            <a href="/auth/register" class="btn btn-outline-primary btn-sm">
+              <i class="fa-solid fa-user-plus me-1"></i> 회원가입
+            </a>
+          </div>
+        <% } %>
+      </div>
     </div>
   </div>
 </header>
-<style>
-body { background: #f8fafc; }
 
-/* 드롭다운 스타일 개선 */
+<script>
+// Bootstrap 드롭다운이 로드될 때까지 대기
+function waitForBootstrap() {
+  if (typeof bootstrap !== 'undefined') {
+    console.log('Bootstrap 로드됨, 드롭다운 초기화 시작');
+    
+    // 모든 드롭다운 요소 초기화
+    document.querySelectorAll('.dropdown-toggle').forEach(function(element) {
+      try {
+        // 기존 인스턴스가 있다면 제거
+        const existingInstance = bootstrap.Dropdown.getInstance(element);
+        if (existingInstance) {
+          existingInstance.dispose();
+        }
+        
+        // 새 인스턴스 생성 (autoClose: true로 설정)
+        const dropdown = new bootstrap.Dropdown(element, {
+          autoClose: true,
+          boundary: 'viewport'
+        });
+        console.log('드롭다운 초기화됨:', element.textContent.trim());
+        
+        // 클릭 이벤트 강제 추가
+        element.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          
+          // 다른 모든 드롭다운 닫기
+          closeAllOtherDropdowns(this);
+          
+          const dropdown = bootstrap.Dropdown.getInstance(this);
+          if (dropdown) {
+            dropdown.toggle();
+          }
+        });
+        
+      } catch (error) {
+        console.error('드롭다운 초기화 오류:', error);
+      }
+    });
+    
+    console.log('모든 드롭다운 초기화 완료');
+    
+    // 드롭다운 메뉴 표시 확인
+    setTimeout(function() {
+      document.querySelectorAll('.dropdown-menu').forEach(function(menu) {
+        console.log('드롭다운 메뉴 확인:', menu);
+      });
+      
+      // 드롭다운 상태 디버깅
+      console.log('=== 드롭다운 상태 확인 ===');
+      document.querySelectorAll('.dropdown-toggle').forEach(function(toggle) {
+        const dropdown = bootstrap.Dropdown.getInstance(toggle);
+        console.log('토글:', toggle.textContent.trim(), '인스턴스:', dropdown ? '있음' : '없음');
+      });
+    }, 100);
+    
+  } else {
+    console.log('Bootstrap 로드 대기 중...');
+    setTimeout(waitForBootstrap, 100);
+  }
+}
+
+// 다른 모든 드롭다운 닫기 함수
+function closeAllOtherDropdowns(currentToggle) {
+  document.querySelectorAll('.dropdown-toggle').forEach(function(toggle) {
+    if (toggle !== currentToggle) {
+      const dropdown = bootstrap.Dropdown.getInstance(toggle);
+      if (dropdown) {
+        dropdown.hide();
+      }
+    }
+  });
+}
+
+// 드롭다운 강제 초기화 함수
+function forceInitializeDropdowns() {
+  console.log('드롭다운 강제 초기화 시작');
+  
+  document.querySelectorAll('.dropdown-toggle').forEach(function(element) {
+    // data-bs-toggle 속성 확인
+    if (!element.getAttribute('data-bs-toggle')) {
+      element.setAttribute('data-bs-toggle', 'dropdown');
+    }
+    
+    // aria-expanded 속성 추가
+    element.setAttribute('aria-expanded', 'false');
+    
+    // Bootstrap 드롭다운 인스턴스 생성
+    try {
+      const dropdown = new bootstrap.Dropdown(element, {
+        autoClose: true,
+        boundary: 'viewport'
+      });
+      console.log('강제 초기화 완료:', element.textContent.trim());
+    } catch (error) {
+      console.error('강제 초기화 오류:', error);
+    }
+  });
+}
+
+// 페이지 클릭 시 모든 드롭다운 닫기
+document.addEventListener('click', function(e) {
+  // 드롭다운 토글이나 메뉴 내부 클릭이 아닌 경우
+  if (!e.target.closest('.dropdown')) {
+    document.querySelectorAll('.dropdown-toggle').forEach(function(toggle) {
+      const dropdown = bootstrap.Dropdown.getInstance(toggle);
+      if (dropdown) {
+        dropdown.hide();
+      }
+    });
+  }
+});
+
+// 페이지 로드 시 드롭다운 초기화
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('DOM 로드됨, Bootstrap 대기 시작');
+  waitForBootstrap();
+  
+  // 추가 안전장치: 1초 후 강제 초기화
+  setTimeout(function() {
+    if (typeof bootstrap !== 'undefined') {
+      forceInitializeDropdowns();
+    }
+  }, 1000);
+});
+
+// 현재 페이지 활성화 표시
+document.addEventListener('DOMContentLoaded', function() {
+  const currentPath = window.location.pathname;
+  const navLinks = document.querySelectorAll('.navbar-nav .nav-link');
+  
+  navLinks.forEach(link => {
+    if (link.getAttribute('href') === currentPath) {
+      link.classList.add('active');
+    }
+  });
+});
+</script>
+
+<style>
+body { 
+  background: linear-gradient(135deg, #f8fafc 0%, #e2eafc 100%);
+  min-height: 100vh;
+}
+
+/* 브랜드 스타일 */
+.brand-logo {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 0.75rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.brand-text small {
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+/* 네비게이션 스타일 */
+.navbar-nav .nav-link {
+  color: #495057;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  margin: 0 0.25rem;
+}
+
+.navbar-nav .nav-link:hover {
+  color: #667eea;
+  background-color: rgba(102, 126, 234, 0.1);
+  transform: translateY(-1px);
+}
+
+.navbar-nav .nav-link.active {
+  color: #667eea;
+  background-color: rgba(102, 126, 234, 0.1);
+}
+
+/* 드롭다운 스타일 */
 .dropdown-menu {
-  border: 1px solid rgba(0,0,0,.15);
-  box-shadow: 0 0.5rem 1rem rgba(0,0,0,.175);
+  border: none;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+  border-radius: 12px;
+  padding: 0.5rem 0;
+  min-width: 220px;
+  border: 1px solid rgba(0,0,0,0.05);
+  display: none; /* 기본적으로 숨김 */
   position: absolute;
-  z-index: 1000;
-  background-color: white;
-  min-width: 200px;
+  z-index: 9999; /* 높은 z-index로 다른 요소 위에 표시 */
+  background: white;
+  margin-top: 0.5rem;
+  transition: opacity 0.15s ease-in-out, transform 0.15s ease-in-out;
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+.dropdown-menu.show {
+  display: block !important; /* show 클래스가 있을 때 강제로 표시 */
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: translateY(0) !important;
+}
+
+/* 드롭다운 토글 버튼 스타일 */
+.dropdown-toggle::after {
+  display: inline-block;
+  margin-left: 0.255em;
+  vertical-align: 0.255em;
+  content: "";
+  border-top: 0.3em solid;
+  border-right: 0.3em solid transparent;
+  border-bottom: 0;
+  border-left: 0.3em solid transparent;
+  transition: transform 0.15s ease-in-out;
+}
+
+/* 드롭다운이 열렸을 때 화살표 회전 */
+.dropdown.show .dropdown-toggle::after {
+  transform: rotate(180deg);
+}
+
+/* 드롭다운 아이템 스타일 */
+.dropdown-item {
+  padding: 0.75rem 1rem;
+  color: #495057;
+  transition: all 0.2s ease;
+  border-radius: 0;
+  display: block;
+  text-decoration: none;
+  white-space: nowrap;
+  position: relative;
 }
 
 .dropdown-item:hover {
   background-color: #f8f9fa;
+  color: #667eea;
+  transform: translateX(5px);
 }
 
-.nav-link.dropdown-toggle::after {
-  margin-left: 0.5em;
+.dropdown-item:active {
+  background-color: #667eea;
+  color: white;
 }
 
-/* 커스텀 드롭다운 스타일 */
-.custom-dropdown {
-  position: relative;
-}
-
-.custom-dropdown-menu {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  z-index: 1000;
-  display: none;
-  min-width: 200px;
-  padding: 0.5rem 0;
-  margin: 0.125rem 0 0;
+/* 드롭다운 헤더 스타일 */
+.dropdown-header {
+  color: #6c757d;
+  font-weight: 600;
   font-size: 0.875rem;
-  color: #212529;
-  text-align: left;
-  list-style: none;
-  background-color: #fff;
-  background-clip: padding-box;
-  border: 1px solid rgba(0,0,0,.15);
-  border-radius: 0.375rem;
-  box-shadow: 0 0.5rem 1rem rgba(0,0,0,.175);
+  padding: 0.5rem 1rem;
+  margin-bottom: 0.25rem;
+  border-bottom: 1px solid #e9ecef;
 }
 
-.custom-dropdown-menu.show {
-  display: block;
+/* 사용자 정보 스타일 */
+.user-info {
+  background: rgba(102, 126, 234, 0.05);
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  border: 1px solid rgba(102, 126, 234, 0.1);
+}
+
+/* 버튼 스타일 */
+.btn {
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.btn-sm {
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 991.98px) {
+  .navbar-collapse {
+    background: white;
+    padding: 1rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    margin-top: 1rem;
+  }
+  
+  .navbar-nav {
+    gap: 0.5rem;
+  }
+  
+  .navbar-nav .nav-link {
+    margin: 0;
+    padding: 0.75rem 1rem;
+  }
+  
+  .user-actions {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .brand-text h2 {
+    font-size: 1.5rem;
+  }
+  
+  .brand-text small {
+    display: none;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .container-fluid {
+    padding: 1rem;
+  }
+  
+  .brand-logo {
+    padding: 0.5rem;
+  }
+  
+  .brand-logo i {
+    font-size: 1.5rem;
+  }
+  
+  .brand-text h2 {
+    font-size: 1.25rem;
+  }
 }
 </style> 
-<script>
-window.addEventListener('unload', function() {
-  navigator.sendBeacon('/auth/logout');
-});
-
-// 커스텀 드롭다운 구현
-document.addEventListener('DOMContentLoaded', function() {
-  console.log('DOM 로드 완료 - 커스텀 드롭다운 초기화 시작');
-  
-  // 관리자 드롭다운
-  const adminDropdown = document.getElementById('adminDropdown');
-  const adminDropdownMenu = document.getElementById('adminDropdownMenu');
-  
-  if (adminDropdown && adminDropdownMenu) {
-    console.log('관리자 드롭다운 요소 발견');
-    
-    adminDropdown.addEventListener('click', function(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      console.log('관리자 드롭다운 클릭됨');
-      
-      // 다른 드롭다운들 닫기
-      if (employeeInputDropdownMenu) {
-        employeeInputDropdownMenu.style.display = 'none';
-      }
-      
-      // 현재 드롭다운 토글
-      if (adminDropdownMenu.style.display === 'none' || adminDropdownMenu.style.display === '') {
-        adminDropdownMenu.style.display = 'block';
-        console.log('관리자 드롭다운 열림');
-      } else {
-        adminDropdownMenu.style.display = 'none';
-        console.log('관리자 드롭다운 닫힘');
-      }
-    });
-  }
-  
-  // 직원정보입력 드롭다운
-  const employeeInputDropdown = document.getElementById('employeeInputDropdown');
-  const employeeInputDropdownMenu = document.getElementById('employeeInputDropdownMenu');
-  
-  if (employeeInputDropdown && employeeInputDropdownMenu) {
-    console.log('직원정보입력 드롭다운 요소 발견');
-    
-    employeeInputDropdown.addEventListener('click', function(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      console.log('직원정보입력 드롭다운 클릭됨');
-      
-      // 다른 드롭다운들 닫기
-      if (adminDropdownMenu) {
-        adminDropdownMenu.style.display = 'none';
-      }
-      
-      // 현재 드롭다운 토글
-      if (employeeInputDropdownMenu.style.display === 'none' || employeeInputDropdownMenu.style.display === '') {
-        employeeInputDropdownMenu.style.display = 'block';
-        console.log('직원정보입력 드롭다운 열림');
-      } else {
-        employeeInputDropdownMenu.style.display = 'none';
-        console.log('직원정보입력 드롭다운 닫힘');
-      }
-    });
-  }
-  
-  // 페이지 클릭시 드롭다운 닫기
-  document.addEventListener('click', function(e) {
-    if (adminDropdownMenu && !adminDropdown.contains(e.target)) {
-      adminDropdownMenu.style.display = 'none';
-    }
-    if (employeeInputDropdownMenu && !employeeInputDropdown.contains(e.target)) {
-      employeeInputDropdownMenu.style.display = 'none';
-    }
-  });
-  
-  console.log('커스텀 드롭다운 초기화 완료');
-});
-</script> 

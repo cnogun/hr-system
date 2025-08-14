@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> - 인사관리 시스템</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    body {
+      background: linear-gradient(135deg, #f8fafc 0%, #e2eafc 100%);
+      min-height: 100vh;
+    }
+    .duty-order-card {
+      transition: all 0.3s ease-in-out;
+      border: none;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+      margin-bottom: 1rem;
+    }
+    .duty-order-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
+    }
+    .priority-high { 
+      border-left: 4px solid #dc3545; 
+      background: linear-gradient(135deg, #fff5f5 0%, #fed7d7 100%);
+    }
+    .priority-medium { 
+      border-left: 4px solid #ffc107; 
+      background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+    }
+    .priority-low { 
+      border-left: 4px solid #28a745; 
+      background: linear-gradient(135deg, #f0fff4 0%, #c6f6d5 100%);
+    }
+    .status-pending { 
+      background: linear-gradient(135deg, #fffbf0 0%, #fef5e7 100%);
+      border-left: 4px solid #f59e0b;
+    }
+    .status-active { 
+      background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+      border-left: 4px solid #0ea5e9;
+    }
+    .status-completed { 
+      background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+      border-left: 4px solid #16a34a;
+    }
+    .progress-bar-custom {
+      height: 8px;
+      border-radius: 4px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    .filter-card {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      border: 1px solid rgba(0,0,0,0.05);
+      margin-bottom: 1.5rem;
+    }
+    .filter-card .form-control,
+    .filter-card .form-select {
+      border-radius: 8px;
+      border: 1px solid #e1e5e9;
+      transition: all 0.2s ease;
+    }
+    .filter-card .form-control:focus,
+    .filter-card .form-select:focus {
+      border-color: #667eea;
+      box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    .btn {
+      border-radius: 8px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    .stats-summary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+    .stat-item {
+      text-align: center;
+      padding: 1rem;
+      background: rgba(255,255,255,0.1);
+      border-radius: 8px;
+    }
+    .stat-number {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+    .stat-label {
+      font-size: 0.8rem;
+      opacity: 0.9;
+    }
+    .priority-badge {
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .priority-high .priority-badge {
+      background: #dc3545;
+      color: white;
+    }
+    .priority-medium .priority-badge {
+      background: #ffc107;
+      color: #212529;
+    }
+    .priority-low .priority-badge {
+      background: #28a745;
+      color: white;
+    }
+    .status-badge {
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .status-pending .status-badge {
+      background: #f59e0b;
+      color: white;
+    }
+    .status-active .status-badge {
+      background: #0ea5e9;
+      color: white;
+    }
+    .status-completed .status-badge {
+      background: #16a34a;
+      color: white;
+    }
+    @media (max-width: 768px) {
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .filter-card {
+        margin-bottom: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <%- include('../header') %>
+  
+  <div class="container mt-4 flex-grow-1">
+    <div class="row">
+      <div class="col-12">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4">
+          <h2 class="mb-3 mb-md-0">
+            <i class="fas fa-clipboard-list text-primary me-2"></i><%= title %>
+          </h2>
+          <div class="d-flex gap-2">
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newDutyOrderModal">
+              <i class="fas fa-plus me-1"></i>새 명령서
+            </button>
+            <button class="btn btn-outline-secondary" data-bs-toggle="collapse" data-bs-target="#filterCollapse">
+              <i class="fas fa-filter me-1"></i>필터
+            </button>
+          </div>
+        </div>
+        
+        <!-- 통계 요약 -->
+        <div class="stats-summary">
+          <h5 class="mb-3"><i class="fas fa-chart-bar me-2"></i>요약</h5>
+          <div class="stats-grid">
+            <div class="stat-item">
+              <div class="stat-number"><%= pendingCount || 0 %></div>
+              <div class="stat-label">대기중</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-number"><%= activeCount || 0 %></div>
+              <div class="stat-label">진행중</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-number"><%= completedCount || 0 %></div>
+              <div class="stat-label">완료</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-number"><%= highPriorityCount || 0 %></div>
+              <div class="stat-label">긴급</div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 필터 섹션 -->
+        <div class="collapse mb-4" id="filterCollapse">
+          <div class="filter-card">
+            <div class="card-body">
+              <form method="GET" class="row g-3">
+                <div class="col-md-3">
+                  <label class="form-label fw-bold">부서</label>
+                  <select name="department" class="form-select">
+                    <option value="">전체</option>
+                    <option value="보안1팀" <%= filters.department === '보안1팀' ? 'selected' : '' %>>보안1팀</option>
+                    <option value="보안2팀" <%= filters.department === '보안2팀' ? 'selected' : '' %>>보안2팀</option>
+                    <option value="보안3팀" <%= filters.department === '보안3팀' ? 'selected' : '' %>>보안3팀</option>
+                  </select>
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label fw-bold">우선순위</label>
+                  <select name="priority" class="form-select">
+                    <option value="">전체</option>
+                    <option value="high" <%= filters.priority === 'high' ? 'selected' : '' %>>긴급</option>
+                    <option value="medium" <%= filters.priority === 'medium' ? 'selected' : '' %>>보통</option>
+                    <option value="low" <%= filters.priority === 'low' ? 'selected' : '' %>>낮음</option>
+                  </select>
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label fw-bold">상태</label>
+                  <select name="status" class="form-select">
+                    <option value="">전체</option>
+                    <option value="pending" <%= filters.status === 'pending' ? 'selected' : '' %>>대기중</option>
+                    <option value="active" <%= filters.status === 'active' ? 'selected' : '' %>>진행중</option>
+                    <option value="completed" <%= filters.status === 'completed' ? 'selected' : '' %>>완료</option>
+                  </select>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                  <button type="submit" class="btn btn-primary me-2">적용</button>
+                  <a href="/security/duty-orders" class="btn btn-outline-secondary">초기화</a>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+        
+        <% if (session.message) { %>
+          <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle me-2"></i>
+            <%= session.message %>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+          <% delete session.message; %>
+        <% } %>
+
+        <% if (session.error) { %>
+          <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <%= session.error %>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+          <% delete session.error; %>
+        <% } %>
+
+        <!-- 근무명령서 목록 -->
+        <div class="row">
+          <% if (dutyOrders && dutyOrders.length > 0) { %>
+            <% dutyOrders.forEach(order => { %>
+              <div class="col-12 col-md-6 col-lg-4 mb-4">
+                <div class="card duty-order-card priority-<%= order.priority %>">
+                  <div class="card-header d-flex justify-content-between align-items-center">
+                    <span class="badge bg-<%= order.priority === 'high' ? 'danger' : order.priority === 'medium' ? 'warning' : 'success' %>">
+                      <%= order.priority === 'high' ? '긴급' : order.priority === 'medium' ? '보통' : '낮음' %>
+                    </span>
+                    <small class="text-muted"><%= new Date(order.createdAt).toLocaleDateString('ko-KR') %></small>
+                  </div>
+                  <div class="card-body">
+                    <h6 class="card-title">
+                      <a href="/security/duty-orders/<%= order._id %>" class="text-decoration-none">
+                        <%= order.title %>
+                      </a>
+                    </h6>
+                    <p class="card-text small"><%= order.content.length > 100 ? order.content.substring(0, 100) + '...' : order.content %></p>
+                    
+                    <!-- 진행률 표시 -->
+                    <div class="mb-3">
+                      <div class="d-flex justify-content-between align-items-center mb-1">
+                        <small class="text-muted">진행률</small>
+                        <small class="text-muted"><%= order.progress || 0 %>%</small>
+                      </div>
+                      <div class="progress progress-bar-custom">
+                        <div class="progress-bar bg-<%= order.progress >= 100 ? 'success' : order.progress >= 50 ? 'warning' : 'info' %>" 
+                             style="width: <%= (order.progress || 0) %>%"></div>
+                      </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-center">
+                      <span class="badge bg-<%= order.status === 'pending' ? 'warning' : order.status === 'active' ? 'info' : 'success' %>">
+                        <%= order.status === 'pending' ? '대기중' : order.status === 'active' ? '진행중' : '완료' %>
+                      </span>
+                      <small class="text-muted">담당: <%= order.department %></small>
+                    </div>
+                    
+                    <% if (order.deadline) { %>
+                      <div class="mt-2">
+                        <small class="text-muted">
+                          <i class="fas fa-clock me-1"></i>
+                          마감일: <%= new Date(order.deadline).toLocaleDateString('ko-KR') %>
+                        </small>
+                      </div>
+                    <% } %>
+                    
+                    <!-- 액션 버튼들 -->
+                    <div class="mt-3 d-flex gap-2">
+                      <!-- 상세보기 버튼 -->
+                      <a href="/security/duty-orders/<%= order._id %>" class="btn btn-primary btn-sm flex-fill">
+                        <i class="fas fa-eye me-1"></i>상세보기
+                      </a>
+                      
+                      <!-- 빠른 상태 변경 버튼 -->
+                      <% if (order.status !== 'completed') { %>
+                        <button class="btn btn-success btn-sm" onclick="quickComplete('<%= order._id %>')" title="완료 처리">
+                          <i class="fas fa-check"></i>
+                        </button>
+                      <% } %>
+                      
+                      <!-- 진행률 빠른 조정 -->
+                      <button class="btn btn-info btn-sm" onclick="quickProgress('<%= order._id %>')" title="진행률 조정">
+                        <i class="fas fa-percentage"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            <% }); %>
+          <% } else { %>
+            <div class="col-12">
+              <div class="text-center text-muted mt-5">
+                <i class="fas fa-clipboard-list fa-3x mb-3"></i>
+                <h5>등록된 근무명령서가 없습니다</h5>
+                <p>새로운 근무명령서를 등록해보세요.</p>
+              </div>
+            </div>
+          <% } %>
+        </div>
+
+        <!-- 페이지네이션 -->
+        <% if (pagination.total > 1) { %>
+          <nav aria-label="근무명령서 페이지네이션" class="mt-4">
+            <ul class="pagination justify-content-center">
+              <% if (pagination.hasPrev) { %>
+                <li class="page-item">
+                  <a class="page-link" href="?page=<%= pagination.current - 1 %>&department=<%= filters.department || '' %>&priority=<%= filters.priority || '' %>&status=<%= filters.status || '' %>">
+                    이전
+                  </a>
+                </li>
+              <% } %>
+              
+              <% for (let i = 1; i <= pagination.total; i++) { %>
+                <li class="page-item <%= i === pagination.current ? 'active' : '' %>">
+                  <a class="page-link" href="?page=<%= i %>&department=<%= filters.department || '' %>&priority=<%= filters.priority || '' %>&status=<%= filters.status || '' %>">
+                    <%= i %>
+                  </a>
+                </li>
+              <% } %>
+              
+              <% if (pagination.hasNext) { %>
+                <li class="page-item">
+                  <a class="page-link" href="?page=<%= pagination.current + 1 %>&department=<%= filters.department || '' %>&priority=<%= filters.priority || '' %>&status=<%= filters.status || '' %>">
+                    다음
+                  </a>
+                </li>
+              <% } %>
+            </ul>
+          </nav>
+        <% } %>
+      </div>
+    </div>
+  </div>
+
+  <!-- 새 명령서 모달 -->
+  <div class="modal fade" id="newDutyOrderModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">새 근무명령서</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <form method="POST" action="/security/duty-orders" enctype="multipart/form-data">
+          <div class="modal-body">
+            <div class="row mb-3">
+              <div class="col-md-8">
+                <label class="form-label">제목 <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" name="title" required>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">우선순위 <span class="text-danger">*</span></label>
+                <select class="form-select" name="priority" required>
+                  <option value="">선택</option>
+                  <option value="high">긴급</option>
+                  <option value="medium">보통</option>
+                  <option value="low">낮음</option>
+                </select>
+              </div>
+            </div>
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label class="form-label">담당 부서 <span class="text-danger">*</span></label>
+                <select class="form-select" name="department" required>
+                  <option value="">선택</option>
+                  <option value="보안1팀">보안1팀</option>
+                  <option value="보안2팀">보안2팀</option>
+                  <option value="보안3팀">보안3팀</option>
+                  <option value="전체">전체</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">마감일</label>
+                <input type="date" class="form-control" name="deadline">
+              </div>
+            </div>
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label class="form-label">담당자</label>
+                <input type="text" class="form-control" name="assignedTo" placeholder="직원 ID (쉼표로 구분)">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">첨부파일</label>
+                <input type="file" class="form-control" name="attachments" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.jpg,.jpeg,.png,.gif">
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">내용 <span class="text-danger">*</span></label>
+              <textarea class="form-control" name="content" rows="4" required></textarea>
+            </div>
+            <div class="mb-3">
+              <small class="text-muted">첨부파일: 최대 5개 파일, 각 파일 5MB 이하 (PDF, Word, Excel, 텍스트, 이미지)</small>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+            <button type="submit" class="btn btn-primary">등록</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  
+  <%- include('../footer') %>
+  
+  <script>
+    // 빠른 완료 처리
+    async function quickComplete(orderId) {
+      if (!confirm('이 근무명령서를 완료 처리하시겠습니까?')) return;
+      
+      try {
+        const response = await fetch(`/security/api/duty-orders/${orderId}/status`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ status: 'completed', progress: 100 })
+        });
+        
+        if (response.ok) {
+          location.reload();
+        } else {
+          alert('상태 변경에 실패했습니다.');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('상태 변경 중 오류가 발생했습니다.');
+      }
+    }
+    
+    // 빠른 진행률 조정
+    async function quickProgress(orderId) {
+      const progress = prompt('진행률을 입력하세요 (0-100):', '50');
+      if (progress === null || progress === '') return;
+      
+      const progressNum = parseInt(progress);
+      if (isNaN(progressNum) || progressNum < 0 || progressNum > 100) {
+        alert('0-100 사이의 숫자를 입력해주세요.');
+        return;
+      }
+      
+      try {
+        const response = await fetch(`/security/api/duty-orders/${orderId}/progress`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ progress: progressNum })
+        });
+        
+        if (response.ok) {
+          location.reload();
+        } else {
+          alert('진행률 업데이트에 실패했습니다.');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('진행률 업데이트 중 오류가 발생했습니다.');
+      }
+    }
+  </script>
+</body>
+</html>

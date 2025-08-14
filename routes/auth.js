@@ -89,40 +89,88 @@ router.get('/login', (req, res) => {
 
 // 로그인 처리
 router.post('/login', async (req, res) => {
-  const { username, password } = req.body;
-  const user = await User.findOne({ username });
-  if (!user) {
-    return res.send('존재하지 않는 사용자입니다.');
+  try {
+    const { username, password } = req.body;
+    
+    // 입력값 검증
+    if (!username || !password) {
+      return res.status(400).send(`
+        <script>
+          alert('사용자명과 비밀번호를 모두 입력해주세요.');
+          history.back();
+        </script>
+      `);
+    }
+    
+    // 사용자 찾기
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(400).send(`
+        <script>
+          alert('존재하지 않는 사용자입니다.');
+          history.back();
+        </script>
+      `);
+    }
+    
+    // 비밀번호 확인
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).send(`
+        <script>
+          alert('비밀번호가 일치하지 않습니다.');
+          history.back();
+        </script>
+      `);
+    }
+    
+    // 사용자 정보를 세션에 저장
+    req.session.userId = user._id;
+    req.session.username = user.username;
+    req.session.userEmail = user.email;
+    req.session.userRole = user.role;
+    
+    // 직원 정보에서 부서 정보 가져오기 (관리자가 아닌 경우에만)
+    if (user.role !== 'admin') {
+      const Employee = require('../models/Employee');
+      const employee = await Employee.findOne({ userId: user._id });
+      if (employee) {
+        req.session.userDepartment = employee.department;
+        req.session.userName = employee.name;
+        req.session.userPosition = employee.position;
+      }
+    }
+    
+    // 로그인 로그 기록
+    try {
+      await Log.create({
+        userId: user._id,
+        action: 'login',
+        detail: '로그인',
+        ip: req.ip,
+        userAgent: req.headers['user-agent']
+      });
+    } catch (logError) {
+      console.error('로그인 로그 기록 실패:', logError);
+      // 로그 기록 실패는 로그인을 막지 않음
+    }
+    
+    // 관리자인 경우 대시보드로, 일반 사용자는 직원 목록으로
+    if (user.role === 'admin') {
+      res.redirect('/dashboard');
+    } else {
+      res.redirect('/employees');
+    }
+    
+  } catch (error) {
+    console.error('로그인 처리 오류:', error);
+    res.status(500).send(`
+      <script>
+        alert('로그인 처리 중 오류가 발생했습니다.\\n\\n오류: ${error.message}');
+        history.back();
+      </script>
+    `);
   }
-  const isMatch = await bcrypt.compare(password, user.password);
-  if (!isMatch) {
-    return res.send('비밀번호가 일치하지 않습니다.');
-  }
-  
-  // 사용자 정보를 세션에 저장
-  req.session.userId = user._id;
-  req.session.username = user.username;
-  req.session.userEmail = user.email;
-  req.session.userRole = user.role;
-  
-  // 직원 정보에서 부서 정보 가져오기
-  const Employee = require('../models/Employee');
-  const employee = await Employee.findOne({ userId: user._id });
-  if (employee) {
-    req.session.userDepartment = employee.department;
-    req.session.userName = employee.name;
-    req.session.userPosition = employee.position; // 직급 정보 추가
-  }
-  
-  // 로그인 로그 기록
-  await Log.create({
-    userId: user._id,
-    action: 'login',
-    detail: '로그인',
-    ip: req.ip,
-    userAgent: req.headers['user-agent']
-  });
-  res.redirect('/employees');
 });
 
 // 로그아웃
