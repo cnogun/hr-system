@@ -75,15 +75,20 @@
             
             <li class="nav-item dropdown">
               <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="employeeInputDropdown" role="button" data-bs-toggle="dropdown">
-                <i class="fa-solid fa-user-plus me-2"></i> 직원 정보
+                <i class="fa-solid fa-user-plus me-2"></i> 정보 입력
               </a>
               <ul class="dropdown-menu dropdown-menu-end">
                 <li><h6 class="dropdown-header">직원 등록</h6></li>
                 <li><a class="dropdown-item" href="/employees/new">
-                  <i class="fa-solid fa-user-plus me-2"></i>신입 직원
+                  <i class="fa-solid fa-user-plus me-2"></i>신입사원등록
                 </a></li>
                 <li><a class="dropdown-item" href="/employees/existing">
-                  <i class="fa-solid fa-user-edit me-2"></i>기존 직원
+                  <i class="fa-solid fa-user-edit me-2"></i>등록사원수정
+                </a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><h6 class="dropdown-header">근태 관리</h6></li>
+                <li><a class="dropdown-item" href="/attendance">
+                  <i class="fa-solid fa-clock me-2"></i>근태 입력
                 </a></li>
               </ul>
             </li>
@@ -114,25 +119,24 @@
       <!-- 사용자 정보 및 액션 -->
       <div class="d-flex align-items-center gap-3">
         <% if (session && session.userId) { %>
-          <div class="user-info text-end">
-            <div class="fw-semibold text-primary" style="font-size: 0.9rem;">
-              <i class="fa-solid fa-user-tie me-1"></i><%= position %>
-            </div>
-            <div class="fw-semibold text-dark" style="font-size: 0.9rem;">
-              <i class="fa-solid fa-user me-1"></i><%= name %>
-            </div>
-          </div>
+          <a href="/notice/new" class="btn btn-warning btn-sm me-2">
+            <i class="fa-solid fa-bullhorn me-1"></i> 시스템 공지
+          </a>
           
           <div class="vr mx-2" style="height: 35px; opacity: 0.3;"></div>
           
-          <div class="user-actions">
-            <a href="/notice/new" class="btn btn-warning btn-sm me-2">
-              <i class="fa-solid fa-bullhorn me-1"></i> 공지
-            </a>
-            <a href="/auth/logout" class="btn btn-outline-danger btn-sm">
-              <i class="fa-solid fa-right-from-bracket me-1"></i> 로그아웃
-            </a>
+          <div class="user-info text-end">
+            <div class="fw-semibold text-primary" style="font-size: 0.9rem;">
+              <i class="fa-solid fa-user me-1"></i><%= name %>
+            </div>
+            <div class="fw-semibold text-dark" style="font-size: 0.9rem;">
+              <i class="fa-solid fa-user-tie me-1"></i><%= position %>
+            </div>
           </div>
+          
+          <a href="/auth/logout" class="btn btn-outline-danger btn-sm">
+            <i class="fa-solid fa-right-from-bracket me-1"></i> 로그아웃
+          </a>
         <% } else { %>
           <div class="auth-actions">
             <a href="/auth/login" class="btn btn-primary btn-sm me-2">

@@ -110,6 +110,7 @@ app.use(async (req, res, next) => {
 });
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/uploads/security', express.static(path.join(__dirname, 'uploads/security')));
+app.use(express.static(path.join(__dirname, 'public')));
 
 // 라우트 연결
 const employeeRoutes = require('./routes/employees');
@@ -119,6 +120,7 @@ const adminRoutes = require('./routes/admin');
 const noticeRoutes = require('./routes/notice');
 const boardRoutes = require('./routes/boards');
 const securityRoutes = require('./routes/security');
+const attendanceRoutes = require('./routes/attendance');
 app.use('/employees', employeeRoutes);
 app.use('/auth', authRoutes);
 app.use('/uniform', uniformRoutes);
@@ -126,6 +128,7 @@ app.use('/admin', adminRoutes);
 app.use('/notice', noticeRoutes);
 app.use('/boards', boardRoutes);
 app.use('/security', securityRoutes);
+app.use('/attendance', attendanceRoutes);
 
 // 메인 페이지
 app.get('/', (req, res) => {
