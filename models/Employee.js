@@ -123,6 +123,9 @@ const employeeSchema = new mongoose.Schema({
   
   // 경력사항
   career: { type: String },
+  
+  // 근태 정보 (동적 필드로 날짜별 근태 데이터 저장)
+  attendance: { type: Map, of: Object, default: {} },
 });
 
 module.exports = mongoose.model('Employee', employeeSchema); 

@@ -75,6 +75,12 @@ router.post('/save', async (req, res) => {
               status: data.status,
               checkIn: data.checkIn || '',
               checkOut: data.checkOut || '',
+              basic: data.basic || '',
+              overtime: data.overtime || '',
+              special: data.special || '',
+              specialOvertime: data.specialOvertime || '',
+              night: data.night || '',
+              totalTime: data.totalTime || '',
               note: data.note || '',
               updatedAt: new Date()
             }
@@ -106,12 +112,18 @@ router.get('/data/:date', async (req, res) => {
       name: 1,
       department: 1,
       position: 1,
-      [`attendance.${date}`]: 1
+      attendance: 1
     });
 
     const attendanceData = {};
     employees.forEach(emp => {
-      attendanceData[emp._id] = emp.attendance && emp.attendance[date] ? emp.attendance[date] : {};
+      if (emp.attendance && emp.attendance.has(date)) {
+        // MongoDB Map 타입을 일반 객체로 변환
+        const dateData = emp.attendance.get(date);
+        attendanceData[emp._id] = dateData;
+      } else {
+        attendanceData[emp._id] = {};
+      }
     });
 
     res.json({ success: true, data: attendanceData });
