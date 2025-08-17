@@ -24,12 +24,25 @@ router.get('/', async (req, res) => {
     const today = new Date();
     const dateString = today.toISOString().split('T')[0];
 
-    // 모든 직원 조회
-    const employees = await Employee.find().sort({ name: 1 });
+    // URL 파라미터에서 부서 가져오기
+    const selectedDepartment = req.query.department || '';
+
+    // 직원 조회 (부서별 필터링 적용)
+    let employeeQuery = { status: '재직' };
+    if (selectedDepartment) {
+      employeeQuery.department = selectedDepartment;
+    }
+    const employees = await Employee.find(employeeQuery).sort({ name: 1 });
+
+    // 전체 부서 목록 가져오기 (필터링과 관계없이 모든 부서)
+    const allEmployees = await Employee.find({ status: '재직' });
+    const allDepartments = [...new Set(allEmployees.map(emp => emp.department || '부서미정'))].sort();
 
     res.render('attendance', {
       employees,
       today: dateString,
+      selectedDepartment,
+      allDepartments,
       session: req.session
     });
 
@@ -106,9 +119,16 @@ router.get('/data/:date', async (req, res) => {
     }
 
     const { date } = req.params;
+    const { department } = req.query;
 
-    // 해당 날짜의 모든 직원 근태 정보 조회
-    const employees = await Employee.find({}, {
+    // 직원 조회 (부서별 필터링 적용)
+    let employeeQuery = { status: '재직' };
+    if (department) {
+      employeeQuery.department = department;
+    }
+
+    // 해당 날짜의 직원 근태 정보 조회 (필터링 적용)
+    const employees = await Employee.find(employeeQuery, {
       name: 1,
       department: 1,
       position: 1,

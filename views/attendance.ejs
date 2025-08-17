@@ -19,6 +19,32 @@
           </div>
         </div>
 
+        <!-- 부서별 필터 -->
+        <div class="card shadow-sm mb-4">
+          <div class="card-body">
+            <form method="GET" class="row g-3 align-items-center">
+              <div class="col-auto">
+                <label for="departmentFilter" class="form-label fw-bold">부서 선택:</label>
+              </div>
+              <div class="col-auto">
+                <select name="department" id="departmentFilter" class="form-select" onchange="this.form.submit()">
+                  <option value="">전체 부서</option>
+                  <% if (allDepartments && allDepartments.length > 0) { %>
+                    <% allDepartments.forEach(dept => { %>
+                      <option value="<%= dept %>" <%= dept === selectedDepartment ? 'selected' : '' %>><%= dept %></option>
+                    <% }); %>
+                  <% } %>
+                </select>
+              </div>
+              <div class="col-auto">
+                <button type="submit" class="btn btn-outline-primary">
+                  <i class="fa-solid fa-filter me-1"></i>필터 적용
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
         <!-- 근태 입력 폼 -->
         <div class="card shadow-sm">
           <div class="card-header bg-primary text-white">
@@ -401,7 +427,17 @@
       try {
         const date = document.getElementById('attendanceDate').value;
         
-        const response = await fetch(`/attendance/data/${date}`);
+        // 현재 선택된 부서 정보 가져오기
+        const departmentFilter = document.getElementById('departmentFilter');
+        const selectedDepartment = departmentFilter ? departmentFilter.value : '';
+        
+        // 부서 정보를 포함하여 데이터 조회
+        let url = `/attendance/data/${date}`;
+        if (selectedDepartment) {
+          url += `?department=${encodeURIComponent(selectedDepartment)}`;
+        }
+        
+        const response = await fetch(url);
         const result = await response.json();
         
         if (result.success) {

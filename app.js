@@ -122,6 +122,7 @@ const noticeRoutes = require('./routes/notice');
 const boardRoutes = require('./routes/boards');
 const securityRoutes = require('./routes/security');
 const attendanceRoutes = require('./routes/attendance');
+const monthlyAttendanceRoutes = require('./routes/monthlyAttendance');
 app.use('/employees', employeeRoutes);
 app.use('/auth', authRoutes);
 app.use('/uniform', uniformRoutes);
@@ -130,6 +131,7 @@ app.use('/notice', noticeRoutes);
 app.use('/boards', boardRoutes);
 app.use('/security', securityRoutes);
 app.use('/attendance', attendanceRoutes);
+app.use('/monthlyAttendance', monthlyAttendanceRoutes);
 
 // 메인 페이지
 app.get('/', (req, res) => {

@@ -1,0 +1,477 @@
+<%- include('header') %>
+
+<style>
+  .attendance-table {
+    font-size: 0.8rem;
+    border-collapse: collapse;
+  }
+  
+  .attendance-table th,
+  .attendance-table td {
+    padding: 0.4rem 0.3rem;
+    vertical-align: middle;
+    text-align: center;
+    border: 1px solid #dee2e6;
+    white-space: nowrap;
+  }
+  
+  .attendance-table th {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    font-weight: 600;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    color: #495057;
+    border-bottom: 2px solid #dee2e6;
+  }
+  
+  .employee-info {
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+    font-weight: 600;
+    color: #1565c0;
+    position: sticky;
+    z-index: 5;
+    min-width: 80px;
+    max-width: 120px;
+  }
+  
+  .employee-info:nth-child(1) { left: 0; min-width: 50px; max-width: 50px; }
+  .employee-info:nth-child(2) { left: 50px; min-width: 80px; max-width: 80px; }
+  .employee-info:nth-child(3) { left: 130px; min-width: 100px; max-width: 100px; }
+  .employee-info:nth-child(4) { left: 230px; min-width: 80px; max-width: 80px; }
+  .employee-info:nth-child(5) { left: 310px; min-width: 100px; max-width: 100px; }
+  
+  .status-cell {
+    min-width: 60px;
+    max-width: 60px;
+    font-weight: 500;
+    border-radius: 4px;
+  }
+  
+  .time-cell {
+    min-width: 50px;
+    max-width: 50px;
+    font-size: 0.75rem;
+  }
+  
+  .note-cell {
+    min-width: 75px;
+    max-width: 75px;
+    text-align: left;
+    font-size: 0.7rem;
+    padding: 0.3rem 0.4rem;
+  }
+  
+  .monthly-total {
+    background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+    font-weight: 600;
+    padding: 0.75rem 0.5rem;
+    border: 1px solid #dee2e6;
+  }
+  
+  .table-responsive {
+    border-radius: 0.5rem;
+    overflow-x: auto;
+    overflow-y: hidden;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    position: relative;
+  }
+  
+  .attendance-table {
+    position: relative;
+    width: 100%;
+  }
+  
+  /* sticky 포지셔닝을 위한 컨테이너 설정 */
+  .table-responsive {
+    position: relative;
+  }
+  
+  .table-responsive::-webkit-scrollbar {
+    height: 12px;
+  }
+  
+  .table-responsive::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 6px;
+  }
+  
+  .table-responsive::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 6px;
+  }
+  
+  .table-responsive::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+  }
+  
+  .sticky-top {
+    position: sticky;
+    top: 0;
+    z-index: 1020;
+  }
+  
+  /* 테이블 헤더 고정을 위한 z-index 조정 */
+  .table-dark {
+    z-index: 20;
+  }
+  
+  .bg-gradient-primary {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%) !important;
+  }
+  
+  .employee-info-header {
+    background: linear-gradient(135deg, #343a40 0%, #495057 100%);
+    color: white;
+    font-weight: 600;
+    border: none;
+    padding: 1rem 0.5rem;
+    min-width: 80px;
+    position: sticky !important;
+    z-index: 25 !important;
+  }
+  
+  .employee-info-header:nth-child(1) { left: 0 !important; min-width: 50px; max-width: 50px; }
+  .employee-info-header:nth-child(2) { left: 50px !important; min-width: 80px; max-width: 80px; }
+  .employee-info-header:nth-child(3) { left: 130px !important; min-width: 100px; max-width: 100px; }
+  .employee-info-header:nth-child(4) { left: 230px !important; min-width: 80px; max-width: 80px; }
+  .employee-info-header:nth-child(5) { left: 310px !important; min-width: 100px; max-width: 100px; }
+  
+  .monthly-total-header {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+    font-weight: 600;
+    border: none;
+    padding: 1rem 0.5rem;
+    min-width: 100px;
+  }
+  
+  .date-header {
+    background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+    color: white;
+    font-weight: 600;
+    border: none;
+    padding: 1rem 0.5rem;
+    min-width: 450px;
+  }
+  
+  .sub-header {
+    background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+    color: #495057;
+    font-weight: 600;
+    border: none;
+    padding: 0.75rem 0.5rem;
+    font-size: 0.85rem;
+  }
+  
+  .employee-row:hover {
+    background-color: #f8f9fa;
+  }
+  
+  .status-badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+  }
+  
+  .status-default {
+    background-color: #6c757d !important;
+    color: white !important;
+  }
+  
+  .status-출근주, .status-출근심 {
+    background-color: #28a745 !important;
+    color: white !important;
+  }
+  
+  .status-출근초 {
+    background-color: #17a2b8 !important;
+    color: white !important;
+  }
+  
+  .status-반차 {
+    background-color: #ffc107 !important;
+    color: #212529 !important;
+  }
+  
+  .status-지각, .status-조퇴, .status-결근 {
+    background-color: #dc3545 !important;
+    color: white !important;
+  }
+  
+  .status-산재, .status-출장, .status-휴가 {
+    background-color: #6c757d !important;
+    color: white !important;
+  }
+</style>
+
+<div class="container-fluid mt-4">
+  <div class="row">
+    <div class="col-12">
+      <!-- 페이지 헤더 -->
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h2 class="mb-1">
+            <i class="fa-solid fa-calendar-days me-2 text-primary"></i>월간 사원별 근태현황
+          </h2>
+          <p class="text-muted mb-0"><%= year %>년 <%= month %>월 근태현황을 조회하고 관리합니다.</p>
+        </div>
+        <div class="d-flex gap-2">
+          <a href="/attendance" class="btn btn-outline-secondary">
+            <i class="fa-solid fa-arrow-left me-1"></i>일일근태
+          </a>
+          <button class="btn btn-success" onclick="exportToExcel()">
+            <i class="fa-solid fa-file-excel me-1"></i>엑셀 내보내기
+          </button>
+        </div>
+      </div>
+
+             <!-- 년월 선택 필터 -->
+       <div class="card shadow-sm mb-4">
+         <div class="card-body">
+           <form method="GET" class="row g-3 align-items-center">
+             <div class="col-auto">
+               <select name="year" class="form-select" onchange="this.form.submit()">
+                 <% 
+                   const currentYear = new Date().getFullYear();
+                   for (let y = currentYear - 3; y <= currentYear; y++) { 
+                 %>
+                   <option value="<%= y %>" <%= y === parseInt(year) ? 'selected' : '' %>><%= y %></option>
+                 <% } %>
+               </select>
+             </div>
+             <div class="col-auto">
+               <select name="month" class="form-select" onchange="this.form.submit()">
+                 <% for (let m = 1; m <= 12; m++) { %>
+                   <option value="<%= m %>" <%= m === parseInt(month) ? 'selected' : '' %>><%= m %></option>
+                 <% } %>
+               </select>
+             </div>
+             <div class="col-auto">
+               <select name="department" class="form-select" onchange="this.form.submit()">
+                 <option value="">전체 부서</option>
+                 <% if (allDepartments && allDepartments.length > 0) { %>
+                   <% allDepartments.forEach(dept => { %>
+                     <option value="<%= dept %>" <%= dept === selectedDepartment ? 'selected' : '' %>><%= dept %></option>
+                   <% }); %>
+                 <% } %>
+               </select>
+             </div>
+             <div class="col-auto d-flex align-items-end">
+               <button type="submit" class="btn btn-primary">
+                 <i class="fa-solid fa-search me-1"></i>조회
+               </button>
+             </div>
+           </form>
+         </div>
+       </div>
+
+      <!-- 월간 근태현황 테이블 -->
+      <div class="card shadow-lg border-0">
+        <div class="card-header bg-gradient-primary text-white py-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 fw-bold">
+              <i class="fa-solid fa-calendar-check me-2"></i>
+              <%= year %>년 <%= month %>월 근태현황
+            </h5>
+            <span class="badge bg-light text-dark fs-6 px-3 py-2">
+              총 <%= monthlyData.length %>명
+            </span>
+          </div>
+        </div>
+        
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover attendance-table mb-0">
+              <thead class="table-dark sticky-top">
+                <!-- 기본 정보 헤더 -->
+                <tr>
+                  <th class="employee-info-header text-center" rowspan="2">
+                    <i class="fa-solid fa-hashtag me-1"></i>번호
+                  </th>
+                  <th class="employee-info-header text-center" rowspan="2">
+                    <i class="fa-solid fa-id-card me-1"></i>사번
+                  </th>
+                  <th class="employee-info-header text-center" rowspan="2">
+                    <i class="fa-solid fa-user me-1"></i>이름
+                  </th>
+                  <th class="employee-info-header text-center" rowspan="2">
+                    <i class="fa-solid fa-star me-1"></i>직급
+                  </th>
+                  <th class="employee-info-header text-center" rowspan="2">
+                    <i class="fa-solid fa-building me-1"></i>부서
+                  </th>
+                  
+                                     <!-- 날짜별 헤더 -->
+                   <% for (let i = 0; i < daysInMonth; i++) { %>
+                     <th class="date-header text-center" colspan="10">
+                      <div class="d-flex flex-column align-items-center">
+                        <span class="fw-bold fs-6"><%= i + 1 %>일</span>
+                        <% 
+                          const dateStr = `${year}-${month.toString().padStart(2, '0')}-${(i + 1).toString().padStart(2, '0')}`;
+                          const date = new Date(dateStr);
+                          const dayOfWeek = ['일', '월', '화', '수', '목', '금', '토'][date.getDay()];
+                        %>
+                        <small class="text-light opacity-75"><%= dayOfWeek %></small>
+                      </div>
+                    </th>
+                  <% } %>
+                  
+                  <!-- 월간 합계 헤더 -->
+                  <th class="monthly-total-header text-center" rowspan="2">
+                    <i class="fa-solid fa-clock me-1"></i>월 기본시간
+                  </th>
+                  <th class="monthly-total-header text-center" rowspan="2">
+                    <i class="fa-solid fa-clock me-1"></i>월 연장시간
+                  </th>
+                  <th class="monthly-total-header text-center" rowspan="2">
+                    <i class="fa-solid fa-clock me-1"></i>월 특근시간
+                  </th>
+                  <th class="monthly-total-header text-center" rowspan="2">
+                    <i class="fa-solid fa-clock me-1"></i>월 특연시간
+                  </th>
+                  <th class="monthly-total-header text-center" rowspan="2">
+                    <i class="fa-solid fa-clock me-1"></i>월 야간시간
+                  </th>
+                  <th class="monthly-total-header text-center" rowspan="2">
+                    <i class="fa-solid fa-clock me-1"></i>월 총시간
+                  </th>
+                </tr>
+                
+                <!-- 세부 헤더 -->
+                <tr class="table-secondary">
+                  <% for (let i = 0; i < daysInMonth; i++) { %>
+                    <th class="sub-header text-center">상태</th>
+                    <th class="sub-header text-center">출근</th>
+                    <th class="sub-header text-center">퇴근</th>
+                    <th class="sub-header text-center">기본</th>
+                    <th class="sub-header text-center">연장</th>
+                    <th class="sub-header text-center">특근</th>
+                    <th class="sub-header text-center">특연</th>
+                    <th class="sub-header text-center">야간</th>
+                    <th class="sub-header text-center">총시간</th>
+                    <th class="sub-header text-center">비고</th>
+                  <% } %>
+                </tr>
+              </thead>
+              
+              <tbody>
+                <% monthlyData.forEach((employee, index) => { %>
+                  <tr class="employee-row">
+                    <!-- 기본 정보 -->
+                    <td class="employee-info text-center fw-bold">
+                      <span class="badge bg-primary rounded-pill"><%= index + 1 %></span>
+                    </td>
+                    <td class="employee-info text-center">
+                      <code class="fs-6"><%= employee.empNo || '-' %></code>
+                    </td>
+                    <td class="employee-info text-center">
+                      <strong class="text-primary"><%= employee.name %></strong>
+                    </td>
+                    <td class="employee-info text-center">
+                      <span class="badge bg-info text-dark"><%= employee.position || '직급미정' %></span>
+                    </td>
+                    <td class="employee-info text-center">
+                      <span class="badge bg-secondary"><%= employee.department || '부서미정' %></span>
+                    </td>
+                    
+                    <!-- 날짜별 근태 데이터 -->
+                    <% 
+                      let monthBasic = 0;
+                      let monthOvertime = 0;
+                      let monthSpecial = 0;
+                      let monthSpecialOvertime = 0;
+                      let monthNight = 0;
+                      let monthTotal = 0;
+                    %>
+                    
+                    <% for (let i = 0; i < daysInMonth; i++) { %>
+                      <% const attendance = employee.dailyAttendance[i]; %>
+                      
+                      <!-- 근태 상태 -->
+                      <td class="status-cell text-center">
+                        <span class="badge status-badge status-<%= attendance.status ? attendance.status.replace(/[()]/g, '') : 'default' %>">
+                          <%= attendance.status || '-' %>
+                        </span>
+                      </td>
+                      
+                      <!-- 시간 정보 -->
+                      <td class="time-cell text-center"><%= attendance.checkIn || '-' %></td>
+                      <td class="time-cell text-center"><%= attendance.checkOut || '-' %></td>
+                      <td class="time-cell text-center fw-bold"><%= attendance.basic || '-' %></td>
+                      <td class="time-cell text-center"><%= attendance.overtime || '-' %></td>
+                      <td class="time-cell text-center"><%= attendance.special || '-' %></td>
+                      <td class="time-cell text-center"><%= attendance.specialOvertime || '-' %></td>
+                      <td class="time-cell text-center"><%= attendance.night || '-' %></td>
+                      <td class="time-cell text-center fw-bold text-primary"><%= attendance.totalTime || '-' %></td>
+                      <td class="note-cell text-start">
+                        <small class="text-muted"><%= attendance.note || '-' %></small>
+                      </td>
+                      
+                      <% 
+                        if (attendance.basic || attendance.overtime || attendance.special || attendance.specialOvertime || attendance.night || attendance.totalTime) {
+                          monthBasic += parseFloat(attendance.basic) || 0;
+                          monthOvertime += parseFloat(attendance.overtime) || 0;
+                          monthSpecial += parseFloat(attendance.special) || 0;
+                          monthSpecialOvertime += parseFloat(attendance.specialOvertime) || 0;
+                          monthNight += parseFloat(attendance.night) || 0;
+                          monthTotal += parseFloat(attendance.totalTime) || 0;
+                        }
+                      %>
+                    <% } %>
+                    
+                    <!-- 월간 합계 -->
+                    <td class="monthly-total text-center fw-bold text-success">
+                      <%= monthBasic.toFixed(1) %>
+                    </td>
+                    <td class="monthly-total text-center fw-bold text-warning">
+                      <%= monthOvertime.toFixed(1) %>
+                    </td>
+                    <td class="monthly-total text-center fw-bold text-info">
+                      <%= monthSpecial.toFixed(1) %>
+                    </td>
+                    <td class="monthly-total text-center fw-bold text-primary">
+                      <%= monthSpecialOvertime.toFixed(1) %>
+                    </td>
+                    <td class="monthly-total text-center fw-bold text-secondary">
+                      <%= monthNight.toFixed(1) %>
+                    </td>
+                    <td class="monthly-total text-center fw-bold text-danger fs-5">
+                      <%= monthTotal.toFixed(1) %>
+                    </td>
+                  </tr>
+                <% }); %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// 엑셀 내보내기 함수
+function exportToExcel() {
+  const year = <%= year %>;
+  const month = <%= month %>;
+  
+  // 현재 URL에서 쿼리 파라미터 유지
+  const url = `/monthlyAttendance/export?year=${year}&month=${month}`;
+  
+  // 새 창에서 다운로드 시작
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `근태현황_${year}년${month}월_${new Date().toISOString().slice(0, 10)}.xlsx`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+// 페이지 로드 시 테이블 스크롤 위치 조정
+document.addEventListener('DOMContentLoaded', function() {
+  // 테이블 초기화 완료
+  console.log('월간 근태현황 테이블 로드 완료');
+});
+</script>
+
+<%- include('footer') %>
