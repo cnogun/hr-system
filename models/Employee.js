@@ -124,6 +124,28 @@ const employeeSchema = new mongoose.Schema({
   // 경력사항
   career: { type: String },
   
+  // 주말 근무 할당 시스템
+  weekendAssignment: {
+    // 기본 할당 그룹 (1/4, 3/4, none)
+    group: { 
+      type: String, 
+      enum: ['1/4', '3/4', 'none'], 
+      default: 'none' 
+    },
+    // A조/B조 구분 (토요일 휴무조용)
+    weekendGroup: { 
+      type: String, 
+      enum: ['A조', 'B조', 'none'], 
+      default: 'none' 
+    },
+    // 1조,2조,3조,4조 구분 (일요일 근무용)
+    sundayGroup: { 
+      type: String, 
+      enum: ['1조', '2조', '3조', '4조', 'none'], 
+      default: 'none' 
+    }
+  },
+  
   // 근태 정보 (동적 필드로 날짜별 근태 데이터 저장)
   attendance: { type: Map, of: Object, default: {} },
 });
