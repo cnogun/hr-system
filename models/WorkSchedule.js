@@ -30,27 +30,54 @@ const workScheduleSchema = new mongoose.Schema({
     }
   },
   
-  // 주말 근무 인원 배정
+  // 주말 근무 인원 배정 (팀별 조별 편성 명단)
   weekendSchedule: {
+    // 토요일 근무 정보 (기존 구조 유지)
     saturday: {
       dayShift: {
-        team1Count: { type: Number, default: 0 }, // 1팀 인원 중 3/4
-        team3Count: { type: Number, default: 0 }  // 3팀 휴무조 1/2
+        team1Count: { type: Number, default: 0 },
+        team3Count: { type: Number, default: 0 }
       },
       nightShift: {
-        team2Count: { type: Number, default: 0 }, // 2팀 인원 중 3/4
-        team3Count: { type: Number, default: 0 }  // 3팀 휴무조 1/2
+        team2Count: { type: Number, default: 0 },
+        team3Count: { type: Number, default: 0 }
       }
     },
+    // 일요일 근무 정보 (기존 구조 유지)
     sunday: {
       dayShift: {
-        team1Count: { type: Number, default: 0 }, // 1팀 인원 중 1/4
-        team3Count: { type: Number, default: 0 }  // 3팀 휴무조 1/2
+        team1Count: { type: Number, default: 0 },
+        team3Count: { type: Number, default: 0 }
       },
       nightShift: {
-        team2Count: { type: Number, default: 0 }, // 2팀 인원 중 1/4
-        team3Count: { type: Number, default: 0 }  // 3팀 휴무조 1/2
+        team2Count: { type: Number, default: 0 },
+        team3Count: { type: Number, default: 0 }
       }
+    },
+    // 팀별 조별 편성 명단 (새로 추가)
+    team1: {
+      aGroup: { type: String, default: '' }, // A조 (일요일 주간근무)
+      bGroup: { type: String, default: '' }, // B조 (일요일 야간근무)
+      group1: { type: String, default: '' }, // 1조 (지원근무)
+      group2: { type: String, default: '' }, // 2조 (지원근무)
+      group3: { type: String, default: '' }, // 3조 (지원근무)
+      group4: { type: String, default: '' }  // 4조 (지원근무)
+    },
+    team2: {
+      aGroup: { type: String, default: '' },
+      bGroup: { type: String, default: '' },
+      group1: { type: String, default: '' },
+      group2: { type: String, default: '' },
+      group3: { type: String, default: '' },
+      group4: { type: String, default: '' }
+    },
+    team3: {
+      aGroup: { type: String, default: '' },
+      bGroup: { type: String, default: '' },
+      group1: { type: String, default: '' },
+      group2: { type: String, default: '' },
+      group3: { type: String, default: '' },
+      group4: { type: String, default: '' }
     }
   },
   
@@ -107,6 +134,13 @@ workScheduleSchema.virtual('weekNumber').get(function() {
 // 가상 필드: 년도
 workScheduleSchema.virtual('year').get(function() {
   return this.weekStartDate.getFullYear();
+});
+
+// 가상 필드: 주차 기간 표시
+workScheduleSchema.virtual('weekPeriod').get(function() {
+  const start = this.weekStartDate;
+  const end = this.weekEndDate;
+  return `${start.getMonth() + 1}월 ${start.getDate()}일 06:00 ~ ${end.getMonth() + 1}월 ${end.getDate()}일 06:00`;
 });
 
 module.exports = mongoose.model('WorkSchedule', workScheduleSchema);

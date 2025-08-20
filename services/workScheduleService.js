@@ -45,21 +45,24 @@ class WorkScheduleService {
   }
   
   /**
-   * 주차 시작일 계산 (월요일)
+   * 주차 시작일 계산 (월요일 06:00)
    */
   static getWeekStart(date) {
     const day = date.getDay();
     const diff = date.getDate() - day + (day === 0 ? -6 : 1);
-    return new Date(date.setDate(diff));
+    const weekStart = new Date(date.setDate(diff));
+    weekStart.setHours(6, 0, 0, 0); // 월요일 06:00으로 설정
+    return weekStart;
   }
   
   /**
-   * 주차 종료일 계산 (일요일)
+   * 주차 종료일 계산 (다음주 월요일 06:00)
    */
   static getWeekEnd(date) {
     const weekStart = this.getWeekStart(date);
     const weekEnd = new Date(weekStart);
-    weekEnd.setDate(weekStart.getDate() + 6);
+    weekEnd.setDate(weekStart.getDate() + 7); // 7일 후 (다음주 월요일)
+    weekEnd.setHours(6, 0, 0, 0); // 06:00으로 설정
     return weekEnd;
   }
   
@@ -187,47 +190,64 @@ class WorkScheduleService {
             night = '0';
           }
         } else if (isWeekend) {
-          // 주말 근무
+          // 주말 근무 (새로운 공식 적용)
           if (dayOfWeek === 6) { // 토요일
-            if (emp.department === '보안3팀') {
-              status = '휴가';
+            if (emp.department === '보안2팀') {
+              // 2팀: 주간특근 (06:00~18:00)
+              status = '출근(주특)';
+              checkIn = '06:00';
+              checkOut = '18:00';
+              basic = '8';
+              special = '8';        // 특근 8시간
+              specialOvertime = '4'; // 특근연장 4시간
+              night = '0';
+            } else if (emp.department === '보안3팀') {
+              // 3팀: 야간특근 (18:00~06:00)
+              status = '출근(야특)';
+              checkIn = '18:00';
+              checkOut = '06:00';
+              basic = '8';
+              special = '8';        // 특근 8시간
+              specialOvertime = '4'; // 특근연장 4시간
+              night = '8';          // 야간 8시간
+            } else {
+              // 1팀: 휴무 (일요일 주간근무 준비)
+              status = '휴무';
               checkIn = '';
               checkOut = '';
               basic = '0';
               special = '0';
+              specialOvertime = '0';
               night = '0';
-            } else {
-              // 1팀, 2팀: 12시간 근무
-              status = '출근(사무)';
-              if (emp.department === '보안1팀') {
-                checkIn = '06:00';
-                checkOut = '18:00';
-                basic = '12';
-                special = '0';
-                night = '0';
-              } else { // 보안2팀
-                checkIn = '18:00';
-                checkOut = '06:00';
-                basic = '12';
-                special = '0';
-                night = '12';
-              }
             }
           } else { // 일요일
-            // 1팀, 2팀: 12시간 근무 (인원 조정 필요)
-            status = '출근(사무)';
             if (emp.department === '보안1팀') {
+              // 1팀: 주간근무 (06:00~18:00)
+              status = '출근(주특)';
               checkIn = '06:00';
               checkOut = '18:00';
-              basic = '12';
-              special = '0';
+              basic = '8';
+              special = '8';        // 특근 8시간
+              specialOvertime = '4'; // 특근연장 4시간
               night = '0';
-            } else { // 보안2팀
+            } else if (emp.department === '보안2팀') {
+              // 2팀: 야간근무 (18:00~06:00)
+              status = '출근(야특)';
               checkIn = '18:00';
               checkOut = '06:00';
-              basic = '12';
+              basic = '8';
+              special = '8';        // 특근 8시간
+              specialOvertime = '4'; // 특근연장 4시간
+              night = '8';          // 야간 8시간
+            } else {
+              // 3팀: 휴무
+              status = '휴무';
+              checkIn = '';
+              checkOut = '';
+              basic = '0';
               special = '0';
-              night = '12';
+              specialOvertime = '0';
+              night = '0';
             }
           }
         }
@@ -240,9 +260,9 @@ class WorkScheduleService {
             basic,
             overtime: '0',
             special: special || '0',
-            specialOvertime: '0',
+            specialOvertime: specialOvertime || '0',
             night,
-            totalTime: this.calculateTotalTime(basic, '0', special || '0', '0', night),
+            totalTime: this.calculateTotalTime(basic, '0', special || '0', specialOvertime || '0', night),
             note: isHoliday ? '공휴일 특근' : '주말 근무',
             updatedAt: new Date()
           };
@@ -286,7 +306,7 @@ class WorkScheduleService {
   }
   
   /**
-   * 총시간 계산
+   * 총시간 계산 (수정됨 - 새로운 공식 적용)
    */
   static calculateTotalTime(basic, overtime, special, specialOvertime, night) {
     const basicNum = parseFloat(basic) || 0;
@@ -295,8 +315,11 @@ class WorkScheduleService {
     const specialOvertimeNum = parseFloat(specialOvertime) || 0;
     const nightNum = parseFloat(night) || 0;
     
-    // 총시간 = 기본시간*8 + 연장*1.5 + 특근*1.5 + 특연*2 + 야간*0.5
-    return (basicNum * 8) + (overtimeNum * 1.5) + (specialNum * 1.5) + (specialOvertimeNum * 2) + (nightNum * 0.5);
+    // 새로운 공식:
+    // 토요일 주간특근: 기본(8) + 특근(8×1.5) + 특근연장(4×2) = 28시간
+    // 토요일 야간특근: 기본(8) + 특근(8×1.5) + 특근연장(4×2) + 야간(8×0.5) = 32시간
+    // 일요일 주간/야간: 토요일과 동일
+    return basicNum + (overtimeNum * 1.5) + (specialNum * 1.5) + (specialOvertimeNum * 2) + (nightNum * 0.5);
   }
   
   /**

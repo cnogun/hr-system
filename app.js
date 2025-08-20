@@ -68,6 +68,8 @@ app.use(async (req, res, next) => {
           res.locals.name = user.username; // User 모델에는 name 필드가 없으므로 username 사용
           res.locals.department = '시스템 관리';
           res.locals.employeePosition = '관리자';
+          res.locals.userRole = 'admin'; // userRole 설정 추가
+          req.session.userRole = 'admin'; // 세션에도 userRole 저장
         } else {
           // 일반 사용자인 경우 Employee 정보 찾기
           const employee = await Employee.findOne({ userId: req.session.userId });
@@ -76,12 +78,16 @@ app.use(async (req, res, next) => {
             res.locals.name = employee.name;
             res.locals.department = employee.department || '부서미정';
             res.locals.employeePosition = employee.position || '직급미정';
+            res.locals.userRole = 'user'; // userRole 설정 추가
+            req.session.userRole = 'user'; // 세션에도 userRole 저장
           } else {
             // 직원 정보가 없으면 User 정보 사용
             res.locals.position = '일반 사용자';
             res.locals.name = user.username;
             res.locals.department = '부서미정';
             res.locals.employeePosition = '직급미정';
+            res.locals.userRole = 'user'; // userRole 설정 추가
+            req.session.userRole = 'user'; // 세션에도 userRole 저장
           }
         }
       } else {
@@ -90,6 +96,7 @@ app.use(async (req, res, next) => {
         res.locals.name = '';
         res.locals.department = '';
         res.locals.employeePosition = '';
+        res.locals.userRole = ''; // userRole 초기화
         // 세션 정리
         req.session.destroy();
       }
@@ -98,6 +105,7 @@ app.use(async (req, res, next) => {
       res.locals.name = '';
       res.locals.department = '';
       res.locals.employeePosition = '';
+      res.locals.userRole = ''; // userRole 초기화
     }
   } catch (error) {
     console.error('세션 미들웨어 오류:', error);
@@ -106,6 +114,7 @@ app.use(async (req, res, next) => {
     res.locals.name = '';
     res.locals.department = '';
     res.locals.employeePosition = '';
+    res.locals.userRole = ''; // userRole 초기화
   }
   next();
 });
@@ -124,6 +133,7 @@ const securityRoutes = require('./routes/security');
 const attendanceRoutes = require('./routes/attendance');
 const monthlyAttendanceRoutes = require('./routes/monthlyAttendance');
 const workScheduleRoutes = require('./routes/workSchedule');
+
 app.use('/employees', employeeRoutes);
 app.use('/auth', authRoutes);
 app.use('/uniform', uniformRoutes);
@@ -134,6 +144,118 @@ app.use('/security', securityRoutes);
 app.use('/attendance', attendanceRoutes);
 app.use('/monthlyAttendance', monthlyAttendanceRoutes);
 app.use('/workSchedule', workScheduleRoutes);
+
+// Excel Manager 페이지 라우트
+app.get('/excelManager', async (req, res) => {
+  try {
+    if (!req.session || !req.session.userId) {
+      return res.redirect('/auth/login');
+    }
+    
+    if (req.session.userRole !== 'admin') {
+      return res.status(403).send(`
+        <script>
+          alert('관리자 권한이 필요합니다.');
+          history.back();
+        </script>
+      `);
+    }
+    
+    res.render('excelManager', { session: req.session });
+  } catch (error) {
+    console.error('Excel Manager 로드 오류:', error);
+    res.status(500).send(`
+      <script>
+        alert('Excel Manager 로드 중 오류가 발생했습니다.\\n\\n오류: ${error.message}');
+        history.back();
+      </script>
+    `);
+  }
+});
+
+// Uniform Stats 페이지 라우트
+app.get('/uniform/stats', async (req, res) => {
+  try {
+    if (!req.session || !req.session.userId) {
+      return res.redirect('/auth/login');
+    }
+    
+    if (req.session.userRole !== 'admin') {
+      return res.status(403).send(`
+        <script>
+          alert('관리자 권한이 필요합니다.');
+          history.back();
+        </script>
+      `);
+    }
+    
+    res.render('uniformStats', { session: req.session });
+  } catch (error) {
+    console.error('Uniform Stats 로드 오류:', error);
+    res.status(500).send(`
+      <script>
+        alert('Uniform Stats 로드 중 오류가 발생했습니다.\\n\\n오류: ${error.message}');
+        history.back();
+      </script>
+    `);
+  }
+});
+
+// Activity Logs 페이지 라우트
+app.get('/auth/logs', async (req, res) => {
+  try {
+    if (!req.session || !req.session.userId) {
+      return res.redirect('/auth/login');
+    }
+    
+    if (req.session.userRole !== 'admin') {
+      return res.status(403).send(`
+        <script>
+          alert('관리자 권한이 필요합니다.');
+          history.back();
+        </script>
+      `);
+    }
+    
+    res.render('activityLogs', { session: req.session });
+  } catch (error) {
+    console.error('Activity Logs 로드 오류:', error);
+    res.status(500).send(`
+      <script>
+        alert('Activity Logs 로드 중 오류가 발생했습니다.\\n\\n오류: ${error.message}');
+        history.back();
+      </script>
+    `);
+  }
+});
+
+// Notice New 페이지 라우트
+app.get('/notice/new', async (req, res) => {
+  try {
+    if (!req.session || !req.session.userId) {
+      return res.redirect('/auth/login');
+    }
+    
+    if (req.session.userRole !== 'admin') {
+      return res.status(403).send(`
+        <script>
+          alert('관리자 권한이 필요합니다.');
+          history.back();
+        </script>
+      `);
+    }
+    
+    res.render('noticeNew', { session: req.session });
+  } catch (error) {
+    console.error('Notice New 로드 오류:', error);
+    res.status(500).send(`
+      <script>
+        alert('Notice New 로드 중 오류가 발생했습니다.\\n\\n오류: ${error.message}');
+        history.back();
+      </script>
+    `);
+  }
+});
 
 // 메인 페이지
 app.get('/', (req, res) => {

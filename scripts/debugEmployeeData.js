@@ -41,6 +41,25 @@ db.once('open', async () => {
       console.log('보안1팀 직원을 찾을 수 없습니다.');
     }
 
+    // 보안팀 직원들의 weekendAssignment 확인
+    const securityEmployees = await Employee.find({ 
+      department: { $regex: /^보안/ }, 
+      status: '재직' 
+    }).limit(50);
+
+    console.log('\n=== 보안팀 직원들의 weekendAssignment ===');
+    securityEmployees.forEach((emp, index) => {
+      console.log(`${index + 1}. ${emp.name} (${emp.department})`);
+      if (emp.weekendAssignment) {
+        console.log(`   - group: ${emp.weekendAssignment.group}`);
+        console.log(`   - weekendGroup: ${emp.weekendAssignment.weekendGroup}`);
+        console.log(`   - sundayGroup: ${emp.weekendAssignment.sundayGroup}`);
+      } else {
+        console.log('   - weekendAssignment: 없음');
+      }
+      console.log('');
+    });
+
   } catch (error) {
     console.error('데이터 조회 중 오류 발생:', error);
   } finally {

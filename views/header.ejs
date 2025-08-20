@@ -61,13 +61,36 @@
                 <li><a class="dropdown-item" href="/boards/admin/reports">
                   <i class="fa-solid fa-flag me-2"></i> 게시판 신고 관리
                 </a></li>
+                  <li><hr class="dropdown-divider"></li>
+                  <li><h6 class="dropdown-header">데이터 관리</h6></li>
+                  <li><a class="dropdown-item" href="/uniform/stats">
+                    <i class="fa-solid fa-tshirt me-2"></i> 유니폼 통계
+                  </a></li>
+                  <li><a class="dropdown-item" href="/auth/logs">
+                    <i class="fa-solid fa-history me-2"></i> 활동 로그 관리
+                  </a></li>
+                </ul>
+              </li>
+             
+             <!-- 엑셀관리 메뉴 -->
+             <li class="nav-item dropdown">
+               <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="excelDropdown" role="button" data-bs-toggle="dropdown">
+                 <i class="fa-solid fa-file-excel me-2"></i> 엑셀관리
+               </a>
+               <ul class="dropdown-menu dropdown-menu-end">
+                 <li><h6 class="dropdown-header">통합 엑셀 관리</h6></li>
+                 <li><a class="dropdown-item" href="/excelManager">
+                   <i class="fa-solid fa-table me-2"></i> 통합 엑셀 관리
+                 </a></li>
+                 <li><hr class="dropdown-divider"></li>
+                                   <li><h6 class="dropdown-header">내려받기</h6></li>
                 <li><a class="dropdown-item" href="/employees/excel">
-                  <i class="fa-solid fa-file-arrow-down me-2"></i> 직원 목록 다운로드
+                   <i class="fa-solid fa-users me-2"></i> 직원 목록
                 </a></li>
-                <li><a class="dropdown-item" href="/uniform/excel-qty">
+                 <li><a class="dropdown-item" href="/uniform/stats">
                   <i class="fa-solid fa-tshirt me-2"></i> 유니폼 통계
                 </a></li>
-                <li><a class="dropdown-item" href="/auth/logs/excel">
+                 <li><a class="dropdown-item" href="/auth/logs">
                   <i class="fa-solid fa-history me-2"></i> 활동 로그
                 </a></li>
               </ul>
@@ -180,19 +203,31 @@ function waitForBootstrap() {
         });
         console.log('드롭다운 초기화됨:', element.textContent.trim());
         
-        // 클릭 이벤트 강제 추가
-        element.addEventListener('click', function(e) {
-          e.preventDefault();
-          e.stopPropagation();
-          
-          // 다른 모든 드롭다운 닫기
-          closeAllOtherDropdowns(this);
-          
-          const dropdown = bootstrap.Dropdown.getInstance(this);
-          if (dropdown) {
-            dropdown.toggle();
-          }
-        });
+                 // 클릭 이벤트 강제 추가
+         element.addEventListener('click', function(e) {
+           e.preventDefault();
+           e.stopPropagation();
+           
+           console.log('드롭다운 토글 클릭됨 (Bootstrap):', this.textContent.trim());
+           
+           // 이전에 명암처리된 모든 메뉴에서 active 클래스 제거
+           document.querySelectorAll('.navbar-nav .nav-link.active, .dropdown-item.active').forEach(link => {
+             console.log('Bootstrap 드롭다운에서 active 제거:', link.textContent.trim());
+             link.classList.remove('active');
+           });
+           
+           // 드롭다운 토글에 active 상태 설정
+           this.classList.add('active');
+           console.log('Bootstrap 드롭다운 토글 active 상태 설정됨:', this.textContent.trim());
+           
+           // 다른 모든 드롭다운 닫기
+           closeAllOtherDropdowns(this);
+           
+           const dropdown = bootstrap.Dropdown.getInstance(this);
+           if (dropdown) {
+             dropdown.toggle();
+           }
+         });
         
       } catch (error) {
         console.error('드롭다운 초기화 오류:', error);
@@ -272,10 +307,15 @@ document.addEventListener('click', function(e) {
   }
 });
 
-// 페이지 로드 시 드롭다운 초기화
+// 페이지 로드 시 드롭다운 초기화 및 메뉴 active 상태 설정
 document.addEventListener('DOMContentLoaded', function() {
   console.log('DOM 로드됨, Bootstrap 대기 시작');
   waitForBootstrap();
+  
+  // 메뉴 active 상태 초기화
+  clearAllActiveStates();
+  const currentPath = window.location.pathname;
+  setActiveMenuForCurrentPage(currentPath);
   
   // 추가 안전장치: 1초 후 강제 초기화
   setTimeout(function() {
@@ -285,17 +325,150 @@ document.addEventListener('DOMContentLoaded', function() {
   }, 1000);
 });
 
-// 현재 페이지 활성화 표시
-document.addEventListener('DOMContentLoaded', function() {
-  const currentPath = window.location.pathname;
-  const navLinks = document.querySelectorAll('.navbar-nav .nav-link');
-  
-  navLinks.forEach(link => {
-    if (link.getAttribute('href') === currentPath) {
-      link.classList.add('active');
-    }
-  });
-});
+      // 현재 페이지에 따른 상위 메뉴 active 상태 설정 함수
+      function setActiveMainMenu(currentPath) {
+        // 모든 상위 메뉴에서 active 클래스 제거
+        document.querySelectorAll('.navbar-nav .nav-link:not(.dropdown-toggle)').forEach(link => {
+          link.classList.remove('active');
+        });
+        
+        // 현재 페이지에 따른 상위 메뉴 active 설정
+        if (currentPath.startsWith('/dashboard')) {
+          document.querySelector('a[href="/dashboard"]').classList.add('active');
+        } else if (currentPath.startsWith('/employees')) {
+          document.querySelector('a[href="/employees"]').classList.add('active');
+        } else if (currentPath.startsWith('/boards')) {
+          document.querySelector('a[href="/boards"]').classList.add('active');
+        } else if (currentPath.startsWith('/uniform') || currentPath.startsWith('/excelManager')) {
+          // 유니폼이나 엑셀관리 페이지인 경우 해당 드롭다운 메뉴의 상위 메뉴는 active하지 않음
+        } else if (currentPath.startsWith('/auth/logs')) {
+          // 활동 로그 페이지인 경우 해당 드롭다운 메뉴의 상위 메뉴는 active하지 않음
+        } else if (currentPath.startsWith('/attendance') || currentPath.startsWith('/monthlyAttendance') || currentPath.startsWith('/workSchedule')) {
+          // 근태 관련 페이지인 경우 정보 입력 메뉴 active
+          const infoInputMenu = document.querySelector('#employeeInputDropdown .nav-link');
+          if (infoInputMenu) {
+            infoInputMenu.classList.add('active');
+          }
+        } else if (currentPath.startsWith('/security')) {
+          // 보안업무 페이지인 경우 보안업무 메뉴 active
+          const securityMenu = document.querySelector('#securityWorkDropdown .nav-link');
+          if (securityMenu) {
+            securityMenu.classList.add('active');
+          }
+        }
+      }
+
+      // 메뉴 클릭 시 active 상태 관리
+      document.addEventListener('click', function(e) {
+        // 상위 메뉴 링크 클릭 시 (드롭다운 토글 포함)
+        const clickedNavLink = e.target.closest('.navbar-nav .nav-link');
+        // 하위 메뉴 링크 클릭 시
+        const clickedDropdownItem = e.target.closest('.dropdown-item');
+        
+        // 상위 메뉴 클릭 시 (드롭다운 토글 포함)
+        if (clickedNavLink) {
+          const href = clickedNavLink.getAttribute('href');
+          
+          // 드롭다운 토글인 경우 (href="#")
+          if (clickedNavLink.classList.contains('dropdown-toggle') && href === '#') {
+            console.log('드롭다운 토글 클릭됨:', clickedNavLink.textContent.trim());
+            // 이전에 명암처리된 모든 메뉴에서 active 클래스 제거
+            document.querySelectorAll('.navbar-nav .nav-link.active, .dropdown-item.active').forEach(link => {
+              console.log('active 제거:', link.textContent.trim());
+              link.classList.remove('active');
+            });
+            // 드롭다운 토글에 active 상태 설정
+            clickedNavLink.classList.add('active');
+            console.log('드롭다운 토글 active 상태 설정됨:', clickedNavLink.textContent.trim());
+          }
+          // 실제 페이지 이동이 있는 링크인 경우
+          else if (href && href !== '#' && href !== '/boards/admin/reports' && href !== '/uniform/stats' && href !== '/auth/logs') {
+            console.log('일반 메뉴 클릭됨:', clickedNavLink.textContent.trim(), 'href:', href);
+            // 이전에 명암처리된 모든 메뉴에서 active 클래스 제거
+            document.querySelectorAll('.navbar-nav .nav-link.active, .dropdown-item.active').forEach(link => {
+              console.log('active 제거:', link.textContent.trim());
+              link.classList.remove('active');
+            });
+            
+            // 클릭된 상위 메뉴에만 active 클래스 추가
+            clickedNavLink.classList.add('active');
+            console.log('active 추가:', clickedNavLink.textContent.trim());
+          }
+        }
+        
+        // 하위 메뉴 클릭 시
+        if (clickedDropdownItem) {
+          const href = clickedDropdownItem.getAttribute('href');
+          if (href && href !== '#') {
+            console.log('하위 메뉴 클릭됨:', clickedDropdownItem.textContent.trim(), 'href:', href);
+            // 이전에 명암처리된 모든 메뉴에서 active 클래스 제거
+            document.querySelectorAll('.navbar-nav .nav-link.active, .dropdown-item.active').forEach(link => {
+              console.log('active 제거:', link.textContent.trim());
+              link.classList.remove('active');
+            });
+            
+            // 클릭된 하위 메뉴에만 active 클래스 추가
+            clickedDropdownItem.classList.add('active');
+            console.log('active 추가:', clickedDropdownItem.textContent.trim());
+            
+            // 하위 메뉴 클릭 시 해당 상위 메뉴도 active 상태로 설정
+            setActiveMainMenuForDropdown(href);
+          }
+        }
+      });
+      
+      // 하위 메뉴 클릭 시 상위 메뉴 active 상태 설정 함수
+      function setActiveMainMenuForDropdown(href) {
+        console.log('setActiveMainMenuForDropdown 호출됨, href:', href);
+        
+        // 이전에 active 상태였던 상위 메뉴들에서 active 클래스 제거
+        document.querySelectorAll('.navbar-nav .nav-link.active:not(.dropdown-toggle)').forEach(link => {
+          console.log('상위 메뉴 active 제거:', link.textContent.trim());
+          link.classList.remove('active');
+        });
+        
+        if (href.startsWith('/attendance') || href.startsWith('/monthlyAttendance') || href.startsWith('/workSchedule')) {
+          // 근태 관련 페이지인 경우 정보 입력 메뉴 active
+          const infoInputMenu = document.querySelector('#employeeInputDropdown .nav-link');
+          if (infoInputMenu) {
+            infoInputMenu.classList.add('active');
+            console.log('정보 입력 메뉴 active 설정');
+          }
+        } else if (href.startsWith('/security')) {
+          // 보안업무 페이지인 경우 보안업무 메뉴 active
+          const securityMenu = document.querySelector('#securityWorkDropdown .nav-link');
+          if (securityMenu) {
+            securityMenu.classList.add('active');
+            console.log('보안업무 메뉴 active 설정');
+          }
+        }
+      }
+      
+      // 모든 메뉴에서 active 클래스 제거하는 함수
+      function clearAllActiveStates() {
+        document.querySelectorAll('.navbar-nav .nav-link, .dropdown-item').forEach(link => {
+          link.classList.remove('active');
+        });
+      }
+      
+             // 페이지 로드 시 모든 active 상태 초기화 (중복 제거)
+      
+      // 현재 페이지에 따른 메뉴 active 상태 설정
+      function setActiveMenuForCurrentPage(currentPath) {
+        // 모든 메뉴에서 active 클래스 제거
+        clearAllActiveStates();
+        
+        // 현재 페이지에 해당하는 하위 메뉴 찾기
+        const currentMenuItem = document.querySelector(`a[href="${currentPath}"]`);
+        if (currentMenuItem) {
+          currentMenuItem.classList.add('active');
+          
+          // 하위 메뉴인 경우 해당 상위 메뉴도 active
+          if (currentMenuItem.classList.contains('dropdown-item')) {
+            setActiveMainMenuForDropdown(currentPath);
+          }
+        }
+      }
 </script>
 
 <style>
@@ -338,6 +511,13 @@ body {
   color: #667eea;
   background-color: rgba(102, 126, 234, 0.1);
 }
+
+ /* 하위 메뉴 active 상태 스타일 */
+ .dropdown-item.active {
+   color: #667eea !important;
+   background-color: rgba(102, 126, 234, 0.1) !important;
+   font-weight: 600;
+ }
 
 /* 드롭다운 스타일 */
 .dropdown-menu {

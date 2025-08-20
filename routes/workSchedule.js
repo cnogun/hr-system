@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const WorkSchedule = require('../models/WorkSchedule');
 const WorkScheduleService = require('../services/workScheduleService');
+const Employee = require('../models/Employee');
 
 // 근무 스케줄 관리 페이지 렌더링
 router.get('/', async (req, res) => {
@@ -126,8 +127,14 @@ router.post('/save-weekend', async (req, res) => {
       schedule = await WorkScheduleService.createCurrentWeekSchedule(req.session.userId);
     }
     
-    // 주말 스케줄 업데이트
-    schedule.weekendSchedule = weekendData;
+    // 주말 스케줄 업데이트 (팀별 조별 편성 명단)
+    schedule.weekendSchedule = {
+      ...schedule.weekendSchedule, // 기존 데이터 유지
+      team1: weekendData.team1,   // 보안1팀 A조, B조, 1~4조
+      team2: weekendData.team2,   // 보안2팀 A조, B조, 1~4조
+      team3: weekendData.team3    // 보안3팀 A조, B조, 1~4조
+    };
+    
     await schedule.save();
     
     // 편성 인원 현황도 함께 업데이트
@@ -311,49 +318,49 @@ router.get('/assignment-counts', async (req, res) => {
 
     // 보안1팀 계산
     if (weekendSchedule.team1) {
-      counts.team1ACount = weekendSchedule.team1.aGroup.split('\n').filter(line => line.trim()).length;
-      counts.team1BCount = weekendSchedule.team1.bGroup.split('\n').filter(line => line.trim()).length;
+      counts.team1ACount = weekendSchedule.team1.aGroup ? weekendSchedule.team1.aGroup.split('\n').filter(line => line.trim()).length : 0;
+      counts.team1BCount = weekendSchedule.team1.bGroup ? weekendSchedule.team1.bGroup.split('\n').filter(line => line.trim()).length : 0;
       counts.team1GroupsCount = (
-        weekendSchedule.team1.group1.split('\n').filter(line => line.trim()).length +
-        weekendSchedule.team1.group2.split('\n').filter(line => line.trim()).length +
-        weekendSchedule.team1.group3.split('\n').filter(line => line.trim()).length +
-        weekendSchedule.team1.group4.split('\n').filter(line => line.trim()).length
+        (weekendSchedule.team1.group1 ? weekendSchedule.team1.group1.split('\n').filter(line => line.trim()).length : 0) +
+        (weekendSchedule.team1.group2 ? weekendSchedule.team1.group2.split('\n').filter(line => line.trim()).length : 0) +
+        (weekendSchedule.team1.group3 ? weekendSchedule.team1.group3.split('\n').filter(line => line.trim()).length : 0) +
+        (weekendSchedule.team1.group4 ? weekendSchedule.team1.group4.split('\n').filter(line => line.trim()).length : 0)
       );
     }
 
     // 보안2팀 계산
     if (weekendSchedule.team2) {
-      counts.team2ACount = weekendSchedule.team2.aGroup.split('\n').filter(line => line.trim()).length;
-      counts.team2BCount = weekendSchedule.team2.bGroup.split('\n').filter(line => line.trim()).length;
+      counts.team2ACount = weekendSchedule.team2.aGroup ? weekendSchedule.team2.aGroup.split('\n').filter(line => line.trim()).length : 0;
+      counts.team2BCount = weekendSchedule.team2.bGroup ? weekendSchedule.team2.bGroup.split('\n').filter(line => line.trim()).length : 0;
       counts.team2GroupsCount = (
-        weekendSchedule.team2.group1.split('\n').filter(line => line.trim()).length +
-        weekendSchedule.team2.group2.split('\n').filter(line => line.trim()).length +
-        weekendSchedule.team2.group3.split('\n').filter(line => line.trim()).length +
-        weekendSchedule.team2.group4.split('\n').filter(line => line.trim()).length
+        (weekendSchedule.team2.group1 ? weekendSchedule.team2.group1.split('\n').filter(line => line.trim()).length : 0) +
+        (weekendSchedule.team2.group2 ? weekendSchedule.team2.group2.split('\n').filter(line => line.trim()).length : 0) +
+        (weekendSchedule.team2.group3 ? weekendSchedule.team2.group3.split('\n').filter(line => line.trim()).length : 0) +
+        (weekendSchedule.team2.group4 ? weekendSchedule.team2.group4.split('\n').filter(line => line.trim()).length : 0)
       );
     }
 
     // 보안3팀 계산
     if (weekendSchedule.team3) {
-      counts.team3ACount = weekendSchedule.team3.aGroup.split('\n').filter(line => line.trim()).length;
-      counts.team3BCount = weekendSchedule.team3.bGroup.split('\n').filter(line => line.trim()).length;
+      counts.team3ACount = weekendSchedule.team3.aGroup ? weekendSchedule.team3.aGroup.split('\n').filter(line => line.trim()).length : 0;
+      counts.team3BCount = weekendSchedule.team3.bGroup ? weekendSchedule.team3.bGroup.split('\n').filter(line => line.trim()).length : 0;
       counts.team3GroupsCount = (
-        weekendSchedule.team3.group1.split('\n').filter(line => line.trim()).length +
-        weekendSchedule.team3.group2.split('\n').filter(line => line.trim()).length +
-        weekendSchedule.team3.group3.split('\n').filter(line => line.trim()).length +
-        weekendSchedule.team3.group4.split('\n').filter(line => line.trim()).length
+        (weekendSchedule.team3.group1 ? weekendSchedule.team3.group1.split('\n').filter(line => line.trim()).length : 0) +
+        (weekendSchedule.team3.group2 ? weekendSchedule.team3.group2.split('\n').filter(line => line.trim()).length : 0) +
+        (weekendSchedule.team3.group3 ? weekendSchedule.team3.group3.split('\n').filter(line => line.trim()).length : 0) +
+        (weekendSchedule.team3.group4 ? weekendSchedule.team3.group4.split('\n').filter(line => line.trim()).length : 0)
       );
     }
 
          // 주말 근무 인원 계산 (이번주 기준: 1팀 주간, 2팀 초야, 3팀 심야)
-     // 토요일 주간: 2팀 초야조 30명 (1~4조 중 3개조)
-     counts.saturdayDayCount = Math.min(counts.team2GroupsCount, 30);
-     // 토요일 야간: 1팀, 3팀 심야조 30명 (1~4조 중 3개조씩)
-     counts.saturdayNightCount = Math.min(counts.team1GroupsCount + counts.team3GroupsCount, 30);
-     // 일요일 주간: A조 30명 (모든 팀 A조 중 30명만 선택)
-     counts.sundayDayCount = Math.min(counts.team1ACount + counts.team2ACount + counts.team3ACount, 30);
-     // 일요일 야간: B조 30명 (모든 팀 B조 중 30명만 선택)
-     counts.sundayNightCount = Math.min(counts.team1BCount + counts.team2BCount + counts.team3BCount, 30);
+         // 토요일 주간: 2팀 초야조 30명 (1~4조 중 3개조)
+         counts.saturdayDayCount = Math.min(counts.team2GroupsCount, 30);
+         // 토요일 야간: 1팀, 3팀 심야조 30명 (1~4조 중 3개조씩)
+         counts.saturdayNightCount = Math.min(counts.team1GroupsCount + counts.team3GroupsCount, 30);
+         // 일요일 주간: A조 30명 (1팀 A조 20명 + 2팀 1조 10명)
+         counts.sundayDayCount = Math.min(counts.team1ACount + (counts.team2GroupsCount > 0 ? 10 : 0), 30);
+         // 일요일 야간: B조 30명 (1팀 B조 20명 + 3팀 1조 10명)
+         counts.sundayNightCount = Math.min(counts.team1BCount + (counts.team3GroupsCount > 0 ? 10 : 0), 30);
 
     res.json({
       success: true,
@@ -369,9 +376,6 @@ router.get('/assignment-counts', async (req, res) => {
 // 편성 인원 현황 업데이트 (내부 함수)
 async function updateAssignmentCounts(weekendData) {
   try {
-    // Employee 모델 import
-    const Employee = require('../models/Employee');
-    
     // 각 팀별로 편성 명단을 기반으로 weekendAssignment 업데이트
     const teams = ['team1', 'team2', 'team3'];
     
@@ -380,14 +384,14 @@ async function updateAssignmentCounts(weekendData) {
       if (!teamData) continue;
       
       // A조, B조 명단 파싱
-      const aGroupMembers = teamData.aGroup.split('\n').filter(line => line.trim());
-      const bGroupMembers = teamData.bGroup.split('\n').filter(line => line.trim());
+      const aGroupMembers = teamData.aGroup ? teamData.aGroup.split('\n').filter(line => line.trim()) : [];
+      const bGroupMembers = teamData.bGroup ? teamData.bGroup.split('\n').filter(line => line.trim()) : [];
       
       // 1조, 2조, 3조, 4조 명단 파싱
-      const group1Members = teamData.group1.split('\n').filter(line => line.trim());
-      const group2Members = teamData.group2.split('\n').filter(line => line.trim());
-      const group3Members = teamData.group3.split('\n').filter(line => line.trim());
-      const group4Members = teamData.group4.split('\n').filter(line => line.trim());
+      const group1Members = teamData.group1 ? teamData.group1.split('\n').filter(line => line.trim()) : [];
+      const group2Members = teamData.group2 ? teamData.group2.split('\n').filter(line => line.trim()) : [];
+      const group3Members = teamData.group3 ? teamData.group3.split('\n').filter(line => line.trim()) : [];
+      const group4Members = teamData.group4 ? teamData.group4.split('\n').filter(line => line.trim()) : [];
       
       // 각 직원의 weekendAssignment 업데이트
       for (const member of aGroupMembers) {
@@ -459,6 +463,7 @@ async function updateAssignmentCounts(weekendData) {
     
   } catch (error) {
     console.error('편성 인원 현황 업데이트 오류:', error);
+    throw error; // 에러를 상위로 전파
   }
 }
 
