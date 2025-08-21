@@ -198,7 +198,7 @@
               <h5 class="card-title">직원 데이터 내보내기</h5>
               <p class="card-text">현재 직원 목록을 엑셀 파일로 다운로드하세요.</p>
               <div class="mt-3">
-                <button class="btn btn-light btn-excel" onclick="downloadEmployeeExcel()">
+                <button class="btn btn-light btn-excel" onclick="downloadEmployeeData()">
                 <i class="fa-solid fa-download me-2"></i>
                 엑셀 다운로드
               </button>
@@ -256,7 +256,7 @@
               <h5 class="card-title">스케줄 내보내기</h5>
               <p class="card-text">현재 근무 스케줄을 엑셀 파일로 다운로드하세요.</p>
               <div class="mt-3">
-                <button class="btn btn-light btn-excel" onclick="downloadScheduleExcel()">
+                <button class="btn btn-light btn-excel" onclick="downloadScheduleData()">
                   <i class="fa-solid fa-download me-2"></i>
                   엑셀 다운로드
                 </button>
@@ -299,7 +299,7 @@
                <h5 class="card-title">근태 데이터 내보내기</h5>
                <p class="card-text">근태 데이터를 엑셀 파일로 다운로드하세요.</p>
                <div class="mt-3">
-                 <button class="btn btn-light btn-excel" onclick="downloadAttendanceExcel()">
+                 <button class="btn btn-light btn-excel" onclick="downloadAttendanceData()">
                    <i class="fa-solid fa-download me-2"></i>
                    엑셀 다운로드
                  </button>
@@ -350,16 +350,16 @@
          </div>
          
          <div class="feature-grid">
-           <!-- 유니폼 통계 내보내기 -->
+           <!-- 유니폼 주문 통계 내보내기 -->
            <div class="card excel-card data-export">
              <div class="card-body text-center">
                <i class="fa-solid fa-file-export fa-3x mb-3"></i>
-               <h5 class="card-title">유니폼 통계 내보내기</h5>
-               <p class="card-text">유니폼 현황 및 통계를 엑셀 파일로 다운로드하세요.</p>
+               <h5 class="card-title">유니폼 주문 통계 내보내기</h5>
+               <p class="card-text">주문하기 편리하도록 품목별 사이즈별 합계수량을 엑셀로 다운로드하세요.</p>
                <div class="mt-3">
                  <button class="btn btn-light btn-excel" onclick="downloadUniformStats()">
                    <i class="fa-solid fa-download me-2"></i>
-                   엑셀 다운로드
+                   주문용 엑셀 다운로드
                  </button>
                </div>
              </div>
@@ -870,6 +870,62 @@
     document.addEventListener('DOMContentLoaded', function() {
       console.log('통합 엑셀 관리 페이지가 로드되었습니다.');
     });
+
+    // 인사 현황 보고서 다운로드
+    function downloadHRReport() {
+      window.location.href = '/dashboard/hr-report/excel';
+    }
+
+    // 근무 통계 보고서 다운로드
+    function downloadWorkStatsReport() {
+      window.location.href = '/dashboard/work-stats/excel';
+    }
+
+    // 월별 요약 보고서 다운로드
+    function downloadMonthlyReport() {
+      const month = prompt('요약 보고서를 생성할 월을 입력하세요 (예: 2025-08):', new Date().toISOString().slice(0, 7));
+      if (month) {
+        window.location.href = `/dashboard/monthly-report/excel?month=${month}`;
+      }
+    }
+
+    // 직원 데이터 내보내기
+    function downloadEmployeeData() {
+      window.location.href = '/employees/excel/export';
+    }
+
+    // 근무 스케줄 데이터 내보내기
+    function downloadScheduleData() {
+      window.location.href = '/workSchedule/excel/export';
+    }
+
+    // 근태 데이터 내보내기
+    function downloadAttendanceData() {
+      window.location.href = '/attendance/excel/export';
+    }
+
+    // 직원 템플릿 다운로드
+    function downloadEmployeeTemplate() {
+      window.location.href = '/employees/excel/template';
+    }
+
+    // 스케줄 템플릿 다운로드
+    function downloadScheduleTemplate() {
+      window.location.href = '/workSchedule/excel/template';
+    }
+
+    // 근태 템플릿 다운로드
+    function downloadAttendanceTemplate() {
+      window.location.href = '/attendance/excel/template';
+    }
+
+    // 근태 보고서 다운로드
+    function downloadAttendanceReport() {
+      const month = prompt('근태 보고서를 생성할 월을 입력하세요 (예: 2025-08):', new Date().toISOString().slice(0, 7));
+      if (month) {
+        window.location.href = `/attendance/report/excel?month=${month}`;
+      }
+    }
   </script>
 </body>
 </html> 

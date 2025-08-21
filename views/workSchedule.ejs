@@ -1,1014 +1,1066 @@
-<%- include('header') %>
-
-<div class="container mt-4">
-  <div class="row">
-    <div class="col-12">
-      <!-- 페이지 헤더 -->
-      <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-          <h2 class="mb-1">
-            <i class="fa-solid fa-calendar-alt me-2 text-primary"></i>근무 스케줄 관리
-          </h2>
-          <p class="text-muted mb-0">주차별 근무 스케줄을 설정하고 관리합니다.</p>
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>근무 스케줄 관리</title>
+  
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    body { 
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+      background-color: #f8f9fa;
+    }
+    .card {
+      border: none;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      border-radius: 12px;
+    }
+    .card-header {
+      border-radius: 12px 12px 0 0 !important;
+      font-weight: 600;
+    }
+    .btn { margin-right: 5px; }
+    .schedule-card {
+      transition: transform 0.2s ease-in-out;
+    }
+    .schedule-card:hover {
+      transform: translateY(-2px);
+    }
+  </style>
+</head>
+<body>
+  
+  <!-- 헤더 포함 -->
+  <%- include('header') %>
+  
+  <!-- 메인 컨테이너 -->
+  <div class="container mt-4">
+    <div class="row">
+      <div class="col-12">
+        <!-- 페이지 헤더 -->
+        <div class="text-center mb-5">
+          <h1 class="display-4 text-primary mb-3">
+            <i class="fa-solid fa-calendar-alt me-3"></i>근무 스케줄 관리
+          </h1>
+          <p class="lead text-muted">주차별 근무 스케줄을 설정하고 관리합니다.</p>
         </div>
-        <div class="d-flex gap-2">
-          <button class="btn btn-success" onclick="createCurrentWeekSchedule()">
-            <i class="fa-solid fa-plus me-1"></i>이번주 스케줄 생성
-          </button>
-        </div>
-      </div>
 
+        <!-- 주차별 스케줄 선택 및 관리 버튼 -->
+        <div class="card shadow-sm mb-4">
+          <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">
+              <i class="fa-solid fa-calendar-week me-2"></i>주차별 스케줄 관리
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-12">
+                <div class="d-flex flex-wrap gap-2 mb-3">
+                  <!-- 주차별 스케줄 선택 드롭다운 -->
+                  <div class="dropdown">
+                    <button class="btn btn-outline-primary dropdown-toggle" type="button" id="weekSelector" data-bs-toggle="dropdown" aria-expanded="false">
+                      <i class="fa-solid fa-calendar-week me-1"></i>
+                      <span id="selectedWeekLabel">이번주</span>
+                    </button>
+                    <ul class="dropdown-menu" id="weekDropdown" aria-labelledby="weekSelector">
+                      <!-- 동적으로 주차 목록이 추가됨 -->
+                    </ul>
+                  </div>
+                  
+                  <!-- 이번주 스케줄 생성 버튼 -->
+                  <button class="btn btn-success" onclick="createCurrentWeekSchedule()">
+                    <i class="fa-solid fa-plus me-1"></i>이번주 스케줄 생성
+                  </button>
 
-
-      <!-- 이번주 근무 형태 -->
-      <div class="card shadow-sm mb-4">
-        <div class="card-header bg-info text-white">
-          <h5 class="mb-0">
-            <i class="fa-solid fa-users me-2"></i><span id="todayTitle">이번주</span> (<span id="weekNumber">?</span>주차) 팀 근무 형태
-          </h5>
-        </div>
-        <div class="card-body">
-          <div class="row">
-            <div class="col-md-4">
-              <div class="text-center p-3 border rounded">
-                <h6 class="text-primary">보안1팀</h6>
-                <span class="badge bg-success fs-6" id="team1Schedule">초야</span>
-              </div>
-            </div>
-            <div class="col-md-4">
-              <div class="text-center p-3 border rounded">
-                <h6 class="text-primary">보안2팀</h6>
-                <span class="badge bg-warning fs-6" id="team2Schedule">심야</span>
-              </div>
-            </div>
-            <div class="col-md-4">
-              <div class="text-center p-3 border rounded">
-                <h6 class="text-primary">보안3팀</h6>
-                <span class="badge bg-info fs-6" id="team3Schedule">주간</span>
+                </div>
+                
+                <!-- 현재 선택된 주차 정보 표시 -->
+                <div class="alert alert-info">
+                  <div class="row">
+                    <div class="col-md-6">
+                      <strong>현재 주차:</strong> <span id="currentWeekInfo">로딩 중...</span>
+                    </div>
+                    <div class="col-md-6">
+                      <strong>선택된 주차:</strong> <span id="selectedWeekInfo">이번주</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
-
-      <!-- 주말 근무 인원 배정 -->
-      <div class="card shadow-sm mb-4">
-        <div class="card-header bg-warning text-dark">
-          <h5 class="mb-0">
-            <i class="fa-solid fa-calendar-week me-2"></i>주말 근무 인원 배정
-          </h5>
-        </div>
-        <div class="card-body">
-          <!-- 근무 순환 로직 설명 -->
-          <div class="alert alert-info mb-4">
-            <div class="d-flex justify-content-between align-items-start">
-              <div>
-                <h6 class="alert-heading"><i class="fa-solid fa-info-circle me-2"></i>근무 순환 로직</h6>
-                <ul class="mb-0 small">
-                  <li><strong>주 단위 팀 근무 순환:</strong> 1팀(주간→심야→초야), 2팀(초야→주간→심야), 3팀(심야→초야→주간)</li>
-                  <li><strong>월~금요일:</strong> 각팀 40명 근무 (주간/초야/심야) 총 120명</li>
-                  <li><strong>토요일:</strong> 주간조 30명(06:00~18:00) + 야간조 30명(18:00~06:00) = 총 60명</li>
-                  <li><strong>일요일:</strong> 주간조 30명(06:00~18:00) + 야간조 30명(18:00~06:00) = 총 60명</li>
-                  <li><strong>주말 인원 배정:</strong> 각 근무 시간대별로 정확히 30명씩 배정</li>
-                </ul>
+        
+        <!-- 이번주 팀 근무 형태 -->
+        <div class="card shadow-sm mb-4">
+          <div class="card-header bg-info text-white">
+            <h5 class="mb-0">
+              <i class="fa-solid fa-users me-2"></i><span id="todayTitle">이번주</span> (<span id="weekNumber">?</span>주차) 팀 근무 형태
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-4">
+                <div class="text-center p-3 border rounded">
+                  <h6 class="text-primary">보안1팀</h6>
+                  <span class="badge bg-success fs-6" id="team1Schedule">초야</span>
+                  <small class="d-block text-muted mt-1">14:00~22:00</small>
+                </div>
               </div>
-              <button class="btn btn-info" onclick="generateAllTeamsPersonnel()">
-                <i class="fa-solid fa-magic me-1"></i>전체 팀 자동 생성
+              <div class="col-md-4">
+                <div class="text-center p-3 border rounded">
+                  <h6 class="text-primary">보안2팀</h6>
+                  <span class="badge bg-warning fs-6" id="team2Schedule">심야</span>
+                  <small class="d-block text-muted mt-1">22:00~06:00</small>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="text-center p-3 border rounded">
+                  <h6 class="text-primary">보안3팀</h6>
+                  <span class="badge bg-info fs-6" id="team3Schedule">주간</span>
+                  <small class="d-block text-muted mt-1">06:00~14:00</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 주말 근무 인원 배정 -->
+        <div class="card shadow-sm mb-4">
+          <div class="card-header bg-warning text-dark">
+            <h5 class="mb-0">
+              <i class="fa-solid fa-calendar-week me-2"></i>주말 근무 인원 배정
+            </h5>
+          </div>
+          <div class="card-body">
+            <!-- 근무 순환 로직 설명 -->
+            <div class="alert alert-info mb-4">
+              <div class="d-flex justify-content-between align-items-start">
+                <div>
+                  <h6 class="alert-heading"><i class="fa-solid fa-info-circle me-2"></i>근무 순환 로직</h6>
+                  <ul class="mb-0 small">
+                    <li><strong>주 단위 팀 근무 순환:</strong> 1팀(주간→심야→초야), 2팀(초야→주간→심야), 3팀(심야→초야→주간)</li>
+                    <li><strong>월~금요일:</strong> 각팀 40명 근무 (주간/초야/심야) 총 120명</li>
+                    <li><strong>토요일:</strong> 주간조 30명(06:00~18:00) + 야간조 30명(18:00~06:00) = 총 60명</li>
+                    <li><strong>일요일:</strong> 주간조 30명(06:00~18:00) + 야간조 30명(18:00~06:00) = 총 60명</li>
+                    <li><strong>주말 인원 배정:</strong> 각 근무 시간대별로 정확히 30명씩 배정</li>
+                  </ul>
+                </div>
+                <button class="btn btn-info" onclick="generateAllTeamsPersonnel()">
+                  <i class="fa-solid fa-magic me-1"></i>전체 팀 자동 생성
+                </button>
+              </div>
+            </div>
+
+            <!-- 보안1팀 조별 편성 명단 -->
+            <div class="row mb-4">
+              <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                  <h6 class="text-primary mb-0">
+                    <i class="fa-solid fa-shield me-2"></i>보안1팀 조별 편성 명단
+                  </h6>
+                  <button class="btn btn-sm btn-outline-primary" onclick="generateTeamPersonnel('team1')">
+                    <i class="fa-solid fa-magic me-1"></i>자동 생성
+                  </button>
+                </div>
+                <div class="row g-3">
+                  <div class="col-md-4">
+                    <label class="form-label small">A조 (일요일 주간근무)</label>
+                    <textarea class="form-control" id="team1AGroup" rows="4" placeholder="A조 편성 명단을 입력하세요 (20명)" oninput="calculateWeekendPersonnel()"></textarea>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label small">B조 (일요일 야간근무)</label>
+                    <textarea class="form-control" id="team1BGroup" rows="4" placeholder="B조 편성 명단을 입력하세요 (20명)" oninput="calculateWeekendPersonnel()"></textarea>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label small">1조</label>
+                    <textarea class="form-control" id="team1Group1" rows="4" placeholder="1조 편성 명단을 입력하세요 (10명)" oninput="calculateWeekendPersonnel()"></textarea>
+                  </div>
+                </div>
+                <div class="row g-3 mt-2">
+                  <div class="col-md-4">
+                    <label class="form-label small">2조</label>
+                    <textarea class="form-control" id="team1Group2" rows="4" placeholder="2조 편성 명단을 입력하세요 (10명)" oninput="calculateWeekendPersonnel()"></textarea>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label small">3조</label>
+                    <textarea class="form-control" id="team1Group3" rows="4" placeholder="3조 편성 명단을 입력하세요 (10명)" oninput="calculateWeekendPersonnel()"></textarea>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label small">4조</label>
+                    <textarea class="form-control" id="team1Group4" rows="4" placeholder="4조 편성 명단을 입력하세요 (10명)" oninput="calculateWeekendPersonnel()"></textarea>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 보안2팀 조별 편성 명단 -->
+            <div class="row mb-4">
+              <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                  <h6 class="text-warning mb-0">
+                    <i class="fa-solid fa-shield me-2"></i>보안2팀 조별 편성 명단
+                  </h6>
+                  <button class="btn btn-sm btn-outline-warning" onclick="generateTeamPersonnel('team2')">
+                    <i class="fa-solid fa-magic me-1"></i>자동 생성
+                  </button>
+                </div>
+                <div class="row g-3">
+                  <div class="col-md-4">
+                    <label class="form-label small">A조 (일요일 주간근무)</label>
+                    <textarea class="form-control" id="team2AGroup" rows="4" placeholder="A조 편성 명단을 입력하세요 (20명)" oninput="calculateWeekendPersonnel()"></textarea>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label small">B조 (일요일 야간근무)</label>
+                    <textarea class="form-control" id="team2BGroup" rows="4" placeholder="B조 편성 명단을 입력하세요 (20명)" oninput="calculateWeekendPersonnel()"></textarea>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label small">1조</label>
+                    <textarea class="form-control" id="team2Group1" rows="4" placeholder="1조 편성 명단을 입력하세요 (10명)" oninput="calculateWeekendPersonnel()"></textarea>
+                  </div>
+                </div>
+                <div class="row g-3 mt-2">
+                  <div class="col-md-4">
+                    <label class="form-label small">2조</label>
+                    <textarea class="form-control" id="team2Group2" rows="4" placeholder="2조 편성 명단을 입력하세요 (10명)" oninput="calculateWeekendPersonnel()"></textarea>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label small">3조</label>
+                    <textarea class="form-control" id="team2Group3" rows="4" placeholder="3조 편성 명단을 입력하세요 (10명)" oninput="calculateWeekendPersonnel()"></textarea>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label small">4조</label>
+                    <textarea class="form-control" id="team2Group4" rows="4" placeholder="4조 편성 명단을 입력하세요 (10명)" oninput="calculateWeekendPersonnel()"></textarea>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 보안3팀 조별 편성 명단 -->
+            <div class="row mb-4">
+              <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                  <h6 class="text-info mb-0">
+                    <i class="fa-solid fa-shield me-2"></i>보안3팀 조별 편성 명단
+                  </h6>
+                  <button class="btn btn-sm btn-outline-info" onclick="generateTeamPersonnel('team3')">
+                    <i class="fa-solid fa-magic me-1"></i>자동 생성
+                  </button>
+                </div>
+                <div class="row g-3">
+                  <div class="col-md-4">
+                    <label class="form-label small">A조 (일요일 주간근무)</label>
+                    <textarea class="form-control" id="team3AGroup" rows="4" placeholder="A조 편성 명단을 입력하세요 (20명)" oninput="calculateWeekendPersonnel()"></textarea>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label small">B조 (일요일 야간근무)</label>
+                    <textarea class="form-control" id="team3BGroup" rows="4" placeholder="B조 편성 명단을 입력하세요 (20명)" oninput="calculateWeekendPersonnel()"></textarea>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label small">1조</label>
+                    <textarea class="form-control" id="team3Group1" rows="4" placeholder="1조 편성 명단을 입력하세요 (10명)" oninput="calculateWeekendPersonnel()"></textarea>
+                  </div>
+                </div>
+                <div class="row g-3 mt-2">
+                  <div class="col-md-4">
+                    <label class="form-label small">2조</label>
+                    <textarea class="form-control" id="team3Group2" rows="4" placeholder="2조 편성 명단을 입력하세요 (10명)" oninput="calculateWeekendPersonnel()"></textarea>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label small">3조</label>
+                    <textarea class="form-control" id="team3Group3" rows="4" placeholder="3조 편성 명단을 입력하세요 (10명)" oninput="calculateWeekendPersonnel()"></textarea>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label small">4조</label>
+                    <textarea class="form-control" id="team3Group4" rows="4" placeholder="4조 편성 명단을 입력하세요 (10명)" oninput="calculateWeekendPersonnel()"></textarea>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="text-center">
+              <button class="btn btn-primary me-2" onclick="saveWeekendSchedule()">
+                <i class="fa-solid fa-save me-1"></i>주말 스케줄 저장
+              </button>
+              <button class="btn btn-success" onclick="calculateWeekendPersonnel()">
+                <i class="fa-solid fa-calculator me-1"></i>인원 계산
               </button>
             </div>
           </div>
-
-
-
-          <!-- 보안1팀 조별 편성 명단 -->
-          <div class="row mb-4">
-            <div class="col-12">
-              <div class="d-flex justify-content-between align-items-center mb-3">
-                <h6 class="text-primary mb-0">
-                  <i class="fa-solid fa-shield me-2"></i>보안1팀 조별 편성 명단
-                </h6>
-                <button class="btn btn-sm btn-outline-primary" onclick="generateTeamPersonnel('team1')">
-                  <i class="fa-solid fa-magic me-1"></i>자동 생성
-                </button>
+        </div>
+        
+        <!-- 주말 근무 인원 요약 -->
+        <div class="card shadow-sm mb-4">
+          <div class="card-header bg-success text-white">
+            <h5 class="mb-0">
+              <i class="fa-solid fa-calculator me-2"></i>주말 근무 인원 요약
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <div class="card border-success">
+                  <div class="card-header bg-success text-white py-2">
+                    <h6 class="mb-0">토요일 근무 인원</h6>
+                  </div>
+                  <div class="card-body py-2">
+                    <div class="row text-center">
+                      <div class="col-6">
+                        <small class="text-muted">주간근무 (06:00~18:00)</small>
+                        <div class="h5 mb-0 text-success" id="satDayTotal">0명 / 30명</div>
+                        <small class="text-muted" id="satDayTeams">-</small>
+                      </div>
+                      <div class="col-6">
+                        <small class="text-muted">야간근무 (18:00~06:00)</small>
+                        <div class="h5 mb-0 text-warning" id="satNightTotal">0명 / 30명</div>
+                        <small class="text-muted" id="satNightTeams">-</small>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div class="row g-3">
-                <div class="col-md-4">
-                  <label class="form-label small">A조 (일요일 주간근무)</label>
-                  <textarea class="form-control" id="team1AGroup" rows="4" placeholder="A조 편성 명단을 입력하세요 (20명)" oninput="calculateWeekendPersonnel()"></textarea>
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label small">B조 (일요일 야간근무)</label>
-                  <textarea class="form-control" id="team1BGroup" rows="4" placeholder="B조 편성 명단을 입력하세요 (20명)" oninput="calculateWeekendPersonnel()"></textarea>
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label small">1조</label>
-                  <textarea class="form-control" id="team1Group1" rows="4" placeholder="1조 편성 명단을 입력하세요 (10명)" oninput="calculateWeekendPersonnel()"></textarea>
-                </div>
-              </div>
-              <div class="row g-3 mt-2">
-                <div class="col-md-4">
-                  <label class="form-label small">2조</label>
-                  <textarea class="form-control" id="team1Group2" rows="4" placeholder="2조 편성 명단을 입력하세요 (10명)" oninput="calculateWeekendPersonnel()"></textarea>
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label small">3조</label>
-                  <textarea class="form-control" id="team1Group3" rows="4" placeholder="3조 편성 명단을 입력하세요 (10명)" oninput="calculateWeekendPersonnel()"></textarea>
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label small">4조</label>
-                  <textarea class="form-control" id="team1Group4" rows="4" placeholder="4조 편성 명단을 입력하세요 (10명)" oninput="calculateWeekendPersonnel()"></textarea>
+              <div class="col-md-6">
+                <div class="card border-info">
+                  <div class="card-header bg-info text-white py-2">
+                    <h6 class="mb-0">일요일 근무 인원</h6>
+                  </div>
+                  <div class="card-body py-2">
+                    <div class="row text-center">
+                      <div class="col-6">
+                        <small class="text-muted">주간근무 (06:00~18:00)</small>
+                        <div class="h5 mb-0 text-success" id="sunDayTotal">0명 / 30명</div>
+                        <small class="text-muted" id="sunDayTeams">-</small>
+                      </div>
+                      <div class="col-6">
+                        <small class="text-muted">야간근무 (18:00~06:00)</small>
+                        <div class="h5 mb-0 text-warning" id="sunNightTotal">0명 / 30명</div>
+                        <small class="text-muted" id="sunNightTeams">-</small>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-
-          <!-- 보안2팀 조별 편성 명단 -->
-          <div class="row mb-4">
-            <div class="col-12">
-              <div class="d-flex justify-content-between align-items-center mb-3">
-                <h6 class="text-warning mb-0">
-                  <i class="fa-solid fa-shield me-2"></i>보안2팀 조별 편성 명단
-                </h6>
-                <button class="btn btn-sm btn-outline-warning" onclick="generateTeamPersonnel('team2')">
-                  <i class="fa-solid fa-magic me-1"></i>자동 생성
-                </button>
-              </div>
-              <div class="row g-3">
-                <div class="col-md-4">
-                  <label class="form-label small">A조 (일요일 주간근무)</label>
-                  <textarea class="form-control" id="team2AGroup" rows="4" placeholder="A조 편성 명단을 입력하세요 (20명)" oninput="calculateWeekendPersonnel()"></textarea>
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label small">B조 (일요일 야간근무)</label>
-                  <textarea class="form-control" id="team2BGroup" rows="4" placeholder="B조 편성 명단을 입력하세요 (20명)" oninput="calculateWeekendPersonnel()"></textarea>
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label small">1조</label>
-                  <textarea class="form-control" id="team2Group1" rows="4" placeholder="1조 편성 명단을 입력하세요 (10명)" oninput="calculateWeekendPersonnel()"></textarea>
-                </div>
-              </div>
-              <div class="row g-3 mt-2">
-                <div class="col-md-4">
-                  <label class="form-label small">2조</label>
-                  <textarea class="form-control" id="team2Group2" rows="4" placeholder="2조 편성 명단을 입력하세요 (10명)" oninput="calculateWeekendPersonnel()"></textarea>
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label small">3조</label>
-                  <textarea class="form-control" id="team2Group3" rows="4" placeholder="3조 편성 명단을 입력하세요 (10명)" oninput="calculateWeekendPersonnel()"></textarea>
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label small">4조</label>
-                  <textarea class="form-control" id="team2Group4" rows="4" placeholder="4조 편성 명단을 입력하세요 (10명)" oninput="calculateWeekendPersonnel()"></textarea>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 보안3팀 조별 편성 명단 -->
-          <div class="row mb-4">
-            <div class="col-12">
-              <div class="d-flex justify-content-between align-items-center mb-3">
-                <h6 class="text-info mb-0">
-                  <i class="fa-solid fa-shield me-2"></i>보안3팀 조별 편성 명단
-                </h6>
-                <button class="btn btn-sm btn-outline-info" onclick="generateTeamPersonnel('team3')">
-                  <i class="fa-solid fa-magic me-1"></i>자동 생성
-                </button>
-              </div>
-              <div class="row g-3">
-                <div class="col-md-4">
-                  <label class="form-label small">A조 (일요일 주간근무)</label>
-                  <textarea class="form-control" id="team3AGroup" rows="4" placeholder="A조 편성 명단을 입력하세요 (20명)" oninput="calculateWeekendPersonnel()"></textarea>
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label small">B조 (일요일 야간근무)</label>
-                  <textarea class="form-control" id="team3BGroup" rows="4" placeholder="B조 편성 명단을 입력하세요 (20명)" oninput="calculateWeekendPersonnel()"></textarea>
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label small">1조</label>
-                  <textarea class="form-control" id="team3Group1" rows="4" placeholder="1조 편성 명단을 입력하세요 (10명)" oninput="calculateWeekendPersonnel()"></textarea>
-                </div>
-              </div>
-              <div class="row g-3 mt-2">
-                <div class="col-md-4">
-                  <label class="form-label small">2조</label>
-                  <textarea class="form-control" id="team3Group2" rows="4" placeholder="2조 편성 명단을 입력하세요 (10명)" oninput="calculateWeekendPersonnel()"></textarea>
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label small">3조</label>
-                  <textarea class="form-control" id="team3Group3" rows="4" placeholder="3조 편성 명단을 입력하세요 (10명)" oninput="calculateWeekendPersonnel()"></textarea>
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label small">4조</label>
-                  <textarea class="form-control" id="team3Group4" rows="4" placeholder="4조 편성 명단을 입력하세요 (10명)" oninput="calculateWeekendPersonnel()"></textarea>
-                </div>
-              </div>
-            </div>
-          </div>
-
-                     <!-- 주말 근무 인원 요약 -->
-           <div class="row mb-4">
-             <div class="col-12">
-               <h6 class="text-success mb-3">
-                 <i class="fa-solid fa-calculator me-2"></i>주말 근무 인원 요약
-               </h6>
-               <div class="row g-3">
-                 <div class="col-md-6">
-                   <div class="card border-success">
-                     <div class="card-header bg-success text-white py-2">
-                       <h6 class="mb-0">토요일 근무 인원</h6>
-                     </div>
-                     <div class="card-body py-2">
-                       <div class="row text-center">
-                         <div class="col-6">
-                           <small class="text-muted">주간근무 (06:00~18:00)</small>
-                           <div class="h5 mb-0 text-success" id="satDayTotal">0명 / 30명</div>
-                           <small class="text-muted" id="satDayTeams">-</small>
-                         </div>
-                         <div class="col-6">
-                           <small class="text-muted">야간근무 (18:00~06:00)</small>
-                           <div class="h5 mb-0 text-warning" id="satNightTotal">0명 / 30명</div>
-                           <small class="text-muted" id="satNightTeams">-</small>
-                         </div>
-                       </div>
-                     </div>
-                   </div>
-                 </div>
-                 <div class="col-md-6">
-                   <div class="card border-info">
-                     <div class="card-header bg-info text-white py-2">
-                       <h6 class="mb-0">일요일 근무 인원</h6>
-                     </div>
-                     <div class="card-body py-2">
-                       <div class="row text-center">
-                         <div class="col-6">
-                           <small class="text-muted">주간근무 (06:00~18:00)</small>
-                           <div class="h5 mb-0 text-success" id="sunDayTotal">0명 / 30명</div>
-                           <small class="text-muted" id="sunDayTeams">-</small>
-                         </div>
-                         <div class="col-6">
-                           <small class="text-muted">야간근무 (18:00~06:00)</small>
-                           <div class="h5 mb-0 text-warning" id="sunNightTotal">0명 / 30명</div>
-                           <small class="text-muted" id="sunNightTeams">-</small>
-                         </div>
-                       </div>
-                     </div>
-                   </div>
-                 </div>
-               </div>
-             </div>
-           </div>
-
-          <div class="text-center">
-            <button class="btn btn-primary me-2" onclick="saveWeekendSchedule()">
-              <i class="fa-solid fa-save me-1"></i>주말 스케줄 저장
-            </button>
-            <button class="btn btn-success" onclick="calculateWeekendPersonnel()">
-              <i class="fa-solid fa-calculator me-1"></i>인원 계산
-            </button>
           </div>
         </div>
+        
+        <!-- 법정공휴일 관리 -->
+        <div class="card shadow-sm mb-4">
+          <div class="card-header bg-danger text-white">
+            <h5 class="mb-0">
+              <i class="fa-solid fa-flag me-2"></i>법정공휴일 관리
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label class="form-label">공휴일</label>
+                <input type="date" class="form-control" id="holidayDate">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">공휴일명</label>
+                <input type="text" class="form-control" id="holidayName" placeholder="예: 신정">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">특근 처리</label>
+                <select class="form-select" id="holidaySpecialWork">
+                  <option value="평일특근">평일특근</option>
+                  <option value="다음날특근">다음날특근</option>
+                </select>
+              </div>
+            </div>
+            <div class="text-center mt-3">
+              <button class="btn btn-danger" onclick="addHoliday()">
+                <i class="fa-solid fa-plus me-1"></i>공휴일 추가
+              </button>
+            </div>
+            
+            <!-- 등록된 공휴일 목록 -->
+            <div class="mt-4">
+              <h6>등록된 공휴일</h6>
+              <div id="holidayList" class="list-group">
+                <!-- 공휴일 목록이 여기에 동적으로 추가됨 -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 저장 결과 알림 -->
+        <div id="saveResult" class="alert mt-3" style="display: none;"></div>
+
       </div>
-
-      <!-- 편성 인원 현황 -->
-      <div class="card shadow-sm mb-4">
-        <div class="card-header bg-success text-white">
-          <h5 class="mb-0">
-            <i class="fa-solid fa-users-gear me-2"></i>편성 인원 현황
-          </h5>
-        </div>
-        <div class="card-body">
-          <div class="row">
-            <div class="col-md-6">
-              <h6 class="text-center mb-3 text-success">주말 근무 할당 현황</h6>
-              <div class="table-responsive">
-                <table class="table table-sm table-bordered">
-                  <thead class="table-success">
-                    <tr>
-                      <th>구분</th>
-                      <th>인원</th>
-                      <th>상세</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td><strong>토요일 주간</strong></td>
-                      <td><span class="badge bg-success" id="saturdayDayCount">-</span></td>
-                      <td>초야조 30명 (06:00~18:00)</td>
-                    </tr>
-                    <tr>
-                      <td><strong>토요일 야간</strong></td>
-                      <td><span class="badge bg-warning" id="saturdayNightCount">-</span></td>
-                      <td>심야조 30명 (18:00~06:00)</td>
-                    </tr>
-                    <tr>
-                      <td><strong>일요일 주간</strong></td>
-                      <td><span class="badge bg-info" id="sundayDayCount">-</span></td>
-                      <td>A조 20명 + 선택조 10명</td>
-                    </tr>
-                    <tr>
-                      <td><strong>일요일 야간</strong></td>
-                      <td><span class="badge bg-secondary" id="sundayNightCount">-</span></td>
-                      <td>B조 20명 + 선택조 10명</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-            <div class="col-md-6">
-              <h6 class="text-center mb-3 text-info">팀별 조 편성 현황</h6>
-              <div class="table-responsive">
-                <table class="table table-sm table-bordered">
-                  <thead class="table-info">
-                    <tr>
-                      <th>팀</th>
-                      <th>A조</th>
-                      <th>B조</th>
-                      <th>1~4조</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td><strong>보안1팀</strong></td>
-                      <td><span class="badge bg-primary" id="team1ACount">-</span></td>
-                      <td><span class="badge bg-primary" id="team1BCount">-</span></td>
-                      <td><span class="badge bg-primary" id="team1GroupsCount">-</span></td>
-                    </tr>
-                    <tr>
-                      <td><strong>보안2팀</strong></td>
-                      <td><span class="badge bg-warning" id="team2ACount">-</span></td>
-                      <td><span class="badge bg-warning" id="team2BCount">-</span></td>
-                      <td><span class="badge bg-warning" id="team2GroupsCount">-</span></td>
-                    </tr>
-                    <tr>
-                      <td><strong>보안3팀</strong></td>
-                      <td><span class="badge bg-info" id="team3ACount">-</span></td>
-                      <td><span class="badge bg-info" id="team3BCount">-</span></td>
-                      <td><span class="badge bg-info" id="team3GroupsCount">-</span></td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-          <div class="text-center mt-3">
-            <button class="btn btn-success" onclick="refreshAssignmentCounts()">
-              <i class="fa-solid fa-sync-alt me-1"></i>편성 인원 새로고침
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- 법정공휴일 관리 -->
-      <div class="card shadow-sm mb-4">
-        <div class="card-header bg-danger text-white">
-          <h5 class="mb-0">
-            <i class="fa-solid fa-flag me-2"></i>법정공휴일 관리
-          </h5>
-        </div>
-        <div class="card-body">
-          <div class="row g-3">
-            <div class="col-md-4">
-              <label class="form-label">공휴일</label>
-              <input type="date" class="form-control" id="holidayDate">
-            </div>
-            <div class="col-md-4">
-              <label class="form-label">공휴일명</label>
-              <input type="text" class="form-control" id="holidayName" placeholder="예: 신정">
-            </div>
-            <div class="col-md-4">
-              <label class="form-label">특근 처리</label>
-              <select class="form-select" id="holidaySpecialWork">
-                <option value="평일특근">평일특근</option>
-                <option value="다음날특근">다음날특근</option>
-              </select>
-            </div>
-          </div>
-          <div class="text-center mt-3">
-            <button class="btn btn-danger" onclick="addHoliday()">
-              <i class="fa-solid fa-plus me-1"></i>공휴일 추가
-            </button>
-          </div>
-          
-          <!-- 등록된 공휴일 목록 -->
-          <div class="mt-4">
-            <h6>등록된 공휴일</h6>
-            <div id="holidayList" class="list-group">
-              <!-- 공휴일 목록이 여기에 동적으로 추가됨 -->
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 저장 결과 알림 -->
-      <div id="saveResult" class="alert mt-3" style="display: none;"></div>
     </div>
   </div>
-</div>
 
-<script>
-  // 현재 주차 정보 로드
-  async function loadCurrentWeekInfo() {
-    try {
-      const response = await fetch('/workSchedule/current-week');
-      const result = await response.json();
-      
-      if (result.success) {
-        const schedule = result.data;
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <script>
+    // 전역 변수
+    let weeklySchedules = [];
+    
+         // 기본 JavaScript 초기화
+     document.addEventListener('DOMContentLoaded', function() {
+       console.log('근무 스케줄 관리 페이지 로드 완료');
+       loadCurrentWeekInfo();
+       loadWeeklySchedules();
+       loadHolidayList(); // 공휴일 목록 자동 로드
+       
+       // Bootstrap 드롭다운 초기화
+       initializeBootstrapDropdowns();
+     });
+     
+     // Bootstrap 드롭다운 초기화 함수
+     function initializeBootstrapDropdowns() {
+       console.log('WorkSchedule 페이지 Bootstrap 드롭다운 초기화 시작');
+       
+       // Bootstrap이 로드될 때까지 대기
+       function waitForBootstrap() {
+         if (typeof bootstrap !== 'undefined') {
+           console.log('Bootstrap 로드됨, 드롭다운 초기화 시작');
+           
+           // 모든 드롭다운 요소 초기화
+           document.querySelectorAll('.dropdown-toggle').forEach(function(element) {
+             try {
+               // 기존 인스턴스가 있다면 제거
+               const existingInstance = bootstrap.Dropdown.getInstance(element);
+               if (existingInstance) {
+                 existingInstance.dispose();
+               }
+               
+               // 새 인스턴스 생성
+               const dropdown = new bootstrap.Dropdown(element, {
+                 autoClose: true,
+                 boundary: 'viewport'
+               });
+               
+               console.log('WorkSchedule 드롭다운 초기화됨:', element.textContent.trim());
+             } catch (error) {
+               console.error('WorkSchedule 드롭다운 초기화 오류:', error);
+             }
+           });
+           
+           console.log('WorkSchedule 모든 드롭다운 초기화 완료');
+         } else {
+           console.log('Bootstrap 로드 대기 중...');
+           setTimeout(waitForBootstrap, 100);
+         }
+       }
+       
+       waitForBootstrap();
+       
+       // 추가 안전장치: 2초 후 한 번 더 초기화
+       setTimeout(function() {
+         if (typeof bootstrap !== 'undefined') {
+           console.log('WorkSchedule 2초 후 추가 드롭다운 초기화');
+           document.querySelectorAll('.dropdown-toggle').forEach(function(element) {
+             try {
+               const dropdown = new bootstrap.Dropdown(element, {
+                 autoClose: true,
+                 boundary: 'viewport'
+               });
+             } catch (error) {
+               console.error('WorkSchedule 추가 초기화 오류:', error);
+             }
+           });
+         }
+       }, 2000);
+     }
+    
+    // 현재 주차 정보 로드
+    async function loadCurrentWeekInfo() {
+      try {
+        const response = await fetch('/workSchedule/current-week');
+        const result = await response.json();
         
-        // 주차 정보는 displayCurrentWeekInfo()에서 처리
-        
-        // 팀별 근무 형태 표시는 displayCurrentWeekInfo()에서 처리
-        
-        // 주말 근무 인원 설정
-        if (schedule.weekendSchedule) {
-          // 보안1팀 편성 명단
-          if (schedule.weekendSchedule.team1) {
-            document.getElementById('team1AGroup').value = schedule.weekendSchedule.team1.aGroup || '';
-            document.getElementById('team1BGroup').value = schedule.weekendSchedule.team1.bGroup || '';
-            document.getElementById('team1Group1').value = schedule.weekendSchedule.team1.group1 || '';
-            document.getElementById('team1Group2').value = schedule.weekendSchedule.team1.group2 || '';
-            document.getElementById('team1Group3').value = schedule.weekendSchedule.team1.group3 || '';
-            document.getElementById('team1Group4').value = schedule.weekendSchedule.team1.group4 || '';
+        if (result.success) {
+          const schedule = result.data;
+          
+          // 주차 정보 표시
+          if (schedule.weekNumber) {
+            document.getElementById('weekNumber').textContent = schedule.weekNumber;
+            document.getElementById('currentWeekInfo').textContent = `${schedule.weekNumber}주차`;
+          } else {
+            // 자동 주차 계산
+            const today = new Date();
+            const weekNumber = getWeekNumber(today);
+            document.getElementById('weekNumber').textContent = weekNumber;
+            document.getElementById('currentWeekInfo').textContent = `${weekNumber}주차`;
           }
           
-          // 보안2팀 편성 명단
-          if (schedule.weekendSchedule.team2) {
-            document.getElementById('team2AGroup').value = schedule.weekendSchedule.team2.aGroup || '';
-            document.getElementById('team2BGroup').value = schedule.weekendSchedule.team2.bGroup || '';
-            document.getElementById('team2Group1').value = schedule.weekendSchedule.team2.group1 || '';
-            document.getElementById('team2Group2').value = schedule.weekendSchedule.team2.group2 || '';
-            document.getElementById('team2Group3').value = schedule.weekendSchedule.team2.group3 || '';
-            document.getElementById('team2Group4').value = schedule.weekendSchedule.team2.group4 || '';
+          // 주말 근무 인원 설정
+          if (schedule.weekendSchedule) {
+            loadWeekendPersonnel(schedule.weekendSchedule);
           }
           
-          // 보안3팀 편성 명단
-          if (schedule.weekendSchedule.team3) {
-            document.getElementById('team3AGroup').value = schedule.weekendSchedule.team3.aGroup || '';
-            document.getElementById('team3BGroup').value = schedule.weekendSchedule.team3.bGroup || '';
-            document.getElementById('team3Group1').value = schedule.weekendSchedule.team3.group1 || '';
-            document.getElementById('team3Group2').value = schedule.weekendSchedule.team3.group2 || '';
-            document.getElementById('team3Group3').value = schedule.weekendSchedule.team3.group3 || '';
-            document.getElementById('team3Group4').value = schedule.weekendSchedule.team3.group4 || '';
-          }
-          
-          // 편성 명단 로드 후 인원 계산 실행
-          setTimeout(() => {
-            calculateWeekendPersonnel();
-          }, 100);
-        }
-        
-        // 공휴일 목록 표시
-        displayHolidayList(schedule.holidays || []);
-        
-        // 편성 인원 현황 로드
-        await loadAssignmentCounts();
-        
-        // 현재 주차 정보 및 근무 형태 표시
-        if (schedule.weekNumber) {
-          displayCurrentWeekInfo(schedule.weekNumber, (schedule.weekNumber - 1) % 3);
         } else {
-          // 주차 정보가 없으면 자동 계산
-          displayCurrentWeekInfo();
+          console.log('현재 주차 정보가 없습니다.');
+          // 기본 정보 표시
+          const today = new Date();
+          const weekNumber = getWeekNumber(today);
+          document.getElementById('weekNumber').textContent = weekNumber;
+          document.getElementById('currentWeekInfo').textContent = `${weekNumber}주차`;
         }
         
-      } else {
-        console.log('현재 주차 정보가 없습니다.');
-        // 기본 정보 표시 (자동 주차 계산)
-        displayCurrentWeekInfo();
+      } catch (error) {
+        console.error('현재 주차 정보 로드 오류:', error);
       }
-      
-    } catch (error) {
-      console.error('현재 주차 정보 로드 오류:', error);
     }
-  }
-  
-  // 이번주 스케줄 생성
-  async function createCurrentWeekSchedule() {
-    try {
-      const response = await fetch('/workSchedule/create-current-week', {
-        method: 'POST'
-      });
-      
-      const result = await response.json();
-      
-      if (result.success) {
-        showMessage('이번주 근무 스케줄이 생성되었습니다.', 'success');
-        loadCurrentWeekInfo();
-      } else {
-        showMessage('스케줄 생성에 실패했습니다: ' + result.message, 'danger');
-      }
-      
-    } catch (error) {
-      console.error('스케줄 생성 오류:', error);
-      showMessage('스케줄 생성 중 오류가 발생했습니다.', 'danger');
-    }
-  }
-  
-  // 주말 스케줄 저장
-  async function saveWeekendSchedule() {
-    try {
-      const weekendData = {
-        // 보안1팀 편성 명단
-        team1: {
-          aGroup: document.getElementById('team1AGroup').value,
-          bGroup: document.getElementById('team1BGroup').value,
-          group1: document.getElementById('team1Group1').value,
-          group2: document.getElementById('team1Group2').value,
-          group3: document.getElementById('team1Group3').value,
-          group4: document.getElementById('team1Group4').value
-        },
-        // 보안2팀 편성 명단
-        team2: {
-          aGroup: document.getElementById('team2AGroup').value,
-          bGroup: document.getElementById('team2BGroup').value,
-          group1: document.getElementById('team2Group1').value,
-          group2: document.getElementById('team2Group2').value,
-          group3: document.getElementById('team2Group3').value,
-          group4: document.getElementById('team2Group4').value
-        },
-        // 보안3팀 편성 명단
-        team3: {
-          aGroup: document.getElementById('team3AGroup').value,
-          bGroup: document.getElementById('team3BGroup').value,
-          group1: document.getElementById('team3Group1').value,
-          group2: document.getElementById('team3Group2').value,
-          group3: document.getElementById('team3Group3').value,
-          group4: document.getElementById('team3Group4').value
+    
+    // 이번주 스케줄 생성
+    async function createCurrentWeekSchedule() {
+      try {
+        const response = await fetch('/workSchedule/create-current-week', {
+          method: 'POST'
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          showMessage('이번주 근무 스케줄이 생성되었습니다.', 'success');
+          loadCurrentWeekInfo();
+        } else {
+          showMessage('스케줄 생성에 실패했습니다: ' + result.message, 'danger');
         }
-      };
-      
-      const response = await fetch('/workSchedule/save-weekend', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(weekendData)
-      });
-      
-      const result = await response.json();
-      
-      if (result.success) {
-        showMessage('주말 스케줄이 저장되었습니다.', 'success');
-        // 인원 계산 실행
-        calculateWeekendPersonnel();
-      } else {
-        showMessage('주말 스케줄 저장에 실패했습니다: ' + result.message, 'danger');
+        
+      } catch (error) {
+        console.error('스케줄 생성 오류:', error);
+        showMessage('스케줄 생성 중 오류가 발생했습니다.', 'danger');
       }
-      
-    } catch (error) {
-      console.error('주말 스케줄 저장 오류:', error);
-      showMessage('주말 스케줄 저장 중 오류가 발생했습니다.', 'danger');
     }
-  }
-  
-  // 공휴일 추가
-  async function addHoliday() {
-    try {
-      const date = document.getElementById('holidayDate').value;
-      const name = document.getElementById('holidayName').value;
-      const specialWork = document.getElementById('holidaySpecialWork').value;
+    
+    // 주말 스케줄 저장
+    async function saveWeekendSchedule() {
+      try {
+        const weekendData = {
+          team1: {
+            aGroup: document.getElementById('team1AGroup').value,
+            bGroup: document.getElementById('team1BGroup').value,
+            group1: document.getElementById('team1Group1').value,
+            group2: document.getElementById('team1Group2').value,
+            group3: document.getElementById('team1Group3').value,
+            group4: document.getElementById('team1Group4').value
+          },
+          team2: {
+            aGroup: document.getElementById('team2AGroup').value,
+            bGroup: document.getElementById('team2BGroup').value,
+            group1: document.getElementById('team2Group1').value,
+            group2: document.getElementById('team2Group2').value,
+            group3: document.getElementById('team2Group3').value,
+            group4: document.getElementById('team2Group4').value
+          },
+          team3: {
+            aGroup: document.getElementById('team3AGroup').value,
+            bGroup: document.getElementById('team3BGroup').value,
+            group1: document.getElementById('team3Group1').value,
+            group2: document.getElementById('team3Group2').value,
+            group3: document.getElementById('team3Group3').value,
+            group4: document.getElementById('team3Group4').value
+          }
+        };
+        
+        const response = await fetch('/workSchedule/save-weekend', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(weekendData)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          showMessage('주말 스케줄이 저장되었습니다.', 'success');
+          calculateWeekendPersonnel();
+        } else {
+          showMessage('주말 스케줄 저장에 실패했습니다: ' + result.message, 'danger');
+        }
+        
+      } catch (error) {
+        console.error('주말 스케줄 저장 오류:', error);
+        showMessage('주말 스케줄 저장 중 오류가 발생했습니다.', 'danger');
+      }
+    }
+    
+    // 주말 근무 인원 계산
+    function calculateWeekendPersonnel() {
+      let satDayTotal = 0;
+      let satNightTotal = 0;
+      let sunDayTotal = 0;
+      let sunNightTotal = 0;
+
+      // 팀별 정보 저장
+      let satDayTeams = [];
+      let satNightTeams = [];
+      let sunDayTeams = [];
+      let sunNightTeams = [];
+
+      // 각 팀별로 편성 명단에서 인원 수 계산
+      const teams = ['team1', 'team2', 'team3'];
       
-      if (!date || !name) {
-        showMessage('공휴일과 공휴일명을 입력해주세요.', 'warning');
+      teams.forEach(team => {
+        const aGroup = document.getElementById(team + 'AGroup').value;
+        const bGroup = document.getElementById(team + 'BGroup').value;
+        const group1 = document.getElementById(team + 'Group1').value;
+        const group2 = document.getElementById(team + 'Group2').value;
+        const group3 = document.getElementById(team + 'Group3').value;
+        const group4 = document.getElementById(team + 'Group4').value;
+
+        // A조, B조는 일요일 근무
+        const aGroupCount = aGroup.split('\n').filter(line => line.trim()).length;
+        const bGroupCount = bGroup.split('\n').filter(line => line.trim()).length;
+
+        // 1조, 2조, 3조, 4조는 금요일 근무 후 토요일 근무
+        const group1Count = group1.split('\n').filter(line => line.trim()).length;
+        const group2Count = group2.split('\n').filter(line => line.trim()).length;
+        const group3Count = group3.split('\n').filter(line => line.trim()).length;
+        const group4Count = group4.split('\n').filter(line => line.trim()).length;
+
+        // 토요일 주간근무: 초야조 30명 (1조~4조 중 3개조)
+        if (team === 'team2') { // 2팀이 초야조
+          const dayCount = group1Count + group2Count + group3Count;
+          satDayTotal += dayCount;
+          if (dayCount > 0) {
+            satDayTeams.push(`2팀 ${dayCount}명`);
+          }
+        } else if (team === 'team3') { // 3팀이 심야조
+          const nightCount = group1Count + group2Count + group3Count;
+          satNightTotal += nightCount;
+          if (nightCount > 0) {
+            satNightTeams.push(`3팀 ${nightCount}명`);
+          }
+        }
+
+        // 일요일 주간근무: 보안1팀 A조 20명 + 보안2팀 지원조 10명
+        if (team === 'team1') {
+          sunDayTotal += aGroupCount;
+          if (aGroupCount > 0) {
+            sunDayTeams.push(`1팀 A조 ${aGroupCount}명`);
+          }
+        } else if (team === 'team2') {
+          const supportCount = group1Count;
+          sunDayTotal += supportCount;
+          if (supportCount > 0) {
+            sunDayTeams.push(`2팀 1조 ${supportCount}명`);
+          }
+        }
+
+        // 일요일 야간근무: 보안1팀 B조 20명 + 보안3팀 지원조 10명
+        if (team === 'team1') {
+          sunNightTotal += bGroupCount;
+          if (bGroupCount > 0) {
+            sunNightTeams.push(`1팀 B조 ${bGroupCount}명`);
+          }
+        } else if (team === 'team3') {
+          const supportCount = group1Count;
+          sunNightTotal += supportCount;
+          if (supportCount > 0) {
+            sunNightTeams.push(`3팀 1조 ${supportCount}명`);
+          }
+        }
+      });
+
+      // 결과 표시
+      document.getElementById('satDayTotal').textContent = satDayTotal + '명 / 30명';
+      document.getElementById('satNightTotal').textContent = satNightTotal + '명 / 30명';
+      document.getElementById('sunDayTotal').textContent = sunDayTotal + '명 / 30명';
+      document.getElementById('sunNightTotal').textContent = sunNightTotal + '명 / 30명';
+
+      // 팀별 정보 표시
+      document.getElementById('satDayTeams').textContent = satDayTeams.join(', ') || '-';
+      document.getElementById('satNightTeams').textContent = satNightTeams.join(', ') || '-';
+      document.getElementById('sunDayTeams').textContent = sunDayTeams.join(', ') || '-';
+      document.getElementById('sunNightTeams').textContent = sunNightTeams.join(', ') || '-';
+
+      // 목표 인원과 비교
+      const targetWeekend = 30;
+      if (satDayTotal === targetWeekend && satNightTotal === targetWeekend && 
+          sunDayTotal === targetWeekend && sunNightTotal === targetWeekend) {
+        showMessage('✅ 모든 주말 근무 인원이 목표(30명)에 맞게 배정되었습니다.', 'success');
+      } else {
+        showMessage(`⚠️ 주말 근무 인원이 목표(30명)와 다릅니다. 토요일 주간: ${satDayTotal}명, 야간: ${satNightTotal}명, 일요일 주간: ${sunDayTotal}명, 야간: ${sunNightTotal}명`, 'warning');
+      }
+    }
+    
+    // 팀별 조별 편성 명단 자동 생성
+    async function generateTeamPersonnel(team) {
+      try {
+        const response = await fetch(`/workSchedule/generate-personnel/${team}`, {
+          method: 'POST'
+        });
+        const result = await response.json();
+
+        if (result.success) {
+          showMessage(`${team} 팀의 조별 편성 명단이 자동 생성되었습니다.`, 'success');
+          // 생성된 명단으로 텍스트 영역 업데이트
+          document.getElementById(`${team}AGroup`).value = result.data.aGroup;
+          document.getElementById(`${team}BGroup`).value = result.data.bGroup;
+          document.getElementById(`${team}Group1`).value = result.data.group1;
+          document.getElementById(`${team}Group2`).value = result.data.group2;
+          document.getElementById(`${team}Group3`).value = result.data.group3;
+          document.getElementById(`${team}Group4`).value = result.data.group4;
+          // 인원 계산 실행
+          calculateWeekendPersonnel();
+        } else {
+          showMessage(`${team} 팀의 조별 편성 명단 자동 생성에 실패했습니다: ${result.message}`, 'danger');
+        }
+      } catch (error) {
+        console.error(`${team} 팀 자동 생성 오류:`, error);
+        showMessage(`${team} 팀 자동 생성 중 오류가 발생했습니다.`, 'danger');
+      }
+    }
+    
+    // 전체 팀 조별 편성 명단 자동 생성
+    async function generateAllTeamsPersonnel() {
+      try {
+        const response = await fetch('/workSchedule/generate-all-teams', {
+          method: 'POST'
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          // 자동 생성된 데이터를 각 팀 필드에 설정
+          const data = result.data;
+          
+          // 보안1팀
+          document.getElementById('team1AGroup').value = data.team1.aGroup;
+          document.getElementById('team1BGroup').value = data.team1.bGroup;
+          document.getElementById('team1Group1').value = data.team1.group1;
+          document.getElementById('team1Group2').value = data.team1.group2;
+          document.getElementById('team1Group3').value = data.team1.group3;
+          document.getElementById('team1Group4').value = data.team1.group4;
+          
+          // 보안2팀
+          document.getElementById('team2AGroup').value = data.team2.aGroup;
+          document.getElementById('team2BGroup').value = result.data.team2.bGroup;
+          document.getElementById('team2Group1').value = data.team2.group1;
+          document.getElementById('team2Group2').value = data.team2.group2;
+          document.getElementById('team2Group3').value = data.team2.group3;
+          document.getElementById('team2Group4').value = data.team2.group4;
+          
+          // 보안3팀
+          document.getElementById('team3AGroup').value = data.team3.aGroup;
+          document.getElementById('team3BGroup').value = data.team3.bGroup;
+          document.getElementById('team3Group1').value = data.team3.group1;
+          document.getElementById('team3Group2').value = data.team3.group2;
+          document.getElementById('team3Group3').value = data.team3.group3;
+          document.getElementById('team3Group4').value = data.team3.group4;
+          
+          showMessage('모든 팀의 조별 편성 명단이 자동 생성되었습니다.', 'success');
+          
+          // 자동으로 주말 스케줄 저장 실행
+          setTimeout(() => {
+            saveWeekendSchedule();
+          }, 1000);
+          
+        } else {
+          showMessage('전체 팀 편성 명단 자동 생성에 실패했습니다: ' + result.message, 'danger');
+        }
+        
+      } catch (error) {
+        console.error('전체 팀 편성 명단 자동 생성 오류:', error);
+        showMessage('전체 팀 편성 명단 자동 생성 중 오류가 발생했습니다.', 'danger');
+      }
+    }
+    
+    // 공휴일 추가
+    async function addHoliday() {
+      try {
+        const date = document.getElementById('holidayDate').value;
+        const name = document.getElementById('holidayName').value;
+        const specialWorkType = document.getElementById('holidaySpecialWork').value;
+        
+        if (!date || !name) {
+          showMessage('공휴일과 공휴일명을 입력해주세요.', 'warning');
+          return;
+        }
+        
+        console.log('공휴일 추가 요청 데이터:', { date, name, specialWorkType });
+        
+        const holidayData = {
+          date: date,
+          name: name,
+          specialWorkType: specialWorkType
+        };
+        
+        const response = await fetch('/workSchedule/add-holiday', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(holidayData)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          showMessage('공휴일이 추가되었습니다.', 'success');
+          document.getElementById('holidayDate').value = '';
+          document.getElementById('holidayName').value = '';
+          
+          // 공휴일 목록 강제 새로고침 (캐시 방지)
+          setTimeout(() => {
+            loadHolidayList(true); // true = 강제 새로고침
+          }, 500);
+        } else {
+          showMessage('공휴일 추가에 실패했습니다: ' + result.message, 'danger');
+        }
+        
+      } catch (error) {
+        console.error('공휴일 추가 오류:', error);
+        showMessage('공휴일 추가 중 오류가 발생했습니다.', 'danger');
+      }
+    }
+    
+    // 공휴일 목록 로드
+    async function loadHolidayList(forceRefresh = false) {
+      try {
+        const url = forceRefresh ? `/workSchedule/holidays?t=${Date.now()}` : '/workSchedule/holidays';
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+          }
+        });
+        const result = await response.json();
+        
+        if (result.success) {
+          console.log(`공휴일 목록 로드 완료: ${result.data.length}개`);
+          displayHolidayList(result.data);
+        } else {
+          console.log('공휴일 목록 로드 실패:', result.message);
+        }
+      } catch (error) {
+        console.error('공휴일 목록 로드 오류:', error);
+      }
+    }
+    
+    // 공휴일 목록 표시
+    function displayHolidayList(holidays) {
+      const holidayList = document.getElementById('holidayList');
+      
+      if (holidays.length === 0) {
+        holidayList.innerHTML = '<div class="text-muted text-center py-3">등록된 공휴일이 없습니다.</div>';
         return;
       }
       
-      const holidayData = {
-        date: date,
-        name: name,
-        specialWorkType: specialWork
-      };
-      
-      const response = await fetch('/workSchedule/add-holiday', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(holidayData)
-      });
-      
-      const result = await response.json();
-      
-      if (result.success) {
-        showMessage('공휴일이 추가되었습니다.', 'success');
-        document.getElementById('holidayDate').value = '';
-        document.getElementById('holidayName').value = '';
-        loadCurrentWeekInfo();
-      } else {
-        showMessage('공휴일 추가에 실패했습니다: ' + result.message, 'danger');
-      }
-      
-    } catch (error) {
-      console.error('공휴일 추가 오류:', error);
-      showMessage('공휴일 추가 중 오류가 발생했습니다.', 'danger');
-    }
-  }
-  
-  // 공휴일 목록 표시
-  function displayHolidayList(holidays) {
-    const holidayList = document.getElementById('holidayList');
-    holidayList.innerHTML = '';
-    
-    if (holidays.length === 0) {
-      holidayList.innerHTML = '<p class="text-muted text-center">등록된 공휴일이 없습니다.</p>';
-      return;
-    }
-    
-    // 공휴일을 날짜순으로 정렬
-    holidays.sort((a, b) => new Date(a.date) - new Date(b.date));
-    
-    holidays.forEach((holiday, index) => {
-      const holidayDate = new Date(holiday.date);
-      const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
-      const dayName = dayNames[holidayDate.getDay()];
-      const isWeekday = holidayDate.getDay() >= 1 && holidayDate.getDay() <= 5;
-      
-      const holidayItem = document.createElement('div');
-      holidayItem.className = 'list-group-item d-flex justify-content-between align-items-center';
-      holidayItem.innerHTML = `
-        <div class="flex-grow-1">
-          <div class="d-flex align-items-center mb-1">
-            <strong class="text-primary me-2">${holiday.name}</strong>
-            <span class="badge ${isWeekday ? 'bg-success' : 'bg-warning'} me-2">
-              ${isWeekday ? '평일' : '주말'}
-            </span>
-            <span class="badge bg-info me-2">${holiday.specialWorkType || '평일특근'}</span>
-          </div>
-          <div class="text-muted small">
-            <i class="fa-solid fa-calendar me-1"></i>
-            ${holidayDate.getFullYear()}년 ${holidayDate.getMonth() + 1}월 ${holidayDate.getDate()}일 (${dayName})
-          </div>
-        </div>
-        <div class="d-flex align-items-center">
-          <button class="btn btn-sm btn-outline-danger me-2" onclick="deleteHoliday('${holiday._id}')" title="삭제">
-            <i class="fa-solid fa-trash"></i>
-          </button>
-        </div>
-      `;
-      holidayList.appendChild(holidayItem);
-    });
-    
-    // 공휴일 개수 표시
-    const holidayCount = document.createElement('div');
-    holidayCount.className = 'text-muted small text-center mt-2';
-    holidayCount.innerHTML = `총 ${holidays.length}개의 공휴일이 등록되어 있습니다.`;
-    holidayList.appendChild(holidayCount);
-  }
-  
-  // 공휴일 삭제
-  async function deleteHoliday(holidayId) {
-    if (!confirm('이 공휴일을 삭제하시겠습니까?')) return;
-    
-    try {
-      const response = await fetch(`/workSchedule/delete-holiday/${holidayId}`, {
-        method: 'DELETE'
-      });
-      
-      const result = await response.json();
-      
-      if (result.success) {
-        showMessage('공휴일이 삭제되었습니다.', 'success');
-        loadCurrentWeekInfo();
-      } else {
-        showMessage('공휴일 삭제에 실패했습니다: ' + result.message, 'danger');
-      }
-      
-    } catch (error) {
-      console.error('공휴일 삭제 오류:', error);
-      showMessage('공휴일 삭제 중 오류가 발생했습니다.', 'danger');
-    }
-  }
-  
-  // 메시지 표시
-  function showMessage(message, type) {
-    const resultDiv = document.getElementById('saveResult');
-    resultDiv.style.display = 'block';
-    resultDiv.className = `alert alert-${type} mt-3`;
-    resultDiv.innerHTML = `
-      <i class="fa-solid fa-${type === 'success' ? 'check-circle' : type === 'danger' ? 'exclamation-triangle' : 'info-circle'} me-2"></i>
-      ${message}
-    `;
-    
-    setTimeout(() => {
-      resultDiv.style.display = 'none';
-    }, 3000);
-  }
-
-  // 편성 인원 현황 로드
-  async function loadAssignmentCounts() {
-    try {
-      const response = await fetch('/workSchedule/assignment-counts');
-      const result = await response.json();
-      
-      if (result.success) {
-        const counts = result.data;
+      holidayList.innerHTML = holidays.map(holiday => {
+        // 날짜를 년월일(요일) 형식으로 변환
+        const holidayDate = new Date(holiday.date);
+        const year = holidayDate.getFullYear();
+        const month = holidayDate.getMonth() + 1;
+        const date = holidayDate.getDate();
+        const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+        const dayName = dayNames[holidayDate.getDay()];
+        const formattedDate = `${year}년 ${month}월 ${date}일 (${dayName})`;
         
-        // 주말 근무 할당 현황 업데이트
-        document.getElementById('saturdayDayCount').textContent = counts.saturdayDayCount;
-        document.getElementById('saturdayNightCount').textContent = counts.saturdayNightCount;
-        document.getElementById('sundayDayCount').textContent = counts.sundayDayCount;
-        document.getElementById('sundayNightCount').textContent = counts.sundayNightCount;
-
-        // 팀별 조 편성 현황 업데이트
-        document.getElementById('team1ACount').textContent = counts.team1ACount;
-        document.getElementById('team1BCount').textContent = counts.team1BCount;
-        document.getElementById('team1GroupsCount').textContent = counts.team1GroupsCount;
-
-        document.getElementById('team2ACount').textContent = counts.team2ACount;
-        document.getElementById('team2BCount').textContent = counts.team2BCount;
-        document.getElementById('team2GroupsCount').textContent = counts.team2GroupsCount;
-
-        document.getElementById('team3ACount').textContent = counts.team3ACount;
-        document.getElementById('team3BCount').textContent = counts.team3BCount;
-        document.getElementById('team3GroupsCount').textContent = counts.team3GroupsCount;
+        return `
+          <div class="list-group-item d-flex justify-content-between align-items-center">
+            <div>
+              <strong>${holiday.name}</strong>
+              <small class="text-muted ms-2">${formattedDate}</small>
+              <span class="badge bg-secondary ms-2">${holiday.specialWorkType}</span>
+            </div>
+            <button class="btn btn-sm btn-outline-danger" onclick="deleteHoliday('${holiday._id}')">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </div>
+        `;
+      }).join('');
+    }
+    
+    // 공휴일 삭제
+    async function deleteHoliday(holidayId) {
+      if (!confirm('정말로 이 공휴일을 삭제하시겠습니까?')) {
+        return;
       }
-    } catch (error) {
-      console.error('편성 인원 현황 로드 오류:', error);
-    }
-  }
-
-  // 편성 인원 새로고침
-  async function refreshAssignmentCounts() {
-    try {
-      await loadAssignmentCounts();
-      showMessage('편성 인원 현황이 새로고침되었습니다.', 'success');
-    } catch (error) {
-      console.error('편성 인원 새로고침 오류:', error);
-      showMessage('편성 인원 새로고침 중 오류가 발생했습니다.', 'danger');
-    }
-  }
-
-     // 주말 근무 인원 계산
-   function calculateWeekendPersonnel() {
-     let satDayTotal = 0;
-     let satNightTotal = 0;
-     let sunDayTotal = 0;
-     let sunNightTotal = 0;
-
-     // 팀별 정보 저장
-     let satDayTeams = [];
-     let satNightTeams = [];
-     let sunDayTeams = [];
-     let sunNightTeams = [];
-
-     // 각 팀별로 편성 명단에서 인원 수 계산
-     const teams = ['team1', 'team2', 'team3'];
-     
-     teams.forEach(team => {
-       const aGroup = document.getElementById(team + 'AGroup').value;
-       const bGroup = document.getElementById(team + 'BGroup').value;
-       const group1 = document.getElementById(team + 'Group1').value;
-       const group2 = document.getElementById(team + 'Group2').value;
-       const group3 = document.getElementById(team + 'Group3').value;
-       const group4 = document.getElementById(team + 'Group4').value;
-
-       // A조, B조는 일요일 근무
-       const aGroupCount = aGroup.split('\n').filter(line => line.trim()).length;
-       const bGroupCount = bGroup.split('\n').filter(line => line.trim()).length;
-
-       // 1조, 2조, 3조, 4조는 금요일 근무 후 토요일 근무
-       const group1Count = group1.split('\n').filter(line => line.trim()).length;
-       const group2Count = group2.split('\n').filter(line => line.trim()).length;
-       const group3Count = group3.split('\n').filter(line => line.trim()).length;
-       const group4Count = group4.split('\n').filter(line => line.trim()).length;
-
-       // 토요일 주간근무: 초야조 30명 (1조~4조 중 3개조)
-       // 이번주 기준으로 계산 (1팀: 주간, 2팀: 초야, 3팀: 심야)
-       if (team === 'team2') { // 2팀이 초야조
-         const dayCount = group1Count + group2Count + group3Count; // 3개조만 선택
-         satDayTotal += dayCount;
-         if (dayCount > 0) {
-           satDayTeams.push(`2팀 ${dayCount}명`);
-         }
-       } else if (team === 'team3') { // 3팀이 심야조 (일요일 야간지원조 제외)
-         const nightCount = group1Count + group2Count + group3Count; // 3개조만 선택
-         satNightTotal += nightCount;
-         if (nightCount > 0) {
-           satNightTeams.push(`3팀 ${nightCount}명`);
-         }
-       }
-
-       // 일요일 주간근무: 보안1팀 A조 20명 + 보안2팀 지원조 10명 = 총 30명
-       if (team === 'team1') { // 1팀 A조
-         sunDayTotal += aGroupCount;
-         if (aGroupCount > 0) {
-           sunDayTeams.push(`1팀 A조 ${aGroupCount}명`);
-         }
-       } else if (team === 'team2') { // 2팀 지원조 (1조~4조 중 1개조)
-         const supportCount = group1Count; // 1조만 선택
-         sunDayTotal += supportCount;
-         if (supportCount > 0) {
-           sunDayTeams.push(`2팀 1조 ${supportCount}명`);
-         }
-       }
-
-       // 일요일 야간근무: 보안1팀 B조 20명 + 보안3팀 지원조 10명 = 총 30명
-       if (team === 'team1') { // 1팀 B조
-         sunNightTotal += bGroupCount;
-         if (bGroupCount > 0) {
-           sunNightTeams.push(`1팀 B조 ${bGroupCount}명`);
-         }
-       } else if (team === 'team3') { // 3팀 지원조 (1조~4조 중 1개조)
-         const supportCount = group1Count; // 1조만 선택
-         sunNightTotal += supportCount;
-         if (supportCount > 0) {
-           sunNightTeams.push(`3팀 1조 ${supportCount}명`);
-         }
-       }
-     });
-
-         // 결과 표시
-     document.getElementById('satDayTotal').textContent = satDayTotal + '명 / 30명';
-     document.getElementById('satNightTotal').textContent = satNightTotal + '명 / 30명';
-     document.getElementById('sunDayTotal').textContent = sunDayTotal + '명 / 30명';
-     document.getElementById('sunNightTotal').textContent = sunNightTotal + '명 / 30명';
-
-    // 팀별 정보 표시
-    document.getElementById('satDayTeams').textContent = satDayTeams.join(', ') || '-';
-    document.getElementById('satNightTeams').textContent = satNightTeams.join(', ') || '-';
-    document.getElementById('sunDayTeams').textContent = sunDayTeams.join(', ') || '-';
-    document.getElementById('sunNightTeams').textContent = sunNightTeams.join(', ') || '-';
-
-    // 목표 인원과 비교 (토요일, 일요일 각각 30명)
-    const targetWeekend = 30;
-    const satDayStatus = satDayTotal === targetWeekend ? 'success' : 'danger';
-    const satNightStatus = satNightTotal === targetWeekend ? 'success' : 'danger';
-    const sunDayStatus = sunDayTotal === targetWeekend ? 'success' : 'danger';
-    const sunNightStatus = sunNightTotal === targetWeekend ? 'success' : 'danger';
-
-    // 상태에 따른 색상 변경
-    document.getElementById('satDayTotal').className = `h5 mb-0 text-${satDayStatus}`;
-    document.getElementById('satNightTotal').className = `h5 mb-0 text-${satNightStatus}`;
-    document.getElementById('sunDayTotal').className = `h5 mb-0 text-${sunDayStatus}`;
-    document.getElementById('sunNightTotal').className = `h5 mb-0 text-${sunNightStatus}`;
-
-    // 결과 메시지 표시
-    let message = '';
-    if (satDayTotal === targetWeekend && satNightTotal === targetWeekend && 
-        sunDayTotal === targetWeekend && sunNightTotal === targetWeekend) {
-      message = '✅ 모든 주말 근무 인원이 목표(30명)에 맞게 배정되었습니다.';
-      showMessage(message, 'success');
-    } else {
-      message = `⚠️ 주말 근무 인원이 목표(30명)와 다릅니다. 토요일 주간: ${satDayTotal}명, 야간: ${satNightTotal}명, 일요일 주간: ${sunDayTotal}명, 야간: ${sunNightTotal}명`;
-      showMessage(message, 'warning');
-    }
-  }
-
-  // 이번주 팀 근무 형태 표시 (더 이상 사용되지 않음)
-  function displayTeamWeekTypes() {
-    // 이 함수는 더 이상 사용되지 않습니다.
-    // 팀 근무 형태는 displayCurrentWeekInfo()에서 처리됩니다.
-    console.log('displayTeamWeekTypes: 이 함수는 더 이상 사용되지 않습니다.');
-  }
-
-  // 주차 시작일 계산
-  function getWeekStart(date) {
-    const day = date.getDay();
-    const diff = date.getDate() - day + (day === 0 ? -6 : 1);
-    return new Date(date.setDate(diff));
-  }
-
-  // 주차 번호 계산
-  function getWeekNumber(date) {
-    const start = new Date(date.getFullYear(), 0, 1);
-    const days = Math.floor((date - start) / (24 * 60 * 60 * 1000));
-    return Math.ceil((days + start.getDay() + 1) / 7);
-  }
-  
-  // 오늘 날짜 정보 표시 및 근무 형태 설정
-  function displayCurrentWeekInfo(weekNumber, cycleWeek) {
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = today.getMonth() + 1;
-    const date = today.getDate();
-    const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
-    const dayName = dayNames[today.getDay()];
-    const isWeekend = today.getDay() === 0 || today.getDay() === 6; // 0=일요일, 6=토요일
-    
-    // 주차 계산 (전달받은 값이 없으면 자동 계산)
-    let currentWeekNumber = weekNumber;
-    if (!currentWeekNumber) {
-      const weekStart = getWeekStart(today);
-      currentWeekNumber = getWeekNumber(weekStart);
+      
+      try {
+        const response = await fetch(`/workSchedule/holidays/${holidayId}`, {
+          method: 'DELETE'
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          showMessage('공휴일이 삭제되었습니다.', 'success');
+          
+          // 공휴일 목록 강제 새로고침 (캐시 방지)
+          setTimeout(() => {
+            loadHolidayList(true); // true = 강제 새로고침
+          }, 500);
+        } else {
+          showMessage('공휴일 삭제에 실패했습니다: ' + result.message, 'danger');
+        }
+        
+      } catch (error) {
+        console.error('공휴일 삭제 오류:', error);
+        showMessage('공휴일 삭제 중 오류가 발생했습니다.', 'danger');
+      }
     }
     
-    // 제목 업데이트 (날짜 + 주차)
-    document.getElementById('todayTitle').textContent = `${year}년 ${month}월 ${date}일(${dayName})`;
-    document.getElementById('weekNumber').textContent = currentWeekNumber;
-    
-    // 평일/주말에 따른 근무 형태 설정
-    if (isWeekend) {
-      // 주말: 주간/야간/- 표시
-      document.getElementById('team1Schedule').textContent = '주간';
-      document.getElementById('team1Schedule').className = 'badge bg-success fs-6';
-      document.getElementById('team2Schedule').textContent = '야간';
-      document.getElementById('team2Schedule').className = 'badge bg-warning fs-6';
-      document.getElementById('team3Schedule').textContent = '-';
-      document.getElementById('team3Schedule').className = 'badge bg-secondary fs-6';
-    } else {
-      // 평일: 주간/초야/심야 표시
-      document.getElementById('team1Schedule').textContent = '초야';
-      document.getElementById('team1Schedule').className = 'badge bg-success fs-6';
-      document.getElementById('team2Schedule').textContent = '심야';
-      document.getElementById('team2Schedule').className = 'badge bg-warning fs-6';
-      document.getElementById('team3Schedule').textContent = '주간';
-      document.getElementById('team3Schedule').className = 'badge bg-info fs-6';
+    // 주차별 스케줄 로드
+    async function loadWeeklySchedules() {
+      try {
+        console.log('주차별 스케줄 로드 시작');
+        const response = await fetch('/workSchedule/weekly-schedules');
+        const result = await response.json();
+        
+        console.log('주차별 스케줄 응답:', result);
+        
+        if (result.success) {
+          weeklySchedules = result.data;
+          console.log('로드된 주차별 스케줄:', weeklySchedules);
+          console.log('주차별 스케줄 개수:', weeklySchedules.length);
+          
+          // 첫 번째 항목 상세 로그
+          if (weeklySchedules.length > 0) {
+            console.log('=== 첫 번째 항목 상세 정보 ===');
+            console.log('첫 번째 항목 전체:', weeklySchedules[0]);
+            console.log('weekStart:', weeklySchedules[0].weekStart);
+            console.log('weekEnd:', weeklySchedules[0].weekEnd);
+            console.log('weekLabel:', weeklySchedules[0].weekLabel);
+            console.log('weekDiff:', weeklySchedules[0].weekDiff);
+            console.log('isCurrentWeek:', weeklySchedules[0].isCurrentWeek);
+          }
+          
+          updateWeekDropdown();
+        } else {
+          console.error('주차별 스케줄 로드 실패:', result.error);
+        }
+      } catch (error) {
+        console.error('주차별 스케줄 로드 오류:', error);
+      }
     }
-  }
-  
-  // 편성 명단 로드 (기존 데이터가 있을 경우)
-  function loadWeekendPersonnel() {
-    // 기존 저장된 데이터가 있다면 로드
-    // 이 부분은 백엔드에서 데이터를 가져와서 표시하는 로직으로 확장 가능
-  }
-
-  // 팀별 조별 편성 명단 자동 생성
-  async function generateTeamPersonnel(team) {
-    try {
-      const response = await fetch(`/workSchedule/generate-personnel/${team}`, {
-        method: 'POST'
+    
+    // 주차 드롭다운 업데이트
+    function updateWeekDropdown() {
+      console.log('updateWeekDropdown 함수 시작');
+      const dropdown = document.getElementById('weekDropdown');
+      
+      if (!dropdown) {
+        console.error('weekDropdown 요소를 찾을 수 없습니다.');
+        return;
+      }
+      
+      console.log('드롭다운 요소 찾음:', dropdown);
+      
+      // 드롭다운 내용 완전 초기화
+      dropdown.innerHTML = '';
+      
+      console.log('주차별 항목 추가 시작, 총 개수:', weeklySchedules.length);
+      
+      // 주차별 항목 추가 (이번주부터 순서대로)
+      weeklySchedules.forEach((schedule, index) => {
+        console.log(`=== 주차 ${index + 1} 상세 정보 ===`);
+        console.log('전체 데이터:', schedule);
+        console.log('weekStart:', schedule.weekStart);
+        console.log('weekEnd:', schedule.weekEnd);
+        console.log('weekLabel:', schedule.weekLabel);
+        console.log('weekDiff:', schedule.weekDiff);
+        console.log('isCurrentWeek:', schedule.isCurrentWeek);
+        
+        const li = document.createElement('li');
+        const a = document.createElement('a');
+        a.className = 'dropdown-item';
+        a.href = '#';
+        a.textContent = schedule.weekLabel;
+        a.dataset.weekId = schedule.id;
+        
+        // 현재 주차인 경우 강조 표시
+        if (schedule.isCurrentWeek) {
+          a.classList.add('fw-bold', 'text-primary');
+        }
+        
+        a.addEventListener('click', (e) => {
+          e.preventDefault();
+          selectWeekFromDropdown(schedule);
+        });
+        
+        li.appendChild(a);
+        dropdown.appendChild(li);
+        console.log(`주차 ${index + 1} 추가 완료:`, a.textContent);
       });
-      const result = await response.json();
-
-      if (result.success) {
-        showMessage(`${team} 팀의 조별 편성 명단이 자동 생성되었습니다.`, 'success');
-        // 생성된 명단으로 텍스트 영역 업데이트
-        document.getElementById(`${team}AGroup`).value = result.data.aGroup;
-        document.getElementById(`${team}BGroup`).value = result.data.bGroup;
-        document.getElementById(`${team}Group1`).value = result.data.group1;
-        document.getElementById(`${team}Group2`).value = result.data.group2;
-        document.getElementById(`${team}Group3`).value = result.data.group3;
-        document.getElementById(`${team}Group4`).value = result.data.group4;
-        // 인원 계산 실행
+      
+      console.log('드롭다운 업데이트 완료, 총 항목 수:', dropdown.children.length);
+    }
+    
+    // 드롭다운에서 주차 선택
+    function selectWeekFromDropdown(schedule) {
+      const weekStart = new Date(schedule.weekStart);
+      const weekNumber = getWeekNumber(weekStart);
+      
+      document.getElementById('selectedWeekLabel').textContent = schedule.weekLabel;
+      document.getElementById('selectedWeekInfo').textContent = schedule.weekLabel;
+      
+      showMessage(`${schedule.weekLabel} 스케줄이 선택되었습니다.`, 'success');
+    }
+    
+    // 주차 번호 계산
+    function getWeekNumber(date) {
+      const start = new Date(date.getFullYear(), 0, 1);
+      const days = Math.floor((date - start) / (24 * 60 * 60 * 1000));
+      return Math.ceil((days + start.getDay() + 1) / 7);
+    }
+    
+    // 주말 근무 인원 로드
+    function loadWeekendPersonnel(weekendSchedule) {
+      if (weekendSchedule.team1) {
+        document.getElementById('team1AGroup').value = weekendSchedule.team1.aGroup || '';
+        document.getElementById('team1BGroup').value = weekendSchedule.team1.bGroup || '';
+        document.getElementById('team1Group1').value = weekendSchedule.team1.group1 || '';
+        document.getElementById('team1Group2').value = weekendSchedule.team1.group2 || '';
+        document.getElementById('team1Group3').value = weekendSchedule.team1.group3 || '';
+        document.getElementById('team1Group4').value = weekendSchedule.team1.group4 || '';
+      }
+      
+      if (weekendSchedule.team2) {
+        document.getElementById('team2AGroup').value = weekendSchedule.team2.aGroup || '';
+        document.getElementById('team2BGroup').value = weekendSchedule.team2.bGroup || '';
+        document.getElementById('team2Group1').value = weekendSchedule.team2.group1 || '';
+        document.getElementById('team2Group2').value = weekendSchedule.team2.group2 || '';
+        document.getElementById('team2Group3').value = weekendSchedule.team2.group3 || '';
+        document.getElementById('team2Group4').value = weekendSchedule.team2.group4 || '';
+      }
+      
+      if (weekendSchedule.team3) {
+        document.getElementById('team3AGroup').value = weekendSchedule.team3.aGroup || '';
+        document.getElementById('team3BGroup').value = weekendSchedule.team3.bGroup || '';
+        document.getElementById('team3Group1').value = weekendSchedule.team3.group1 || '';
+        document.getElementById('team3Group2').value = weekendSchedule.team3.group2 || '';
+        document.getElementById('team3Group3').value = weekendSchedule.team3.group3 || '';
+        document.getElementById('team3Group4').value = weekendSchedule.team3.group4 || '';
+      }
+      
+      // 편성 명단 로드 후 인원 계산 실행
+      setTimeout(() => {
         calculateWeekendPersonnel();
-      } else {
-        showMessage(`${team} 팀의 조별 편성 명단 자동 생성에 실패했습니다: ${result.message}`, 'danger');
-      }
-    } catch (error) {
-      console.error(`${team} 팀 자동 생성 오류:`, error);
-      showMessage(`${team} 팀 자동 생성 중 오류가 발생했습니다.`, 'danger');
+      }, 100);
     }
-  }
-
-  // 전체 팀 조별 편성 명단 자동 생성
-  async function generateAllTeamsPersonnel() {
-    try {
-      const response = await fetch('/workSchedule/generate-all-teams', {
-        method: 'POST'
-      });
+    
+    // 메시지 표시
+    function showMessage(message, type) {
+      const resultDiv = document.getElementById('saveResult');
+      resultDiv.style.display = 'block';
+      resultDiv.className = `alert alert-${type} mt-3`;
+      resultDiv.innerHTML = `
+        <i class="fa-solid fa-${type === 'success' ? 'check-circle' : type === 'danger' ? 'exclamation-triangle' : 'info-circle'} me-2"></i>
+        ${message}
+      `;
       
-      const result = await response.json();
-      
-      if (result.success) {
-        // 자동 생성된 데이터를 각 팀 필드에 설정
-        const data = result.data;
-        
-        // 보안1팀
-        document.getElementById('team1AGroup').value = data.team1.aGroup;
-        document.getElementById('team1BGroup').value = data.team1.bGroup;
-        document.getElementById('team1Group1').value = data.team1.group1;
-        document.getElementById('team1Group2').value = data.team1.group2;
-        document.getElementById('team1Group3').value = data.team1.group3;
-        document.getElementById('team1Group4').value = data.team1.group4;
-        
-        // 보안2팀
-        document.getElementById('team2AGroup').value = data.team2.aGroup;
-        document.getElementById('team2BGroup').value = data.team2.bGroup;
-        document.getElementById('team2Group1').value = data.team2.group1;
-        document.getElementById('team2Group2').value = data.team2.group2;
-        document.getElementById('team2Group3').value = data.team2.group3;
-        document.getElementById('team2Group4').value = data.team2.group4;
-        
-        // 보안3팀
-        document.getElementById('team3AGroup').value = data.team3.aGroup;
-        document.getElementById('team3BGroup').value = data.team3.bGroup;
-        document.getElementById('team3Group1').value = data.team3.group1;
-        document.getElementById('team3Group2').value = data.team3.group2;
-        document.getElementById('team3Group3').value = data.team3.group3;
-        document.getElementById('team3Group4').value = data.team3.group4;
-        
-        showMessage('모든 팀의 조별 편성 명단이 자동 생성되었습니다.', 'success');
-        
-        // 자동으로 주말 스케줄 저장 실행
-        setTimeout(() => {
-          saveWeekendSchedule();
-        }, 1000);
-        
-      } else {
-        showMessage('전체 팀 편성 명단 자동 생성에 실패했습니다: ' + result.message, 'danger');
-      }
-      
-    } catch (error) {
-      console.error('전체 팀 편성 명단 자동 생성 오류:', error);
-      showMessage('전체 팀 편성 명단 자동 생성 중 오류가 발생했습니다.', 'danger');
+      setTimeout(() => {
+        resultDiv.style.display = 'none';
+      }, 3000);
     }
-  }
+  </script>
   
-  // 페이지 로드 시 현재 주차 정보 로드
-  document.addEventListener('DOMContentLoaded', function() {
-    loadCurrentWeekInfo();
-  });
-</script>
-
-<%- include('footer') %>
+  <!-- 푸터 포함 -->
+  <%- include('footer') %>
+</body>
+</html>

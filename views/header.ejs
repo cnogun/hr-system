@@ -27,7 +27,7 @@
         </div>
       </div>
       
-      <% if (session && session.userId) { %>
+      <% if (typeof session !== 'undefined' && session && session.userId) { %>
       <!-- 네비게이션 메뉴 -->
       <nav class="navbar navbar-expand-lg">
         <div class="collapse navbar-collapse" id="navbarNav">
@@ -50,7 +50,7 @@
             
 
             
-            <% if ((session && session.userRole === 'admin') || (typeof userRole !== 'undefined' && userRole === 'admin')) { %>
+            <% if ((typeof session !== 'undefined' && session && session.userRole === 'admin') || (typeof userRole !== 'undefined' && userRole === 'admin')) { %>
             <!-- 관리자 메뉴 -->
             <li class="nav-item dropdown">
               <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown">
@@ -87,7 +87,7 @@
                 <li><a class="dropdown-item" href="/employees/excel">
                    <i class="fa-solid fa-users me-2"></i> 직원 목록
                 </a></li>
-                 <li><a class="dropdown-item" href="/uniform/stats">
+                 <li><a class="dropdown-item" href="/uniform/stats/excel" onclick="downloadUniformStatsExcel()">
                   <i class="fa-solid fa-tshirt me-2"></i> 유니폼 통계
                 </a></li>
                  <li><a class="dropdown-item" href="/auth/logs">
@@ -147,7 +147,7 @@
       
       <!-- 사용자 정보 및 액션 -->
       <div class="d-flex align-items-center gap-3">
-        <% if (session && session.userId) { %>
+        <% if (typeof session !== 'undefined' && session && session.userId) { %>
           <a href="/notice/new" class="btn btn-warning btn-sm me-2">
             <i class="fa-solid fa-bullhorn me-1"></i> 시스템 공지
           </a>
@@ -156,7 +156,7 @@
           
           <div class="user-info text-end">
             <div class="fw-semibold text-primary" style="font-size: 0.9rem;">
-              <i class="fa-solid fa-user me-1"></i><%= name %>
+              <i class="fa-solid fa-user me-1"></i>관리자
             </div>
             <div class="fw-semibold text-dark" style="font-size: 0.9rem;">
               <i class="fa-solid fa-user-tie me-1"></i><%= position %>
@@ -268,29 +268,186 @@ function closeAllOtherDropdowns(currentToggle) {
   });
 }
 
+// 유니폼 통계 엑셀 다운로드 함수
+function downloadUniformStatsExcel() {
+  try {
+    // 로딩 표시
+    const loadingToast = showLoadingToast('유니폼 통계 엑셀 파일을 생성하고 있습니다...');
+    
+    // 엑셀 다운로드 API 호출
+    fetch('/uniform/stats/excel', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.blob();
+    })
+    .then(blob => {
+      // 로딩 토스트 숨기기
+      hideLoadingToast(loadingToast);
+      
+      // 파일 다운로드
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = `uniform_order_stats_${new Date().toISOString().slice(0, 10)}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      // 성공 메시지 표시
+      showSuccessToast('유니폼 통계 엑셀 파일이 성공적으로 다운로드되었습니다!');
+    })
+    .catch(error => {
+      console.error('유니폼 통계 엑셀 다운로드 오류:', error);
+      hideLoadingToast(loadingToast);
+      showErrorToast('엑셀 파일 다운로드 중 오류가 발생했습니다.');
+    });
+  } catch (error) {
+    console.error('유니폼 통계 엑셀 다운로드 함수 오류:', error);
+    showErrorToast('엑셀 파일 다운로드 중 오류가 발생했습니다.');
+  }
+}
+
+// 로딩 토스트 표시 함수
+function showLoadingToast(message) {
+  const toastContainer = document.getElementById('toast-container') || createToastContainer();
+  
+  const toast = document.createElement('div');
+  toast.className = 'toast show bg-info text-white';
+  toast.innerHTML = `
+    <div class="toast-body d-flex align-items-center">
+      <div class="spinner-border spinner-border-sm me-2" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      ${message}
+    </div>
+  `;
+  
+  toastContainer.appendChild(toast);
+  return toast;
+}
+
+// 로딩 토스트 숨기기 함수
+function hideLoadingToast(toast) {
+  if (toast && toast.parentNode) {
+    toast.parentNode.removeChild(toast);
+  }
+}
+
+// 성공 토스트 표시 함수
+function showSuccessToast(message) {
+  const toastContainer = document.getElementById('toast-container') || createToastContainer();
+  
+  const toast = document.createElement('div');
+  toast.className = 'toast show bg-success text-white';
+  toast.innerHTML = `
+    <div class="toast-body">
+      <i class="fa-solid fa-check-circle me-2"></i>
+      ${message}
+    </div>
+  `;
+  
+  toastContainer.appendChild(toast);
+  
+  // 3초 후 자동으로 숨기기
+  setTimeout(() => {
+    if (toast.parentNode) {
+      toast.parentNode.removeChild(toast);
+    }
+  }, 3000);
+}
+
+// 에러 토스트 표시 함수
+function showErrorToast(message) {
+  const toastContainer = document.getElementById('toast-container') || createToastContainer();
+  
+  const toast = document.createElement('div');
+  toast.className = 'toast show bg-danger text-white';
+  toast.innerHTML = `
+    <div class="toast-body">
+      <i class="fa-solid fa-exclamation-triangle me-2"></i>
+      ${message}
+    </div>
+  `;
+  
+  toastContainer.appendChild(toast);
+  
+  // 5초 후 자동으로 숨기기
+  setTimeout(() => {
+    if (toast.parentNode) {
+      toast.parentNode.removeChild(toast);
+    }
+  }, 5000);
+}
+
+// 토스트 컨테이너 생성 함수
+function createToastContainer() {
+  const container = document.createElement('div');
+  container.id = 'toast-container';
+  container.className = 'toast-container position-fixed top-0 end-0 p-3';
+  container.style.zIndex = '9999';
+  document.body.appendChild(container);
+  return container;
+}
+
 // 드롭다운 강제 초기화 함수
 function forceInitializeDropdowns() {
   console.log('드롭다운 강제 초기화 시작');
   
   document.querySelectorAll('.dropdown-toggle').forEach(function(element) {
-    // data-bs-toggle 속성 확인
-    if (!element.getAttribute('data-bs-toggle')) {
-      element.setAttribute('data-bs-toggle', 'dropdown');
-    }
-    
-    // aria-expanded 속성 추가
-    element.setAttribute('aria-expanded', 'false');
-    
-    // Bootstrap 드롭다운 인스턴스 생성
     try {
+      // 기존 인스턴스가 있다면 제거
+      const existingInstance = bootstrap.Dropdown.getInstance(element);
+      if (existingInstance) {
+        existingInstance.dispose();
+        console.log('기존 드롭다운 인스턴스 제거:', element.textContent.trim());
+      }
+      
+      // data-bs-toggle 속성 확인 및 설정
+      if (!element.getAttribute('data-bs-toggle')) {
+        element.setAttribute('data-bs-toggle', 'dropdown');
+      }
+      
+      // aria-expanded 속성 추가
+      element.setAttribute('aria-expanded', 'false');
+      
+      // Bootstrap 드롭다운 인스턴스 생성
       const dropdown = new bootstrap.Dropdown(element, {
         autoClose: true,
         boundary: 'viewport'
       });
+      
+      // 클릭 이벤트 강제 추가
+      element.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        console.log('드롭다운 강제 초기화 클릭 이벤트:', this.textContent.trim());
+        
+        const dropdownInstance = bootstrap.Dropdown.getInstance(this);
+        if (dropdownInstance) {
+          dropdownInstance.toggle();
+        }
+      });
+      
       console.log('강제 초기화 완료:', element.textContent.trim());
     } catch (error) {
       console.error('강제 초기화 오류:', error);
     }
+  });
+  
+  // 드롭다운 메뉴 표시 강제 설정
+  document.querySelectorAll('.dropdown-menu').forEach(function(menu) {
+    menu.style.display = 'none';
+    menu.classList.remove('show');
   });
 }
 
@@ -323,6 +480,24 @@ document.addEventListener('DOMContentLoaded', function() {
       forceInitializeDropdowns();
     }
   }, 1000);
+  
+  // 추가 안전장치: 3초 후 한 번 더 강제 초기화
+  setTimeout(function() {
+    if (typeof bootstrap !== 'undefined') {
+      console.log('3초 후 추가 드롭다운 초기화 시작');
+      forceInitializeDropdowns();
+    }
+  }, 3000);
+});
+
+// 페이지 로드 완료 후 추가 초기화
+window.addEventListener('load', function() {
+  console.log('페이지 로드 완료, 드롭다운 추가 초기화');
+  setTimeout(function() {
+    if (typeof bootstrap !== 'undefined') {
+      forceInitializeDropdowns();
+    }
+  }, 500);
 });
 
       // 현재 페이지에 따른 상위 메뉴 active 상태 설정 함수
@@ -669,5 +844,34 @@ body {
   .brand-text h2 {
     font-size: 1.25rem;
   }
+}
+
+/* 토스트 컨테이너 스타일 */
+.toast-container {
+  z-index: 9999;
+}
+
+.toast {
+  min-width: 300px;
+  border: none;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.toast.bg-info {
+  background-color: #17a2b8 !important;
+}
+
+.toast.bg-success {
+  background-color: #28a745 !important;
+}
+
+.toast.bg-danger {
+  background-color: #dc3545 !important;
+}
+
+.toast-body {
+  padding: 1rem;
+  font-weight: 500;
 }
 </style> 
