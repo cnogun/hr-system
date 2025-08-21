@@ -10,6 +10,18 @@
  * - 포트 설정 및 서버 시작
  */
 require('dotenv').config();
+
+// 프로세스 에러 핸들링 (Render 프로덕션 환경용)
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception:', err);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  process.exit(1);
+});
+
 const express = require('express');
 const mongoose = require('mongoose');
 const methodOverride = require('method-override');
@@ -119,9 +131,27 @@ app.use(async (req, res, next) => {
   }
   next();
 });
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-app.use('/uploads/security', express.static(path.join(__dirname, 'uploads/security')));
-app.use(express.static(path.join(__dirname, 'public')));
+// 정적 파일 미들웨어 설정 (에러 핸들링 포함)
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'), (err, req, res, next) => {
+  if (err) {
+    console.error('Uploads 정적 파일 에러:', err);
+    next();
+  }
+}));
+
+app.use('/uploads/security', express.static(path.join(__dirname, 'uploads/security'), (err, req, res, next) => {
+  if (err) {
+    console.error('Security uploads 정적 파일 에러:', err);
+    next();
+  }
+}));
+
+app.use(express.static(path.join(__dirname, 'public'), (err, req, res, next) => {
+  if (err) {
+    console.error('Public 정적 파일 에러:', err);
+    next();
+  }
+}));
 
 // 라우트 연결
 const employeeRoutes = require('./routes/employees');
@@ -1787,6 +1817,35 @@ app.get('/healthz', (req, res) => {
   res.status(200).send('OK');
 });
 
+// 전역 에러 핸들러 (serve-static 에러 포함)
+app.use((err, req, res, next) => {
+  console.error('전역 에러 핸들러:', err);
+  
+  // serve-static 에러인 경우
+  if (err.code === 'ENOENT' || err.status === 404) {
+    return res.status(404).json({ 
+      error: '요청한 파일을 찾을 수 없습니다.',
+      path: req.path 
+    });
+  }
+  
+  // 기타 서버 에러
+  res.status(500).json({ 
+    error: '서버 내부 오류가 발생했습니다.',
+    message: process.env.NODE_ENV === 'production' ? '서버 오류' : err.message
+  });
+});
+
+// 404 핸들러
+app.use((req, res) => {
+  res.status(404).json({ 
+    error: '요청한 페이지를 찾을 수 없습니다.',
+    path: req.path 
+  });
+});
+
 app.listen(PORT, () => {
   console.log(`서버가 http://localhost:${PORT} 에서 실행 중입니다.`);
+  console.log(`환경: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`포트: ${PORT}`);
 });
