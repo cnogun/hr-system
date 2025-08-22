@@ -186,6 +186,11 @@
 let dropdownInitialized = false;
 let eventListenersAttached = false;
 
+// 디버깅을 위한 콘솔 로그
+console.log('Header script 로드됨');
+console.log('Bootstrap 상태:', typeof bootstrap);
+console.log('Document ready:', document.readyState);
+
 // Bootstrap 드롭다운이 로드될 때까지 대기
 function waitForBootstrap() {
   if (typeof bootstrap !== 'undefined') {
@@ -423,7 +428,6 @@ function downloadUniformStatsExcel() {
 function showLoadingToast(message) {
   const toastContainer = document.getElementById('toast-container') || createToastContainer();
   
-<<<<<<< Updated upstream
   const toast = document.createElement('div');
   toast.className = 'toast show bg-info text-white';
   toast.innerHTML = `
@@ -465,13 +469,6 @@ function showSuccessToast(message) {
   setTimeout(() => {
     if (toast.parentNode) {
       toast.parentNode.removeChild(toast);
-=======
-  document.querySelectorAll('.dropdown-toggle').forEach(function(element) {
-    // 이미 Bootstrap 드롭다운이 초기화된 경우 건너뛰기
-    if (bootstrap.Dropdown.getInstance(element)) {
-      console.log('이미 초기화됨:', element.textContent.trim());
-      return;
->>>>>>> Stashed changes
     }
   }, 3000);
 }
