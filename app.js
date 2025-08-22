@@ -1500,7 +1500,7 @@ app.get('/dashboard', async (req, res) => {
   }
 });
 
-<<<<<<< Updated upstream
+
 // 직원 찾기 페이지
 app.get('/employees', async (req, res) => {
   try {
@@ -1734,43 +1734,12 @@ app.get('/api/uniform/stats', async (req, res) => {
     res.status(500).json({ 
       error: '유니폼 통계를 불러오는 중 오류가 발생했습니다.',
       details: error.message 
-=======
-// WorkSchedule 관련 API 엔드포인트
-app.post('/workSchedule/save-weekend', async (req, res) => {
-  try {
-    if (!req.session || !req.session.userId) {
-      return res.status(401).json({ success: false, message: '로그인이 필요합니다.' });
-    }
 
-    const weekendData = req.body;
-    
-    // 데이터 유효성 검사
-    if (!weekendData.team1 || !weekendData.team2 || !weekendData.team3) {
-      return res.status(400).json({ success: false, message: '팀 데이터가 누락되었습니다.' });
-    }
-
-    // 여기에 데이터베이스 저장 로직 추가
-    // 현재는 메모리에 저장 (실제 구현 시 데이터베이스 모델 필요)
-    console.log('주말 스케줄 저장 요청:', weekendData);
-    
-    // 성공 응답
-    res.json({
-      success: true,
-      message: '주말 스케줄이 저장되었습니다.',
-      data: weekendData
-    });
-
-  } catch (error) {
-    console.error('주말 스케줄 저장 오류:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: '서버 오류가 발생했습니다.' 
->>>>>>> Stashed changes
     });
   }
 });
 
-<<<<<<< Updated upstream
+
 // 활동 로그 데이터 API
 app.get('/api/logs', async (req, res) => {
   try {
@@ -1842,36 +1811,7 @@ app.get('/api/logs', async (req, res) => {
     res.status(500).json({ 
       error: '활동 로그를 불러오는 중 오류가 발생했습니다.',
       details: error.message 
-=======
-// 공휴일 추가 API
-app.post('/workSchedule/add-holiday', async (req, res) => {
-  try {
-    if (!req.session || !req.session.userId) {
-      return res.status(401).json({ success: false, message: '로그인이 필요합니다.' });
-    }
 
-    const { date, name, specialWorkType } = req.body;
-    
-    if (!date || !name) {
-      return res.status(400).json({ success: false, message: '공휴일과 공휴일명을 입력해주세요.' });
-    }
-
-    // 여기에 데이터베이스 저장 로직 추가
-    console.log('공휴일 추가 요청:', { date, name, specialWorkType });
-    
-    // 성공 응답
-    res.json({
-      success: true,
-      message: '공휴일이 추가되었습니다.',
-      data: { date, name, specialWorkType }
-    });
-
-  } catch (error) {
-    console.error('공휴일 추가 오류:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: '서버 오류가 발생했습니다.' 
->>>>>>> Stashed changes
     });
   }
 });
