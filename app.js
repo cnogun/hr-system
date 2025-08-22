@@ -14,13 +14,47 @@ require('dotenv').config();
 // 프로세스 에러 핸들링 (Render 프로덕션 환경용)
 process.on('uncaughtException', (err) => {
   console.error('Uncaught Exception:', err);
-  process.exit(1);
+  // 프로덕션에서는 즉시 종료하지 않고 로그만 남김
+  if (process.env.NODE_ENV === 'production') {
+    console.error('프로덕션 환경에서 예외 발생, 서버 유지');
+  } else {
+    process.exit(1);
+  }
 });
 
 process.on('unhandledRejection', (reason, promise) => {
   console.error('Unhandled Rejection at:', promise, 'reason:', reason);
-  process.exit(1);
+  // 프로덕션에서는 즉시 종료하지 않고 로그만 남김
+  if (process.env.NODE_ENV === 'production') {
+    console.error('프로덕션 환경에서 Promise 거부 발생, 서버 유지');
+  } else {
+    process.exit(1);
+  }
 });
+
+// SIGTERM 시그널 처리 (Render 종료 신호)
+process.on('SIGTERM', () => {
+  console.log('SIGTERM 신호 수신, 정상 종료 시작...');
+  // 데이터베이스 연결 정리
+  if (mongoose.connection.readyState === 1) {
+    mongoose.connection.close(() => {
+      console.log('MongoDB 연결 종료됨');
+      process.exit(0);
+    });
+  } else {
+    process.exit(0);
+  }
+});
+
+// 메모리 사용량 모니터링
+setInterval(() => {
+  const memUsage = process.memoryUsage();
+  console.log('메모리 사용량:', {
+    rss: Math.round(memUsage.rss / 1024 / 1024) + 'MB',
+    heapUsed: Math.round(memUsage.heapUsed / 1024 / 1024) + 'MB',
+    heapTotal: Math.round(memUsage.heapTotal / 1024 / 1024) + 'MB'
+  });
+}, 300000); // 5분마다
 
 const express = require('express');
 const mongoose = require('mongoose');
@@ -41,19 +75,40 @@ const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/hr_sys
 const SESSION_SECRET = process.env.SESSION_SECRET || 'hr_system_session_secret_key_2025';
 
 // MongoDB 연결 (Render 최적화)
-mongoose.connect(MONGODB_URI, {
-  maxPoolSize: 5,           // 연결 풀 크기 제한
-  serverSelectionTimeoutMS: 5000,
-  socketTimeoutMS: 45000,
-  connectTimeoutMS: 10000,  // 연결 타임아웃
-  bufferCommands: false,    // 버퍼링 비활성화
-  bufferMaxEntries: 0,      // 버퍼 최대 항목 제한
-});
+const connectDB = async () => {
+  try {
+    await mongoose.connect(MONGODB_URI, {
+      maxPoolSize: 5,           // 연결 풀 크기 제한
+      serverSelectionTimeoutMS: 10000,  // 서버 선택 타임아웃 증가
+      socketTimeoutMS: 45000,
+      connectTimeoutMS: 15000,  // 연결 타임아웃 증가
+      retryWrites: true,        // 재시도 활성화
+      w: 'majority'             // 쓰기 확인
+    });
+    console.log('MongoDB 연결 성공!');
+  } catch (error) {
+    console.error('MongoDB 연결 실패:', error.message);
+    // 5초 후 재시도
+    setTimeout(connectDB, 5000);
+  }
+};
+
+// MongoDB 연결 시작
+connectDB();
 
 const db = mongoose.connection;
-db.on('error', console.error.bind(console, 'MongoDB 연결 에러:'));
-db.once('open', () => {
-  console.log('MongoDB 연결 성공!');
+db.on('error', (error) => {
+  console.error('MongoDB 연결 에러:', error);
+  // 연결이 끊어진 경우 재연결 시도
+  if (error.name === 'MongoNetworkError') {
+    console.log('네트워크 오류로 재연결 시도...');
+    setTimeout(connectDB, 5000);
+  }
+});
+
+db.on('disconnected', () => {
+  console.log('MongoDB 연결 끊어짐, 재연결 시도...');
+  setTimeout(connectDB, 5000);
 });
 
 // 미들웨어 설정
@@ -1856,8 +1911,28 @@ app.use((req, res) => {
   });
 });
 
-app.listen(PORT, () => {
+// 서버 시작 (에러 핸들링 포함)
+const server = app.listen(PORT, () => {
   console.log(`서버가 http://localhost:${PORT} 에서 실행 중입니다.`);
   console.log(`환경: ${process.env.NODE_ENV || 'development'}`);
   console.log(`포트: ${PORT}`);
+  console.log('서버 시작 완료!');
+});
+
+// 서버 에러 핸들링
+server.on('error', (error) => {
+  if (error.code === 'EADDRINUSE') {
+    console.error(`포트 ${PORT}가 이미 사용 중입니다.`);
+    process.exit(1);
+  } else {
+    console.error('서버 에러:', error);
+  }
+});
+
+// 서버 종료 시 정리
+server.on('close', () => {
+  console.log('서버 종료 중...');
+  if (mongoose.connection.readyState === 1) {
+    mongoose.connection.close();
+  }
 });
