@@ -27,7 +27,7 @@
         </div>
       </div>
       
-      <% if (session && session.userId) { %>
+      <% if (typeof session !== 'undefined' && session && session.userId) { %>
       <!-- 네비게이션 메뉴 -->
       <nav class="navbar navbar-expand-lg">
         <div class="collapse navbar-collapse" id="navbarNav">
@@ -50,7 +50,7 @@
             
 
             
-            <% if ((session && session.userRole === 'admin') || (typeof userRole !== 'undefined' && userRole === 'admin')) { %>
+            <% if ((typeof session !== 'undefined' && session && session.userRole === 'admin') || (typeof userRole !== 'undefined' && userRole === 'admin')) { %>
             <!-- 관리자 메뉴 -->
             <li class="nav-item dropdown">
               <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown">
@@ -87,7 +87,7 @@
                 <li><a class="dropdown-item" href="/employees/excel">
                    <i class="fa-solid fa-users me-2"></i> 직원 목록
                 </a></li>
-                 <li><a class="dropdown-item" href="/uniform/stats">
+                 <li><a class="dropdown-item" href="/uniform/stats/excel" onclick="downloadUniformStatsExcel()">
                   <i class="fa-solid fa-tshirt me-2"></i> 유니폼 통계
                 </a></li>
                  <li><a class="dropdown-item" href="/auth/logs">
@@ -147,7 +147,7 @@
       
       <!-- 사용자 정보 및 액션 -->
       <div class="d-flex align-items-center gap-3">
-        <% if (session && session.userId) { %>
+        <% if (typeof session !== 'undefined' && session && session.userId) { %>
           <a href="/notice/new" class="btn btn-warning btn-sm me-2">
             <i class="fa-solid fa-bullhorn me-1"></i> 시스템 공지
           </a>
@@ -156,7 +156,7 @@
           
           <div class="user-info text-end">
             <div class="fw-semibold text-primary" style="font-size: 0.9rem;">
-              <i class="fa-solid fa-user me-1"></i><%= name %>
+              <i class="fa-solid fa-user me-1"></i>관리자
             </div>
             <div class="fw-semibold text-dark" style="font-size: 0.9rem;">
               <i class="fa-solid fa-user-tie me-1"></i><%= position %>
@@ -182,78 +182,180 @@
 </header>
 
 <script>
+// 전역 변수로 이벤트 리스너 중복 등록 방지
+let dropdownInitialized = false;
+let eventListenersAttached = false;
+
 // Bootstrap 드롭다운이 로드될 때까지 대기
 function waitForBootstrap() {
   if (typeof bootstrap !== 'undefined') {
     console.log('Bootstrap 로드됨, 드롭다운 초기화 시작');
     
-    // 모든 드롭다운 요소 초기화
-    document.querySelectorAll('.dropdown-toggle').forEach(function(element) {
-      try {
-        // 기존 인스턴스가 있다면 제거
-        const existingInstance = bootstrap.Dropdown.getInstance(element);
-        if (existingInstance) {
-          existingInstance.dispose();
-        }
-        
-        // 새 인스턴스 생성 (autoClose: true로 설정)
-        const dropdown = new bootstrap.Dropdown(element, {
-          autoClose: true,
-          boundary: 'viewport'
-        });
-        console.log('드롭다운 초기화됨:', element.textContent.trim());
-        
-                 // 클릭 이벤트 강제 추가
-         element.addEventListener('click', function(e) {
-           e.preventDefault();
-           e.stopPropagation();
-           
-           console.log('드롭다운 토글 클릭됨 (Bootstrap):', this.textContent.trim());
-           
-           // 이전에 명암처리된 모든 메뉴에서 active 클래스 제거
-           document.querySelectorAll('.navbar-nav .nav-link.active, .dropdown-item.active').forEach(link => {
-             console.log('Bootstrap 드롭다운에서 active 제거:', link.textContent.trim());
-             link.classList.remove('active');
-           });
-           
-           // 드롭다운 토글에 active 상태 설정
-           this.classList.add('active');
-           console.log('Bootstrap 드롭다운 토글 active 상태 설정됨:', this.textContent.trim());
-           
-           // 다른 모든 드롭다운 닫기
-           closeAllOtherDropdowns(this);
-           
-           const dropdown = bootstrap.Dropdown.getInstance(this);
-           if (dropdown) {
-             dropdown.toggle();
-           }
-         });
-        
-      } catch (error) {
-        console.error('드롭다운 초기화 오류:', error);
-      }
-    });
+    if (!dropdownInitialized) {
+      initializeDropdowns();
+      dropdownInitialized = true;
+    }
+    
+    if (!eventListenersAttached) {
+      attachEventListeners();
+      eventListenersAttached = true;
+    }
     
     console.log('모든 드롭다운 초기화 완료');
-    
-    // 드롭다운 메뉴 표시 확인
-    setTimeout(function() {
-      document.querySelectorAll('.dropdown-menu').forEach(function(menu) {
-        console.log('드롭다운 메뉴 확인:', menu);
-      });
-      
-      // 드롭다운 상태 디버깅
-      console.log('=== 드롭다운 상태 확인 ===');
-      document.querySelectorAll('.dropdown-toggle').forEach(function(toggle) {
-        const dropdown = bootstrap.Dropdown.getInstance(toggle);
-        console.log('토글:', toggle.textContent.trim(), '인스턴스:', dropdown ? '있음' : '없음');
-      });
-    }, 100);
-    
   } else {
     console.log('Bootstrap 로드 대기 중...');
     setTimeout(waitForBootstrap, 100);
   }
+}
+
+// 드롭다운 초기화 함수
+function initializeDropdowns() {
+  document.querySelectorAll('.dropdown-toggle').forEach(function(element) {
+    try {
+      // 기존 인스턴스가 있다면 제거
+      const existingInstance = bootstrap.Dropdown.getInstance(element);
+      if (existingInstance) {
+        existingInstance.dispose();
+      }
+      
+      // aria-expanded 속성 명시적 설정
+      element.setAttribute('aria-expanded', 'false');
+      
+      // 새 인스턴스 생성
+      const dropdown = new bootstrap.Dropdown(element, {
+        autoClose: true,
+        boundary: 'viewport'
+      });
+      
+      // 드롭다운 상태 변경 이벤트 리스너 추가
+      element.addEventListener('show.bs.dropdown', function() {
+        this.setAttribute('aria-expanded', 'true');
+        console.log('드롭다운 열림:', this.textContent.trim());
+        
+        // 다른 모든 드롭다운 닫기
+        closeAllOtherDropdowns(this);
+        
+        // 다른 모든 메뉴의 active 상태 제거
+        document.querySelectorAll('.navbar-nav .nav-link.active, .dropdown-item.active').forEach(link => {
+          if (link !== this) {
+            link.classList.remove('active');
+          }
+        });
+        
+        // 현재 드롭다운 토글만 active 상태로 설정
+        this.classList.add('active');
+      });
+      
+      element.addEventListener('hide.bs.dropdown', function() {
+        this.setAttribute('aria-expanded', 'false');
+        console.log('드롭다운 닫힘:', this.textContent.trim());
+        
+        // 드롭다운이 닫힐 때 active 상태 제거
+        this.classList.remove('active');
+      });
+      
+      console.log('드롭다운 초기화됨:', element.textContent.trim());
+      
+    } catch (error) {
+      console.error('드롭다운 초기화 오류:', error);
+    }
+  });
+}
+
+// 이벤트 리스너 등록 함수
+function attachEventListeners() {
+  // 드롭다운 토글 클릭 이벤트
+  document.addEventListener('click', function(e) {
+    const dropdownToggle = e.target.closest('.dropdown-toggle');
+    if (dropdownToggle) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      console.log('드롭다운 토글 클릭됨:', dropdownToggle.textContent.trim());
+      
+      // 모든 메뉴의 active 상태 초기화 (드롭다운 토글과 하위 메뉴 모두)
+      document.querySelectorAll('.navbar-nav .nav-link.active, .dropdown-item.active').forEach(link => {
+        link.classList.remove('active');
+      });
+      
+      // 클릭된 드롭다운 토글에만 active 상태 설정
+      dropdownToggle.classList.add('active');
+      console.log('드롭다운 토글 active 상태 설정됨:', dropdownToggle.textContent.trim());
+      
+      // 다른 모든 드롭다운 닫기
+      closeAllOtherDropdowns(dropdownToggle);
+      
+      // Bootstrap 드롭다운 토글
+      const dropdown = bootstrap.Dropdown.getInstance(dropdownToggle);
+      if (dropdown) {
+        // 현재 상태 확인
+        const isExpanded = dropdownToggle.getAttribute('aria-expanded') === 'true';
+        
+        if (isExpanded) {
+          dropdown.hide();
+          dropdownToggle.setAttribute('aria-expanded', 'false');
+          // 드롭다운이 닫힐 때 active 상태도 제거
+          dropdownToggle.classList.remove('active');
+        } else {
+          dropdown.show();
+          dropdownToggle.setAttribute('aria-expanded', 'true');
+        }
+      }
+    }
+    
+    // 드롭다운 메뉴 외부 클릭 시 모든 드롭다운 닫기 및 active 상태 초기화
+    if (!e.target.closest('.dropdown')) {
+      closeAllDropdowns();
+      // 외부 클릭 시 모든 active 상태 제거
+      document.querySelectorAll('.navbar-nav .nav-link.active, .dropdown-item.active').forEach(link => {
+        link.classList.remove('active');
+      });
+    }
+  });
+  
+  // 메뉴 링크 클릭 이벤트
+  document.addEventListener('click', function(e) {
+    const menuLink = e.target.closest('.nav-link:not(.dropdown-toggle), .dropdown-item');
+    if (menuLink && menuLink.getAttribute('href') && menuLink.getAttribute('href') !== '#') {
+      console.log('메뉴 링크 클릭됨:', menuLink.textContent.trim());
+      
+      // 모든 드롭다운 닫기
+      closeAllDropdowns();
+      
+      // 모든 메뉴의 active 상태 완전 초기화
+      document.querySelectorAll('.navbar-nav .nav-link.active, .dropdown-item.active').forEach(link => {
+        link.classList.remove('active');
+      });
+      
+      // 클릭된 메뉴에만 active 상태 설정
+      menuLink.classList.add('active');
+      
+      // 드롭다운 메뉴인 경우 상위 메뉴도 active
+      if (menuLink.classList.contains('dropdown-item')) {
+        const parentDropdown = menuLink.closest('.dropdown');
+        if (parentDropdown) {
+          const parentToggle = parentDropdown.querySelector('.dropdown-toggle');
+          if (parentToggle) {
+            parentToggle.classList.add('active');
+            console.log('상위 드롭다운 토글 active 상태 설정됨:', parentToggle.textContent.trim());
+          }
+        }
+      }
+      
+      console.log('메뉴 링크 active 상태 설정됨:', menuLink.textContent.trim());
+    }
+  });
+}
+
+// 모든 드롭다운 닫기 함수
+function closeAllDropdowns() {
+  document.querySelectorAll('.dropdown-toggle').forEach(function(toggle) {
+    const dropdown = bootstrap.Dropdown.getInstance(toggle);
+    if (dropdown) {
+      dropdown.hide();
+      toggle.setAttribute('aria-expanded', 'false');
+    }
+  });
 }
 
 // 다른 모든 드롭다운 닫기 함수
@@ -263,212 +365,185 @@ function closeAllOtherDropdowns(currentToggle) {
       const dropdown = bootstrap.Dropdown.getInstance(toggle);
       if (dropdown) {
         dropdown.hide();
+        toggle.setAttribute('aria-expanded', 'false');
       }
     }
   });
 }
 
-// 드롭다운 강제 초기화 함수
-function forceInitializeDropdowns() {
-  console.log('드롭다운 강제 초기화 시작');
-  
-  document.querySelectorAll('.dropdown-toggle').forEach(function(element) {
-    // data-bs-toggle 속성 확인
-    if (!element.getAttribute('data-bs-toggle')) {
-      element.setAttribute('data-bs-toggle', 'dropdown');
-    }
+// 유니폼 통계 엑셀 다운로드 함수
+function downloadUniformStatsExcel() {
+  try {
+    // 로딩 표시
+    const loadingToast = showLoadingToast('유니폼 통계 엑셀 파일을 생성하고 있습니다...');
     
-    // aria-expanded 속성 추가
-    element.setAttribute('aria-expanded', 'false');
-    
-    // Bootstrap 드롭다운 인스턴스 생성
-    try {
-      const dropdown = new bootstrap.Dropdown(element, {
-        autoClose: true,
-        boundary: 'viewport'
-      });
-      console.log('강제 초기화 완료:', element.textContent.trim());
-    } catch (error) {
-      console.error('강제 초기화 오류:', error);
-    }
-  });
-}
-
-// 페이지 클릭 시 모든 드롭다운 닫기
-document.addEventListener('click', function(e) {
-  // 드롭다운 토글이나 메뉴 내부 클릭이 아닌 경우
-  if (!e.target.closest('.dropdown')) {
-    document.querySelectorAll('.dropdown-toggle').forEach(function(toggle) {
-      const dropdown = bootstrap.Dropdown.getInstance(toggle);
-      if (dropdown) {
-        dropdown.hide();
+    // 엑셀 다운로드 API 호출
+    fetch('/uniform/stats/excel', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
+      return response.blob();
+    })
+    .then(blob => {
+      // 로딩 토스트 숨기기
+      hideLoadingToast(loadingToast);
+      
+      // 파일 다운로드
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = `uniform_order_stats_${new Date().toISOString().slice(0, 10)}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      // 성공 메시지 표시
+      showSuccessToast('유니폼 통계 엑셀 파일이 성공적으로 다운로드되었습니다!');
+    })
+    .catch(error => {
+      console.error('유니폼 통계 엑셀 다운로드 오류:', error);
+      hideLoadingToast(loadingToast);
+      showErrorToast('엑셀 파일 다운로드 중 오류가 발생했습니다.');
     });
+  } catch (error) {
+    console.error('유니폼 통계 엑셀 다운로드 함수 오류:', error);
+    showErrorToast('엑셀 파일 다운로드 중 오류가 발생했습니다.');
   }
-});
+}
 
-// 페이지 로드 시 드롭다운 초기화 및 메뉴 active 상태 설정
+// 로딩 토스트 표시 함수
+function showLoadingToast(message) {
+  const toastContainer = document.getElementById('toast-container') || createToastContainer();
+  
+  const toast = document.createElement('div');
+  toast.className = 'toast show bg-info text-white';
+  toast.innerHTML = `
+    <div class="toast-body d-flex align-items-center">
+      <div class="spinner-border spinner-border-sm me-2" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      ${message}
+    </div>
+  `;
+  
+  toastContainer.appendChild(toast);
+  return toast;
+}
+
+// 로딩 토스트 숨기기 함수
+function hideLoadingToast(toast) {
+  if (toast && toast.parentNode) {
+    toast.parentNode.removeChild(toast);
+  }
+}
+
+// 성공 토스트 표시 함수
+function showSuccessToast(message) {
+  const toastContainer = document.getElementById('toast-container') || createToastContainer();
+  
+  const toast = document.createElement('div');
+  toast.className = 'toast show bg-success text-white';
+  toast.innerHTML = `
+    <div class="toast-body">
+      <i class="fa-solid fa-check-circle me-2"></i>
+      ${message}
+    </div>
+  `;
+  
+  toastContainer.appendChild(toast);
+  
+  // 3초 후 자동으로 숨기기
+  setTimeout(() => {
+    if (toast.parentNode) {
+      toast.parentNode.removeChild(toast);
+    }
+  }, 3000);
+}
+
+// 에러 토스트 표시 함수
+function showErrorToast(message) {
+  const toastContainer = document.getElementById('toast-container') || createToastContainer();
+  
+  const toast = document.createElement('div');
+  toast.className = 'toast show bg-danger text-white';
+  toast.innerHTML = `
+    <div class="toast-body">
+      <i class="fa-solid fa-exclamation-triangle me-2"></i>
+      ${message}
+    </div>
+  `;
+  
+  toastContainer.appendChild(toast);
+  
+  // 5초 후 자동으로 숨기기
+  setTimeout(() => {
+    if (toast.parentNode) {
+      toast.parentNode.removeChild(toast);
+    }
+  }, 5000);
+}
+
+// 토스트 컨테이너 생성 함수
+function createToastContainer() {
+  const container = document.createElement('div');
+  container.id = 'toast-container';
+  container.className = 'toast-container position-fixed top-0 end-0 p-3';
+  container.style.zIndex = '9999';
+  document.body.appendChild(container);
+  return container;
+}
+
+// 페이지 로드 시 초기화
 document.addEventListener('DOMContentLoaded', function() {
   console.log('DOM 로드됨, Bootstrap 대기 시작');
   waitForBootstrap();
   
-  // 메뉴 active 상태 초기화
-  clearAllActiveStates();
-  const currentPath = window.location.pathname;
-  setActiveMenuForCurrentPage(currentPath);
-  
-  // 추가 안전장치: 1초 후 강제 초기화
-  setTimeout(function() {
-    if (typeof bootstrap !== 'undefined') {
-      forceInitializeDropdowns();
-    }
-  }, 1000);
+  // 현재 페이지에 따른 메뉴 active 상태 설정
+  setActiveMenuForCurrentPage(window.location.pathname);
 });
 
-      // 현재 페이지에 따른 상위 메뉴 active 상태 설정 함수
-      function setActiveMainMenu(currentPath) {
-        // 모든 상위 메뉴에서 active 클래스 제거
-        document.querySelectorAll('.navbar-nav .nav-link:not(.dropdown-toggle)').forEach(link => {
-          link.classList.remove('active');
-        });
-        
-        // 현재 페이지에 따른 상위 메뉴 active 설정
-        if (currentPath.startsWith('/dashboard')) {
-          document.querySelector('a[href="/dashboard"]').classList.add('active');
-        } else if (currentPath.startsWith('/employees')) {
-          document.querySelector('a[href="/employees"]').classList.add('active');
-        } else if (currentPath.startsWith('/boards')) {
-          document.querySelector('a[href="/boards"]').classList.add('active');
-        } else if (currentPath.startsWith('/uniform') || currentPath.startsWith('/excelManager')) {
-          // 유니폼이나 엑셀관리 페이지인 경우 해당 드롭다운 메뉴의 상위 메뉴는 active하지 않음
-        } else if (currentPath.startsWith('/auth/logs')) {
-          // 활동 로그 페이지인 경우 해당 드롭다운 메뉴의 상위 메뉴는 active하지 않음
-        } else if (currentPath.startsWith('/attendance') || currentPath.startsWith('/monthlyAttendance') || currentPath.startsWith('/workSchedule')) {
-          // 근태 관련 페이지인 경우 정보 입력 메뉴 active
-          const infoInputMenu = document.querySelector('#employeeInputDropdown .nav-link');
-          if (infoInputMenu) {
-            infoInputMenu.classList.add('active');
-          }
-        } else if (currentPath.startsWith('/security')) {
-          // 보안업무 페이지인 경우 보안업무 메뉴 active
-          const securityMenu = document.querySelector('#securityWorkDropdown .nav-link');
-          if (securityMenu) {
-            securityMenu.classList.add('active');
-          }
+// 현재 페이지에 따른 메뉴 active 상태 설정
+function setActiveMenuForCurrentPage(currentPath) {
+  console.log('현재 페이지 경로:', currentPath);
+  
+  // 모든 메뉴에서 active 클래스 제거
+  document.querySelectorAll('.navbar-nav .nav-link, .dropdown-item').forEach(link => {
+    link.classList.remove('active');
+  });
+  
+  // 현재 페이지에 해당하는 메뉴 찾기
+  const currentMenuItem = document.querySelector(`a[href="${currentPath}"]`);
+  if (currentMenuItem) {
+    console.log('현재 페이지 메뉴 발견:', currentMenuItem.textContent.trim());
+    
+    // 클릭된 메뉴에 active 상태 설정
+    currentMenuItem.classList.add('active');
+    
+    // 드롭다운 메뉴인 경우 상위 메뉴도 active
+    if (currentMenuItem.classList.contains('dropdown-item')) {
+      const parentDropdown = currentMenuItem.closest('.dropdown');
+      if (parentDropdown) {
+        const parentToggle = parentDropdown.querySelector('.dropdown-toggle');
+        if (parentToggle) {
+          parentToggle.classList.add('active');
+          console.log('상위 드롭다운 토글 active 상태 설정됨:', parentToggle.textContent.trim());
         }
       }
-
-      // 메뉴 클릭 시 active 상태 관리
-      document.addEventListener('click', function(e) {
-        // 상위 메뉴 링크 클릭 시 (드롭다운 토글 포함)
-        const clickedNavLink = e.target.closest('.navbar-nav .nav-link');
-        // 하위 메뉴 링크 클릭 시
-        const clickedDropdownItem = e.target.closest('.dropdown-item');
-        
-        // 상위 메뉴 클릭 시 (드롭다운 토글 포함)
-        if (clickedNavLink) {
-          const href = clickedNavLink.getAttribute('href');
-          
-          // 드롭다운 토글인 경우 (href="#")
-          if (clickedNavLink.classList.contains('dropdown-toggle') && href === '#') {
-            console.log('드롭다운 토글 클릭됨:', clickedNavLink.textContent.trim());
-            // 이전에 명암처리된 모든 메뉴에서 active 클래스 제거
-            document.querySelectorAll('.navbar-nav .nav-link.active, .dropdown-item.active').forEach(link => {
-              console.log('active 제거:', link.textContent.trim());
-              link.classList.remove('active');
-            });
-            // 드롭다운 토글에 active 상태 설정
-            clickedNavLink.classList.add('active');
-            console.log('드롭다운 토글 active 상태 설정됨:', clickedNavLink.textContent.trim());
-          }
-          // 실제 페이지 이동이 있는 링크인 경우
-          else if (href && href !== '#' && href !== '/boards/admin/reports' && href !== '/uniform/stats' && href !== '/auth/logs') {
-            console.log('일반 메뉴 클릭됨:', clickedNavLink.textContent.trim(), 'href:', href);
-            // 이전에 명암처리된 모든 메뉴에서 active 클래스 제거
-            document.querySelectorAll('.navbar-nav .nav-link.active, .dropdown-item.active').forEach(link => {
-              console.log('active 제거:', link.textContent.trim());
-              link.classList.remove('active');
-            });
-            
-            // 클릭된 상위 메뉴에만 active 클래스 추가
-            clickedNavLink.classList.add('active');
-            console.log('active 추가:', clickedNavLink.textContent.trim());
-          }
-        }
-        
-        // 하위 메뉴 클릭 시
-        if (clickedDropdownItem) {
-          const href = clickedDropdownItem.getAttribute('href');
-          if (href && href !== '#') {
-            console.log('하위 메뉴 클릭됨:', clickedDropdownItem.textContent.trim(), 'href:', href);
-            // 이전에 명암처리된 모든 메뉴에서 active 클래스 제거
-            document.querySelectorAll('.navbar-nav .nav-link.active, .dropdown-item.active').forEach(link => {
-              console.log('active 제거:', link.textContent.trim());
-              link.classList.remove('active');
-            });
-            
-            // 클릭된 하위 메뉴에만 active 클래스 추가
-            clickedDropdownItem.classList.add('active');
-            console.log('active 추가:', clickedDropdownItem.textContent.trim());
-            
-            // 하위 메뉴 클릭 시 해당 상위 메뉴도 active 상태로 설정
-            setActiveMainMenuForDropdown(href);
-          }
-        }
-      });
-      
-      // 하위 메뉴 클릭 시 상위 메뉴 active 상태 설정 함수
-      function setActiveMainMenuForDropdown(href) {
-        console.log('setActiveMainMenuForDropdown 호출됨, href:', href);
-        
-        // 이전에 active 상태였던 상위 메뉴들에서 active 클래스 제거
-        document.querySelectorAll('.navbar-nav .nav-link.active:not(.dropdown-toggle)').forEach(link => {
-          console.log('상위 메뉴 active 제거:', link.textContent.trim());
-          link.classList.remove('active');
-        });
-        
-        if (href.startsWith('/attendance') || href.startsWith('/monthlyAttendance') || href.startsWith('/workSchedule')) {
-          // 근태 관련 페이지인 경우 정보 입력 메뉴 active
-          const infoInputMenu = document.querySelector('#employeeInputDropdown .nav-link');
-          if (infoInputMenu) {
-            infoInputMenu.classList.add('active');
-            console.log('정보 입력 메뉴 active 설정');
-          }
-        } else if (href.startsWith('/security')) {
-          // 보안업무 페이지인 경우 보안업무 메뉴 active
-          const securityMenu = document.querySelector('#securityWorkDropdown .nav-link');
-          if (securityMenu) {
-            securityMenu.classList.add('active');
-            console.log('보안업무 메뉴 active 설정');
-          }
-        }
-      }
-      
-      // 모든 메뉴에서 active 클래스 제거하는 함수
-      function clearAllActiveStates() {
-        document.querySelectorAll('.navbar-nav .nav-link, .dropdown-item').forEach(link => {
-          link.classList.remove('active');
-        });
-      }
-      
-             // 페이지 로드 시 모든 active 상태 초기화 (중복 제거)
-      
-      // 현재 페이지에 따른 메뉴 active 상태 설정
-      function setActiveMenuForCurrentPage(currentPath) {
-        // 모든 메뉴에서 active 클래스 제거
-        clearAllActiveStates();
-        
-        // 현재 페이지에 해당하는 하위 메뉴 찾기
-        const currentMenuItem = document.querySelector(`a[href="${currentPath}"]`);
-        if (currentMenuItem) {
-          currentMenuItem.classList.add('active');
-          
-          // 하위 메뉴인 경우 해당 상위 메뉴도 active
-          if (currentMenuItem.classList.contains('dropdown-item')) {
-            setActiveMainMenuForDropdown(currentPath);
-          }
-        }
-      }
+    }
+    
+    console.log('현재 페이지 메뉴 active 상태 설정 완료');
+  } else {
+    console.log('현재 페이지에 해당하는 메뉴를 찾을 수 없음');
+  }
+}
 </script>
 
 <style>
@@ -669,5 +744,34 @@ body {
   .brand-text h2 {
     font-size: 1.25rem;
   }
+}
+
+/* 토스트 컨테이너 스타일 */
+.toast-container {
+  z-index: 9999;
+}
+
+.toast {
+  min-width: 300px;
+  border: none;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.toast.bg-info {
+  background-color: #17a2b8 !important;
+}
+
+.toast.bg-success {
+  background-color: #28a745 !important;
+}
+
+.toast.bg-danger {
+  background-color: #dc3545 !important;
+}
+
+.toast-body {
+  padding: 1rem;
+  font-weight: 500;
 }
 </style> 

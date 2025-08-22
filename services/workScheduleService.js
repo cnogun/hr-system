@@ -168,7 +168,7 @@ class WorkScheduleService {
       const dayOfWeek = date.getDay();
       
       employees.forEach(emp => {
-        let status, checkIn, checkOut, basic, special, night;
+        let status, checkIn, checkOut, basic, special, specialOvertime, night;
         
         if (isHoliday) {
           // 공휴일인 경우 특근 처리

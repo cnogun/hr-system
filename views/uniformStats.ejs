@@ -1,13 +1,3 @@
-<!--
-  파일명: uniformStats.ejs
-  목적: 유니폼 통계 및 현황 관리 페이지
-  기능:
-  - 유니폼 종류별 통계 표시
-  - 사이즈별 현황 차트
-  - 부서별 유니폼 현황
-  - 엑셀 다운로드 기능
-  - 관리자 권한 검증
--->
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -28,11 +18,6 @@
       transform: translateY(-5px);
       box-shadow: 0 10px 25px rgba(0,0,0,0.1);
     }
-    .chart-container {
-      position: relative;
-      height: 300px;
-      margin: 20px 0;
-    }
     .uniform-type {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
@@ -45,24 +30,66 @@
       background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
       color: white;
     }
-    .btn-download {
-      border-radius: 10px;
-      font-weight: 600;
-      padding: 12px 24px;
-      transition: all 0.3s;
+    .chart-container {
+      position: relative;
+      height: 250px;
+      margin: 15px 0;
     }
-    .btn-download:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    .compact-chart {
+      height: 200px;
     }
-    .table-responsive {
+    .detail-section {
+      background: #f8f9fa;
       border-radius: 15px;
-      overflow: hidden;
+      padding: 20px;
+      margin: 20px 0;
+    }
+    .uniform-detail-card {
+      background: white;
+      border-radius: 10px;
+      padding: 15px;
+      margin: 10px 0;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .size-badge {
+      display: inline-block;
+      padding: 4px 8px;
+      margin: 2px;
+      border-radius: 12px;
+      font-size: 0.8em;
+      font-weight: 500;
+      background: #e9ecef;
+      color: #495057;
+    }
+    .size-badge.has-data {
+      background: #28a745;
+      color: white;
     }
   </style>
 </head>
 <body class="bg-light">
-  <%- include('header') %>
+  <!-- 간단한 헤더 -->
+  <header class="bg-primary text-white p-3 shadow">
+    <div class="container">
+      <div class="d-flex justify-content-between align-items-center">
+        <h1 class="h4 mb-0">
+          <i class="fa-solid fa-building me-2"></i>
+          인사관리 시스템
+        </h1>
+        <div>
+          <a href="/dashboard" class="btn btn-light btn-sm me-2">
+            <i class="fa-solid fa-home me-1"></i>대시보드
+          </a>
+          <a href="/excelManager" class="btn btn-success btn-sm me-2">
+            <i class="fa-solid fa-file-excel me-1"></i>엑셀 관리
+          </a>
+          <a href="/auth/logout" class="btn btn-outline-light btn-sm">
+            <i class="fa-solid fa-sign-out-alt me-1"></i>로그아웃
+          </a>
+        </div>
+      </div>
+    </div>
+  </header>
   
   <div class="container mt-4">
     <div class="row mb-4">
@@ -73,9 +100,9 @@
             유니폼 통계
           </h1>
           <div>
-            <button class="btn btn-success btn-download me-2" onclick="downloadUniformStats()">
-              <i class="fa-solid fa-file-excel me-2"></i>엑셀 다운로드
-            </button>
+            <a href="/excelManager" class="btn btn-success me-2">
+              <i class="fa-solid fa-file-excel me-2"></i>엑셀 관리
+            </a>
             <a href="/dashboard" class="btn btn-outline-secondary">
               <i class="fa-solid fa-arrow-left me-1"></i>대시보드
             </a>
@@ -125,11 +152,10 @@
       </div>
     </div>
 
-    <!-- 차트 및 상세 통계 -->
-    <div class="row g-4">
-      <!-- 유니폼 종류별 통계 -->
+    <!-- 차트 섹션 -->
+    <div class="row g-4 mb-4">
       <div class="col-lg-6">
-        <div class="card stats-card h-100">
+        <div class="card">
           <div class="card-header bg-primary text-white">
             <h5 class="mb-0">
               <i class="fa-solid fa-chart-pie me-2"></i>
@@ -137,58 +163,57 @@
             </h5>
           </div>
           <div class="card-body">
-            <div class="chart-container">
+            <div class="chart-container compact-chart">
               <canvas id="uniformTypeChart"></canvas>
             </div>
           </div>
         </div>
       </div>
-
-      <!-- 사이즈별 통계 -->
       <div class="col-lg-6">
-        <div class="card stats-card h-100">
+        <div class="card">
           <div class="card-header bg-success text-white">
             <h5 class="mb-0">
               <i class="fa-solid fa-chart-bar me-2"></i>
-              사이즈별 현황
+              부서별 인원 현황
             </h5>
           </div>
           <div class="card-body">
-            <div class="chart-container">
-              <canvas id="sizeChart"></canvas>
+            <div class="chart-container compact-chart">
+              <canvas id="departmentChart"></canvas>
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- 상세 통계 테이블 -->
-    <div class="row mt-4">
+    <!-- 상세 유니폼 통계 -->
+    <div class="detail-section">
+      <h4 class="mb-3">
+        <i class="fa-solid fa-list-ul me-2 text-primary"></i>
+        상세 유니폼 통계
+      </h4>
+      
+      <!-- 유니폼 종류별 상세 -->
+      <div class="row" id="uniformDetails">
+        <div class="col-12">
+          <p class="text-muted">데이터를 불러오는 중...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 부서별 상세 현황 -->
+    <div class="row">
       <div class="col-12">
-        <div class="card stats-card">
+        <div class="card">
           <div class="card-header bg-info text-white">
             <h5 class="mb-0">
               <i class="fa-solid fa-table me-2"></i>
-              부서별 유니폼 상세 현황
+              부서별 상세 현황
             </h5>
           </div>
           <div class="card-body">
-            <div class="table-responsive">
-              <table class="table table-hover" id="uniformTable">
-                <thead class="table-dark">
-                  <tr>
-                    <th>부서</th>
-                    <th>유니폼 종류</th>
-                    <th>사이즈</th>
-                    <th>수량</th>
-                    <th>재고 상태</th>
-                    <th>마지막 업데이트</th>
-                  </tr>
-                </thead>
-                <tbody id="uniformTableBody">
-                  <!-- 데이터가 동적으로 로드됨 -->
-                </tbody>
-              </table>
+            <div id="departmentStats">
+              <p class="text-muted">데이터를 불러오는 중...</p>
             </div>
           </div>
         </div>
@@ -196,11 +221,9 @@
     </div>
   </div>
 
-  <%- include('footer') %>
-
   <script>
     // 차트 객체들
-    let uniformTypeChart, sizeChart;
+    let uniformTypeChart, departmentChart;
 
     // 페이지 로드 시 데이터 로드
     document.addEventListener('DOMContentLoaded', function() {
@@ -210,40 +233,61 @@
     // 유니폼 통계 데이터 로드
     async function loadUniformStats() {
       try {
-        const response = await fetch('/uniform/stats');
+        const response = await fetch('/api/uniform/stats');
         const result = await response.json();
         
         if (result.success) {
           const stats = result.data;
           updateSummaryCards(stats);
+          updateDepartmentStats(stats);
           createCharts(stats);
-          updateUniformTable(stats);
+          updateUniformDetails(stats);
         } else {
-          console.error('통계 데이터 로드 실패:', result.message);
+          console.error('통계 데이터 로드 실패:', result.error);
+          showError('통계 데이터를 불러오는 중 오류가 발생했습니다.');
         }
       } catch (error) {
         console.error('통계 데이터 로드 오류:', error);
+        showError('서버 연결 오류가 발생했습니다.');
       }
     }
 
     // 요약 카드 업데이트
     function updateSummaryCards(stats) {
       document.getElementById('totalUniforms').textContent = stats.totalUniforms || 0;
-      document.getElementById('totalSizes').textContent = stats.totalSizes || 0;
-      document.getElementById('totalDepartments').textContent = stats.totalDepartments || 0;
-      document.getElementById('lowStock').textContent = stats.lowStock || 0;
+      document.getElementById('totalSizes').textContent = Object.keys(stats.departmentStats || {}).length || 0;
+      document.getElementById('totalDepartments').textContent = Object.keys(stats.departmentStats || {}).length || 0;
+      document.getElementById('lowStock').textContent = stats.totalEmployees || 0;
     }
 
     // 차트 생성
     function createCharts(stats) {
       // 유니폼 종류별 차트
       const uniformTypeCtx = document.getElementById('uniformTypeChart').getContext('2d');
+      const uniformTypeData = {
+        '여름 상의': Object.values(stats.uniformStats?.summerTop || {}).reduce((a, b) => a + b, 0),
+        '여름 하의': Object.values(stats.uniformStats?.summerBottom || {}).reduce((a, b) => a + b, 0),
+        '겨울 상의': Object.values(stats.uniformStats?.winterTop || {}).reduce((a, b) => a + b, 0),
+        '겨울 하의': Object.values(stats.uniformStats?.winterBottom || {}).reduce((a, b) => a + b, 0),
+        '방한 하의': Object.values(stats.uniformStats?.winterPants || {}).reduce((a, b) => a + b, 0),
+        '방한 외투': Object.values(stats.uniformStats?.winterCoat || {}).reduce((a, b) => a + b, 0),
+        '우비': Object.values(stats.uniformStats?.raincoat || {}).reduce((a, b) => a + b, 0),
+        '모자': Object.values(stats.uniformStats?.cap || {}).reduce((a, b) => a + b, 0),
+        '안전화': Object.values(stats.uniformStats?.safetyShoes || {}).reduce((a, b) => a + b, 0),
+        '장화': Object.values(stats.uniformStats?.rainBoots || {}).reduce((a, b) => a + b, 0)
+      };
+
+      // 0이 아닌 데이터만 필터링
+      const filteredData = Object.fromEntries(
+        Object.entries(uniformTypeData).filter(([key, value]) => value > 0)
+      );
+
       uniformTypeChart = new Chart(uniformTypeCtx, {
         type: 'doughnut',
         data: {
-          labels: stats.uniformTypes?.map(item => item.name) || [],
+          labels: Object.keys(filteredData),
           datasets: [{
-            data: stats.uniformTypes?.map(item => item.count) || [],
+            data: Object.values(filteredData),
             backgroundColor: [
               '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
               '#FF9F40', '#FF6384', '#C9CBCF', '#4BC0C0', '#FF6384'
@@ -255,21 +299,26 @@
           maintainAspectRatio: false,
           plugins: {
             legend: {
-              position: 'bottom'
+              position: 'bottom',
+              labels: {
+                font: { size: 11 }
+              }
             }
           }
         }
       });
 
-      // 사이즈별 차트
-      const sizeCtx = document.getElementById('sizeChart').getContext('2d');
-      sizeChart = new Chart(sizeCtx, {
+      // 부서별 차트
+      const deptCtx = document.getElementById('departmentChart').getContext('2d');
+      const departmentData = stats.departmentStats || {};
+      
+      departmentChart = new Chart(deptCtx, {
         type: 'bar',
         data: {
-          labels: stats.sizes?.map(item => item.size) || [],
+          labels: Object.keys(departmentData),
           datasets: [{
-            label: '수량',
-            data: stats.sizes?.map(item => item.count) || [],
+            label: '인원 수',
+            data: Object.values(departmentData),
             backgroundColor: 'rgba(54, 162, 235, 0.8)',
             borderColor: 'rgba(54, 162, 235, 1)',
             borderWidth: 1
@@ -280,49 +329,175 @@
           maintainAspectRatio: false,
           scales: {
             y: {
-              beginAtZero: true
+              beginAtZero: true,
+              ticks: { font: { size: 11 } }
+            },
+            x: {
+              ticks: { font: { size: 10 } }
+            }
+          },
+          plugins: {
+            legend: {
+              labels: { font: { size: 11 } }
             }
           }
         }
       });
     }
 
-    // 유니폼 테이블 업데이트
-    function updateUniformTable(stats) {
-      const tbody = document.getElementById('uniformTableBody');
-      tbody.innerHTML = '';
+    // 상세 유니폼 통계 업데이트
+    function updateUniformDetails(stats) {
+      const container = document.getElementById('uniformDetails');
+      const uniformStats = stats.uniformStats || {};
+      
+      let html = '';
+      
+      // 여름 상의
+      if (uniformStats.summerTop) {
+        html += createUniformDetailCard('여름 상의', uniformStats.summerTop, 'summer-top');
+      }
+      
+      // 여름 하의
+      if (uniformStats.summerBottom) {
+        html += createUniformDetailCard('여름 하의', uniformStats.summerBottom, 'summer-bottom');
+      }
+      
+      // 겨울 상의
+      if (uniformStats.winterTop) {
+        html += createUniformDetailCard('겨울 상의', uniformStats.winterTop, 'winter-top');
+      }
+      
+      // 겨울 하의
+      if (uniformStats.winterBottom) {
+        html += createUniformDetailCard('겨울 하의', uniformStats.winterBottom, 'winter-bottom');
+      }
+      
+      // 방한 하의
+      if (uniformStats.winterPants) {
+        html += createUniformDetailCard('방한 하의', uniformStats.winterPants, 'winter-pants');
+      }
+      
+      // 방한 외투
+      if (uniformStats.winterCoat) {
+        html += createUniformDetailCard('방한 외투', uniformStats.winterCoat, 'winter-coat');
+      }
+      
+      // 우비
+      if (uniformStats.raincoat) {
+        html += createUniformDetailCard('우비', uniformStats.raincoat, 'raincoat');
+      }
+      
+      // 모자
+      if (uniformStats.cap) {
+        html += createUniformDetailCard('모자', uniformStats.cap, 'cap');
+      }
+      
+      // 안전화
+      if (uniformStats.safetyShoes) {
+        html += createUniformDetailCard('안전화', uniformStats.safetyShoes, 'safety-shoes');
+      }
+      
+      // 장화
+      if (uniformStats.rainBoots) {
+        html += createUniformDetailCard('장화', uniformStats.rainBoots, 'rain-boots');
+      }
+      
+      if (html === '') {
+        html = '<div class="col-12"><p class="text-muted">유니폼 데이터가 없습니다.</p></div>';
+      }
+      
+      container.innerHTML = html;
+    }
 
-      if (stats.departments) {
-        stats.departments.forEach(dept => {
-          dept.uniforms.forEach(uniform => {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-              <td>${dept.name}</td>
-              <td>${uniform.type}</td>
-              <td>${uniform.size}</td>
-              <td>${uniform.quantity}</td>
-              <td>
-                <span class="badge ${uniform.quantity < 10 ? 'bg-danger' : uniform.quantity < 30 ? 'bg-warning' : 'bg-success'}">
-                  ${uniform.quantity < 10 ? '재고 부족' : uniform.quantity < 30 ? '재고 적음' : '재고 충분'}
-                </span>
-              </td>
-              <td>${new Date(uniform.lastUpdated).toLocaleDateString('ko-KR')}</td>
-            `;
-            tbody.appendChild(row);
-          });
+    // 유니폼 상세 카드 생성
+    function createUniformDetailCard(title, data, type) {
+      const total = Object.values(data).reduce((a, b) => a + b, 0);
+      if (total === 0) return '';
+      
+      let badges = '';
+      Object.entries(data).forEach(([size, count]) => {
+        if (count > 0) {
+          badges += `<span class="size-badge has-data">${size}: ${count}개</span>`;
+        } else {
+          badges += `<span class="size-badge">${size}: 0개</span>`;
+        }
+      });
+      
+      return `
+        <div class="col-md-6 col-lg-4 mb-3">
+          <div class="uniform-detail-card">
+            <h6 class="mb-2">
+              <i class="fa-solid fa-tshirt me-2 text-primary"></i>
+              ${title}
+            </h6>
+            <p class="mb-2">
+              <strong>총 수량:</strong> ${total}개
+            </p>
+            <div class="mb-2">
+              <strong>사이즈별:</strong><br>
+              ${badges}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // 부서별 통계 업데이트
+    function updateDepartmentStats(stats) {
+      const container = document.getElementById('departmentStats');
+      
+      if (stats.departmentStats && Object.keys(stats.departmentStats).length > 0) {
+        let html = '<div class="table-responsive"><table class="table table-hover">';
+        html += '<thead class="table-dark"><tr><th>부서</th><th>인원 수</th><th>상태</th><th>비율</th></tr></thead><tbody>';
+        
+        const totalEmployees = stats.totalEmployees || 0;
+        
+        Object.entries(stats.departmentStats).forEach(([deptName, empCount]) => {
+          const status = empCount < 5 ? 'bg-danger' : empCount < 15 ? 'bg-warning' : 'bg-success';
+          const statusText = empCount < 5 ? '인원 부족' : empCount < 15 ? '적정 인원' : '충분한 인원';
+          const percentage = totalEmployees > 0 ? ((empCount / totalEmployees) * 100).toFixed(1) : 0;
+          
+          html += `
+            <tr>
+              <td><strong>${deptName}</strong></td>
+              <td>${empCount}명</td>
+              <td><span class="badge ${status}">${statusText}</span></td>
+              <td>${percentage}%</td>
+            </tr>
+          `;
         });
+        
+        html += '</tbody></table></div>';
+        container.innerHTML = html;
+      } else {
+        container.innerHTML = '<p class="text-muted">부서별 데이터가 없습니다.</p>';
       }
     }
 
-    // 엑셀 다운로드
-    function downloadUniformStats() {
-      window.location.href = '/uniform/stats/excel';
+    // 에러 표시 함수
+    function showError(message) {
+      const container = document.querySelector('.container');
+      const errorDiv = document.createElement('div');
+      errorDiv.className = 'alert alert-danger alert-dismissible fade show';
+      errorDiv.innerHTML = `
+        <i class="fa-solid fa-exclamation-triangle me-2"></i>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      `;
+      
+      container.insertBefore(errorDiv, container.firstChild);
+      
+      setTimeout(() => {
+        if (errorDiv.parentNode) {
+          errorDiv.remove();
+        }
+      }, 5000);
     }
 
     // 차트 리사이즈 처리
     window.addEventListener('resize', function() {
       if (uniformTypeChart) uniformTypeChart.resize();
-      if (sizeChart) sizeChart.resize();
+      if (departmentChart) departmentChart.resize();
     });
   </script>
 </body>

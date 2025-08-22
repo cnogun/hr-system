@@ -17,9 +17,18 @@ async function testWorkSchedule() {
     await mongoose.connect('mongodb://localhost:27017/hr_system');
     console.log('MongoDB 연결 성공');
     
+    // 실제 admin 사용자 ID 가져오기
+    const User = require('../models/User');
+    const adminUser = await User.findOne({ role: 'admin' });
+    if (!adminUser) {
+      throw new Error('admin 사용자를 찾을 수 없습니다.');
+    }
+    const adminId = adminUser._id.toString();
+    console.log('Admin 사용자 ID:', adminId);
+    
     // 1. 현재 주차 스케줄 생성 테스트
     console.log('\n=== 1. 현재 주차 스케줄 생성 테스트 ===');
-    const schedule = await WorkScheduleService.createCurrentWeekSchedule('testUserId');
+    const schedule = await WorkScheduleService.createCurrentWeekSchedule(adminId);
     console.log('생성된 스케줄:', {
       weekStartDate: schedule.weekStartDate,
       weekEndDate: schedule.weekEndDate,

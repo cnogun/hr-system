@@ -29,30 +29,7 @@
       font-weight: 500;
     }
     
-    .calendar-view {
-      background: #f8f9fa;
-      border-radius: 0.5rem;
-      padding: 1rem;
-    }
-    
-    .calendar-day {
-      background: white;
-      border: 1px solid #dee2e6;
-      border-radius: 0.375rem;
-      padding: 0.75rem;
-      min-height: 120px;
-      position: relative;
-    }
-    
-    .calendar-day.today {
-      background: #e3f2fd;
-      border-color: #2196f3;
-    }
-    
-    .calendar-day.has-events {
-      background: #fff3e0;
-      border-color: #ff9800;
-    }
+
     
     .event-dot {
       width: 8px;
@@ -220,58 +197,7 @@
           </div>
         </div>
 
-        <!-- 주간 캘린더 -->
-        <div class="row mb-4">
-          <div class="col-12">
-            <h5 class="mb-3">
-              <i class="fas fa-calendar-week text-info me-2"></i>이번 주 일정
-            </h5>
-            <div class="calendar-view">
-              <div class="row">
-                <% 
-                  const days = ['월', '화', '수', '목', '금', '토', '일'];
-                  const today = new Date();
-                  const currentDay = today.getDay();
-                  const weekStart = new Date(today);
-                  weekStart.setDate(today.getDate() - currentDay + (currentDay === 0 ? -6 : 1));
-                  
-                  for (let i = 0; i < 7; i++) {
-                    const currentDate = new Date(weekStart);
-                    currentDate.setDate(weekStart.getDate() + i);
-                    const isToday = currentDate.toDateString() === today.toDateString();
-                    const hasEvents = weekSchedules && weekSchedules.some(s => 
-                      new Date(s.startDate).toDateString() === currentDate.toDateString()
-                    );
-                %>
-                  <div class="col-12 col-md-2 mb-2">
-                    <div class="calendar-day text-center <%= isToday ? 'today' : '' %> <%= hasEvents ? 'has-events' : '' %>">
-                      <div class="fw-bold <%= isToday ? 'text-primary' : 'text-muted' %>"><%= days[i] %></div>
-                      <div class="h5 mb-2 <%= isToday ? 'text-primary' : '' %>"><%= currentDate.getDate() %></div>
-                      <% if (hasEvents) { %>
-                        <div class="event-dot"></div>
-                        <small class="<%= isToday ? 'text-primary' : 'text-muted' %>">
-                          <% 
-                            const daySchedules = weekSchedules.filter(s => 
-                              new Date(s.startDate).toDateString() === currentDate.toDateString()
-                            );
-                            if (daySchedules.length > 0) {
-                              const firstSchedule = daySchedules[0];
-                              const typeText = firstSchedule.type === 'meeting' ? '회의' : 
-                                             firstSchedule.type === 'training' ? '교육' : 
-                                             firstSchedule.type === 'maintenance' ? '점검' : 
-                                             firstSchedule.type === 'inspection' ? '검사' : '업무';
-                          %>
-                            <%= typeText %>
-                          <% } %>
-                        </small>
-                      <% } %>
-                    </div>
-                  </div>
-                <% } %>
-              </div>
-            </div>
-          </div>
-        </div>
+
 
         <!-- 전체 일정 목록 -->
         <div class="row mb-4">

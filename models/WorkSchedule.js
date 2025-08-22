@@ -32,27 +32,35 @@ const workScheduleSchema = new mongoose.Schema({
   
   // 주말 근무 인원 배정 (팀별 조별 편성 명단)
   weekendSchedule: {
-    // 토요일 근무 정보 (기존 구조 유지)
+    // 토요일 근무 정보 (기존 구조 유지) - 선택적 필드
     saturday: {
-      dayShift: {
-        team1Count: { type: Number, default: 0 },
-        team3Count: { type: Number, default: 0 }
+      type: {
+        dayShift: {
+          team1Count: { type: Number, default: 0 },
+          team3Count: { type: Number, default: 0 }
+        },
+        nightShift: {
+          team2Count: { type: Number, default: 0 },
+          team3Count: { type: Number, default: 0 }
+        }
       },
-      nightShift: {
-        team2Count: { type: Number, default: 0 },
-        team3Count: { type: Number, default: 0 }
-      }
+      default: undefined,
+      required: false
     },
-    // 일요일 근무 정보 (기존 구조 유지)
+    // 일요일 근무 정보 (기존 구조 유지) - 선택적 필드
     sunday: {
-      dayShift: {
-        team1Count: { type: Number, default: 0 },
-        team3Count: { type: Number, default: 0 }
+      type: {
+        dayShift: {
+          team1Count: { type: Number, default: 0 },
+          team3Count: { type: Number, default: 0 }
+        },
+        nightShift: {
+          team2Count: { type: Number, default: 0 },
+          team3Count: { type: Number, default: 0 }
+        }
       },
-      nightShift: {
-        team2Count: { type: Number, default: 0 },
-        team3Count: { type: Number, default: 0 }
-      }
+      default: undefined,
+      required: false
     },
     // 팀별 조별 편성 명단 (새로 추가)
     team1: {
