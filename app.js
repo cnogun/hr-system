@@ -240,7 +240,7 @@ app.get('/workSchedule', async (req, res) => {
     }
     
     // EJS 템플릿 렌더링
-    res.render('WorkSchedule', { 
+    res.render('workSchedule', { 
       session: req.session,
       name: req.session.name || '사용자',
       position: req.session.position || '직급미정',
@@ -248,10 +248,10 @@ app.get('/workSchedule', async (req, res) => {
     });
     
   } catch (error) {
-    console.error('WorkSchedule 로드 오류:', error);
+    console.error('workSchedule 로드 오류:', error);
     res.status(500).send(`
       <script>
-        alert('WorkSchedule 로드 중 오류가 발생했습니다.\\n\\n오류: ${error.message}');
+        alert('workSchedule 로드 중 오류가 발생했습니다.\\n\\n오류: ${error.message}');
         history.back();
       </script>
     `);
