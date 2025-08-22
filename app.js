@@ -40,10 +40,14 @@ const PORT = process.env.PORT || 3000;
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/hr_system';
 const SESSION_SECRET = process.env.SESSION_SECRET || 'hr_system_session_secret_key_2025';
 
-// MongoDB 연결
+// MongoDB 연결 (Render 최적화)
 mongoose.connect(MONGODB_URI, {
+  maxPoolSize: 5,           // 연결 풀 크기 제한
   serverSelectionTimeoutMS: 5000,
   socketTimeoutMS: 45000,
+  connectTimeoutMS: 10000,  // 연결 타임아웃
+  bufferCommands: false,    // 버퍼링 비활성화
+  bufferMaxEntries: 0,      // 버퍼 최대 항목 제한
 });
 
 const db = mongoose.connection;
@@ -1818,7 +1822,11 @@ app.get('/api/logs', async (req, res) => {
 
 // 헬스 체크 엔드포인트 (Render/모니터링용)
 app.get('/healthz', (req, res) => {
-  res.status(200).send('OK');
+  res.status(200).json({ 
+    status: 'OK', 
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
+  });
 });
 
 // 전역 에러 핸들러 (serve-static 에러 포함)
