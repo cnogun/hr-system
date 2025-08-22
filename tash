@@ -1,0 +1,6 @@
+warning: LF will be replaced by CRLF in app.js.
+The file will have its original line endings in your working directory
+app.js
+routes/workSchedule.js
+views/header.ejs
+views/workSchedule.ejs
