@@ -76,7 +76,7 @@
                       <th style="width: 70px;">특연</th>
                       <th style="width: 70px;">야간</th>
                       <th style="width: 80px;">총시간</th>
-                      <th style="width: 150px;">비고</th>
+                      <th style="width: 200px;">비고</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -107,6 +107,7 @@
                             <option value="출근(주특)">출근(주특)</option>
                             <option value="출근(야특)">출근(야특)</option>
                             <option value="출근(사무)">출근(사무)</option>
+                            <option value="정기휴무">정기휴무</option>
                             <option value="월차휴가">월차휴가</option>
                             <option value="연차휴가">연차휴가</option>
                             <option value="지각">지각</option>
@@ -157,7 +158,7 @@
                     </td>
                     <td class="align-middle">
                           <input type="text" class="form-control form-control-sm" name="<%= employee._id %>_note"
-                            placeholder="">
+                            placeholder="" style="min-width: 180px; font-size: 0.875rem;">
                     </td>
                   </tr>
                   <% }); %>
@@ -194,14 +195,31 @@
 <script>
     // 근태 상태에 따라 시간 입력 필드 활성화/비활성화 및 기본값 설정
 function toggleTimeInputs(employeeId) {
+  // employeeId 유효성 검사 추가
+  if (!employeeId || typeof employeeId !== 'string') {
+    console.error('toggleTimeInputs: 유효하지 않은 employeeId:', employeeId);
+    return;
+  }
+  
+  console.log('toggleTimeInputs 호출됨, employeeId:', employeeId);
+  
   const statusSelect = document.querySelector(`select[name="${employeeId}_status"]`);
   const checkInInput = document.querySelector(`input[name="${employeeId}_checkIn"]`);
   const checkOutInput = document.querySelector(`input[name="${employeeId}_checkOut"]`);
-      const timeInputs = document.querySelectorAll(`input[name^="${employeeId}_"][class*="time-input"]`);
-      const basicInput = document.querySelector(`input[name="${employeeId}_basic"]`);
-      const specialInput = document.querySelector(`input[name="${employeeId}_special"]`);
-      const specialOvertimeInput = document.querySelector(`input[name="${employeeId}_specialOvertime"]`);
-      const nightInput = document.querySelector(`input[name="${employeeId}_night"]`);
+  
+  // CSS 선택자 오류 방지를 위한 안전한 쿼리
+  let timeInputs = [];
+  try {
+    timeInputs = document.querySelectorAll(`input[name^="${employeeId}_"][class*="time-input"]`);
+  } catch (error) {
+    console.error('timeInputs 쿼리 오류:', error);
+    timeInputs = [];
+  }
+  
+  const basicInput = document.querySelector(`input[name="${employeeId}_basic"]`);
+  const specialInput = document.querySelector(`input[name="${employeeId}_special"]`);
+  const specialOvertimeInput = document.querySelector(`input[name="${employeeId}_specialOvertime"]`);
+  const nightInput = document.querySelector(`input[name="${employeeId}_night"]`);
 
       // 모든 시간 입력 필드 초기화
       checkInInput.value = '';
@@ -359,14 +377,63 @@ function toggleTimeInputs(employeeId) {
       const specialOvertime = parseFloat(document.querySelector(`input[name="${employeeId}_specialOvertime"]`).value) || 0;
       const night = parseFloat(document.querySelector(`input[name="${employeeId}_night"]`).value) || 0;
       
-      // 총시간 계산: 기본+연장*1.5+특근*1.5+특연*2+야간*0.5
-      // 주말 근무: 기본(8) + 특근(8*1.5) + 특연(4*2) + 야간(8*0.5) = 8 + 12 + 8 + 4 = 32시간
+      // 총시간 계산: 기본+연장*1.5+특근*1.5+특연*2+야간수당(야간*0.5)
+      // 야간수당: 야간시간(8시간) × 0.5 = 4시간
+      // 주말 근무: 기본(8) + 특근(12) + 특연(8) + 야간수당(4) = 8 + 12 + 8 + 4 = 32시간
       const totalTime = basic + (overtime * 1.5) + (special * 1.5) + (specialOvertime * 2) + (night * 0.5);
       
       const totalInput = document.querySelector(`input[name="${employeeId}_totalTime"]`);
       if (totalInput) {
         totalInput.value = Math.floor(totalTime);
       }
+    }
+
+    // 야간시간 자동 계산 (22:00~06:00)
+    function calculateNightTime(employeeId) {
+      const checkInInput = document.querySelector(`input[name="${employeeId}_checkIn"]`);
+      const checkOutInput = document.querySelector(`input[name="${employeeId}_checkOut"]`);
+      const nightInput = document.querySelector(`input[name="${employeeId}_night"]`);
+      
+      if (!checkInInput || !checkOutInput || !nightInput) return;
+      
+      const checkIn = checkInInput.value;
+      const checkOut = checkOutInput.value;
+      
+      if (!checkIn || !checkOut) return;
+      
+      // 야간시간 계산 (22:00~06:00)
+      const [checkInHour, checkInMin] = checkIn.split(':').map(Number);
+      const [checkOutHour, checkOutMin] = checkOut.split(':').map(Number);
+      
+      let nightTime = 0;
+      
+      console.log(`야간시간 계산 - 직원ID: ${employeeId}, 출근: ${checkInHour}:${checkInMin}, 퇴근: ${checkOutHour}:${checkOutMin}`);
+      console.log(`파싱된 시간 - 출근시간: ${checkInHour}시, 퇴근시간: ${checkOutHour}시`);
+      
+      // 야간 근무 감지 (22:00~06:00)
+      if (checkInHour >= 18 && checkOutHour <= 6) {
+        // 야간 특근: 18:00~06:00 (다음날) - 야간시간 8시간 고정
+        nightTime = 8;
+        console.log('야간 특근 감지: 야간시간 8시간으로 설정');
+      } else if (checkInHour >= 22 && checkOutHour <= 6) {
+        // 심야 정상근무: 22:00~06:00 - 야간시간 8시간 고정
+        nightTime = 8;
+        console.log('심야 근무 감지: 야간시간 8시간으로 설정');
+      } else if (checkInHour >= 22 || checkOutHour <= 6) {
+        // 22:00~06:00 구간에 해당하는 경우 - 야간시간 8시간 고정
+        nightTime = 8;
+        console.log('일반 야간시간: 야간시간 8시간으로 설정');
+      } else if (checkInHour >= 18 && checkOutHour <= 23) {
+        // 18:00~23:59 구간 (야간 특근의 시작 부분) - 야간시간 8시간 고정
+        nightTime = 8;
+        console.log('야간 특근 시작 부분 감지: 야간시간 8시간으로 설정');
+      }
+      
+      console.log(`최종 야간시간: ${nightTime}시간 (야간수당 ${nightTime * 0.5}시간)`);
+      nightInput.value = nightTime;
+      
+      // 총시간 재계산
+      calculateTotalTime(employeeId);
     }
 
     // 모든 필드 초기화
@@ -564,59 +631,6 @@ async function loadAttendanceData() {
   }
 }
 
-    // 야간시간 자동 계산 (22:00~06:00)
-    function calculateNightTime(employeeId) {
-      const checkInInput = document.querySelector(`input[name="${employeeId}_checkIn"]`);
-      const checkOutInput = document.querySelector(`input[name="${employeeId}_checkOut"]`);
-      const nightInput = document.querySelector(`input[name="${employeeId}_night"]`);
-      
-      if (!checkInInput || !checkOutInput || !nightInput) return;
-      
-      const checkIn = checkInInput.value;
-      const checkOut = checkOutInput.value;
-      
-      if (!checkIn || !checkOut) return;
-      
-      // 야간시간 계산 (22:00~06:00)
-      const [checkInHour, checkInMin] = checkIn.split(':').map(Number);
-      const [checkOutHour, checkOutMin] = checkOut.split(':').map(Number);
-      
-      let nightTime = 0;
-      
-      console.log(`야간시간 계산 - 직원ID: ${employeeId}, 출근: ${checkInHour}:${checkInMin}, 퇴근: ${checkOutHour}:${checkOutMin}`);
-      console.log(`파싱된 시간 - 출근시간: ${checkInHour}시, 퇴근시간: ${checkOutHour}시`);
-      
-      // 심야 정상근무시 야간시간은 8시간으로 설정 (22:00~06:00)
-      if (checkInHour >= 22 && checkOutHour < 6) {
-        // 22:00~06:00 심야 근무
-        nightTime = 8;
-        console.log('심야 근무 감지: 야간시간 8시간으로 설정');
-      } else if (checkInHour >= 22 || checkOutHour < 6) {
-        // 22:00~06:00 구간에 해당하는 경우 (심야 근무가 아닌 경우)
-        if (checkInHour >= 22) {
-          // 22:00~24:00
-          nightTime += 24 - checkInHour;
-          if (checkOutHour < 6) {
-            nightTime += checkOutHour;
-          }
-        } else if (checkOutHour < 6) {
-          // 00:00~06:00
-          nightTime += checkOutHour;
-        }
-        console.log(`일반 야간시간 계산: ${nightTime}시간`);
-      }
-      
-      console.log(`최종 야간시간: ${nightTime}시간`);
-      nightInput.value = Math.max(0, nightTime);
-      
-      // 총시간 재계산
-      calculateTotalTime(employeeId);
-    }
-    
-
-    
-
-    
     // 근태 자동 입력 함수
     async function autoSetAttendance() {
       try {
@@ -631,13 +645,19 @@ async function loadAttendanceData() {
           return;
         }
         
+        // 현재 선택된 부서 정보 가져오기
+        const selectedDepartment = document.getElementById('departmentFilter').value;
+        
         // 근태 자동 입력 API 호출
         const response = await fetch('/attendance/auto-attendance', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ date: date })
+          body: JSON.stringify({ 
+            date: date,
+            department: selectedDepartment 
+          })
         });
         
         const result = await response.json();
@@ -671,16 +691,63 @@ async function loadAttendanceData() {
     
     // 자동 입력된 근태 데이터를 폼에 적용
     function applyAutoAttendanceData(attendanceData) {
+      console.log('자동입력 데이터 적용 시작:', attendanceData);
+      
+      // 현재 화면에 표시된 직원들의 ID 목록 가져오기
+      const currentEmployeeIds = [];
+      const statusSelects = document.querySelectorAll('select[name$="_status"]');
+      console.log('찾은 상태 선택 요소들:', statusSelects.length, '개');
+      
+      statusSelects.forEach(select => {
+        const name = select.getAttribute('name');
+        const employeeId = name.replace('_status', '');
+        currentEmployeeIds.push(employeeId);
+        console.log(`상태 선택 요소: ${name} → 직원ID: ${employeeId}`);
+      });
+      
+      console.log('현재 화면에 표시된 직원 ID들:', currentEmployeeIds);
+      console.log('받은 자동입력 데이터 키들:', Object.keys(attendanceData));
+      
       for (const employeeId in attendanceData) {
+        // employeeId 유효성 검사 추가
+        if (!employeeId || typeof employeeId !== 'string') {
+          console.error('유효하지 않은 employeeId:', employeeId);
+          continue;
+        }
+        
         const data = attendanceData[employeeId];
+        console.log(`직원 ${employeeId} 데이터 적용:`, data);
+        
+        // 현재 화면에 표시된 직원만 처리
+        if (!currentEmployeeIds.includes(employeeId)) {
+          console.log(`직원 ${employeeId}는 현재 화면에 표시되지 않음, 건너뜀`);
+          console.log(`화면 직원 ID들:`, currentEmployeeIds);
+          console.log(`자동입력 데이터 키:`, employeeId);
+          continue;
+        }
+        
+        console.log(`✅ 직원 ${employeeId} 매칭 성공, 데이터 적용 시작`);
         
         // 상태 선택
         const statusSelect = document.querySelector(`select[name="${employeeId}_status"]`);
+        console.log(`직원 ${employeeId} 상태 선택 요소 찾기:`, statusSelect);
+        console.log(`적용할 데이터:`, data);
+        
         if (statusSelect) {
+          console.log(`상태 업데이트: ${statusSelect.value} → ${data.status}`);
           statusSelect.value = data.status;
           
-          // 시간 입력 필드 활성화 및 기본값 설정
-          toggleTimeInputs(employeeId);
+          // 백엔드에서 설정한 값을 보존하기 위해 toggleTimeInputs 호출하지 않음
+          // toggleTimeInputs(employeeId);
+          
+          // 입력 필드 활성화만 처리 (값은 변경하지 않음)
+          const checkInInput = document.querySelector(`input[name="${employeeId}_checkIn"]`);
+          const checkOutInput = document.querySelector(`input[name="${employeeId}_checkOut"]`);
+          const timeInputs = document.querySelectorAll(`input[name^="${employeeId}_"][class*="time-input"]`);
+          
+          if (checkInInput) checkInInput.disabled = false;
+          if (checkOutInput) checkOutInput.disabled = false;
+          timeInputs.forEach(input => input.disabled = false);
           
           // 출근/퇴근 시간 설정
           if (data.checkIn) {
