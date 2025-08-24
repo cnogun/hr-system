@@ -64,7 +64,7 @@
                   <li><hr class="dropdown-divider"></li>
                   <li><h6 class="dropdown-header">데이터 관리</h6></li>
                   <li><a class="dropdown-item" href="/uniform/stats">
-                    <i class="fa-solid fa-tshirt me-2"></i> 유니폼 통계
+                    <i class="fa-solid fa-tshirt me-2"></i> 유니폼 현황
                   </a></li>
                   <li><a class="dropdown-item" href="/auth/logs">
                     <i class="fa-solid fa-history me-2"></i> 활동 로그 관리
@@ -82,17 +82,6 @@
                  <li><a class="dropdown-item" href="/excelManager">
                    <i class="fa-solid fa-table me-2"></i> 통합 엑셀 관리
                  </a></li>
-                 <li><hr class="dropdown-divider"></li>
-                                   <li><h6 class="dropdown-header">내려받기</h6></li>
-                <li><a class="dropdown-item" href="/employees/excel">
-                   <i class="fa-solid fa-users me-2"></i> 직원 목록
-                </a></li>
-                 <li><a class="dropdown-item" href="/uniform/stats/excel" onclick="downloadUniformStatsExcel()">
-                  <i class="fa-solid fa-tshirt me-2"></i> 유니폼 통계
-                </a></li>
-                 <li><a class="dropdown-item" href="/auth/logs">
-                  <i class="fa-solid fa-history me-2"></i> 활동 로그
-                </a></li>
               </ul>
             </li>
             
@@ -376,53 +365,7 @@ function closeAllOtherDropdowns(currentToggle) {
   });
 }
 
-// 유니폼 통계 엑셀 다운로드 함수
-function downloadUniformStatsExcel() {
-  try {
-    // 로딩 표시
-    const loadingToast = showLoadingToast('유니폼 통계 엑셀 파일을 생성하고 있습니다...');
-    
-    // 엑셀 다운로드 API 호출
-    fetch('/uniform/stats/excel', {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    })
-    .then(response => {
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      return response.blob();
-    })
-    .then(blob => {
-      // 로딩 토스트 숨기기
-      hideLoadingToast(loadingToast);
-      
-      // 파일 다운로드
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.style.display = 'none';
-      a.href = url;
-      a.download = `uniform_order_stats_${new Date().toISOString().slice(0, 10)}.xlsx`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-      
-      // 성공 메시지 표시
-      showSuccessToast('유니폼 통계 엑셀 파일이 성공적으로 다운로드되었습니다!');
-    })
-    .catch(error => {
-      console.error('유니폼 통계 엑셀 다운로드 오류:', error);
-      hideLoadingToast(loadingToast);
-      showErrorToast('엑셀 파일 다운로드 중 오류가 발생했습니다.');
-    });
-  } catch (error) {
-    console.error('유니폼 통계 엑셀 다운로드 함수 오류:', error);
-    showErrorToast('엑셀 파일 다운로드 중 오류가 발생했습니다.');
-  }
-}
+
 
 // 로딩 토스트 표시 함수
 function showLoadingToast(message) {

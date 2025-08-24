@@ -42,10 +42,15 @@
   .employee-info:nth-child(5) { left: 310px; min-width: 100px; max-width: 100px; }
   
   .status-cell {
-    min-width: 60px;
-    max-width: 60px;
+    min-width: 90px;
+    max-width: 90px;
     font-weight: 500;
     border-radius: 4px;
+    word-break: keep-all;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding: 0.2rem 0.3rem;
   }
   
   .time-cell {
@@ -152,7 +157,7 @@
     font-weight: 600;
     border: none;
     padding: 1rem 0.5rem;
-    min-width: 450px;
+    min-width: 500px;
   }
   
   .sub-header {
@@ -169,8 +174,25 @@
   }
   
   .status-badge {
-    font-size: 0.75rem;
-    padding: 0.25rem 0.5rem;
+    font-size: 0.65rem;
+    padding: 0.15rem 0.3rem;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: inline-block;
+    line-height: 1.2;
+    max-width: 85px;
+  }
+  
+  /* 긴 상태 텍스트를 위한 특별 처리 */
+  .status-badge[title*="출근(주특)"],
+  .status-badge[title*="출근(야특)"],
+  .status-badge[title*="출근(주)"],
+  .status-badge[title*="출근(초)"],
+  .status-badge[title*="출근(심)"] {
+    font-size: 0.6rem;
+    padding: 0.1rem 0.25rem;
   }
   
   .status-default {
@@ -388,7 +410,7 @@
                       <% const attendance = employee.dailyAttendance[i]; %>
                       
                       <!-- 근태 상태 -->
-                      <td class="status-cell text-center">
+                      <td class="status-cell text-center" title="<%= attendance.status || '-' %>">
                         <span class="badge status-badge status-<%= attendance.status ? attendance.status.replace(/[()]/g, '') : 'default' %>">
                           <%= attendance.status || '-' %>
                         </span>

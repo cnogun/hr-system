@@ -50,7 +50,7 @@
                 <label class="form-label small mb-1">하복 상의</label>
                 <select name="uniformSummerTop" class="form-select form-select-sm py-1" style="width:80%;">
                   <option value="">선택</option>
-                  <% ['2별대','별대','특대','대','중'].forEach(opt => { %>
+                  <% ['3별대','2별대','별대','특대','대','중'].forEach(opt => { %>
                     <option value="<%= opt %>" <%= employee.uniformSummerTop===opt?'selected':'' %>><%= opt %></option>
                   <% }) %>
                 </select>
@@ -68,7 +68,7 @@
                 <label class="form-label small mb-1">동복 상의</label>
                 <select name="uniformWinterTop" class="form-select form-select-sm py-1" style="width:80%;">
                   <option value="">선택</option>
-                  <% ['2별대','별대','특대','대','중'].forEach(opt => { %>
+                  <% ['3별대','2별대','별대','특대','대','중'].forEach(opt => { %>
                     <option value="<%= opt %>" <%= employee.uniformWinterTop===opt?'selected':'' %>><%= opt %></option>
                   <% }) %>
                 </select>
@@ -95,7 +95,7 @@
                 <label class="form-label small mb-1">춘추복</label>
                 <select name="springAutumnUniform" class="form-select form-select-sm py-1" style="width:80%;">
                   <option value="">선택</option>
-                  <% ['2별대','별대','특대','대','중'].forEach(opt => { %>
+                  <% ['3별대','2별대','별대','특대','대','중'].forEach(opt => { %>
                     <option value="<%= opt %>" <%= employee.springAutumnUniform===opt?'selected':'' %>><%= opt %></option>
                   <% }) %>
                 </select>
@@ -104,7 +104,7 @@
                 <label class="form-label small mb-1" style="margin-bottom:0.25rem;">방한외투</label>
                 <select name="uniformWinterCoat" class="form-select form-select-sm py-1" style="width:80%;">
                   <option value="">선택</option>
-                  <% ['2별대','별대','특대','대','중'].forEach(opt => { %>
+                  <% ['3별대','2별대','별대','특대','대','중'].forEach(opt => { %>
                     <option value="<%= opt %>" <%= employee.uniformWinterCoat===opt?'selected':'' %>><%= opt %></option>
                   <% }) %>
                 </select>
@@ -119,13 +119,13 @@
                  </div>
                  <select id="winterJacketSelect" name="winterJacket" class="form-select form-select-sm py-1" style="width:80%; display:none;">
                    <option value="">사이즈 선택</option>
-                   <% ['2별대','별대','특대','대','중'].forEach(opt => { %>
+                   <% ['3별대','2별대','별대','특대','대','중'].forEach(opt => { %>
                      <option value="<%= opt %>" <%= employee.winterJacket===opt?'selected':'' %>><%= opt %></option>
                    <% }) %>
                  </select>
                  <select id="doubleJacketSelect" name="doubleJacket" class="form-select form-select-sm py-1" style="width:80%; display:none;" autocomplete="off">
                    <option value="">사이즈 선택</option>
-                   <% ['2별대','별대','특대','대','중'].forEach(opt => { %>
+                   <% ['3별대','2별대','별대','특대','대','중'].forEach(opt => { %>
                      <option value="<%= opt %>" <%= employee.doubleJacket===opt?'selected':'' %>><%= opt %></option>
                    <% }) %>
                  </select>
@@ -140,15 +140,15 @@
                   <% }) %>
                 </select>
               </div>
-              <div class="col-md-2 d-flex flex-column justify-content-end align-items-start">
-                <label class="form-label small mb-1" style="margin-bottom:0.25rem;">우의</label>
-                <select name="raincoat" class="form-select form-select-sm py-1" style="width:80%;">
-                  <option value="">선택</option>
-                  <% ['2별대','별대','특대','대','중'].forEach(opt => { %>
-                    <option value="<%= opt %>" <%= employee.raincoat===opt?'selected':'' %>><%= opt %></option>
-                  <% }) %>
-                </select>
-              </div>
+                             <div class="col-md-2 d-flex flex-column justify-content-end align-items-start">
+                 <label class="form-label small mb-1" style="margin-bottom:0.25rem;">우의</label>
+                 <select name="raincoat" class="form-select form-select-sm py-1" style="width:80%;">
+                   <option value="">선택</option>
+                   <% ['3별대','2별대','별대','특대','대','중'].forEach(opt => { %>
+                     <option value="<%= opt %>" <%= employee.raincoat===opt?'selected':'' %>><%= opt %></option>
+                   <% }) %>
+                 </select>
+               </div>
               <div class="col-md-2 d-flex flex-column justify-content-end align-items-start">
                 <label class="form-label small mb-1" style="margin-bottom:0.25rem;">신발(안전화)</label>
                 <select name="safetyShoes" class="form-select form-select-sm py-1" style="width:80%;">

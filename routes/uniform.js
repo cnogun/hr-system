@@ -92,6 +92,283 @@ router.get('/excel-qty', requireLogin, requireAdmin, async (req, res) => {
   res.end();
 });
 
+// 유니폼 통계 API (관리자용)
+router.get('/stats/api', requireLogin, requireAdmin, async (req, res) => {
+  try {
+    // 전체 직원 수
+    const totalEmployees = await Employee.countDocuments();
+    
+    // 유니폼 신청 직원 수 (유니폼 정보가 있는 직원)
+    const uniformEmployees = await Employee.countDocuments({
+      $or: [
+        { uniformSummerTop: { $exists: true, $ne: null } },
+        { uniformSummerBottom: { $exists: true, $ne: null } },
+        { uniformWinterTop: { $exists: true, $ne: null } },
+        { uniformWinterBottom: { $exists: true, $ne: null } },
+        { uniformWinterPants: { $exists: true, $ne: null } },
+        { uniformWinterCoat: { $exists: true, $ne: null } },
+        { raincoat: { $exists: true, $ne: null } },
+        { cap: { $exists: true, $ne: null } },
+        { safetyShoes: { $exists: true, $ne: null } },
+        { rainBoots: { $exists: true, $ne: null } },
+        { winterJacket: { $exists: true, $ne: null } },
+        { doubleJacket: { $exists: true, $ne: null } }
+      ]
+    });
+
+    // 부서별 총 인원 수
+    const departmentTotals = await Employee.aggregate([
+      {
+        $group: {
+          _id: '$department',
+          totalCount: { $sum: 1 }
+        }
+      },
+      {
+        $sort: { totalCount: -1 }
+      }
+    ]);
+
+    // 부서별 유니폼 신청자 수
+    const departmentUniformCounts = await Employee.aggregate([
+      {
+        $match: {
+          $or: [
+            { uniformSummerTop: { $exists: true, $ne: null } },
+            { uniformSummerBottom: { $exists: true, $ne: null } },
+            { uniformWinterTop: { $exists: true, $ne: null } },
+            { uniformWinterBottom: { $exists: true, $ne: null } },
+            { uniformWinterPants: { $exists: true, $ne: null } },
+            { uniformWinterCoat: { $exists: true, $ne: null } },
+            { raincoat: { $exists: true, $ne: null } },
+            { cap: { $exists: true, $ne: null } },
+            { safetyShoes: { $exists: true, $ne: null } },
+            { rainBoots: { $exists: true, $ne: null } },
+            { winterJacket: { $exists: true, $ne: null } },
+            { doubleJacket: { $exists: true, $ne: null } }
+          ]
+        }
+      },
+      {
+        $group: {
+          _id: '$department',
+          uniformCount: { $sum: 1 }
+        }
+      }
+    ]);
+
+    // 부서별 통계를 객체로 변환 (총 인원 수와 유니폼 신청자 수)
+    const departmentStatsObj = {};
+    departmentTotals.forEach(dept => {
+      const deptName = dept._id || '미지정';
+      const uniformCount = departmentUniformCounts.find(d => d._id === dept._id)?.uniformCount || 0;
+      departmentStatsObj[deptName] = {
+        total: dept.totalCount,
+        uniform: uniformCount
+      };
+    });
+
+    // 유니폼 종류별 현황
+    const uniformDetails = {
+      '하복 상의': await Employee.countDocuments({ uniformSummerTop: { $exists: true, $ne: null } }),
+      '하복 하의': await Employee.countDocuments({ uniformSummerBottom: { $exists: true, $ne: null } }),
+      '동복 상의': await Employee.countDocuments({ uniformWinterTop: { $exists: true, $ne: null } }),
+      '동복 하의': await Employee.countDocuments({ uniformWinterBottom: { $exists: true, $ne: null } }),
+      '방한 하의': await Employee.countDocuments({ uniformWinterPants: { $exists: true, $ne: null } }),
+      '방한 외투': await Employee.countDocuments({ uniformWinterCoat: { $exists: true, $ne: null } }),
+      '우의': await Employee.countDocuments({ raincoat: { $exists: true, $ne: null } }),
+      '모자': await Employee.countDocuments({ cap: { $exists: true, $ne: null } }),
+      '안전화': await Employee.countDocuments({ safetyShoes: { $exists: true, $ne: null } }),
+      '장화': await Employee.countDocuments({ rainBoots: { $exists: true, $ne: null } }),
+      '동점퍼': await Employee.countDocuments({ winterJacket: { $exists: true, $ne: null } }),
+      '겹점퍼': await Employee.countDocuments({ doubleJacket: { $exists: true, $ne: null } })
+    };
+
+    // 사이즈별 현황
+    const sizeDetails = {};
+    
+    // 하복 상의 사이즈별 현황
+    const summerTopSizes = await Employee.aggregate([
+      { $match: { uniformSummerTop: { $exists: true, $ne: null } } },
+      { $group: { _id: '$uniformSummerTop', count: { $sum: 1 } } },
+      { $sort: { _id: 1 } }
+    ]);
+    sizeDetails['하복 상의'] = summerTopSizes.reduce((acc, size) => {
+      acc[size._id] = size.count;
+      return acc;
+    }, {});
+
+    // 하복 하의 사이즈별 현황
+    const summerBottomSizes = await Employee.aggregate([
+      { $match: { uniformSummerBottom: { $exists: true, $ne: null } } },
+      { $group: { _id: '$uniformSummerBottom', count: { $sum: 1 } } },
+      { $sort: { _id: 1 } }
+    ]);
+    sizeDetails['하복 하의'] = summerBottomSizes.reduce((acc, size) => {
+      acc[size._id] = size.count;
+      return acc;
+    }, {});
+
+    // 동복 상의 사이즈별 현황
+    const winterTopSizes = await Employee.aggregate([
+      { $match: { uniformWinterTop: { $exists: true, $ne: null } } },
+      { $group: { _id: '$uniformWinterTop', count: { $sum: 1 } } },
+      { $sort: { _id: 1 } }
+    ]);
+    sizeDetails['동복 상의'] = winterTopSizes.reduce((acc, size) => {
+      acc[size._id] = size.count;
+      return acc;
+    }, {});
+
+    // 동복 하의 사이즈별 현황
+    const winterBottomSizes = await Employee.aggregate([
+      { $match: { uniformWinterBottom: { $exists: true, $ne: null } } },
+      { $group: { _id: '$uniformWinterBottom', count: { $sum: 1 } } },
+      { $sort: { _id: 1 } }
+    ]);
+    sizeDetails['동복 하의'] = winterBottomSizes.reduce((acc, size) => {
+      acc[size._id] = size.count;
+      return acc;
+    }, {});
+
+    // 방한 하의 사이즈별 현황
+    const winterPantsSizes = await Employee.aggregate([
+      { $match: { uniformWinterPants: { $exists: true, $ne: null } } },
+      { $group: { _id: '$uniformWinterPants', count: { $sum: 1 } } },
+      { $sort: { _id: 1 } }
+    ]);
+    sizeDetails['방한 하의'] = winterPantsSizes.reduce((acc, size) => {
+      acc[size._id] = size.count;
+      return acc;
+    }, {});
+
+    // 방한 외투 사이즈별 현황
+    const winterCoatSizes = await Employee.aggregate([
+      { $match: { uniformWinterCoat: { $exists: true, $ne: null } } },
+      { $group: { _id: '$uniformWinterCoat', count: { $sum: 1 } } },
+      { $sort: { _id: 1 } }
+    ]);
+    sizeDetails['방한 외투'] = winterCoatSizes.reduce((acc, size) => {
+      acc[size._id] = size.count;
+      return acc;
+    }, {});
+
+    // 우의 사이즈별 현황
+    const raincoatSizes = await Employee.aggregate([
+      { $match: { raincoat: { $exists: true, $ne: null } } },
+      { $group: { _id: '$raincoat', count: { $sum: 1 } } },
+      { $sort: { _id: 1 } }
+    ]);
+    sizeDetails['우의'] = raincoatSizes.reduce((acc, size) => {
+      acc[size._id] = size.count;
+      return acc;
+    }, {});
+
+    // 모자 사이즈별 현황
+    const capSizes = await Employee.aggregate([
+      { $match: { cap: { $exists: true, $ne: null } } },
+      { $group: { _id: '$cap', count: { $sum: 1 } } },
+      { $sort: { _id: 1 } }
+    ]);
+    sizeDetails['모자'] = capSizes.reduce((acc, size) => {
+      acc[size._id] = size.count;
+      return acc;
+    }, {});
+
+    // 안전화 사이즈별 현황
+    const safetyShoesSizes = await Employee.aggregate([
+      { $match: { safetyShoes: { $exists: true, $ne: null } } },
+      { $group: { _id: '$safetyShoes', count: { $sum: 1 } } },
+      { $sort: { _id: 1 } }
+    ]);
+    sizeDetails['안전화'] = safetyShoesSizes.reduce((acc, size) => {
+      acc[size._id] = size.count;
+      return acc;
+    }, {});
+
+    // 장화 사이즈별 현황
+    const rainBootsSizes = await Employee.aggregate([
+      { $match: { rainBoots: { $exists: true, $ne: null } } },
+      { $group: { _id: '$rainBoots', count: { $sum: 1 } } },
+      { $sort: { _id: 1 } }
+    ]);
+    sizeDetails['장화'] = rainBootsSizes.reduce((acc, size) => {
+      acc[size._id] = size.count;
+      return acc;
+    }, {});
+
+    // 동점퍼 사이즈별 현황
+    const winterJacketSizes = await Employee.aggregate([
+      { $match: { winterJacket: { $exists: true, $ne: null } } },
+      { $group: { _id: '$winterJacket', count: { $sum: 1 } } },
+      { $sort: { _id: 1 } }
+    ]);
+    sizeDetails['동점퍼'] = winterJacketSizes.reduce((acc, size) => {
+      acc[size._id] = size.count;
+      return acc;
+    }, {});
+
+    // 겹점퍼 사이즈별 현황
+    const doubleJacketSizes = await Employee.aggregate([
+      { $match: { doubleJacket: { $exists: true, $ne: null } } },
+      { $group: { _id: '$doubleJacket', count: { $sum: 1 } } },
+      { $sort: { _id: 1 } }
+    ]);
+    sizeDetails['겹점퍼'] = doubleJacketSizes.reduce((acc, size) => {
+      acc[size._id] = size.count;
+      return acc;
+    }, {});
+
+    // 총계 계산
+    const totalUniforms = Object.values(uniformDetails).reduce((sum, count) => sum + count, 0);
+    
+    // 비용 계산 (대략적인 추정치)
+    const uniformCosts = {
+      '하복 상의': 15000,
+      '하복 하의': 12000,
+      '동복 상의': 20000,
+      '동복 하의': 15000,
+      '방한 하의': 18000,
+      '방한 외투': 35000,
+      '우의': 25000,
+      '모자': 8000,
+      '안전화': 45000,
+      '장화': 15000,
+      '동점퍼': 40000,
+      '겹점퍼': 50000
+    };
+
+    let totalCost = 0;
+    Object.entries(uniformDetails).forEach(([type, count]) => {
+      if (uniformCosts[type]) {
+        totalCost += count * uniformCosts[type];
+      }
+    });
+
+    const stats = {
+      totalEmployees,
+      uniformEmployees,
+      departmentStats: departmentStatsObj,
+      uniformDetails,
+      sizeDetails,
+      totalUniforms,
+      totalCost
+    };
+
+    res.json({
+      success: true,
+      data: stats
+    });
+
+  } catch (error) {
+    console.error('유니폼 통계 API 오류:', error);
+    res.status(500).json({
+      success: false,
+      message: '통계 데이터를 불러오는 중 오류가 발생했습니다.'
+    });
+  }
+});
+
 // 유니폼 정보 조회 (본인)
 router.get('/', requireLogin, requireSelfOrAdmin, async (req, res) => {
   // 최신 데이터를 다시 불러와서 확실히 최신 정보를 표시

@@ -182,9 +182,6 @@
             <button class="btn btn-outline-primary" onclick="refreshDashboard()">
               <i class="fas fa-sync-alt me-1"></i>새로고침
             </button>
-            <button class="btn btn-primary" onclick="exportDashboard()">
-              <i class="fas fa-download me-1"></i>보고서 다운로드
-            </button>
           </div>
         </div>
         
@@ -293,11 +290,6 @@
   <script>
     function refreshDashboard() {
       location.reload();
-    }
-    
-    function exportDashboard() {
-      // 대시보드 데이터를 PDF나 Excel로 내보내기
-      alert('보고서 다운로드 기능이 준비 중입니다.');
     }
     
     // 자동 새로고침 (5분마다)

@@ -377,10 +377,9 @@ function toggleTimeInputs(employeeId) {
       const specialOvertime = parseFloat(document.querySelector(`input[name="${employeeId}_specialOvertime"]`).value) || 0;
       const night = parseFloat(document.querySelector(`input[name="${employeeId}_night"]`).value) || 0;
       
-      // 총시간 계산: 기본+연장*1.5+특근*1.5+특연*2+야간수당(야간*0.5)
-      // 야간수당: 야간시간(8시간) × 0.5 = 4시간
-      // 주말 근무: 기본(8) + 특근(12) + 특연(8) + 야간수당(4) = 8 + 12 + 8 + 4 = 32시간
-      const totalTime = basic + (overtime * 1.5) + (special * 1.5) + (specialOvertime * 2) + (night * 0.5);
+      // 총시간 계산: 단순 합계 (이미 가중치가 적용된 값들)
+      // 주말 근무: 기본(8) + 특근(12) + 특연(8) + 야간(4) = 8 + 12 + 8 + 4 = 32시간
+      const totalTime = basic + overtime + special + specialOvertime + night;
       
       const totalInput = document.querySelector(`input[name="${employeeId}_totalTime"]`);
       if (totalInput) {
@@ -789,10 +788,10 @@ async function loadAttendanceData() {
           // 총시간 재계산
           calculateTotalTime(employeeId);
           
-          // 야간시간 계산
-          if (data.checkIn && data.checkOut) {
-            calculateNightTime(employeeId);
-          }
+          // 야간시간 계산 - 자동입력 데이터가 있을 때는 실행하지 않음
+          // if (data.checkIn && data.checkOut) {
+          //   calculateNightTime(employeeId);
+          // }
         }
         
         // 비고 설정

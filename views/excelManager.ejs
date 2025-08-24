@@ -350,20 +350,7 @@
          </div>
          
          <div class="feature-grid">
-           <!-- 유니폼 주문 통계 내보내기 -->
-           <div class="card excel-card data-export">
-             <div class="card-body text-center">
-               <i class="fa-solid fa-file-export fa-3x mb-3"></i>
-               <h5 class="card-title">유니폼 주문 통계 내보내기</h5>
-               <p class="card-text">주문하기 편리하도록 품목별 사이즈별 합계수량을 엑셀로 다운로드하세요.</p>
-               <div class="mt-3">
-                 <button class="btn btn-light btn-excel" onclick="downloadUniformStats()">
-                   <i class="fa-solid fa-download me-2"></i>
-                   주문용 엑셀 다운로드
-                 </button>
-               </div>
-             </div>
-           </div>
+
 
            <!-- 유니폼 데이터 가져오기 -->
            <div class="card excel-card data-import">
@@ -658,10 +645,7 @@
        }
      }
 
-     // 유니폼 통계 다운로드
-     function downloadUniformStats() {
-       window.location.href = '/uniform/stats/excel';
-     }
+
 
      // 유니폼 템플릿 다운로드
      function downloadUniformTemplate() {

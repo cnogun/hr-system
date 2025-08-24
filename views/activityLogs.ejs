@@ -102,9 +102,6 @@
             활동 로그
           </h1>
           <div>
-            <button class="btn btn-success me-2" onclick="downloadActivityLogs()">
-              <i class="fa-solid fa-file-excel me-2"></i>엑셀 다운로드
-            </button>
             <a href="/dashboard" class="btn btn-outline-secondary">
               <i class="fa-solid fa-arrow-left me-1"></i>대시보드
             </a>
@@ -537,12 +534,7 @@
       }, 5000);
     }
 
-    // 엑셀 다운로드
-    function downloadActivityLogs() {
-      const filters = getCurrentFilters();
-      const queryParams = new URLSearchParams(filters);
-      window.location.href = `/api/logs/excel?${queryParams}`;
-    }
+
   </script>
 </body>
 </html>
