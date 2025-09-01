@@ -17,7 +17,15 @@ const logSchema = new mongoose.Schema({
   detail: { type: String }, // ex: '직원정보 수정', '비밀번호 변경' 등
   ip: { type: String },
   userAgent: { type: String },
-  createdAt: { type: Date, default: Date.now }
+  createdAt: { 
+    type: Date, 
+    default: function() {
+      // 한국 시간대 (UTC+9)로 현재 시간 설정
+      const now = new Date();
+      const koreaTime = new Date(now.getTime() + (9 * 60 * 60 * 1000));
+      return koreaTime;
+    }
+  }
 });
 
 module.exports = mongoose.model('Log', logSchema); 
