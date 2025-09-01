@@ -546,88 +546,60 @@
   document.addEventListener('DOMContentLoaded', function() {
     console.log('활동 로그 페이지가 로드되었습니다.');
     
-    // Bootstrap 로드 대기 후 헤더 드롭다운 초기화
-    waitForBootstrapAndInitialize();
+    // 페이지 초기화
+    initializePage();
+    
+    // 헤더 드롭다운 메뉴 초기화 (약간의 지연 후)
+    setTimeout(() => {
+      initializeHeaderDropdowns();
+    }, 500);
     
     // 초기 데이터 로드
     loadActivityLogs(1);
   });
   
-  // Bootstrap 로드 대기 및 헤더 드롭다운 초기화
-  function waitForBootstrapAndInitialize() {
-    if (typeof bootstrap !== 'undefined') {
-      console.log('Bootstrap 로드됨, 헤더 드롭다운 초기화 시작');
-      initializeHeaderDropdowns();
-    } else {
-      console.log('Bootstrap 로드 대기 중...');
-      setTimeout(waitForBootstrapAndInitialize, 100);
-    }
-  }
-  
   // 헤더 드롭다운 메뉴 초기화 함수
   function initializeHeaderDropdowns() {
     try {
-      // 기존 드롭다운 인스턴스 정리
-      document.querySelectorAll('.dropdown-toggle').forEach(function(element) {
-        const existingInstance = bootstrap.Dropdown.getInstance(element);
-        if (existingInstance) {
-          existingInstance.dispose();
-        }
-      });
+      console.log('헤더 드롭다운 초기화 시작...');
       
-      // Bootstrap 드롭다운 초기화
-      const dropdownElementList = document.querySelectorAll('.dropdown-toggle');
-      const dropdownList = [...dropdownElementList].map(dropdownToggleEl => {
-        return new bootstrap.Dropdown(dropdownToggleEl, {
-          autoClose: true,
-          boundary: 'viewport'
-        });
-      });
+      // Bootstrap이 로드될 때까지 대기
+      if (typeof bootstrap === 'undefined') {
+        console.log('Bootstrap 로드 대기 중...');
+        setTimeout(initializeHeaderDropdowns, 100);
+        return;
+      }
       
-      console.log('헤더 드롭다운 메뉴 초기화 완료:', dropdownList.length, '개');
+      // 모든 드롭다운 토글 요소 찾기
+      const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
+      console.log('발견된 드롭다운 토글:', dropdownToggles.length, '개');
       
-      // 드롭다운 토글 클릭 이벤트
-      document.addEventListener('click', function(e) {
-        const dropdownToggle = e.target.closest('.dropdown-toggle');
-        if (dropdownToggle) {
-          e.preventDefault();
-          e.stopPropagation();
-          
-          // 다른 모든 드롭다운 닫기
-          document.querySelectorAll('.dropdown-toggle').forEach(toggle => {
-            if (toggle !== dropdownToggle) {
-              const dropdown = bootstrap.Dropdown.getInstance(toggle);
-              if (dropdown) {
-                dropdown.hide();
-              }
-            }
-          });
-          
-          // 현재 드롭다운 토글
-          const dropdown = bootstrap.Dropdown.getInstance(dropdownToggle);
-          if (dropdown) {
-            const isExpanded = dropdownToggle.getAttribute('aria-expanded') === 'true';
-            if (isExpanded) {
-              dropdown.hide();
-            } else {
-              dropdown.show();
-            }
+      // 각 드롭다운 토글에 대해 Bootstrap 드롭다운 초기화
+      dropdownToggles.forEach((toggle, index) => {
+        try {
+          // 기존 인스턴스가 있다면 제거
+          const existingInstance = bootstrap.Dropdown.getInstance(toggle);
+          if (existingInstance) {
+            existingInstance.dispose();
           }
-        }
-        
-        // 드롭다운 외부 클릭 시 모든 드롭다운 닫기
-        if (!e.target.closest('.dropdown')) {
-          document.querySelectorAll('.dropdown-toggle').forEach(toggle => {
-            const dropdown = bootstrap.Dropdown.getInstance(toggle);
-            if (dropdown) {
-              dropdown.hide();
-            }
+          
+          // 새 드롭다운 인스턴스 생성
+          const dropdown = new bootstrap.Dropdown(toggle, {
+            autoClose: true,
+            boundary: 'viewport'
           });
+          
+          console.log(`드롭다운 ${index + 1} 초기화 완료:`, toggle.textContent.trim());
+          
+        } catch (error) {
+          console.error(`드롭다운 ${index + 1} 초기화 오류:`, error);
         }
       });
+      
+      console.log('모든 헤더 드롭다운 초기화 완료!');
       
     } catch (error) {
-      console.error('헤더 드롭다운 초기화 오류:', error);
+      console.error('헤더 드롭다운 초기화 중 오류 발생:', error);
     }
   }
 
