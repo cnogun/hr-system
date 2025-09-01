@@ -149,13 +149,81 @@
       box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     }
     
+    /* 모바일 최적화 스타일 */
     @media (max-width: 768px) {
+      .container {
+        padding: 0.5rem;
+      }
+      
       .dashboard-card {
-        margin-bottom: 0.5rem;
+        margin-bottom: 0.75rem;
       }
       
       .stats-card {
+        margin-bottom: 0.75rem;
+        padding: 1.25rem 1rem;
+      }
+      
+      .stats-number {
+        font-size: 1.6rem;
+      }
+      
+      .stats-icon {
+        font-size: 1.6rem;
+      }
+      
+      .quick-action-card {
+        padding: 1.25rem 1rem;
+        margin-bottom: 0.75rem;
+      }
+      
+      .quick-action-icon {
+        font-size: 1.75rem;
+      }
+      
+      .btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+      }
+      
+      .chart-container {
+        padding: 0.75rem;
+        margin-bottom: 0.75rem;
+      }
+      
+      .activity-item {
+        padding: 0.75rem;
         margin-bottom: 0.5rem;
+      }
+      
+      .progress {
+        height: 8px;
+      }
+      
+      .department-progress {
+        margin-bottom: 0.75rem;
+      }
+      
+      .department-progress .d-flex {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+      }
+      
+      .department-progress .ms-auto {
+        margin-left: 0 !important;
+        margin-top: 0.25rem;
+      }
+    }
+    
+    /* 작은 모바일 화면 최적화 */
+    @media (max-width: 576px) {
+      .container {
+        padding: 0.25rem;
+      }
+      
+      .stats-card {
+        padding: 1rem 0.75rem;
       }
       
       .stats-number {
@@ -164,6 +232,73 @@
       
       .stats-icon {
         font-size: 1.4rem;
+      }
+      
+      .quick-action-card {
+        padding: 1rem 0.75rem;
+      }
+      
+      .quick-action-icon {
+        font-size: 1.5rem;
+      }
+      
+      .btn {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.85rem;
+      }
+      
+      .chart-container {
+        padding: 0.5rem;
+      }
+      
+      .activity-item {
+        padding: 0.5rem;
+      }
+      
+      .progress {
+        height: 6px;
+      }
+      
+      .department-progress .d-flex {
+        gap: 0.5rem;
+      }
+    }
+    
+    /* 태블릿 최적화 */
+    @media (min-width: 769px) and (max-width: 1024px) {
+      .stats-card {
+        padding: 1.5rem 1rem;
+      }
+      
+      .quick-action-card {
+        padding: 1.75rem 1.5rem;
+      }
+      
+      .chart-container {
+        padding: 1.25rem;
+      }
+    }
+    
+    /* 터치 디바이스 최적화 */
+    @media (hover: none) and (pointer: coarse) {
+      .dashboard-card:hover,
+      .quick-action-card:hover,
+      .activity-item:hover {
+        transform: none;
+      }
+      
+      .btn:hover {
+        transform: none;
+      }
+      
+      .quick-action-card:active,
+      .activity-item:active {
+        background-color: #f8f9fa;
+        transform: scale(0.98);
+      }
+      
+      .btn:active {
+        transform: scale(0.95);
       }
     }
   </style>
