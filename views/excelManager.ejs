@@ -106,14 +106,6 @@
             <i class="fa-solid fa-file-excel me-2 text-success"></i>
             통합 엑셀 관리
           </h1>
-          <div>
-            <a href="/dashboard" class="btn btn-outline-secondary me-2">
-              <i class="fa-solid fa-home me-1"></i>대시보드
-            </a>
-          <a href="/employees" class="btn btn-outline-secondary">
-            <i class="fa-solid fa-arrow-left me-1"></i>목록으로
-          </a>
-        </div>
         </div>
         <p class="text-muted mt-2">모든 엑셀 관련 기능을 한 곳에서 관리할 수 있습니다.</p>
       </div>
@@ -592,10 +584,9 @@
     </div>
   </div>
 
-  <%- include('footer') %>
+     <%- include('footer') %>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <script>
+   <script>
     // 직원 엑셀 다운로드
     function downloadEmployeeExcel() {
       window.location.href = '/employees/excel?format=xlsx';
@@ -853,7 +844,46 @@
     // 페이지 로드 시 초기화
     document.addEventListener('DOMContentLoaded', function() {
       console.log('통합 엑셀 관리 페이지가 로드되었습니다.');
+      
+      // 헤더 드롭다운 메뉴 초기화
+      initializeHeaderDropdowns();
     });
+    
+    // 헤더 드롭다운 메뉴 초기화 함수
+    function initializeHeaderDropdowns() {
+      try {
+        // Bootstrap 드롭다운 초기화
+        const dropdownElementList = document.querySelectorAll('.dropdown-toggle');
+        const dropdownList = [...dropdownElementList].map(dropdownToggleEl => {
+          return new bootstrap.Dropdown(dropdownToggleEl);
+        });
+        
+        console.log('헤더 드롭다운 메뉴 초기화 완료:', dropdownList.length, '개');
+        
+        // 드롭다운 클릭 이벤트 리스너 추가
+        document.querySelectorAll('.dropdown-toggle').forEach(toggle => {
+          toggle.addEventListener('click', function(e) {
+            e.preventDefault();
+            const dropdownMenu = this.nextElementSibling;
+            if (dropdownMenu && dropdownMenu.classList.contains('dropdown-menu')) {
+              dropdownMenu.classList.toggle('show');
+            }
+          });
+        });
+        
+        // 드롭다운 외부 클릭 시 닫기
+        document.addEventListener('click', function(e) {
+          if (!e.target.closest('.dropdown')) {
+            document.querySelectorAll('.dropdown-menu.show').forEach(menu => {
+              menu.classList.remove('show');
+            });
+          }
+        });
+        
+      } catch (error) {
+        console.error('헤더 드롭다운 초기화 오류:', error);
+      }
+    }
 
     // 인사 현황 보고서 다운로드
     function downloadHRReport() {

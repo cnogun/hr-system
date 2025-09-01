@@ -124,7 +124,7 @@ router.post('/save-weekend', async (req, res) => {
     
     if (!schedule) {
       // 스케줄이 없으면 생성
-      schedule = await WorkScheduleService.createCurrentWeekSchedule(req.session.userId);
+        schedule = await WorkScheduleService.createCurrentWeekSchedule(req.session.userId);
     }
     
     // 주말 스케줄 업데이트 (팀별 조별 편성 명단)
@@ -155,12 +155,12 @@ router.post('/save-weekend', async (req, res) => {
     
     await schedule.save();
     
-    // 편성 인원 현황도 함께 업데이트
+    // 편성 인원 현황도 함께 업데이트 및 근태 자동입력
     await updateAssignmentCounts(weekendData);
     
     res.json({ 
       success: true, 
-      message: '주말 스케줄이 저장되었습니다.',
+      message: '주말 스케줄이 저장되었습니다. 근태 자동입력이 완료되었습니다.',
       data: schedule
     });
     
@@ -230,6 +230,74 @@ router.post('/add-holiday', async (req, res) => {
   }
 });
 
+// 주말 근태 자동입력 상태 확인
+router.get('/weekend-attendance-status', async (req, res) => {
+  try {
+    // 세션 확인
+    if (!req.session || !req.session.userId) {
+      return res.status(401).json({ success: false, message: '로그인이 필요합니다.' });
+    }
+
+    // 관리자 권한 확인
+    if (req.session.userRole !== 'admin') {
+      return res.status(403).json({ success: false, message: '관리자 권한이 필요합니다.' });
+    }
+
+    // 현재 주차의 토요일, 일요일 날짜 계산
+    const today = new Date();
+    const weekStart = WorkScheduleService.getWeekStart(today);
+    const weekEnd = WorkScheduleService.getWeekEnd(today);
+    
+    const saturday = new Date(weekStart);
+    saturday.setDate(weekStart.getDate() + (5 - weekStart.getDay() + 7) % 7);
+    
+    const sunday = new Date(saturday);
+    sunday.setDate(saturday.getDate() + 1);
+    
+    const saturdayStr = saturday.toISOString().split('T')[0];
+    const sundayStr = sunday.toISOString().split('T')[0];
+
+    // 보안팀 직원들의 주말 근태 상태 조회
+    const securityEmployees = await Employee.find({
+      department: { $regex: /^보안/ }
+    }).select('name department weekendAssignment attendance');
+
+    const attendanceStatus = {
+      saturday: { date: saturdayStr, employees: [] },
+      sunday: { date: sundayStr, employees: [] }
+    };
+
+    for (const employee of securityEmployees) {
+      // 토요일 근태 상태
+      const satAttendance = employee.attendance.get(saturdayStr);
+      attendanceStatus.saturday.employees.push({
+        name: employee.name,
+        department: employee.department,
+        status: satAttendance ? satAttendance.status : '미설정',
+        weekendAssignment: employee.weekendAssignment
+      });
+
+      // 일요일 근태 상태
+      const sunAttendance = employee.attendance.get(sundayStr);
+      attendanceStatus.sunday.employees.push({
+        name: employee.name,
+        department: employee.department,
+        status: sunAttendance ? sunAttendance.status : '미설정',
+        weekendAssignment: employee.weekendAssignment
+      });
+    }
+
+    res.json({
+      success: true,
+      data: attendanceStatus
+    });
+
+  } catch (error) {
+    console.error('주말 근태 상태 조회 오류:', error);
+    res.status(500).json({ success: false, message: '주말 근태 상태 조회 중 오류가 발생했습니다.' });
+  }
+});
+
 // 공휴일 삭제
 router.delete('/delete-holiday/:holidayId', async (req, res) => {
   try {
@@ -259,14 +327,14 @@ router.delete('/delete-holiday/:holidayId', async (req, res) => {
     if (!schedule) {
       return res.status(404).json({ success: false, message: '현재 주차 스케줄을 찾을 수 없습니다.' });
     }
-    
+
     // 공휴일 삭제
     schedule.holidays = schedule.holidays.filter(holiday => 
       holiday._id.toString() !== holidayId
     );
-    
+
     await schedule.save();
-    
+
     res.json({ 
       success: true, 
       message: '공휴일이 삭제되었습니다.',
@@ -398,11 +466,29 @@ router.get('/assignment-counts', async (req, res) => {
   }
 });
 
-// 편성 인원 현황 업데이트 (내부 함수)
+// 편성 인원 현황 업데이트 및 근태 자동입력 (내부 함수)
 async function updateAssignmentCounts(weekendData) {
   try {
     // 각 팀별로 편성 명단을 기반으로 weekendAssignment 업데이트
     const teams = ['team1', 'team2', 'team3'];
+    
+    // 현재 주차의 토요일, 일요일 날짜 계산
+    const today = new Date();
+    const weekStart = WorkScheduleService.getWeekStart(today);
+    const weekEnd = WorkScheduleService.getWeekEnd(today);
+    
+    // 토요일과 일요일 날짜 찾기
+    const saturday = new Date(weekStart);
+    saturday.setDate(weekStart.getDate() + (5 - weekStart.getDay() + 7) % 7); // 다음 토요일
+    
+    const sunday = new Date(saturday);
+    sunday.setDate(saturday.getDate() + 1); // 일요일
+    
+    // 날짜 형식 변환 (YYYY-MM-DD)
+    const saturdayStr = saturday.toISOString().split('T')[0];
+    const sundayStr = sunday.toISOString().split('T')[0];
+    
+    console.log('주말 날짜 계산:', { saturday: saturdayStr, sunday: sundayStr });
     
     for (const team of teams) {
       const teamData = weekendData[team];
@@ -418,7 +504,7 @@ async function updateAssignmentCounts(weekendData) {
       const group3Members = teamData.group3 ? teamData.group3.split('\n').filter(line => line.trim()) : [];
       const group4Members = teamData.group4 ? teamData.group4.split('\n').filter(line => line.trim()) : [];
       
-      // 각 직원의 weekendAssignment 업데이트
+      // 각 직원의 weekendAssignment 업데이트 및 근태 자동입력
       for (const member of aGroupMembers) {
         await Employee.updateOne(
           { name: member.trim() },
@@ -428,6 +514,9 @@ async function updateAssignmentCounts(weekendData) {
             'weekendAssignment.sundayGroup': 'none'
           }
         );
+        
+        // 일요일 주간근무 근태 자동입력
+        await updateAttendanceStatus(member.trim(), sundayStr, '일요일특근');
       }
       
       for (const member of bGroupMembers) {
@@ -439,6 +528,9 @@ async function updateAssignmentCounts(weekendData) {
             'weekendAssignment.sundayGroup': 'none'
           }
         );
+        
+        // 일요일 야간근무 근태 자동입력
+        await updateAttendanceStatus(member.trim(), sundayStr, '일요일야간특근');
       }
       
       for (const member of group1Members) {
@@ -450,6 +542,10 @@ async function updateAssignmentCounts(weekendData) {
             'weekendAssignment.sundayGroup': '1조'
           }
         );
+        
+        // 1조는 토요일과 일요일 모두 근무
+        await updateAttendanceStatus(member.trim(), saturdayStr, '토요일특근');
+        await updateAttendanceStatus(member.trim(), sundayStr, '일요일특근');
       }
       
       for (const member of group2Members) {
@@ -461,6 +557,10 @@ async function updateAssignmentCounts(weekendData) {
             'weekendAssignment.sundayGroup': '2조'
           }
         );
+        
+        // 2조는 토요일과 일요일 모두 근무
+        await updateAttendanceStatus(member.trim(), saturdayStr, '토요일특근');
+        await updateAttendanceStatus(member.trim(), sundayStr, '일요일특근');
       }
       
       for (const member of group3Members) {
@@ -472,6 +572,10 @@ async function updateAssignmentCounts(weekendData) {
             'weekendAssignment.sundayGroup': '3조'
           }
         );
+        
+        // 3조는 토요일과 일요일 모두 근무
+        await updateAttendanceStatus(member.trim(), saturdayStr, '토요일특근');
+        await updateAttendanceStatus(member.trim(), sundayStr, '일요일특근');
       }
       
       for (const member of group4Members) {
@@ -483,12 +587,80 @@ async function updateAssignmentCounts(weekendData) {
             'weekendAssignment.sundayGroup': '4조'
           }
         );
+        
+        // 4조는 토요일과 일요일 모두 근무
+        await updateAttendanceStatus(member.trim(), saturdayStr, '토요일특근');
+        await updateAttendanceStatus(member.trim(), sundayStr, '일요일특근');
       }
     }
+    
+    // 주말에 근무하지 않는 직원들의 근태를 정기휴무로 설정
+    await updateNonWorkingEmployees(saturdayStr, sundayStr);
     
   } catch (error) {
     console.error('편성 인원 현황 업데이트 오류:', error);
     throw error; // 에러를 상위로 전파
+  }
+}
+
+// 근태 상태 업데이트 함수
+async function updateAttendanceStatus(employeeName, date, status) {
+  try {
+    const employee = await Employee.findOne({ name: employeeName });
+    if (!employee) {
+      console.log(`직원을 찾을 수 없음: ${employeeName}`);
+      return;
+    }
+    
+    // attendance 필드가 없으면 초기화
+    if (!employee.attendance) {
+      employee.attendance = new Map();
+    }
+    
+    // 해당 날짜의 근태 상태 업데이트
+    employee.attendance.set(date, {
+      status: status,
+      checkIn: status.includes('야간') ? '18:00' : '06:00',
+      checkOut: status.includes('야간') ? '06:00' : '18:00',
+      basic: status.includes('야간') ? '8' : '8',
+      overtime: '0',
+      nightTime: status.includes('야간') ? '8' : '0',
+      updatedAt: new Date()
+    });
+    
+    await employee.save();
+    console.log(`${employeeName}의 ${date} 근태 상태가 ${status}로 업데이트되었습니다.`);
+    
+  } catch (error) {
+    console.error(`${employeeName}의 근태 상태 업데이트 오류:`, error);
+  }
+}
+
+// 주말에 근무하지 않는 직원들의 근태를 정기휴무로 설정
+async function updateNonWorkingEmployees(saturdayStr, sundayStr) {
+  try {
+    // 보안팀 직원들 조회
+    const securityEmployees = await Employee.find({
+      department: { $regex: /^보안/ }
+    });
+    
+    for (const employee of securityEmployees) {
+      // 주말 할당이 없는 직원들만 처리
+      if (!employee.weekendAssignment || 
+          (employee.weekendAssignment.group === 'none' && 
+           employee.weekendAssignment.weekendGroup === 'none' && 
+           employee.weekendAssignment.sundayGroup === 'none')) {
+        
+        // 토요일과 일요일을 정기휴무로 설정
+        await updateAttendanceStatus(employee.name, saturdayStr, '정기휴무');
+        await updateAttendanceStatus(employee.name, sundayStr, '정기휴무');
+      }
+    }
+    
+    console.log('주말 근무하지 않는 직원들의 근태가 정기휴무로 설정되었습니다.');
+    
+  } catch (error) {
+    console.error('비근무 직원 근태 설정 오류:', error);
   }
 }
 
@@ -593,7 +765,7 @@ function generateTeamPersonnelData(teamNumber) {
   for (let i = 31; i <= 40; i++) {
     group4.push(`보안${teamNumber}팀원${i}번`);
   }
-
+  
   return {
     aGroup: aGroup.join('\n'),
     bGroup: bGroup.join('\n'),

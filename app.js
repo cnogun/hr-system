@@ -725,6 +725,103 @@ app.delete('/workSchedule/holidays/:holidayId', async (req, res) => {
 
 
 
+// 주말 근태 자동입력 상태 확인
+app.get('/workSchedule/weekend-attendance-status', async (req, res) => {
+  try {
+    if (!req.session || !req.session.userId) {
+      return res.status(401).json({ error: '로그인이 필요합니다.' });
+    }
+
+    console.log('주말 근태 자동입력 상태 확인 시작');
+    
+    // 현재 주차의 토요일과 일요일 날짜 계산
+    const today = new Date();
+    const dayOfWeek = today.getDay(); // 0: 일요일, 1: 월요일, ..., 6: 토요일
+    
+    // 이번주 월요일 찾기
+    const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    const monday = new Date(today);
+    monday.setDate(today.getDate() - daysToMonday);
+    monday.setHours(0, 0, 0, 0);
+    
+    // 토요일과 일요일 날짜 계산
+    const saturday = new Date(monday);
+    saturday.setDate(monday.getDate() + 5);
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    
+    const saturdayStr = saturday.toISOString().split('T')[0];
+    const sundayStr = sunday.toISOString().split('T')[0];
+    
+    console.log('주말 날짜:', { saturday: saturdayStr, sunday: sundayStr });
+    
+    // 보안팀 직원들의 주말 근태 상태 조회
+    const securityEmployees = await Employee.find({
+      department: { $regex: /^보안/ }
+    }).select('name department weekendAssignment attendance');
+    
+    console.log(`보안팀 직원 ${securityEmployees.length}명 조회됨`);
+    
+    // 토요일과 일요일 근태 상태 분류
+    const saturdayEmployees = [];
+    const sundayEmployees = [];
+    
+    securityEmployees.forEach(employee => {
+      // 토요일 근태 상태
+      const satAttendance = employee.attendance.get(saturdayStr);
+      if (satAttendance) {
+        saturdayEmployees.push({
+          name: employee.name,
+          department: employee.department,
+          status: satAttendance.status,
+          checkIn: satAttendance.checkIn,
+          checkOut: satAttendance.checkOut
+        });
+      }
+      
+      // 일요일 근태 상태
+      const sunAttendance = employee.attendance.get(sundayStr);
+      if (sunAttendance) {
+        sundayEmployees.push({
+          name: employee.name,
+          department: employee.department,
+          status: sunAttendance.status,
+          checkIn: sunAttendance.checkIn,
+          checkOut: sunAttendance.checkOut
+        });
+      }
+    });
+    
+    const attendanceStatus = {
+      saturday: {
+        date: saturdayStr,
+        employees: saturdayEmployees
+      },
+      sunday: {
+        date: sundayStr,
+        employees: sundayEmployees
+      }
+    };
+    
+    console.log('주말 근태 상태 조회 완료:', {
+      saturday: saturdayEmployees.length + '명',
+      sunday: sundayEmployees.length + '명'
+    });
+    
+    res.json({
+      success: true,
+      data: attendanceStatus
+    });
+    
+  } catch (error) {
+    console.error('주말 근태 상태 조회 오류:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: '주말 근태 상태 조회 중 오류가 발생했습니다.' 
+    });
+  }
+});
+
 // 주차별 스케줄 목록
 app.get('/workSchedule/weekly-schedules', async (req, res) => {
   try {

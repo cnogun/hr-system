@@ -25,6 +25,40 @@
         </div>
         </div>
 
+        <!-- 이번주 팀 근무 형태 -->
+        <div class="card shadow-sm mb-4">
+          <div class="card-header bg-info text-white">
+            <h5 class="mb-0">
+              <i class="fa-solid fa-users me-2"></i><span id="currentWeekInfo">이번주 팀 근무 형태</span>
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-4">
+                <div class="text-center p-3 border rounded">
+                  <h6 class="text-primary">보안1팀</h6>
+                  <span class="badge bg-success fs-6" id="team1Schedule">초야</span>
+                  <small class="d-block text-muted mt-1">14:00~22:00</small>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="text-center p-3 border rounded">
+                  <h6 class="text-primary">보안2팀</h6>
+                  <span class="badge bg-warning fs-6" id="team2Schedule">심야</span>
+                  <small class="d-block text-muted mt-1">22:00~06:00</small>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="text-center p-3 border rounded">
+                  <h6 class="text-primary">보안3팀</h6>
+                  <span class="badge bg-info fs-6" id="team3Schedule">주간</span>
+                  <small class="d-block text-muted mt-1">06:00~14:00</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- 부서별 필터 -->
         <div class="card shadow-sm mb-4">
           <div class="card-body">
@@ -108,6 +142,7 @@
                             <option value="출근(야특)">출근(야특)</option>
                             <option value="출근(사무)">출근(사무)</option>
                             <option value="정기휴무">정기휴무</option>
+                            <option value="경조휴가">경조휴가</option>
                             <option value="월차휴가">월차휴가</option>
                             <option value="연차휴가">연차휴가</option>
                             <option value="지각">지각</option>
@@ -316,6 +351,7 @@ function toggleTimeInputs(employeeId) {
           }, 100);
           break;
 
+        case '경조휴가':
         case '월차휴가':
         case '연차휴가':
         case '병가':
@@ -534,6 +570,47 @@ async function saveAttendance() {
   }
 }
 
+// 시간 형식을 HH:mm으로 변환하는 함수
+function formatTimeForInput(timeValue) {
+  if (!timeValue || timeValue === '') return '';
+  
+  // 숫자만 있는 경우 (예: 9.5 -> 09:30)
+  if (typeof timeValue === 'number' || !isNaN(parseFloat(timeValue))) {
+    const hours = Math.floor(parseFloat(timeValue));
+    const minutes = Math.round((parseFloat(timeValue) - hours) * 60);
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+  }
+  
+  // 문자열인 경우
+  const timeStr = timeValue.toString();
+  
+  // 이미 HH:mm 형식인 경우
+  if (/^\d{1,2}:\d{2}$/.test(timeStr)) {
+    const [hours, minutes] = timeStr.split(':');
+    return `${hours.padStart(2, '0')}:${minutes}`;
+  }
+  
+  // HH.mm 형식인 경우 (예: 9.5 -> 09:30)
+  if (/^\d+\.\d+$/.test(timeStr)) {
+    const [hours, minutes] = timeStr.split('.');
+    const minuteValue = Math.round(parseFloat(`0.${minutes}`) * 60);
+    return `${hours.padStart(2, '0')}:${minuteValue.toString().padStart(2, '0')}`;
+  }
+  
+  // 숫자만 있는 경우 (예: 930 -> 09:30)
+  if (/^\d{3,4}$/.test(timeStr)) {
+    const hours = Math.floor(parseInt(timeStr) / 100);
+    const minutes = parseInt(timeStr) % 100;
+    if (minutes < 60) {
+      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+    }
+  }
+  
+  // 변환할 수 없는 경우 빈 문자열 반환
+  console.warn(`시간 형식을 변환할 수 없습니다: ${timeValue}`);
+  return '';
+}
+
 // 특정 날짜의 근태 데이터 조회
 async function loadAttendanceData() {
   try {
@@ -575,23 +652,30 @@ async function loadAttendanceData() {
             // 모든 상태에 대해 toggleTimeInputs 호출하여 기본값 설정
             toggleTimeInputs(employeeId);
                 
-            // 기존 데이터가 있는 경우 해당 값으로 설정
+            // 기존 데이터가 있는 경우 해당 값으로 설정 (시간 형식 변환 적용)
             if (attendance.checkIn) {
               const checkInInput = document.querySelector(`input[name="${employeeId}_checkIn"]`);
-              if (checkInInput) checkInInput.value = attendance.checkIn;
+              if (checkInInput) {
+                const formattedTime = formatTimeForInput(attendance.checkIn);
+                checkInInput.value = formattedTime;
+              }
             }
                 
             if (attendance.checkOut) {
               const checkOutInput = document.querySelector(`input[name="${employeeId}_checkOut"]`);
-              if (checkOutInput) checkOutInput.value = attendance.checkOut;
+              if (checkOutInput) {
+                const formattedTime = formatTimeForInput(attendance.checkOut);
+                checkOutInput.value = formattedTime;
+              }
             }
                 
-            // 시간 입력 필드들 - MongoDB Map 타입 데이터 처리
+            // 시간 입력 필드들 - MongoDB Map 타입 데이터 처리 (시간 형식 변환 적용)
             const timeFields = ['basic', 'overtime', 'special', 'specialOvertime', 'night'];
             timeFields.forEach(field => {
               const input = document.querySelector(`input[name="${employeeId}_${field}"]`);
               if (input && attendance[field] !== undefined && attendance[field] !== null && attendance[field] !== '') {
-                input.value = attendance[field];
+                const formattedTime = formatTimeForInput(attendance[field]);
+                input.value = formattedTime;
               }
             });
                 
@@ -823,9 +907,147 @@ async function loadAttendanceData() {
       }
     }
     
+    // 주차 번호 계산 (월요일 06시부터 다음주 월요일 06시까지) - 팀 근무 순환용
+    function getWeekNumber(date) {
+      // 2025년 1월 1일(수)을 1주차로 설정
+      const yearStart = new Date(2025, 0, 1); // 2025년 1월 1일
+      
+      // 8월 26일과 8월 30일은 특별히 3주차로 설정 (1팀 심야, 2팀 주간, 3팀 초야)
+      const targetDate = new Date(date);
+      if ((targetDate.getFullYear() === 2025 && targetDate.getMonth() === 7 && targetDate.getDate() === 26) ||
+          (targetDate.getFullYear() === 2025 && targetDate.getMonth() === 7 && targetDate.getDate() === 30)) {
+        return 3;
+      }
+      
+      // 월요일 06시를 기준으로 주차 계산
+      const dayOfWeek = targetDate.getDay(); // 0: 일요일, 1: 월요일, ..., 6: 토요일
+      const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // 일요일이면 6, 월요일이면 0
+      
+      const monday6am = new Date(targetDate);
+      monday6am.setDate(targetDate.getDate() - mondayOffset);
+      monday6am.setHours(6, 0, 0, 0);
+      
+      // 2025년 1월 1일(수)부터의 주차 계산
+      const weekDiff = Math.floor((monday6am - yearStart) / (7 * 24 * 60 * 60 * 1000));
+      const weekNumber = weekDiff + 1; // 1부터 시작하는 주차 번호
+      
+      return weekNumber;
+    }
+
+    // 표시용 주차 번호 계산 (실제 주차)
+    function getDisplayWeekNumber(date) {
+      // 8월 26일과 8월 30일은 특별히 3주차로 설정 (1팀 심야, 2팀 주간, 3팀 초야)
+      if ((date.getFullYear() === 2025 && date.getMonth() === 7 && date.getDate() === 26) ||
+          (date.getFullYear() === 2025 && date.getMonth() === 7 && date.getDate() === 30)) {
+        return 3;
+      }
+      
+      // 실제 주차 계산 (보정값 없음)
+      const yearStart = new Date(2025, 0, 1);
+      const dayOfWeek = date.getDay();
+      const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+      
+      const monday6am = new Date(date);
+      monday6am.setDate(date.getDate() - mondayOffset);
+      monday6am.setHours(6, 0, 0, 0);
+      
+      const weekDiff = Math.floor((monday6am - yearStart) / (7 * 24 * 60 * 60 * 1000));
+      return weekDiff + 1; // 1부터 시작하는 주차 번호
+    }
+
+    // 팀별 근무 형태 반환 함수
+    function getTeamSchedule(teamNumber, weekNumber) {
+      // 3주 주기로 팀별 근무 형태 순환
+      const cycle = weekNumber % 3;
+      
+      if (teamNumber === 1) {
+        // 1팀: 주간→초야→심야 (1,2,3주차) - 3주차일 때 심야
+        const schedules = ['주간', '초야', '심야'];
+        return schedules[cycle];
+      } else if (teamNumber === 2) {
+        // 2팀: 초야→심야→주간 (1,2,3주차) - 3주차일 때 주간
+        const schedules = ['초야', '심야', '주간'];
+        return schedules[cycle];
+      } else if (teamNumber === 3) {
+        // 3팀: 심야→주간→초야 (1,2,3주차) - 3주차일 때 초야
+        const schedules = ['심야', '주간', '초야'];
+        return schedules[cycle];
+      }
+      
+      return '주간'; // 기본값
+    }
+
+    // 팀별 근무 형태를 주차에 따라 동적으로 계산
+    function updateTeamWorkSchedule() {
+      const today = new Date();
+      const weekNumber = getWeekNumber(today);
+      
+      // 주차별 팀 근무 순환 로직
+      const team1Schedule = getTeamSchedule(1, weekNumber);
+      const team2Schedule = getTeamSchedule(2, weekNumber);
+      const team3Schedule = getTeamSchedule(3, weekNumber);
+      
+      // UI 업데이트 - 팀 근무 형태
+      document.getElementById('team1Schedule').textContent = team1Schedule;
+      document.getElementById('team1Schedule').className = `badge ${getBadgeClass(team1Schedule)} fs-6`;
+      
+      document.getElementById('team2Schedule').textContent = team2Schedule;
+      document.getElementById('team2Schedule').className = `badge ${getBadgeClass(team2Schedule)} fs-6`;
+      
+      document.getElementById('team3Schedule').textContent = team3Schedule;
+      document.getElementById('team3Schedule').className = `badge ${getBadgeClass(team3Schedule)} fs-6`;
+      
+      // UI 업데이트 - 시간
+      const team1TimeElement = document.querySelector('.col-md-4:nth-child(1) .d-block.text-muted.mt-1');
+      const team2TimeElement = document.querySelector('.col-md-4:nth-child(2) .d-block.text-muted.mt-1');
+      const team3TimeElement = document.querySelector('.col-md-4:nth-child(3) .d-block.text-muted.mt-1');
+      
+      if (team1TimeElement) {
+        team1TimeElement.textContent = getTimeRange(team1Schedule);
+      }
+      if (team2TimeElement) {
+        team2TimeElement.textContent = getTimeRange(team2Schedule);
+      }
+      if (team3TimeElement) {
+        team3TimeElement.textContent = getTimeRange(team3Schedule);
+      }
+    }
+    
+    // 근무 형태에 따른 배지 클래스 반환
+    function getBadgeClass(schedule) {
+      switch(schedule) {
+        case '주간': return 'bg-info';
+        case '심야': return 'bg-warning';
+        case '초야': return 'bg-success';
+        default: return 'bg-secondary';
+      }
+    }
+    
+    // 근무 형태에 따른 시간 범위 반환
+    function getTimeRange(schedule) {
+      switch(schedule) {
+        case '주간': return '06:00~14:00';
+        case '심야': return '22:00~06:00';
+        case '초야': return '14:00~22:00';
+        default: return '00:00~00:00';
+      }
+    }
+    
+    // 날짜와 근무형태만 표시하는 형식
+    function formatDetailedWeekDisplay(date, weekNumber) {
+      const year = date.getFullYear();
+      const month = date.getMonth() + 1;
+      const day = date.getDate();
+      const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+      const dayName = dayNames[date.getDay()];
+      
+      return `${year}년 ${month}월 ${day}일(${dayName}요일)`;
+    }
+
     // 페이지 로드 시 오늘 날짜 데이터 자동 조회 및 요일 표시
     document.addEventListener('DOMContentLoaded', function() {
       updateDayOfWeek(); // 초기 요일 표시
+      updateTeamWorkSchedule(); // 팀 근무 형태 업데이트
       loadAttendanceData();
     });
     
