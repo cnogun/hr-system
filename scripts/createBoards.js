@@ -63,10 +63,10 @@ db.once('open', async () => {
         order: 4
       },
       {
-        name: '보안1팀 근무명령서',
+        name: '보안1팀 인사명령',
         type: 'department',
         department: '보안1팀',
-        description: '보안1팀 근무 명령서 및 지침',
+        description: '보안1팀 인사 명령 및 지침',
         writePermission: 'department',
         readPermission: 'department',
         order: 5
@@ -109,10 +109,10 @@ db.once('open', async () => {
         order: 9
       },
       {
-        name: '보안2팀 근무명령서',
+        name: '보안2팀 인사명령',
         type: 'department',
         department: '보안2팀',
-        description: '보안2팀 근무 명령서 및 지침',
+        description: '보안2팀 인사 명령 및 지침',
         writePermission: 'department',
         readPermission: 'department',
         order: 10
@@ -155,10 +155,10 @@ db.once('open', async () => {
         order: 14
       },
       {
-        name: '보안3팀 근무명령서',
+        name: '보안3팀 인사명령',
         type: 'department',
         department: '보안3팀',
-        description: '보안3팀 근무 명령서 및 지침',
+        description: '보안3팀 인사 명령 및 지침',
         writePermission: 'department',
         readPermission: 'department',
         order: 15

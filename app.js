@@ -1750,7 +1750,7 @@ app.get('/security/duty-orders', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('근무명령서 페이지 로드 오류:', error);
+    console.error('인사명령 페이지 로드 오류:', error);
     res.status(500).send('서버 오류가 발생했습니다.');
   }
 });

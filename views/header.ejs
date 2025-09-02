@@ -127,7 +127,10 @@
               <ul class="dropdown-menu dropdown-menu-end">
                 <li><h6 class="dropdown-header">보안 관리</h6></li>
                 <li><a class="dropdown-item" href="/security/duty-orders">
-                  <i class="fa-solid fa-clipboard-list me-2"></i> 근무명령서
+                  <i class="fa-solid fa-clipboard-list me-2"></i> 인사명령
+                </a></li>
+                <li><a class="dropdown-item" href="/security/work-orders">
+                  <i class="fa-solid fa-file-alt me-2"></i> 근무명령서
                 </a></li>
                 <li><a class="dropdown-item" href="/security/handover">
                   <i class="fa-solid fa-exchange-alt me-2"></i> 인계사항
@@ -229,7 +232,7 @@ function initializeDropdowns() {
       
       // 새 인스턴스 생성
       const dropdown = new bootstrap.Dropdown(element, {
-        autoClose: true,
+        autoClose: 'inside',
         boundary: 'viewport'
       });
       
@@ -237,9 +240,6 @@ function initializeDropdowns() {
       element.addEventListener('show.bs.dropdown', function() {
         this.setAttribute('aria-expanded', 'true');
         console.log('드롭다운 열림:', this.textContent.trim());
-        
-        // 다른 모든 드롭다운 닫기
-        closeAllOtherDropdowns(this);
         
         // 다른 모든 메뉴의 active 상태 제거
         document.querySelectorAll('.navbar-nav .nav-link.active, .dropdown-item.active').forEach(link => {
@@ -287,9 +287,6 @@ function attachEventListeners() {
       // 클릭된 드롭다운 토글에만 active 상태 설정
       dropdownToggle.classList.add('active');
       console.log('드롭다운 토글 active 상태 설정됨:', dropdownToggle.textContent.trim());
-      
-      // 다른 모든 드롭다운 닫기
-      closeAllOtherDropdowns(dropdownToggle);
       
       // Bootstrap 드롭다운 토글
       const dropdown = bootstrap.Dropdown.getInstance(dropdownToggle);

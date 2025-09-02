@@ -38,7 +38,7 @@ db.once('open', async () => {
       process.exit(1);
     }
 
-    // ===== 근무명령서 샘플 데이터 =====
+    // ===== 인사명령 샘플 데이터 =====
     const dutyOrders = [
       {
         title: '야간 순찰 강화',
@@ -92,12 +92,12 @@ db.once('open', async () => {
       }
     ];
 
-    // 근무명령서 저장
+    // 인사명령 저장
     for (const orderData of dutyOrders) {
       const dutyOrder = new DutyOrder(orderData);
       await dutyOrder.save();
     }
-    console.log('근무명령서 샘플 데이터 생성 완료');
+    console.log('인사명령 샘플 데이터 생성 완료');
 
     // ===== 인계사항 샘플 데이터 =====
     const handovers = [
@@ -237,7 +237,7 @@ db.once('open', async () => {
     console.log('일정 샘플 데이터 생성 완료');
 
     console.log('🎉 모든 보안업무 샘플 데이터 생성이 완료되었습니다!');
-    console.log(`- 근무명령서: ${dutyOrders.length}개`);
+    console.log(`- 인사명령: ${dutyOrders.length}개`);
     console.log(`- 인계사항: ${handovers.length}개`);
     console.log(`- 일정: ${schedules.length}개`);
 

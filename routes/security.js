@@ -3,16 +3,212 @@ const router = express.Router();
 const { isLoggedIn } = require('../middleware/auth');
 const upload = require('../middleware/upload');
 const DutyOrder = require('../models/DutyOrder');
+const WorkOrder = require('../models/WorkOrder');
 const Handover = require('../models/Handover');
 const Schedule = require('../models/Schedule');
 const Employee = require('../models/Employee');
+const Template = require('../models/Template');
 const NotificationService = require('../services/notificationService');
 const fs = require('fs');
 const path = require('path');
 
-// ===== 근무명령서 라우트 =====
+// ===== 인사명령 라우트 =====
 
 // 근무명령서 목록 페이지
+router.get('/work-orders', isLoggedIn, async (req, res) => {
+  try {
+    const { department, priority, status, page = 1, limit = 10 } = req.query;
+    
+    // 필터 조건 구성
+    let filter = {};
+    if (department) filter.department = department;
+    if (priority) filter.priority = priority;
+    if (status) filter.status = status;
+
+    // 페이지네이션
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    
+    // 근무명령서 조회
+    const workOrders = await WorkOrder.find(filter)
+      .populate('createdBy', 'name username')
+      .populate('assignedTo', 'name username')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit));
+
+    const total = await WorkOrder.countDocuments(filter);
+    const totalPages = Math.ceil(total / parseInt(limit));
+
+    // 통계 정보
+    const stats = await WorkOrder.aggregate([
+      { $group: { _id: '$status', count: { $sum: 1 } } }
+    ]);
+
+    const statusStats = {
+      pending: 0,
+      active: 0,
+      completed: 0
+    };
+
+    stats.forEach(stat => {
+      statusStats[stat._id] = stat.count;
+    });
+
+    res.render('security/work-orders', {
+      title: '근무명령서',
+      workOrders,
+      filters: { department, priority, status },
+      pagination: {
+        currentPage: parseInt(page),
+        totalPages,
+        hasNext: parseInt(page) < totalPages,
+        hasPrev: parseInt(page) > 1,
+        nextPage: parseInt(page) + 1,
+        prevPage: parseInt(page) - 1
+      },
+      stats: statusStats,
+      message: req.session.message,
+      session: req.session,
+      position: req.session.position
+    });
+
+    // 메시지 삭제
+    delete req.session.message;
+
+  } catch (error) {
+    console.error('근무명령서 목록 조회 오류:', error);
+    res.status(500).render('error', { 
+      message: '근무명령서 목록을 불러오는데 실패했습니다.',
+      error: process.env.NODE_ENV === 'development' ? error : {}
+    });
+  }
+});
+
+// 근무명령서 생성
+router.post('/work-orders', isLoggedIn, upload.array('attachments', 5), async (req, res) => {
+  try {
+    const { title, department, priority, deadline, assignedTo, content } = req.body;
+
+    // 필수 필드 검증
+    if (!title || !department || !priority || !content) {
+      req.session.message = '모든 필수 필드를 입력해주세요.';
+      return res.redirect('/security/work-orders');
+    }
+
+    // 첨부파일 처리
+    const attachments = [];
+    if (req.files && req.files.length > 0) {
+      req.files.forEach(file => {
+        attachments.push({
+          fileName: file.filename,
+          originalName: file.originalname,
+          filePath: file.path,
+          fileSize: file.size,
+          mimeType: file.mimetype
+        });
+      });
+    }
+
+    // 근무명령서 생성
+    const workOrder = new WorkOrder({
+      title,
+      department,
+      priority,
+      deadline: deadline ? new Date(deadline) : null,
+      assignedTo: assignedTo ? assignedTo.split(',').map(id => id.trim()) : [],
+      content,
+      attachments,
+      status: 'pending',
+      progress: 0,
+      createdBy: req.session.userId
+    });
+
+    await workOrder.save();
+
+    // 알림 발송
+    try {
+      await NotificationService.createNotification({
+        title: '새 근무명령서가 등록되었습니다',
+        message: `[${department}] ${title}`,
+        type: 'work_order',
+        targetUsers: assignedTo ? assignedTo.split(',').map(id => id.trim()) : [],
+        relatedId: workOrder._id
+      });
+    } catch (notificationError) {
+      console.error('알림 발송 오류:', notificationError);
+    }
+
+    req.session.message = '근무명령서가 성공적으로 등록되었습니다.';
+    res.redirect('/security/work-orders');
+
+  } catch (error) {
+    console.error('근무명령서 생성 오류:', error);
+    req.session.message = '근무명령서 등록에 실패했습니다.';
+    res.redirect('/security/work-orders');
+  }
+});
+
+// 근무명령서 상세 조회
+router.get('/work-orders/:id', isLoggedIn, async (req, res) => {
+  try {
+    const workOrder = await WorkOrder.findById(req.params.id)
+      .populate('createdBy', 'name username')
+      .populate('assignedTo', 'name username');
+
+    if (!workOrder) {
+      req.session.message = '근무명령서를 찾을 수 없습니다.';
+      return res.redirect('/security/work-orders');
+    }
+
+    res.render('security/work-order-detail', {
+      title: '근무명령서 상세',
+      workOrder,
+      message: req.session.message,
+      session: req.session,
+      position: req.session.position
+    });
+
+    delete req.session.message;
+
+  } catch (error) {
+    console.error('근무명령서 상세 조회 오류:', error);
+    req.session.message = '근무명령서를 불러오는데 실패했습니다.';
+    res.redirect('/security/work-orders');
+  }
+});
+
+// 근무명령서 상태 업데이트 API
+router.put('/api/work-orders/:id/status', isLoggedIn, async (req, res) => {
+  try {
+    const { status, progress } = req.body;
+
+    const workOrder = await WorkOrder.findByIdAndUpdate(
+      req.params.id,
+      { 
+        status: status || 'active',
+        progress: progress || 0,
+        updatedAt: new Date()
+      },
+      { new: true }
+    );
+
+    if (!workOrder) {
+      return res.status(404).json({ success: false, message: '근무명령서를 찾을 수 없습니다.' });
+    }
+
+    res.json({ 
+      success: true, 
+      message: '상태가 업데이트되었습니다.',
+      workOrder: workOrder
+    });
+
+  } catch (error) {
+    console.error('근무명령서 상태 업데이트 오류:', error);
+    res.status(500).json({ success: false, message: '상태 업데이트에 실패했습니다.' });
+  }
+});
+
+// 인사명령 목록 페이지
 router.get('/duty-orders', isLoggedIn, async (req, res) => {
   try {
     const { department, priority, status, page = 1, limit = 10 } = req.query;
@@ -78,7 +274,7 @@ router.get('/duty-orders', isLoggedIn, async (req, res) => {
     
     res.render('security/duty-orders', { 
       session: req.session,
-      title: '근무명령서',
+      title: '인사명령',
       dutyOrders,
       pagination: {
         current: parseInt(page),
@@ -94,21 +290,21 @@ router.get('/duty-orders', isLoggedIn, async (req, res) => {
       highPriorityCount
     });
   } catch (error) {
-    console.error('근무명령서 페이지 오류:', error);
+    console.error('인사명령 페이지 오류:', error);
     res.status(500).send(`
       <script>
-        alert('근무명령서 페이지 로드 중 오류가 발생했습니다.\\n\\n오류: ${error.message}');
+        alert('인사명령 페이지 로드 중 오류가 발생했습니다.\\n\\n오류: ${error.message}');
         history.back();
       </script>
     `);
   }
 });
 
-// 새 근무명령서 등록
+// 새 인사명령 등록
 router.post('/duty-orders', isLoggedIn, upload.array('attachments', 5), async (req, res) => {
   try {
     // 디버깅: 세션 정보 확인
-    console.log('=== 근무명령서 등록 디버깅 ===');
+    console.log('=== 인사명령 등록 디버깅 ===');
     console.log('req.session:', req.session);
     console.log('req.session.userId:', req.session.userId);
     console.log('req.body:', req.body);
@@ -142,10 +338,10 @@ router.post('/duty-orders', isLoggedIn, upload.array('attachments', 5), async (r
       console.error('알림 생성 실패:', error);
     }
     
-    req.session.message = '근무명령서가 성공적으로 등록되었습니다.';
+    req.session.message = '인사명령이 성공적으로 등록되었습니다.';
     res.redirect('/security/duty-orders');
   } catch (error) {
-    console.error('근무명령서 등록 오류:', error);
+    console.error('인사명령 등록 오류:', error);
     // 업로드된 파일이 있다면 삭제
     if (req.files) {
       req.files.forEach(file => {
@@ -154,12 +350,12 @@ router.post('/duty-orders', isLoggedIn, upload.array('attachments', 5), async (r
         }
       });
     }
-    req.session.error = '근무명령서 등록에 실패했습니다.';
+    req.session.error = '인사명령 등록에 실패했습니다.';
     res.redirect('/security/duty-orders');
   }
 });
 
-// 근무명령서 상세보기
+// 인사명령 상세보기
 router.get('/duty-orders/:id', isLoggedIn, async (req, res) => {
   try {
     const dutyOrder = await DutyOrder.findById(req.params.id)
@@ -168,7 +364,7 @@ router.get('/duty-orders/:id', isLoggedIn, async (req, res) => {
       .populate('comments.user', 'name username');
     
     if (!dutyOrder) {
-      return res.status(404).send('근무명령서를 찾을 수 없습니다.');
+      return res.status(404).send('인사명령을 찾을 수 없습니다.');
     }
     
     // 헤더에 필요한 변수들 설정
@@ -208,7 +404,7 @@ router.get('/duty-orders/:id', isLoggedIn, async (req, res) => {
       dutyOrder
     });
   } catch (error) {
-    console.error('근무명령서 상세보기 오류:', error);
+    console.error('인사명령 상세보기 오류:', error);
     res.status(500).send('서버 오류가 발생했습니다.');
   }
 });
@@ -537,7 +733,7 @@ router.put('/api/duty-orders/:id/progress', isLoggedIn, async (req, res) => {
     );
     
     if (!dutyOrder) {
-      return res.status(404).json({ error: '근무명령서를 찾을 수 없습니다.' });
+      return res.status(404).json({ error: '인사명령을 찾을 수 없습니다.' });
     }
     
     res.json({ success: true, progress: dutyOrder.progress });
@@ -559,7 +755,7 @@ router.post('/api/duty-orders/:id/comments', isLoggedIn, async (req, res) => {
     
     const dutyOrder = await DutyOrder.findById(id);
     if (!dutyOrder) {
-      return res.status(404).json({ error: '근무명령서를 찾을 수 없습니다.' });
+      return res.status(404).json({ error: '인사명령을 찾을 수 없습니다.' });
     }
     
     const comment = {
@@ -585,7 +781,7 @@ router.delete('/api/duty-orders/:id/comments/:commentId', isLoggedIn, async (req
     
     const dutyOrder = await DutyOrder.findById(id);
     if (!dutyOrder) {
-      return res.status(404).json({ error: '근무명령서를 찾을 수 없습니다.' });
+      return res.status(404).json({ error: '인사명령을 찾을 수 없습니다.' });
     }
     
     const comment = dutyOrder.comments.id(commentId);
@@ -708,6 +904,210 @@ router.delete('/api/notifications/:id', isLoggedIn, async (req, res) => {
   } catch (error) {
     console.error('알림 삭제 오류:', error);
     res.status(500).json({ success: false, message: '알림 삭제에 실패했습니다.' });
+  }
+});
+
+// ===== 양식 템플릿 관리 라우트 =====
+
+// 양식 업로드
+router.post('/templates/upload', isLoggedIn, upload.single('templateFile'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: '양식 파일을 선택해주세요.' });
+    }
+
+    const { templateName, department, templateType, priority, description, isDefault } = req.body;
+
+    // 필수 필드 검증
+    if (!templateName || !department) {
+      return res.status(400).json({ success: false, message: '양식명과 적용 부서는 필수입니다.' });
+    }
+
+    // 파일 크기 검증 (10MB)
+    if (req.file.size > 10 * 1024 * 1024) {
+      fs.unlinkSync(req.file.path); // 파일 삭제
+      return res.status(400).json({ success: false, message: '파일 크기는 10MB를 초과할 수 없습니다.' });
+    }
+
+    // 기본 양식 설정 시 기존 기본 양식 해제
+    if (isDefault === 'on') {
+      await Template.updateMany(
+        { department, templateType, isDefault: true },
+        { isDefault: false }
+      );
+    }
+
+    // 양식 저장
+    const template = new Template({
+      templateName,
+      description,
+      department,
+      templateType: templateType || 'daily',
+      priority: priority || 'medium',
+      fileName: req.file.filename,
+      originalName: req.file.originalname,
+      filePath: req.file.path,
+      fileSize: req.file.size,
+      mimeType: req.file.mimetype,
+      isDefault: isDefault === 'on',
+      uploadedBy: req.session.userId
+    });
+
+    await template.save();
+
+    res.json({ 
+      success: true, 
+      message: '양식이 성공적으로 업로드되었습니다.',
+      template: template
+    });
+
+  } catch (error) {
+    console.error('양식 업로드 오류:', error);
+    
+    // 업로드된 파일이 있다면 삭제
+    if (req.file && fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+    }
+    
+    res.status(500).json({ success: false, message: '양식 업로드에 실패했습니다.' });
+  }
+});
+
+// 양식 목록 조회
+router.get('/api/templates', isLoggedIn, async (req, res) => {
+  try {
+    const { department } = req.query;
+    
+    let query = { isActive: true };
+    if (department && department !== '전체') {
+      query.$or = [
+        { department: department },
+        { department: '전체' }
+      ];
+    }
+
+    const templates = await Template.find(query)
+      .populate('uploadedBy', 'name username')
+      .sort({ isDefault: -1, createdAt: -1 });
+
+    res.json({ 
+      success: true, 
+      templates: templates
+    });
+
+  } catch (error) {
+    console.error('양식 목록 조회 오류:', error);
+    res.status(500).json({ success: false, message: '양식 목록을 불러오는데 실패했습니다.' });
+  }
+});
+
+// 양식 상세 조회
+router.get('/api/templates/:id', isLoggedIn, async (req, res) => {
+  try {
+    const template = await Template.findById(req.params.id)
+      .populate('uploadedBy', 'name username');
+
+    if (!template) {
+      return res.status(404).json({ success: false, message: '양식을 찾을 수 없습니다.' });
+    }
+
+    res.json({ 
+      success: true, 
+      template: template
+    });
+
+  } catch (error) {
+    console.error('양식 상세 조회 오류:', error);
+    res.status(500).json({ success: false, message: '양식 정보를 불러오는데 실패했습니다.' });
+  }
+});
+
+// 양식 다운로드
+router.get('/api/templates/:id/download', isLoggedIn, async (req, res) => {
+  try {
+    const template = await Template.findById(req.params.id);
+
+    if (!template) {
+      return res.status(404).json({ success: false, message: '양식을 찾을 수 없습니다.' });
+    }
+
+    // 파일 존재 확인
+    if (!fs.existsSync(template.filePath)) {
+      return res.status(404).json({ success: false, message: '파일을 찾을 수 없습니다.' });
+    }
+
+    // 다운로드 카운트 증가
+    await Template.findByIdAndUpdate(req.params.id, { $inc: { downloadCount: 1 } });
+
+    // 파일 다운로드
+    res.download(template.filePath, template.originalName);
+
+  } catch (error) {
+    console.error('양식 다운로드 오류:', error);
+    res.status(500).json({ success: false, message: '양식 다운로드에 실패했습니다.' });
+  }
+});
+
+// 양식 삭제
+router.delete('/api/templates/:id', isLoggedIn, async (req, res) => {
+  try {
+    const template = await Template.findById(req.params.id);
+
+    if (!template) {
+      return res.status(404).json({ success: false, message: '양식을 찾을 수 없습니다.' });
+    }
+
+    // 파일 삭제
+    if (fs.existsSync(template.filePath)) {
+      fs.unlinkSync(template.filePath);
+    }
+
+    // 데이터베이스에서 삭제
+    await Template.findByIdAndDelete(req.params.id);
+
+    res.json({ 
+      success: true, 
+      message: '양식이 삭제되었습니다.'
+    });
+
+  } catch (error) {
+    console.error('양식 삭제 오류:', error);
+    res.status(500).json({ success: false, message: '양식 삭제에 실패했습니다.' });
+  }
+});
+
+// 기본 양식 설정
+router.put('/api/templates/:id/default', isLoggedIn, async (req, res) => {
+  try {
+    const template = await Template.findById(req.params.id);
+
+    if (!template) {
+      return res.status(404).json({ success: false, message: '양식을 찾을 수 없습니다.' });
+    }
+
+    // 같은 부서, 같은 타입의 다른 기본 양식들 해제
+    await Template.updateMany(
+      { 
+        department: template.department, 
+        templateType: template.templateType,
+        _id: { $ne: template._id },
+        isDefault: true
+      },
+      { isDefault: false }
+    );
+
+    // 현재 양식을 기본 양식으로 설정
+    template.isDefault = true;
+    await template.save();
+
+    res.json({ 
+      success: true, 
+      message: '기본 양식으로 설정되었습니다.'
+    });
+
+  } catch (error) {
+    console.error('기본 양식 설정 오류:', error);
+    res.status(500).json({ success: false, message: '기본 양식 설정에 실패했습니다.' });
   }
 });
 

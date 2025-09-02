@@ -109,7 +109,7 @@ class NotificationService {
     }
   }
 
-  // 근무명령서 관련 알림 생성
+  // 인사명령 관련 알림 생성
   static async createDutyOrderNotification(dutyOrder, action = 'created') {
     try {
       const notifications = [];
@@ -126,8 +126,8 @@ class NotificationService {
               recipient: employee.userId,
               sender: dutyOrder.issuedBy,
               type: 'duty_order',
-              title: `새로운 근무명령서: ${dutyOrder.title}`,
-              message: `${dutyOrder.department} 부서에 새로운 근무명령서가 등록되었습니다.`,
+              title: `새로운 인사명령: ${dutyOrder.title}`,
+              message: `${dutyOrder.department} 부서에 새로운 인사명령이 등록되었습니다.`,
               relatedItem: dutyOrder._id,
               relatedItemModel: 'DutyOrder',
               priority: dutyOrder.priority === 'high' ? 'high' : 'normal',
@@ -140,7 +140,7 @@ class NotificationService {
       
       return notifications;
     } catch (error) {
-      console.error('근무명령서 알림 생성 오류:', error);
+      console.error('인사명령 알림 생성 오류:', error);
       throw error;
     }
   }
