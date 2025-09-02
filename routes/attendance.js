@@ -3,6 +3,7 @@ const router = express.Router();
 const Employee = require('../models/Employee');
 const WorkSchedule = require('../models/WorkSchedule');
 const WorkScheduleService = require('../services/workScheduleService');
+const ExcelJS = require('exceljs');
 
 // 근태 상태에 따라 비고란 자동 설정 함수
 function getNoteByStatus(status) {
@@ -660,6 +661,159 @@ router.post('/auto-attendance', async (req, res) => {
   } catch (error) {
     console.error('근태 자동 입력 오류:', error);
     res.status(500).json({ success: false, message: '근태 자동 입력 중 오류가 발생했습니다.' });
+  }
+});
+
+// 근태 데이터 엑셀 내보내기
+router.get('/excel/export', async (req, res) => {
+  try {
+    // 세션 확인
+    if (!req.session || !req.session.userId) {
+      return res.status(401).json({ success: false, message: '로그인이 필요합니다.' });
+    }
+
+    const { date, department } = req.query;
+    
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('근태 데이터');
+    
+    // 헤더 스타일
+    const headerStyle = {
+      font: { bold: true, color: { argb: 'FFFFFF' } },
+      fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: '4472C4' } },
+      alignment: { horizontal: 'center', vertical: 'middle' }
+    };
+
+    // 헤더 설정
+    worksheet.columns = [
+      { header: '이름', key: 'name', width: 15 },
+      { header: '부서', key: 'department', width: 15 },
+      { header: '직급', key: 'position', width: 15 },
+      { header: '근태상태', key: 'status', width: 15 },
+      { header: '출근시간', key: 'checkIn', width: 15 },
+      { header: '퇴근시간', key: 'checkOut', width: 15 },
+      { header: '기본시간', key: 'basicHours', width: 12 },
+      { header: '연장시간', key: 'overtime', width: 12 },
+      { header: '특근시간', key: 'specialWork', width: 12 },
+      { header: '특연시간', key: 'specialOvertime', width: 12 },
+      { header: '야간시간', key: 'nightHours', width: 12 },
+      { header: '총시간', key: 'totalHours', width: 12 },
+      { header: '비고', key: 'note', width: 20 }
+    ];
+
+    // 헤더 스타일 적용
+    worksheet.getRow(1).eachCell((cell) => {
+      cell.style = headerStyle;
+    });
+
+    // 직원 데이터 가져오기
+    let query = {};
+    if (department) {
+      query.department = department;
+    }
+    
+    const employees = await Employee.find(query).sort({ name: 1 });
+    
+    // 샘플 근태 데이터 추가
+    employees.forEach(employee => {
+      worksheet.addRow({
+        name: employee.name,
+        department: employee.department,
+        position: employee.position,
+        status: '출근(주)',
+        checkIn: '09:00',
+        checkOut: '18:00',
+        basicHours: 8,
+        overtime: 0,
+        specialWork: 0,
+        specialOvertime: 0,
+        nightHours: 0,
+        totalHours: 8,
+        note: '정상 출근'
+      });
+    });
+
+    // 파일명 설정
+    const fileName = `근태데이터_${date || new Date().toISOString().split('T')[0]}.xlsx`;
+    
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(fileName)}"`);
+    
+    await workbook.xlsx.write(res);
+    res.end();
+
+  } catch (error) {
+    console.error('근태 데이터 내보내기 오류:', error);
+    res.status(500).json({ success: false, message: '데이터 내보내기 중 오류가 발생했습니다.' });
+  }
+});
+
+// 근태 보고서 엑셀 다운로드
+router.get('/report/excel', async (req, res) => {
+  try {
+    // 세션 확인
+    if (!req.session || !req.session.userId) {
+      return res.status(401).json({ success: false, message: '로그인이 필요합니다.' });
+    }
+
+    const { month } = req.query;
+    if (!month) {
+      return res.status(400).json({ success: false, message: '월 정보가 필요합니다.' });
+    }
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('근태 보고서');
+    
+    // 헤더 스타일
+    const headerStyle = {
+      font: { bold: true, color: { argb: 'FFFFFF' } },
+      fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: '4472C4' } },
+      alignment: { horizontal: 'center', vertical: 'middle' }
+    };
+
+    // 헤더 설정
+    worksheet.columns = [
+      { header: '부서', key: 'department', width: 15 },
+      { header: '직원수', key: 'employeeCount', width: 12 },
+      { header: '총 근무일수', key: 'totalWorkDays', width: 15 },
+      { header: '평균 근무시간', key: 'avgWorkHours', width: 15 },
+      { header: '총 연장시간', key: 'totalOvertime', width: 15 },
+      { header: '총 특근시간', key: 'totalSpecialWork', width: 15 },
+      { header: '총 야간시간', key: 'totalNightHours', width: 15 }
+    ];
+
+    // 헤더 스타일 적용
+    worksheet.getRow(1).eachCell((cell) => {
+      cell.style = headerStyle;
+    });
+
+    // 부서별 통계 데이터 추가 (샘플)
+    const departments = ['보안1팀', '보안2팀', '보안3팀'];
+    
+    departments.forEach(dept => {
+      worksheet.addRow({
+        department: dept,
+        employeeCount: 40,
+        totalWorkDays: 22,
+        avgWorkHours: 8.5,
+        totalOvertime: 120,
+        totalSpecialWork: 80,
+        totalNightHours: 200
+      });
+    });
+
+    // 파일명 설정
+    const fileName = `근태보고서_${month}.xlsx`;
+    
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(fileName)}"`);
+    
+    await workbook.xlsx.write(res);
+    res.end();
+
+  } catch (error) {
+    console.error('근태 보고서 다운로드 오류:', error);
+    res.status(500).json({ success: false, message: '보고서 다운로드 중 오류가 발생했습니다.' });
   }
 });
 

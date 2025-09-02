@@ -152,7 +152,7 @@ router.get('/', isLoggedIn, async (req, res) => {
     activeEmployees,
     newEmployees,
     query: req.query,
-    message: req.session.message,
+    message: req.session.message && !req.session.message.includes('유니폼') ? req.session.message : undefined,
     session: req.session
   });
 });
@@ -880,7 +880,7 @@ router.get('/excel', isLoggedIn, async (req, res) => {
 router.get('/excel-manager', isLoggedIn, adminOnly, async (req, res) => {
   res.render('excelManager', { 
     session: req.session,
-    message: req.session.message,
+    message: req.session.message && !req.session.message.includes('유니폼') ? req.session.message : undefined,
     error: req.session.error
   });
   delete req.session.message;

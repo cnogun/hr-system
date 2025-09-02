@@ -555,6 +555,23 @@
         checkbox.checked = this.checked;
       });
     });
+
+    // 헤더 드롭다운 초기화 (header.ejs와 중복 방지)
+    document.addEventListener('DOMContentLoaded', function() {
+      // Bootstrap이 로드될 때까지 대기
+      function initDropdowns() {
+        if (typeof bootstrap !== 'undefined') {
+          const dropdownElementList = [].slice.call(document.querySelectorAll('.dropdown-toggle'));
+          const dropdownList = dropdownElementList.map(function (dropdownToggleEl) {
+            return new bootstrap.Dropdown(dropdownToggleEl);
+          });
+          console.log('Employees 페이지 드롭다운 초기화 완료:', dropdownList.length);
+        } else {
+          setTimeout(initDropdowns, 100);
+        }
+      }
+      initDropdowns();
+    });
   </script>
 </body>
 </html> 

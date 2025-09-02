@@ -537,11 +537,11 @@ router.post('/edit', requireLogin, requireSelfOrAdmin, async (req, res) => {
     // 성공 메시지와 함께 리다이렉트
     req.session.message = `유니폼 정보가 수정되었습니다.`;
     
-    // 관리자인 경우 특정 직원 페이지로, 일반 사용자인 경우 본인 페이지로
+    // 유니폼 수정 페이지로 리다이렉트
     if (req.session.userRole === 'admin' && req.body.employeeId) {
-      res.redirect('/uniform/' + employee._id);
+      res.redirect('/uniform/' + employee._id + '/edit');
     } else {
-      res.redirect('/uniform');
+      res.redirect('/uniform/' + req.session.userId + '/edit');
     }
   } catch (error) {
     console.error('본인 유니폼 수정 오류:', error);
@@ -645,12 +645,151 @@ router.post('/:id/edit', requireLogin, requireAdmin, async (req, res) => {
       uniformWinterBottom: employee.uniformWinterBottom
     });
     
-    // 성공 메시지와 함께 상세페이지로 리다이렉트
+    // 성공 메시지와 함께 유니폼 수정 페이지로 리다이렉트
     req.session.message = `${employee.name}의 유니폼 정보가 수정되었습니다.`;
-    res.redirect('/admin/employees/' + employee._id);
+    res.redirect('/uniform/' + employee._id + '/edit');
   } catch (error) {
     console.error('유니폼 수정 오류:', error);
     res.status(500).send('유니폼 정보 수정 중 오류가 발생했습니다.');
+  }
+});
+
+// 유니폼 엑셀 템플릿 다운로드
+router.get('/excel/template', requireLogin, async (req, res) => {
+  try {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('유니폼 정보 템플릿');
+    
+    // 헤더 스타일
+    const headerStyle = {
+      font: { bold: true, color: { argb: 'FFFFFF' } },
+      fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: '4472C4' } },
+      alignment: { horizontal: 'center', vertical: 'middle' }
+    };
+
+    // 헤더 설정
+    worksheet.columns = [
+      { header: '이름', key: 'name', width: 15 },
+      { header: '부서', key: 'department', width: 15 },
+      { header: '직급', key: 'position', width: 15 },
+      { header: '상의 사이즈', key: 'topSize', width: 15 },
+      { header: '하의 사이즈', key: 'bottomSize', width: 15 },
+      { header: '모자 사이즈', key: 'hatSize', width: 15 },
+      { header: '신발 사이즈', key: 'shoeSize', width: 15 },
+      { header: '장갑 사이즈', key: 'gloveSize', width: 15 },
+      { header: '비고', key: 'note', width: 20 }
+    ];
+
+    // 헤더 스타일 적용
+    worksheet.getRow(1).eachCell((cell) => {
+      cell.style = headerStyle;
+    });
+
+    // 샘플 데이터 추가
+    const sampleData = [
+      {
+        name: '홍길동',
+        department: '보안1팀',
+        position: '보안원',
+        topSize: 'L',
+        bottomSize: 'L',
+        hatSize: 'L',
+        shoeSize: '270',
+        gloveSize: 'L',
+        note: '샘플 데이터'
+      },
+      {
+        name: '김철수',
+        department: '보안2팀',
+        position: '보안원',
+        topSize: 'M',
+        bottomSize: 'M',
+        hatSize: 'M',
+        shoeSize: '260',
+        gloveSize: 'M',
+        note: '샘플 데이터'
+      }
+    ];
+
+    sampleData.forEach(data => {
+      worksheet.addRow(data);
+    });
+
+    // 파일명 설정
+    const fileName = `유니폼_템플릿_${new Date().toISOString().split('T')[0]}.xlsx`;
+    
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(fileName)}"`);
+    
+    await workbook.xlsx.write(res);
+    res.end();
+
+  } catch (error) {
+    console.error('유니폼 템플릿 다운로드 오류:', error);
+    res.status(500).json({ success: false, message: '템플릿 다운로드 중 오류가 발생했습니다.' });
+  }
+});
+
+// 유니폼 데이터 엑셀 내보내기
+router.get('/excel/export', requireLogin, async (req, res) => {
+  try {
+    const employees = await Employee.find().sort({ name: 1 });
+    
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('유니폼 현황');
+    
+    // 헤더 스타일
+    const headerStyle = {
+      font: { bold: true, color: { argb: 'FFFFFF' } },
+      fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: '4472C4' } },
+      alignment: { horizontal: 'center', vertical: 'middle' }
+    };
+
+    // 헤더 설정
+    worksheet.columns = [
+      { header: '이름', key: 'name', width: 15 },
+      { header: '부서', key: 'department', width: 15 },
+      { header: '직급', key: 'position', width: 15 },
+      { header: '상의 사이즈', key: 'topSize', width: 15 },
+      { header: '하의 사이즈', key: 'bottomSize', width: 15 },
+      { header: '모자 사이즈', key: 'hatSize', width: 15 },
+      { header: '신발 사이즈', key: 'shoeSize', width: 15 },
+      { header: '장갑 사이즈', key: 'gloveSize', width: 15 },
+      { header: '비고', key: 'note', width: 20 }
+    ];
+
+    // 헤더 스타일 적용
+    worksheet.getRow(1).eachCell((cell) => {
+      cell.style = headerStyle;
+    });
+
+    // 직원 데이터 추가
+    employees.forEach(employee => {
+      worksheet.addRow({
+        name: employee.name,
+        department: employee.department,
+        position: employee.position,
+        topSize: employee.uniform?.topSize || '',
+        bottomSize: employee.uniform?.bottomSize || '',
+        hatSize: employee.uniform?.hatSize || '',
+        shoeSize: employee.uniform?.shoeSize || '',
+        gloveSize: employee.uniform?.gloveSize || '',
+        note: employee.uniform?.note || ''
+      });
+    });
+
+    // 파일명 설정
+    const fileName = `유니폼현황_${new Date().toISOString().split('T')[0]}.xlsx`;
+    
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(fileName)}"`);
+    
+    await workbook.xlsx.write(res);
+    res.end();
+
+  } catch (error) {
+    console.error('유니폼 데이터 내보내기 오류:', error);
+    res.status(500).json({ success: false, message: '데이터 내보내기 중 오류가 발생했습니다.' });
   }
 });
 

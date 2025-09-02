@@ -19,12 +19,7 @@ const logSchema = new mongoose.Schema({
   userAgent: { type: String },
   createdAt: { 
     type: Date, 
-    default: function() {
-      // 한국 시간대 (UTC+9)로 현재 시간 설정
-      const now = new Date();
-      const koreaTime = new Date(now.getTime() + (9 * 60 * 60 * 1000));
-      return koreaTime;
-    }
+    default: Date.now // UTC 시간으로 저장, 클라이언트에서 로컬 시간으로 변환
   }
 });
 

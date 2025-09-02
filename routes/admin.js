@@ -13,6 +13,7 @@ const express = require('express');
 const router = express.Router();
 const { adminOnly } = require('../middleware/auth');
 const { employeeUpload } = require('../utils/upload');
+const ExcelJS = require('exceljs');
 const { 
   generateEmpNo, 
   checkEmailDuplicate, 
@@ -458,7 +459,7 @@ router.get('/employees', adminOnly, async (req, res) => {
     limit: parseInt(limit),
     total,
     session: req.session,
-    message: req.session.message,
+    message: req.session.message && !req.session.message.includes('유니폼') ? req.session.message : undefined,
     query: req.query || {}
   });
   delete req.session.message;
@@ -547,6 +548,181 @@ router.post('/employees/new', adminOnly, employeeUpload.single('profileImage'), 
   } catch (error) {
     console.error('직원 추가 오류:', error);
     res.status(500).send('직원 추가 중 오류가 발생했습니다.');
+  }
+});
+
+// 인사 현황 보고서 엑셀 다운로드
+router.get('/hr-report/excel', adminOnly, async (req, res) => {
+  try {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('인사 현황 보고서');
+    
+    // 헤더 스타일
+    const headerStyle = {
+      font: { bold: true, color: { argb: 'FFFFFF' } },
+      fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: '4472C4' } },
+      alignment: { horizontal: 'center', vertical: 'middle' }
+    };
+
+    // 헤더 설정
+    worksheet.columns = [
+      { header: '부서', key: 'department', width: 20 },
+      { header: '직급', key: 'position', width: 15 },
+      { header: '인원수', key: 'count', width: 12 },
+      { header: '비율(%)', key: 'percentage', width: 12 },
+      { header: '평균 연령', key: 'avgAge', width: 12 },
+      { header: '평균 근속년수', key: 'avgTenure', width: 15 }
+    ];
+
+    // 헤더 스타일 적용
+    worksheet.getRow(1).eachCell((cell) => {
+      cell.style = headerStyle;
+    });
+
+    // 부서별 통계 데이터 추가 (샘플)
+    const departments = ['보안1팀', '보안2팀', '보안3팀'];
+    const positions = ['보안원', '보안팀장', '보안과장'];
+    
+    departments.forEach(dept => {
+      positions.forEach(pos => {
+        worksheet.addRow({
+          department: dept,
+          position: pos,
+          count: pos === '보안원' ? 35 : pos === '보안팀장' ? 3 : 2,
+          percentage: pos === '보안원' ? 87.5 : pos === '보안팀장' ? 7.5 : 5,
+          avgAge: 35,
+          avgTenure: 5.2
+        });
+      });
+    });
+
+    // 파일명 설정
+    const fileName = `인사현황보고서_${new Date().toISOString().split('T')[0]}.xlsx`;
+    
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(fileName)}"`);
+    
+    await workbook.xlsx.write(res);
+    res.end();
+
+  } catch (error) {
+    console.error('인사 현황 보고서 다운로드 오류:', error);
+    res.status(500).json({ success: false, message: '보고서 다운로드 중 오류가 발생했습니다.' });
+  }
+});
+
+// 근무 통계 보고서 엑셀 다운로드
+router.get('/work-stats/excel', adminOnly, async (req, res) => {
+  try {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('근무 통계 보고서');
+    
+    // 헤더 스타일
+    const headerStyle = {
+      font: { bold: true, color: { argb: 'FFFFFF' } },
+      fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: '4472C4' } },
+      alignment: { horizontal: 'center', vertical: 'middle' }
+    };
+
+    // 헤더 설정
+    worksheet.columns = [
+      { header: '구분', key: 'category', width: 20 },
+      { header: '보안1팀', key: 'team1', width: 15 },
+      { header: '보안2팀', key: 'team2', width: 15 },
+      { header: '보안3팀', key: 'team3', width: 15 },
+      { header: '합계', key: 'total', width: 15 }
+    ];
+
+    // 헤더 스타일 적용
+    worksheet.getRow(1).eachCell((cell) => {
+      cell.style = headerStyle;
+    });
+
+    // 통계 데이터 추가 (샘플)
+    const categories = [
+      { category: '주간 근무', team1: '7일', team2: '7일', team3: '7일', total: '21일' },
+      { category: '심야 근무', team1: '7일', team2: '7일', team3: '7일', total: '21일' },
+      { category: '초야 근무', team1: '7일', team2: '7일', team3: '7일', total: '21일' },
+      { category: '특근 근무', team1: '2일', team2: '2일', team3: '2일', total: '6일' },
+      { category: '휴무', team1: '2일', team2: '2일', team3: '2일', total: '6일' }
+    ];
+
+    categories.forEach(cat => {
+      worksheet.addRow(cat);
+    });
+
+    // 파일명 설정
+    const fileName = `근무통계보고서_${new Date().toISOString().split('T')[0]}.xlsx`;
+    
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(fileName)}"`);
+    
+    await workbook.xlsx.write(res);
+    res.end();
+
+  } catch (error) {
+    console.error('근무 통계 보고서 다운로드 오류:', error);
+    res.status(500).json({ success: false, message: '보고서 다운로드 중 오류가 발생했습니다.' });
+  }
+});
+
+// 월별 요약 보고서 엑셀 다운로드
+router.get('/monthly-report/excel', adminOnly, async (req, res) => {
+  try {
+    const { month } = req.query;
+    if (!month) {
+      return res.status(400).json({ success: false, message: '월 정보가 필요합니다.' });
+    }
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('월별 요약 보고서');
+    
+    // 헤더 스타일
+    const headerStyle = {
+      font: { bold: true, color: { argb: 'FFFFFF' } },
+      fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: '4472C4' } },
+      alignment: { horizontal: 'center', vertical: 'middle' }
+    };
+
+    // 헤더 설정
+    worksheet.columns = [
+      { header: '항목', key: 'item', width: 25 },
+      { header: '내용', key: 'content', width: 30 },
+      { header: '비고', key: 'note', width: 20 }
+    ];
+
+    // 헤더 스타일 적용
+    worksheet.getRow(1).eachCell((cell) => {
+      cell.style = headerStyle;
+    });
+
+    // 월별 요약 데이터 추가 (샘플)
+    const summaryData = [
+      { item: '총 직원 수', content: '120명', note: '전체 재직자' },
+      { item: '신규 입사', content: '3명', note: '신규 채용' },
+      { item: '퇴사', content: '1명', note: '자연 퇴사' },
+      { item: '총 근무일수', content: '22일', note: '월 근무일' },
+      { item: '평균 출근률', content: '98.5%', note: '전체 평균' },
+      { item: '총 특근 시간', content: '240시간', note: '월간 합계' },
+      { item: '총 야간 근무', content: '180시간', note: '월간 합계' }
+    ];
+
+    summaryData.forEach(data => {
+      worksheet.addRow(data);
+    });
+
+    // 파일명 설정
+    const fileName = `월별요약보고서_${month}.xlsx`;
+    
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(fileName)}"`);
+    
+    await workbook.xlsx.write(res);
+    res.end();
+
+  } catch (error) {
+    console.error('월별 요약 보고서 다운로드 오류:', error);
+    res.status(500).json({ success: false, message: '보고서 다운로드 중 오류가 발생했습니다.' });
   }
 });
 

@@ -885,61 +885,7 @@
       }
     }
 
-    // 인사 현황 보고서 다운로드
-    function downloadHRReport() {
-      window.location.href = '/dashboard/hr-report/excel';
-    }
-
-    // 근무 통계 보고서 다운로드
-    function downloadWorkStatsReport() {
-      window.location.href = '/dashboard/work-stats/excel';
-    }
-
-    // 월별 요약 보고서 다운로드
-    function downloadMonthlyReport() {
-      const month = prompt('요약 보고서를 생성할 월을 입력하세요 (예: 2025-08):', new Date().toISOString().slice(0, 7));
-      if (month) {
-        window.location.href = `/dashboard/monthly-report/excel?month=${month}`;
-      }
-    }
-
-    // 직원 데이터 내보내기
-    function downloadEmployeeData() {
-      window.location.href = '/employees/excel/export';
-    }
-
-    // 근무 스케줄 데이터 내보내기
-    function downloadScheduleData() {
-      window.location.href = '/workSchedule/excel/export';
-    }
-
-    // 근태 데이터 내보내기
-    function downloadAttendanceData() {
-      window.location.href = '/attendance/excel/export';
-    }
-
-    // 직원 템플릿 다운로드
-    function downloadEmployeeTemplate() {
-      window.location.href = '/employees/excel/template';
-    }
-
-    // 스케줄 템플릿 다운로드
-    function downloadScheduleTemplate() {
-      window.location.href = '/workSchedule/excel/template';
-    }
-
-    // 근태 템플릿 다운로드
-    function downloadAttendanceTemplate() {
-      window.location.href = '/attendance/excel/template';
-    }
-
-    // 근태 보고서 다운로드
-    function downloadAttendanceReport() {
-      const month = prompt('근태 보고서를 생성할 월을 입력하세요 (예: 2025-08):', new Date().toISOString().slice(0, 7));
-      if (month) {
-        window.location.href = `/attendance/report/excel?month=${month}`;
-      }
-    }
+    // 중복 함수 제거됨 - 위쪽에 이미 정의된 함수들 사용
   </script>
 </body>
 </html> 

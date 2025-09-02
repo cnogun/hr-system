@@ -3,6 +3,7 @@ const router = express.Router();
 const WorkSchedule = require('../models/WorkSchedule');
 const WorkScheduleService = require('../services/workScheduleService');
 const Employee = require('../models/Employee');
+const ExcelJS = require('exceljs');
 
 // 근무 스케줄 관리 페이지 렌더링
 router.get('/', async (req, res) => {
@@ -775,5 +776,220 @@ function generateTeamPersonnelData(teamNumber) {
     group4: group4.join('\n')
   };
 }
+
+// 근무 스케줄 엑셀 템플릿 다운로드
+router.get('/excel/template', async (req, res) => {
+  try {
+    // 세션 확인
+    if (!req.session || !req.session.userId) {
+      return res.status(401).json({ success: false, message: '로그인이 필요합니다.' });
+    }
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('근무 스케줄 템플릿');
+    
+    // 헤더 스타일
+    const headerStyle = {
+      font: { bold: true, color: { argb: 'FFFFFF' } },
+      fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: '4472C4' } },
+      alignment: { horizontal: 'center', vertical: 'middle' }
+    };
+
+    // 헤더 설정
+    worksheet.columns = [
+      { header: '날짜', key: 'date', width: 15 },
+      { header: '요일', key: 'dayOfWeek', width: 10 },
+      { header: '보안1팀', key: 'team1', width: 20 },
+      { header: '보안2팀', key: 'team2', width: 20 },
+      { header: '보안3팀', key: 'team3', width: 20 }
+    ];
+
+    // 헤더 스타일 적용
+    worksheet.getRow(1).eachCell((cell) => {
+      cell.style = headerStyle;
+    });
+
+    // 샘플 데이터 추가
+    const today = new Date();
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(today);
+      date.setDate(today.getDate() + i);
+      
+      const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+      const dayOfWeek = dayNames[date.getDay()];
+      
+      worksheet.addRow({
+        date: date.toISOString().split('T')[0],
+        dayOfWeek: dayOfWeek,
+        team1: '주간/심야/초야',
+        team2: '심야/초야/주간',
+        team3: '초야/주간/심야'
+      });
+    }
+
+    // 파일명 설정
+    const fileName = `근무스케줄_템플릿_${new Date().toISOString().split('T')[0]}.xlsx`;
+    
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(fileName)}"`);
+    
+    await workbook.xlsx.write(res);
+    res.end();
+
+  } catch (error) {
+    console.error('근무 스케줄 템플릿 다운로드 오류:', error);
+    res.status(500).json({ success: false, message: '템플릿 다운로드 중 오류가 발생했습니다.' });
+  }
+});
+
+// 근무 스케줄 엑셀 내보내기
+router.get('/excel/export', async (req, res) => {
+  try {
+    // 세션 확인
+    if (!req.session || !req.session.userId) {
+      return res.status(401).json({ success: false, message: '로그인이 필요합니다.' });
+    }
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('근무 스케줄');
+    
+    // 헤더 스타일
+    const headerStyle = {
+      font: { bold: true, color: { argb: 'FFFFFF' } },
+      fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: '4472C4' } },
+      alignment: { horizontal: 'center', vertical: 'middle' }
+    };
+
+    // 헤더 설정
+    worksheet.columns = [
+      { header: '날짜', key: 'date', width: 15 },
+      { header: '요일', key: 'dayOfWeek', width: 10 },
+      { header: '보안1팀', key: 'team1', width: 20 },
+      { header: '보안2팀', key: 'team2', width: 20 },
+      { header: '보안3팀', key: 'team3', width: 20 }
+    ];
+
+    // 헤더 스타일 적용
+    worksheet.getRow(1).eachCell((cell) => {
+      cell.style = headerStyle;
+    });
+
+    // 현재 주차 데이터 가져오기
+    const today = new Date();
+    const weekStart = WorkScheduleService.getWeekStart(today);
+    const weekEnd = WorkScheduleService.getWeekEnd(today);
+    
+    // 주차 정보 계산
+    const weekNumber = WorkScheduleService.getWeekNumber(today);
+    const teamSchedule = WorkScheduleService.getTeamSchedule(weekNumber);
+
+    // 일주일 데이터 추가
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(weekStart);
+      date.setDate(weekStart.getDate() + i);
+      
+      const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+      const dayOfWeek = dayNames[date.getDay()];
+      
+      worksheet.addRow({
+        date: date.toISOString().split('T')[0],
+        dayOfWeek: dayOfWeek,
+        team1: teamSchedule.team1,
+        team2: teamSchedule.team2,
+        team3: teamSchedule.team3
+      });
+    }
+
+    // 파일명 설정
+    const fileName = `근무스케줄_${new Date().toISOString().split('T')[0]}.xlsx`;
+    
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(fileName)}"`);
+    
+    await workbook.xlsx.write(res);
+    res.end();
+
+  } catch (error) {
+    console.error('근무 스케줄 내보내기 오류:', error);
+    res.status(500).json({ success: false, message: '데이터 내보내기 중 오류가 발생했습니다.' });
+  }
+});
+
+// 근무 통계 보고서 엑셀 다운로드
+router.get('/stats/excel', async (req, res) => {
+  try {
+    // 세션 확인
+    if (!req.session || !req.session.userId) {
+      return res.status(401).json({ success: false, message: '로그인이 필요합니다.' });
+    }
+
+    const { month } = req.query;
+    if (!month) {
+      return res.status(400).json({ success: false, message: '월 정보가 필요합니다.' });
+    }
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('근무 통계 보고서');
+    
+    // 헤더 스타일
+    const headerStyle = {
+      font: { bold: true, color: { argb: 'FFFFFF' } },
+      fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: '4472C4' } },
+      alignment: { horizontal: 'center', vertical: 'middle' }
+    };
+
+    // 헤더 설정
+    worksheet.columns = [
+      { header: '구분', key: 'category', width: 20 },
+      { header: '보안1팀', key: 'team1', width: 15 },
+      { header: '보안2팀', key: 'team2', width: 15 },
+      { header: '보안3팀', key: 'team3', width: 15 },
+      { header: '합계', key: 'total', width: 15 }
+    ];
+
+    // 헤더 스타일 적용
+    worksheet.getRow(1).eachCell((cell) => {
+      cell.style = headerStyle;
+    });
+
+    // 통계 데이터 추가 (샘플)
+    worksheet.addRow({
+      category: '주간 근무',
+      team1: '7일',
+      team2: '7일',
+      team3: '7일',
+      total: '21일'
+    });
+
+    worksheet.addRow({
+      category: '심야 근무',
+      team1: '7일',
+      team2: '7일',
+      team3: '7일',
+      total: '21일'
+    });
+
+    worksheet.addRow({
+      category: '초야 근무',
+      team1: '7일',
+      team2: '7일',
+      team3: '7일',
+      total: '21일'
+    });
+
+    // 파일명 설정
+    const fileName = `근무통계_${month}.xlsx`;
+    
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(fileName)}"`);
+    
+    await workbook.xlsx.write(res);
+    res.end();
+
+  } catch (error) {
+    console.error('근무 통계 보고서 다운로드 오류:', error);
+    res.status(500).json({ success: false, message: '보고서 다운로드 중 오류가 발생했습니다.' });
+  }
+});
 
 module.exports = router;

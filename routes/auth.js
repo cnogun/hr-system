@@ -407,6 +407,94 @@ router.get('/logs', async (req, res) => {
     position: user.position || '관리자'
   });
 });
+// 활동 로그 API (AJAX용)
+router.get('/logs/api', async (req, res) => {
+  try {
+    if (!req.session.userId) return res.status(401).json({ success: false, error: '로그인이 필요합니다.' });
+    const User = require('../models/User');
+    const user = await User.findById(req.session.userId);
+    if (!user || user.role !== 'admin') return res.status(403).json({ success: false, error: '관리자만 접근 가능합니다.' });
+    
+    const Log = require('../models/Log');
+    const { page = 1, limit = 20, startDate, endDate, userId, activityType } = req.query;
+    
+    // 필터 조건 구성
+    let filter = {};
+    if (startDate || endDate) {
+      filter.createdAt = {};
+      if (startDate) filter.createdAt.$gte = new Date(startDate);
+      if (endDate) filter.createdAt.$lte = new Date(endDate + 'T23:59:59.999Z');
+    }
+    if (userId) filter.userId = userId;
+    if (activityType) filter.action = activityType;
+    
+    const skip = (page - 1) * limit;
+    const logs = await Log.find(filter)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit))
+      .populate('userId', 'username email role');
+    
+    const totalLogs = await Log.countDocuments(filter);
+    const totalPages = Math.ceil(totalLogs / limit);
+    
+    // 통계 계산
+    const stats = {
+      totalLogs,
+      totalUsers: await Log.distinct('userId').length,
+      todayLogs: await Log.countDocuments({
+        createdAt: {
+          $gte: new Date(new Date().setHours(0, 0, 0, 0)),
+          $lt: new Date(new Date().setHours(23, 59, 59, 999))
+        }
+      })
+    };
+    
+    res.json({
+      success: true,
+      data: {
+        logs,
+        pagination: {
+          currentPage: parseInt(page),
+          totalPages,
+          totalLogs,
+          hasNext: page < totalPages,
+          hasPrev: page > 1
+        },
+        stats
+      }
+    });
+  } catch (error) {
+    console.error('활동 로그 API 오류:', error);
+    res.status(500).json({ success: false, error: '서버 오류가 발생했습니다.' });
+  }
+});
+
+// 사용자 목록 API (활동로그 필터용)
+router.get('/users', async (req, res) => {
+  try {
+    if (!req.session.userId) return res.status(401).json({ success: false, error: '로그인이 필요합니다.' });
+    const User = require('../models/User');
+    const user = await User.findById(req.session.userId);
+    if (!user || user.role !== 'admin') return res.status(403).json({ success: false, error: '관리자만 접근 가능합니다.' });
+    
+    const users = await User.find({}, 'username email role position').sort({ username: 1 });
+    res.json({
+      success: true,
+      data: users.map(u => ({
+        userId: u._id,
+        name: u.username,
+        email: u.email,
+        role: u.role,
+        position: u.position
+      }))
+    });
+  } catch (error) {
+    console.error('사용자 목록 API 오류:', error);
+    res.status(500).json({ success: false, error: '서버 오류가 발생했습니다.' });
+  }
+});
+
 // 활동 로그 엑셀 다운로드
 router.get('/logs/excel', async (req, res) => {
   if (!req.session.userId) return res.redirect('/auth/login');
