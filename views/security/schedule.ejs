@@ -372,7 +372,17 @@
 
   <%- include('../footer') %>
   
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script>
+    // 헤더 드롭다운 메뉴 초기화
+    document.addEventListener('DOMContentLoaded', function() {
+      // Bootstrap 드롭다운 초기화
+      const dropdownElementList = [].slice.call(document.querySelectorAll('.dropdown-toggle'));
+      const dropdownList = dropdownElementList.map(function (dropdownToggleEl) {
+        return new bootstrap.Dropdown(dropdownToggleEl);
+      });
+    });
+
     // 오늘 날짜를 기본값으로 설정
     document.addEventListener('DOMContentLoaded', function() {
       const today = new Date().toISOString().split('T')[0];

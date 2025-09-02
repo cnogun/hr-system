@@ -401,7 +401,11 @@ router.get('/logs', async (req, res) => {
   if (!user || user.role !== 'admin') return res.status(403).send('관리자만 접근 가능합니다.');
   const Log = require('../models/Log');
   const logs = await Log.find().sort({ createdAt: -1 }).limit(100).populate('userId', 'username email role');
-  res.render('logs', { logs });
+  res.render('activityLogs', { 
+    logs,
+    session: req.session,
+    position: user.position || '관리자'
+  });
 });
 // 활동 로그 엑셀 다운로드
 router.get('/logs/excel', async (req, res) => {

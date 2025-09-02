@@ -71,7 +71,7 @@
   </style>
 </head>
 <body class="bg-light">
-  <%- include('header') %>
+  <%- include('header', { session: session, position: position }) %>
   
   <div class="container mt-4">
     <div class="row mb-4">
@@ -81,11 +81,6 @@
             <i class="fa-solid fa-history me-2 text-primary"></i>
             활동 로그
           </h1>
-          <div>
-            <a href="/dashboard" class="btn btn-outline-secondary">
-              <i class="fa-solid fa-arrow-left me-1"></i>대시보드
-            </a>
-          </div>
         </div>
         <p class="text-muted mt-2">사용자 활동 내역을 확인하고 관리할 수 있습니다.</p>
       </div>
@@ -542,68 +537,11 @@
     }, 5000);
   }
 
-  // 페이지 로드 시 초기화
-  document.addEventListener('DOMContentLoaded', function() {
-    console.log('활동 로그 페이지가 로드되었습니다.');
-    
-    // 페이지 초기화
-    initializePage();
-    
-    // 헤더 드롭다운 메뉴 초기화 (약간의 지연 후)
-    setTimeout(() => {
-      initializeHeaderDropdowns();
-    }, 500);
-    
-    // 초기 데이터 로드
-    loadActivityLogs(1);
-  });
-  
-  // 헤더 드롭다운 메뉴 초기화 함수
-  function initializeHeaderDropdowns() {
-    try {
-      console.log('헤더 드롭다운 초기화 시작...');
-      
-      // Bootstrap이 로드될 때까지 대기
-      if (typeof bootstrap === 'undefined') {
-        console.log('Bootstrap 로드 대기 중...');
-        setTimeout(initializeHeaderDropdowns, 100);
-        return;
-      }
-      
-      // 모든 드롭다운 토글 요소 찾기
-      const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
-      console.log('발견된 드롭다운 토글:', dropdownToggles.length, '개');
-      
-      // 각 드롭다운 토글에 대해 Bootstrap 드롭다운 초기화
-      dropdownToggles.forEach((toggle, index) => {
-        try {
-          // 기존 인스턴스가 있다면 제거
-          const existingInstance = bootstrap.Dropdown.getInstance(toggle);
-          if (existingInstance) {
-            existingInstance.dispose();
-          }
-          
-          // 새 드롭다운 인스턴스 생성
-          const dropdown = new bootstrap.Dropdown(toggle, {
-            autoClose: true,
-            boundary: 'viewport'
-          });
-          
-          console.log(`드롭다운 ${index + 1} 초기화 완료:`, toggle.textContent.trim());
-          
-        } catch (error) {
-          console.error(`드롭다운 ${index + 1} 초기화 오류:`, error);
-        }
-      });
-      
-      console.log('모든 헤더 드롭다운 초기화 완료!');
-      
-    } catch (error) {
-      console.error('헤더 드롭다운 초기화 중 오류 발생:', error);
-    }
-  }
+
 
   </script>
+  
+
   
   <%- include('footer') %>
 </body>
