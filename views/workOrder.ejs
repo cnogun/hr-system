@@ -608,7 +608,7 @@
             }
             
             /* 인원편성 섹션 지역 구분선 - 인쇄용 */
-            .assignment-divider {qh
+            .assignment-divider {
                 display: block !important;
                 height: 1px;
                 background-color: #333;
@@ -1158,20 +1158,20 @@
                                             <div class="absent-grid-item">
                                                 <div class="absent-type"><%= item.type %>:</div>
                                                 <div class="absent-names"><%= item.names.join(', ') %></div>
-                                            </div>
+                                    </div>
                                         <% }); %>
                                     <% } else if (workOrder.personnelStatus.accidentDetails) { %>
                                         <div class="absent-grid-item">
                                             <div class="absent-type">사고내용:</div>
                                             <div class="absent-names"><%= workOrder.personnelStatus.accidentDetails %></div>
                                         </div>
-                                    <% } else { %>
+                                <% } else { %>
                                         <div class="absent-grid-item">
                                             <div class="absent-type">사고내용:</div>
                                             <div class="absent-names">-</div>
                                         </div>
-                                    <% } %>
-                                </div>
+                            <% } %>
+                        </div>
                             </td>
                             <td class="personnel-td" rowspan="3" style="vertical-align: middle;">
                                 <div class="personnel-value" style="text-align: center;"><%= workOrder.personnelStatus.currentPersonnel || '-' %></div>
@@ -1374,10 +1374,10 @@
                                 <div class="education-item">2. 근무기강 확립/근무 개강 반드시 준수 할 것/입초 근무 시 정위치 정자세 근무/복장 통일되게 관리</div>
                             <% } %>
                         </div>
-                        </div>
                     </div>
                 </div>
-                    </div>
+            </div>
+        </div>
 
         <!-- 버튼 그룹 -->
         <div class="btn-group">
