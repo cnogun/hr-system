@@ -1,0 +1,1358 @@
+<%- include('header') %>
+
+    <style>
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 20px;
+        }
+        
+        .title {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        
+        .form-section {
+            margin-bottom: 25px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        
+        .section-header {
+            background-color: #f8f9fa;
+            padding: 10px 15px;
+            border-bottom: 1px solid #ddd;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        .section-content {
+            padding: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+        }
+        
+        .form-control.small {
+            max-width: 150px;
+            min-width: 120px;
+        }
+        
+        .form-control.medium {
+            max-width: 250px;
+            min-width: 200px;
+        }
+        
+        .form-control.time {
+            max-width: 180px;
+            min-width: 150px;
+            font-size: 16px;
+            padding: 10px 12px;
+        }
+        
+        .assignment-table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 2px solid #333;
+            margin-top: 15px;
+            font-size: 12px;
+        }
+        
+        .assignment-table th,
+        .assignment-table td {
+            border: 1px solid #333;
+            padding: 8px;
+            text-align: center;
+            vertical-align: middle;
+        }
+        
+        .assignment-table th {
+            background-color: #f0f0f0;
+            font-weight: bold;
+            font-size: 13px;
+        }
+        
+        .region-header {
+            background-color: #e9ecef !important;
+            font-size: 14px;
+            font-weight: bold;
+            width: 80px;
+        }
+        
+        .location-header {
+            background-color: #e9ecef !important;
+            font-size: 14px;
+            font-weight: bold;
+            width: 120px;
+        }
+        
+        .personnel-header {
+            background-color: #e9ecef !important;
+            font-size: 14px;
+            font-weight: bold;
+            text-align: center;
+        }
+        
+        .role-header {
+            background-color: #f8f9fa !important;
+            font-size: 12px;
+            font-weight: bold;
+            width: 80px;
+        }
+        
+        .region-cell {
+            background-color: #f8f9fa;
+            font-weight: bold;
+            font-size: 13px;
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            width: 80px;
+        }
+        
+        .location-cell {
+            background-color: #f8f9fa;
+            font-weight: bold;
+            font-size: 12px;
+            text-align: left;
+            padding-left: 12px;
+            width: 120px;
+        }
+        
+        .personnel-cell {
+            background-color: white;
+            width: 80px;
+            height: 40px;
+        }
+        
+        .personnel-cell input {
+            width: 100%;
+            height: 100%;
+            border: none;
+            padding: 4px;
+            font-size: 11px;
+            text-align: center;
+        }
+        
+        .personnel-cell input:focus {
+            outline: 2px solid #007bff;
+            background-color: #f8f9fa;
+        }
+        
+        .role-label {
+            position: absolute;
+            top: 2px;
+            left: 4px;
+            font-size: 9px;
+            font-weight: bold;
+            color: #666;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 1px 3px;
+            border-radius: 2px;
+            z-index: 1;
+        }
+        
+        .personnel-cell {
+            position: relative;
+        }
+        
+        .region-row {
+            background-color: #f8f9fa;
+        }
+        
+        .absent-details {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            background-color: #f8f9fa;
+        }
+        
+        .absent-item {
+            display: grid;
+        grid-template-columns: 1fr 1fr auto;
+            gap: 10px;
+            align-items: end;
+            margin-bottom: 10px;
+        }
+        
+        .absent-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .work-assignment {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            background-color: #f8f9fa;
+        }
+        
+        .assignment-item {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr auto;
+            gap: 10px;
+            align-items: end;
+            margin-bottom: 15px;
+            padding: 10px;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            background-color: white;
+        }
+        
+        .assignment-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .education-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .education-column {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .education-header {
+            background-color: #e9ecef;
+            padding: 8px 12px;
+            font-weight: bold;
+            font-size: 13px;
+            text-align: center;
+        }
+        
+        .education-content {
+            padding: 15px;
+        }
+        
+        .education-item {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+        
+        .education-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .btn {
+        padding: 6px 12px;
+            border: none;
+        border-radius: 3px;
+            cursor: pointer;
+        font-size: 12px;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        margin-right: 6px;
+        min-width: auto;
+        width: auto;
+        }
+        
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+        
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+        
+        .btn-success {
+            background-color: #28a745;
+            color: white;
+        }
+        
+        .btn-danger {
+            background-color: #dc3545;
+            color: white;
+        }
+        
+        .btn:hover {
+            opacity: 0.9;
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            justify-content: center;
+        }
+        
+        .add-button-container {
+            margin-top: 10px;
+            text-align: center;
+        }
+        
+        .add-button-container.weekly-focus-add {
+            margin-top: 5px;
+        }
+        
+        .add-btn {
+            background-color: #17a2b8;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+        
+        .add-btn:hover {
+            background-color: #138496;
+        }
+        
+        .remove-btn {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .approval-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        
+        .approval-table {
+            border-collapse: collapse;
+            border: 1px solid #333;
+        }
+        
+        .approval-table th,
+        .approval-table td {
+            border: 1px solid #333;
+            padding: 8px 12px;
+            text-align: center;
+            font-size: 12px;
+        }
+        
+        .approval-table th {
+            background-color: #f0f0f0;
+            font-weight: bold;
+        }
+        
+        .approval-label {
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            width: 30px;
+            height: 60px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        
+        .approval-cell {
+            height: 40px;
+            width: 80px;
+        }
+        
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .education-section {
+                grid-template-columns: 1fr;
+            }
+            
+            .absent-item,
+            .assignment-item {
+                grid-template-columns: 1fr;
+                gap: 5px;
+            }
+        }
+    </style>
+
+<div class="container mt-4">
+        <!-- 헤더 -->
+        <div class="header">
+            <div class="title"><%= workOrder ? '근무명령서 편집' : '근무명령서 작성' %></div>
+            <div class="approval-section">
+                <div></div>
+                <table class="approval-table">
+                    <tr>
+                        <th rowspan="2" class="approval-label">결재</th>
+                        <th>반장</th>
+                        <th>과장</th>
+                        <th>소장</th>
+                    </tr>
+                    <tr>
+                        <td class="approval-cell"></td>
+                        <td class="approval-cell"></td>
+                        <td class="approval-cell"></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <form method="POST" action="<%= workOrder ? `/work-orders/${workOrder._id}` : '/work-orders' %>">
+            <% if (workOrder) { %>
+                <input type="hidden" name="_method" value="PUT">
+            <% } %>
+
+            <!-- 근무 정보 -->
+            <div class="form-section">
+                <div class="section-header">□ 근무 정보</div>
+                <div class="section-content">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">근무 날짜</label>
+                            <input type="date" name="workInfo.date" class="form-control" 
+                                   value="<%= workOrder ? workOrder.workInfo.date.toISOString().split('T')[0] : '' %>" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">근무팀</label>
+                            <select name="workInfo.team" class="form-control" required>
+                                <option value="">선택하세요</option>
+                                <option value="보안1반" <%= workOrder && workOrder.workInfo.team === '보안1반' ? 'selected' : '' %>>보안1반</option>
+                                <option value="보안2반" <%= workOrder && workOrder.workInfo.team === '보안2반' ? 'selected' : '' %>>보안2반</option>
+                                <option value="보안3반" <%= workOrder && workOrder.workInfo.team === '보안3반' ? 'selected' : '' %>>보안3반</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">근무조</label>
+                            <select name="workInfo.shift" class="form-control" required>
+                                <option value="">선택하세요</option>
+                                <option value="주간조" <%= workOrder && workOrder.workInfo.shift === '주간조' ? 'selected' : '' %>>주간조(06:00~14:00)</option>
+                                <option value="초야조" <%= workOrder && workOrder.workInfo.shift === '초야조' ? 'selected' : '' %>>초야조(14:00~22:00)</option>
+                                <option value="심야조" <%= workOrder && workOrder.workInfo.shift === '심야조' ? 'selected' : '' %>>심야조(22:00~06:00)</option>
+                                <option value="주간특근조" <%= workOrder && workOrder.workInfo.shift === '주간특근조' ? 'selected' : '' %>>주간특근조(06:00~18:00)</option>
+                                <option value="야간특근조" <%= workOrder && workOrder.workInfo.shift === '야간특근조' ? 'selected' : '' %>>야간특근조(18:00~06:00)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- 인원 현황 -->
+            <div class="form-section">
+                <div class="section-header">□ 인원 현황</div>
+                <div class="section-content">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">총원</label>
+                            <input type="number" name="personnelStatus.totalPersonnel" class="form-control small" 
+                                   value="<%= workOrder ? workOrder.personnelStatus.totalPersonnel : 40 %>" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">결원 수</label>
+                            <input type="number" name="personnelStatus.absentPersonnel" class="form-control small" 
+                                   value="<%= workOrder ? workOrder.personnelStatus.absentPersonnel : 0 %>" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">현재원</label>
+                            <input type="number" name="personnelStatus.currentPersonnel" class="form-control small" 
+                                   value="<%= workOrder ? workOrder.personnelStatus.currentPersonnel : 40 %>" readonly>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="personnelStatus.accidentDetails" class="form-label">사고내용</label>
+                            <textarea class="form-control" id="personnelStatus.accidentDetails" name="personnelStatus.accidentDetails" rows="4" placeholder="사고 내용을 입력하세요"><%= workOrder ? workOrder.personnelStatus.accidentDetails : '' %></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group" id="absentDetailsGroup" style="display: none;">
+                        <label class="form-label">결원 상세</label>
+                        <div class="absent-details" id="absentDetails">
+                            <% if (workOrder && workOrder.personnelStatus.absentDetails && workOrder.personnelStatus.absentDetails.length > 0) { %>
+                                <% 
+                                // 사고내용을 3개씩 묶어서 처리 (type, days, employeeName)
+                                const details = workOrder.personnelStatus.absentDetails;
+                                for (let i = 0; i < details.length; i += 3) {
+                                    const type = details[i] || '';
+                                    const days = details[i + 1] || '';
+                                    const employeeName = details[i + 2] || '';
+                                    const index = i / 3;
+                                %>
+                                <div class="absent-item">
+                                    <select name="personnelStatus.absentDetails[<%= index %>].type" class="form-control" onchange="updateAccidentDetails()">
+                                        <option value="연차1" <%= type === '연차1' ? 'selected' : '' %>>연차1</option>
+                                        <option value="연차2" <%= type === '연차2' ? 'selected' : '' %>>연차2</option>
+                                        <option value="정직" <%= type === '정직' ? 'selected' : '' %>>정직</option>
+                                        <option value="휴직" <%= type === '휴직' ? 'selected' : '' %>>휴직</option>
+                                        <option value="산재" <%= type === '산재' ? 'selected' : '' %>>산재</option>
+                                        <option value="병가" <%= type === '병가' ? 'selected' : '' %>>병가</option>
+                                        <option value="경조" <%= type === '경조' ? 'selected' : '' %>>경조</option>
+                                        <option value="근무지원조" <%= type === '근무지원조' ? 'selected' : '' %>>근무지원조</option>
+                                        <option value="기타" <%= type === '기타' ? 'selected' : '' %>>기타</option>
+                                    </select>
+                                    <input type="text" name="personnelStatus.absentDetails[<%= index %>].employeeName" class="form-control" 
+                                           placeholder="직원명" value="<%= employeeName %>" onchange="updateAccidentDetails()">
+                                    <button type="button" class="remove-btn" onclick="removeAbsentItem(this)">삭제</button>
+                                </div>
+                                <% } %>
+                            <% } %>
+                        </div>
+                        <div class="add-button-container">
+                            <button type="button" class="add-btn" onclick="addAbsentItem()">결원 추가</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 근무 편성 -->
+            <div class="form-section">
+                <div class="section-header">□ 근무 편성</div>
+                <div class="section-content">
+                    <table class="assignment-table">
+                        <thead>
+                            <tr>
+                                <th class="region-header">지역</th>
+                                <th class="location-header">보안근무지</th>
+                                <th colspan="6" class="personnel-header">편성</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- 해안지역 -->
+                            <tr class="region-row">
+                                <td rowspan="10" class="region-cell">해안지역</td>
+                                <td class="location-cell">해안입문</td>
+                                <td class="personnel-cell">
+                                    <div class="role-label">반장</div>
+                                    <input type="text" name="workAssignment[0].assignment.teamLeader" class="form-control small" placeholder="반장명 입력" value="<%= workOrder && workOrder.workAssignment && workOrder.workAssignment[0] && workOrder.workAssignment[0].assignment ? workOrder.workAssignment[0].assignment.teamLeader : '' %>">
+                                    <input type="hidden" name="workAssignment[0].region" value="해안">
+                                    <input type="hidden" name="workAssignment[0].location" value="해안입문">
+                                </td>
+                                <td class="personnel-cell">
+                                    <div class="role-label">조장</div>
+                                    <input type="text" name="workAssignment[0].assignment.supervisor" class="form-control small" placeholder="조장명 입력" value="<%= workOrder && workOrder.workAssignment && workOrder.workAssignment[0] && workOrder.workAssignment[0].assignment ? workOrder.workAssignment[0].assignment.supervisor : '' %>">
+                                </td>
+                                <td class="personnel-cell">
+                                    <input type="text" name="workAssignment[0].assignment.members[0]" class="form-control small" placeholder="대원1" value="<%= workOrder && workOrder.workAssignment && workOrder.workAssignment[0] && workOrder.workAssignment[0].assignment && workOrder.workAssignment[0].assignment.members ? workOrder.workAssignment[0].assignment.members[0] : '' %>">
+                                </td>
+                                <td class="personnel-cell">
+                                    <input type="text" name="workAssignment[0].assignment.members[1]" class="form-control small" placeholder="대원2" value="<%= workOrder && workOrder.workAssignment && workOrder.workAssignment[0] && workOrder.workAssignment[0].assignment && workOrder.workAssignment[0].assignment.members ? workOrder.workAssignment[0].assignment.members[1] : '' %>">
+                                </td>
+                                <td class="personnel-cell">
+                                    <input type="text" name="workAssignment[0].assignment.members[2]" class="form-control small" placeholder="대원3" value="<%= workOrder && workOrder.workAssignment && workOrder.workAssignment[0] && workOrder.workAssignment[0].assignment && workOrder.workAssignment[0].assignment.members ? workOrder.workAssignment[0].assignment.members[2] : '' %>">
+                                </td>
+                                <td class="personnel-cell">
+                                    <input type="text" name="workAssignment[0].assignment.members[3]" class="form-control small" placeholder="대원4" value="<%= workOrder && workOrder.workAssignment && workOrder.workAssignment[0] && workOrder.workAssignment[0].assignment && workOrder.workAssignment[0].assignment.members ? workOrder.workAssignment[0].assignment.members[3] : '' %>">
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="location-cell">해안출문</td>
+                                <td class="personnel-cell">
+                                    <input type="text" name="workAssignment[1].assignment.members[0]" class="form-control small" placeholder="대원1">
+                                    <input type="hidden" name="workAssignment[1].region" value="해안">
+                                    <input type="hidden" name="workAssignment[1].location" value="해안출문">
+                                    <input type="hidden" name="workAssignment[1].assignment.teamLeader" value="">
+                                    <input type="hidden" name="workAssignment[1].assignment.supervisor" value="">
+                                </td>
+                                <td class="personnel-cell">
+                                    <input type="text" name="workAssignment[1].assignment.members[1]" class="form-control small" placeholder="대원2">
+                                </td>
+                                <td class="personnel-cell">
+                                    <input type="text" name="workAssignment[1].assignment.members[2]" class="form-control small" placeholder="대원3">
+                                </td>
+                                <td class="personnel-cell">
+                                    <input type="text" name="workAssignment[1].assignment.members[3]" class="form-control small" placeholder="대원4">
+                                </td>
+                                <td class="personnel-cell">-</td>
+                                <td class="personnel-cell">-</td>
+                            </tr>
+                            <tr>
+                                <td class="location-cell">기술교육원문</td>
+                                <td class="personnel-cell">
+                                    <input type="text" name="workAssignment[2].assignment.members[0]" class="form-control small" placeholder="대원1">
+                                    <input type="hidden" name="workAssignment[2].region" value="해안">
+                                    <input type="hidden" name="workAssignment[2].location" value="기술교육원문">
+                                    <input type="hidden" name="workAssignment[2].assignment.teamLeader" value="">
+                                    <input type="hidden" name="workAssignment[2].assignment.supervisor" value="">
+                                </td>
+                                <td class="personnel-cell">
+                                    <input type="text" name="workAssignment[2].assignment.members[1]" class="form-control small" placeholder="대원2">
+                                </td>
+                                <td class="personnel-cell">-</td>
+                                <td class="personnel-cell">-</td>
+                                <td class="personnel-cell">-</td>
+                                <td class="personnel-cell">-</td>
+                            </tr>
+                            <tr>
+                                <td class="location-cell">교육원중문</td>
+                                <td class="personnel-cell">
+                                    <input type="text" name="workAssignment[3].assignment.members[0]" class="form-control small" placeholder="대원1">
+                                    <input type="hidden" name="workAssignment[3].region" value="해안">
+                                    <input type="hidden" name="workAssignment[3].location" value="교육원중문">
+                                    <input type="hidden" name="workAssignment[3].assignment.teamLeader" value="">
+                                    <input type="hidden" name="workAssignment[3].assignment.supervisor" value="">
+                                </td>
+                                <td class="personnel-cell">-</td>
+                                <td class="personnel-cell">-</td>
+                                <td class="personnel-cell">-</td>
+                                <td class="personnel-cell">-</td>
+                                <td class="personnel-cell">-</td>
+                            </tr>
+                            <tr>
+                                <td class="location-cell">성내주차장문</td>
+                                <td class="personnel-cell">
+                                    <input type="text" name="workAssignment[4].assignment.members[0]" class="form-control small" placeholder="대원1">
+                                    <input type="hidden" name="workAssignment[4].region" value="해안">
+                                    <input type="hidden" name="workAssignment[4].location" value="성내주차장문">
+                                    <input type="hidden" name="workAssignment[4].assignment.teamLeader" value="">
+                                    <input type="hidden" name="workAssignment[4].assignment.supervisor" value="">
+                                </td>
+                                <td class="personnel-cell">-</td>
+                                <td class="personnel-cell">-</td>
+                                <td class="personnel-cell">-</td>
+                                <td class="personnel-cell">-</td>
+                                <td class="personnel-cell">-</td>
+                            </tr>
+                            <tr>
+                                <td class="location-cell">성내주차장초소</td>
+                                <td class="personnel-cell">
+                                    <input type="text" name="workAssignment[5].assignment.members[0]" class="form-control small" placeholder="대원1">
+                                    <input type="hidden" name="workAssignment[5].region" value="해안">
+                                    <input type="hidden" name="workAssignment[5].location" value="성내주차장초소">
+                                    <input type="hidden" name="workAssignment[5].assignment.teamLeader" value="">
+                                    <input type="hidden" name="workAssignment[5].assignment.supervisor" value="">
+                                </td>
+                                <td class="personnel-cell">-</td>
+                                <td class="personnel-cell">-</td>
+                                <td class="personnel-cell">-</td>
+                                <td class="personnel-cell">-</td>
+                                <td class="personnel-cell">-</td>
+                            </tr>
+                            <tr>
+                                <td class="location-cell">선적중문</td>
+                                <td class="personnel-cell">
+                                    <input type="text" name="workAssignment[6].assignment.members[0]" class="form-control small" placeholder="대원1">
+                                    <input type="hidden" name="workAssignment[6].region" value="해안">
+                                    <input type="hidden" name="workAssignment[6].location" value="선적중문">
+                                    <input type="hidden" name="workAssignment[6].assignment.teamLeader" value="">
+                                    <input type="hidden" name="workAssignment[6].assignment.supervisor" value="">
+                                </td>
+                                <td class="personnel-cell">
+                                    <input type="text" name="workAssignment[6].assignment.members[1]" class="form-control small" placeholder="대원2">
+                                </td>
+                                <td class="personnel-cell">-</td>
+                                <td class="personnel-cell">-</td>
+                                <td class="personnel-cell">-</td>
+                                <td class="personnel-cell">-</td>
+                            </tr>
+                            <tr>
+                                <td class="location-cell">5의장중문</td>
+                                <td class="personnel-cell">
+                                    <input type="text" name="workAssignment[7].assignment.members[0]" class="form-control small" placeholder="대원1">
+                                    <input type="hidden" name="workAssignment[7].region" value="해안">
+                                    <input type="hidden" name="workAssignment[7].location" value="5의장중문">
+                                    <input type="hidden" name="workAssignment[7].assignment.teamLeader" value="">
+                                    <input type="hidden" name="workAssignment[7].assignment.supervisor" value="">
+                                </td>
+                                <td class="personnel-cell">
+                                    <input type="text" name="workAssignment[7].assignment.members[1]" class="form-control small" placeholder="대원2">
+                                </td>
+                                <td class="personnel-cell">-</td>
+                                <td class="personnel-cell">-</td>
+                                <td class="personnel-cell">-</td>
+                                <td class="personnel-cell">-</td>
+                            </tr>
+                            <tr>
+                                <td class="location-cell">아산로중문</td>
+                                <td class="personnel-cell">
+                                    <input type="text" name="workAssignment[8].assignment.members[0]" class="form-control small" placeholder="대원1">
+                                    <input type="hidden" name="workAssignment[8].region" value="해안">
+                                    <input type="hidden" name="workAssignment[8].location" value="아산로중문">
+                                    <input type="hidden" name="workAssignment[8].assignment.teamLeader" value="">
+                                    <input type="hidden" name="workAssignment[8].assignment.supervisor" value="">
+                                </td>
+                                <td class="personnel-cell">
+                                    <input type="text" name="workAssignment[8].assignment.members[1]" class="form-control small" placeholder="대원2">
+                                </td>
+                                <td class="personnel-cell">-</td>
+                                <td class="personnel-cell">-</td>
+                                <td class="personnel-cell">-</td>
+                                <td class="personnel-cell">-</td>
+                            </tr>
+                            <tr>
+                                <td class="location-cell">항만순찰</td>
+                                <td class="personnel-cell">
+                                    <input type="text" name="workAssignment[9].assignment.members[0]" class="form-control small" placeholder="대원1">
+                                    <input type="hidden" name="workAssignment[9].region" value="해안">
+                                    <input type="hidden" name="workAssignment[9].location" value="항만순찰">
+                                    <input type="hidden" name="workAssignment[9].assignment.teamLeader" value="">
+                                    <input type="hidden" name="workAssignment[9].assignment.supervisor" value="">
+                                </td>
+                                <td class="personnel-cell">
+                                    <input type="text" name="workAssignment[9].assignment.members[1]" class="form-control small" placeholder="대원2">
+                                </td>
+                                <td class="personnel-cell">-</td>
+                                <td class="personnel-cell">-</td>
+                                <td class="personnel-cell">-</td>
+                                <td class="personnel-cell">-</td>
+                            </tr>
+
+                            <!-- 성내지역 -->
+                            <tr class="region-row">
+                                <td rowspan="2" class="region-cell">성내지역</td>
+                                <td class="location-cell">성내문</td>
+                                <td class="personnel-cell">
+                                    <input type="text" name="workAssignment[10].assignment.members[0]" class="form-control small" placeholder="대원1">
+                                    <input type="hidden" name="workAssignment[10].region" value="성내">
+                                    <input type="hidden" name="workAssignment[10].location" value="성내문">
+                                    <input type="hidden" name="workAssignment[10].assignment.teamLeader" value="">
+                                    <input type="hidden" name="workAssignment[10].assignment.supervisor" value="">
+                                </td>
+                                <td class="personnel-cell">
+                                    <input type="text" name="workAssignment[10].assignment.members[1]" class="form-control small" placeholder="대원2">
+                                </td>
+                                <td class="personnel-cell">-</td>
+                                <td class="personnel-cell">-</td>
+                                <td class="personnel-cell">-</td>
+                                <td class="personnel-cell">-</td>
+                            </tr>
+                            <tr>
+                                <td class="location-cell">차량검색소</td>
+                                <td class="personnel-cell">
+                                    <input type="text" name="workAssignment[11].assignment.members[0]" class="form-control small" placeholder="대원1">
+                                    <input type="hidden" name="workAssignment[11].region" value="성내">
+                                    <input type="hidden" name="workAssignment[11].location" value="차량검색소">
+                                    <input type="hidden" name="workAssignment[11].assignment.teamLeader" value="">
+                                    <input type="hidden" name="workAssignment[11].assignment.supervisor" value="">
+                                </td>
+                                <td class="personnel-cell">
+                                    <input type="text" name="workAssignment[11].assignment.members[1]" class="form-control small" placeholder="대원2">
+                                </td>
+                                <td class="personnel-cell">-</td>
+                                <td class="personnel-cell">-</td>
+                                <td class="personnel-cell">-</td>
+                                <td class="personnel-cell">-</td>
+                            </tr>
+
+                            <!-- 시트지역 -->
+                            <tr class="region-row">
+                                <td rowspan="5" class="region-cell">시트지역</td>
+                                <td class="location-cell">시트1문</td>
+                                <td class="personnel-cell">
+                                    <div class="role-label">조장</div>
+                                    <input type="text" name="workAssignment[12].assignment.supervisor" class="form-control small" placeholder="조장명 입력">
+                                    <input type="hidden" name="workAssignment[12].region" value="시트">
+                                    <input type="hidden" name="workAssignment[12].location" value="시트1문">
+                                    <input type="hidden" name="workAssignment[12].assignment.teamLeader" value="">
+                                    <input type="hidden" name="workAssignment[12].assignment.supervisor" value="">
+                                </td>
+                                <td class="personnel-cell">
+                                    <input type="text" name="workAssignment[12].assignment.members[0]" class="form-control small" placeholder="대원1">
+                                </td>
+                                <td class="personnel-cell">
+                                    <input type="text" name="workAssignment[12].assignment.members[1]" class="form-control small" placeholder="대원2">
+                                </td>
+                                <td class="personnel-cell">
+                                    <input type="text" name="workAssignment[12].assignment.members[2]" class="form-control small" placeholder="대원3">
+                                </td>
+                                <td class="personnel-cell">-</td>
+                                <td class="personnel-cell">-</td>
+                            </tr>
+                            <tr>
+                                <td class="location-cell">시트1중문</td>
+                                <td class="personnel-cell">
+                                    <input type="text" name="workAssignment[13].assignment.members[0]" class="form-control small" placeholder="대원1">
+                                    <input type="hidden" name="workAssignment[13].region" value="시트">
+                                    <input type="hidden" name="workAssignment[13].location" value="시트1중문">
+                                    <input type="hidden" name="workAssignment[13].assignment.teamLeader" value="">
+                                    <input type="hidden" name="workAssignment[13].assignment.supervisor" value="">
+                                </td>
+                                <td class="personnel-cell">
+                                    <input type="text" name="workAssignment[13].assignment.members[1]" class="form-control small" placeholder="대원2">
+                                </td>
+                                <td class="personnel-cell">-</td>
+                                <td class="personnel-cell">-</td>
+                                <td class="personnel-cell">-</td>
+                                <td class="personnel-cell">-</td>
+                            </tr>
+                            <tr>
+                                <td class="location-cell">시트1주차장초소</td>
+                                <td class="personnel-cell">
+                                    <input type="text" name="workAssignment[14].assignment.members[0]" class="form-control small" placeholder="대원1">
+                                    <input type="hidden" name="workAssignment[14].region" value="시트">
+                                    <input type="hidden" name="workAssignment[14].location" value="시트1주차장초소">
+                                    <input type="hidden" name="workAssignment[14].assignment.teamLeader" value="">
+                                    <input type="hidden" name="workAssignment[14].assignment.supervisor" value="">
+                                </td>
+                                <td class="personnel-cell">-</td>
+                                <td class="personnel-cell">-</td>
+                                <td class="personnel-cell">-</td>
+                                <td class="personnel-cell">-</td>
+                                <td class="personnel-cell">-</td>
+                            </tr>
+                            <tr>
+                                <td class="location-cell">시트3문</td>
+                                <td class="personnel-cell">
+                                    <input type="text" name="workAssignment[15].assignment.members[0]" class="form-control small" placeholder="대원1">
+                                    <input type="hidden" name="workAssignment[15].region" value="시트">
+                                    <input type="hidden" name="workAssignment[15].location" value="시트3문">
+                                    <input type="hidden" name="workAssignment[15].assignment.teamLeader" value="">
+                                    <input type="hidden" name="workAssignment[15].assignment.supervisor" value="">
+                                </td>
+                                <td class="personnel-cell">
+                                    <input type="text" name="workAssignment[15].assignment.members[1]" class="form-control small" placeholder="대원2">
+                                </td>
+                                <td class="personnel-cell">-</td>
+                                <td class="personnel-cell">-</td>
+                                <td class="personnel-cell">-</td>
+                                <td class="personnel-cell">-</td>
+                            </tr>
+                            <tr>
+                                <td class="location-cell">코일주차장</td>
+                                <td class="personnel-cell">
+                                    <input type="text" name="workAssignment[16].assignment.members[0]" class="form-control small" placeholder="대원1">
+                                    <input type="hidden" name="workAssignment[16].region" value="시트">
+                                    <input type="hidden" name="workAssignment[16].location" value="코일주차장">
+                                    <input type="hidden" name="workAssignment[16].assignment.teamLeader" value="">
+                                    <input type="hidden" name="workAssignment[16].assignment.supervisor" value="">
+                                </td>
+                                <td class="personnel-cell">-</td>
+                                <td class="personnel-cell">-</td>
+                                <td class="personnel-cell">-</td>
+                                <td class="personnel-cell">-</td>
+                                <td class="personnel-cell">-</td>
+                            </tr>
+
+                            <!-- 매암동지역 -->
+                            <tr class="region-row">
+                                <td rowspan="2" class="region-cell">매암동지역</td>
+                                <td class="location-cell">엔진4부</td>
+                                <td class="personnel-cell">
+                                    <div class="role-label">조장</div>
+                                    <input type="text" name="workAssignment[17].assignment.supervisor" class="form-control small" placeholder="조장명 입력">
+                                    <input type="hidden" name="workAssignment[17].region" value="매암동">
+                                    <input type="hidden" name="workAssignment[17].location" value="엔진4부">
+                                    <input type="hidden" name="workAssignment[17].assignment.teamLeader" value="">
+                                    <input type="hidden" name="workAssignment[17].assignment.supervisor" value="">
+                                </td>
+                                <td class="personnel-cell">
+                                    <input type="text" name="workAssignment[17].assignment.members[0]" class="form-control small" placeholder="대원1">
+                                </td>
+                                <td class="personnel-cell">
+                                    <input type="text" name="workAssignment[17].assignment.members[1]" class="form-control small" placeholder="대원2">
+                                </td>
+                                <td class="personnel-cell">-</td>
+                                <td class="personnel-cell">-</td>
+                                <td class="personnel-cell">-</td>
+                            </tr>
+                            <tr>
+                                <td class="location-cell">야적장초소</td>
+                                <td class="personnel-cell">
+                                    <input type="text" name="workAssignment[18].assignment.members[0]" class="form-control small" placeholder="대원1">
+                                    <input type="hidden" name="workAssignment[18].region" value="매암동">
+                                    <input type="hidden" name="workAssignment[18].location" value="야적장초소">
+                                    <input type="hidden" name="workAssignment[18].assignment.teamLeader" value="">
+                                    <input type="hidden" name="workAssignment[18].assignment.supervisor" value="">
+                                </td>
+                                <td class="personnel-cell">-</td>
+                                <td class="personnel-cell">-</td>
+                                <td class="personnel-cell">-</td>
+                                <td class="personnel-cell">-</td>
+                                <td class="personnel-cell">-</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 직무 교육 -->
+            <div class="form-section">
+                <div class="section-header">□ 직무(안전/보건) 교육</div>
+                <div class="section-content">
+                    <div class="education-section">
+                        <div class="education-column">
+                            <div class="education-header">금주중점</div>
+                            <div class="education-content" id="weeklyFocus">
+                                <% if (workOrder && workOrder.education.weeklyFocus) { %>
+                                    <% workOrder.education.weeklyFocus.forEach(function(focus, index) { %>
+                                    <div class="education-item">
+                                        <input type="text" name="education.weeklyFocus[<%= index %>]" class="form-control" 
+                                               value="<%= focus %>">
+                                    </div>
+                                    <% }); %>
+                                <% } else { %>
+                                    <div class="education-item">
+                                        <input type="text" name="education.weeklyFocus[0]" class="form-control" 
+                                               value="근무기강 확립 강조">
+                                    </div>
+                                    <div class="education-item">
+                                        <input type="text" name="education.weeklyFocus[1]" class="form-control" 
+                                               value="기본적인 예의 / 직장 예의범절 준수">
+                                    </div>
+                                    <div class="education-item">
+                                        <input type="text" name="education.weeklyFocus[2]" class="form-control" 
+                                               value="근무중 안전사고 예방 철저">
+                                    </div>
+                                <% } %>
+                            </div>
+                            <div class="add-button-container weekly-focus-add">
+                                <button type="button" class="add-btn" onclick="addWeeklyFocus()">항목 추가</button>
+                            </div>
+                        </div>
+                        
+                        <div class="education-column">
+                            <div class="education-header">교육내용</div>
+                            <div class="education-content" id="generalEducation">
+                                <% if (workOrder && workOrder.education.generalEducation) { %>
+                                    <% workOrder.education.generalEducation.forEach(function(education, index) { %>
+                                    <div class="education-item">
+                                        <input type="text" name="education.generalEducation[<%= index %>]" class="form-control" 
+                                               value="<%= education %>">
+                                    </div>
+                                    <% }); %>
+                                <% } else { %>
+                                    <div class="education-item">
+                                        <input type="text" name="education.generalEducation[0]" class="form-control" 
+                                               value="보안업무 능력 강화(출입보안 업무 일관성 있게 처리 / 입문차량 키오스크 승인 여부 확인)">
+                                    </div>
+                                    <div class="education-item">
+                                        <input type="text" name="education.generalEducation[1]" class="form-control" 
+                                               value="근무기강 확립/근무 개강 반드시 준수 할 것/입초 근무 시 정위치 정자세 근무/복장 통일되게 관리">
+                                    </div>
+                                <% } %>
+                            </div>
+                            <div class="add-button-container">
+                                <button type="button" class="add-btn" onclick="addGeneralEducation()">항목 추가</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 버튼 그룹 -->
+            <div class="btn-group">
+                <a href="/work-orders" class="btn btn-secondary">취소</a>
+                <button type="submit" class="btn btn-primary">
+                    저장
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        // 근무 스케줄 자동 설정 함수
+        function autoSetWorkSchedule() {
+            const dateInput = document.querySelector('input[name="workInfo.date"]');
+            const teamSelect = document.querySelector('select[name="workInfo.team"]');
+            const shiftSelect = document.querySelector('select[name="workInfo.shift"]');
+            
+            console.log('필드 검색 결과:', {
+                dateInput: dateInput,
+                teamSelect: teamSelect,
+                shiftSelect: shiftSelect
+            });
+            
+            if (!dateInput.value || !teamSelect.value) {
+                console.log('날짜 또는 팀이 선택되지 않음');
+                return;
+            }
+            
+            const selectedDate = new Date(dateInput.value);
+            const dayOfWeek = selectedDate.getDay(); // 0: 일요일, 1: 월요일, ..., 6: 토요일
+            const team = teamSelect.value;
+            
+            console.log('자동 설정 시작:', { date: dateInput.value, dayOfWeek, team });
+            
+            let shift;
+            
+            // 평일 스케줄 (월~금) - 9월 3일 기준
+            if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+                switch (team) {
+                    case '보안1반':
+                        shift = '심야조';
+                        break;
+                    case '보안2반':
+                        shift = '주간조';
+                        break;
+                    case '보안3반':
+                        shift = '초야조';
+                        break;
+                }
+            }
+            // 주말 스케줄 (토요일, 일요일)
+            else {
+                if (dayOfWeek === 6) { // 토요일
+                    switch (team) {
+                        case '보안1반':
+                            // 토요일 보안1반: 40명 중 30명 야간특근근무(18:00~06:00)
+                            shift = '야간특근조';
+                            break;
+                        case '보안2반':
+                            // 토요일 보안2반: 전원 휴무
+                            shift = '휴무';
+                            break;
+                        case '보안3반':
+                            // 토요일 보안3반: 30명 주간특근근무(06:00~18:00)
+                            shift = '주간특근조';
+                            break;
+                    }
+                } else { // 일요일
+                    switch (team) {
+                        case '보안1반':
+                            // 일요일 보안1반: 10명(지원조) 야간특근근무(18:00~06:00)
+                            shift = '야간특근조';
+                            break;
+                        case '보안2반':
+                            // 일요일 보안2반: 20명 주간특근, 20명 야간특근
+                            // 기본적으로 주간특근으로 설정 (사용자가 필요시 변경)
+                            shift = '주간특근조';
+                            break;
+                        case '보안3반':
+                            // 일요일 보안3반: 10명 주간특근근무(06:00~18:00)
+                            shift = '주간특근조';
+                            break;
+                    }
+                }
+            }
+            
+            console.log('계산된 스케줄:', { shift });
+            
+            // 자동 설정 적용
+            if (shift === '휴무') {
+                // 휴무인 경우
+                shiftSelect.value = '';
+                
+                // 휴무 알림
+                alert('선택한 날짜와 팀은 휴무일입니다.\n토요일: 보안2반 휴무');
+                
+                // 시각적 피드백 (휴무 표시)
+                shiftSelect.style.backgroundColor = '#fff3cd';
+                
+                setTimeout(() => {
+                    shiftSelect.style.backgroundColor = '';
+                }, 2000);
+            } else if (shift) {
+                // 정상 근무인 경우
+                shiftSelect.value = shift;
+                
+                console.log('스케줄 설정됨:', { shift });
+                
+                // 시각적 피드백
+                shiftSelect.style.backgroundColor = '#e8f5e8';
+                
+                setTimeout(() => {
+                    shiftSelect.style.backgroundColor = '';
+                }, 2000);
+            }
+        }
+        
+        // 페이지 로드 시 이벤트 리스너 설정
+        document.addEventListener('DOMContentLoaded', function() {
+            const dateInput = document.querySelector('input[name="workInfo.date"]');
+            const teamSelect = document.querySelector('select[name="workInfo.team"]');
+            
+            if (dateInput) {
+                dateInput.addEventListener('change', autoSetWorkSchedule);
+            }
+            if (teamSelect) {
+                teamSelect.addEventListener('change', autoSetWorkSchedule);
+            }
+            
+            // 초기 결원 상세 섹션 표시 상태 설정
+            calculateCurrentPersonnel();
+            
+            // 사고내용 자동 업데이트
+            updateAccidentDetails();
+        });
+        
+        // 결원 수 변경 시 현재원 자동 계산 및 결원 상세 표시/숨김
+        document.querySelector('input[name="personnelStatus.totalPersonnel"]').addEventListener('input', calculateCurrentPersonnel);
+        document.querySelector('input[name="personnelStatus.absentPersonnel"]').addEventListener('input', calculateCurrentPersonnel);
+        
+        function calculateCurrentPersonnel() {
+            const total = parseInt(document.querySelector('input[name="personnelStatus.totalPersonnel"]').value) || 0;
+            const absent = parseInt(document.querySelector('input[name="personnelStatus.absentPersonnel"]').value) || 0;
+            const current = total - absent;
+            document.querySelector('input[name="personnelStatus.currentPersonnel"]').value = current;
+            
+            // 결원 수에 따라 결원 상세 섹션 표시/숨김
+            const absentDetailsGroup = document.getElementById('absentDetailsGroup');
+            if (absent > 0) {
+                absentDetailsGroup.style.display = 'block';
+            } else {
+                absentDetailsGroup.style.display = 'none';
+                // 결원 수가 0이면 결원 상세 항목들도 모두 제거
+                const absentDetails = document.getElementById('absentDetails');
+                absentDetails.innerHTML = '';
+            }
+        }
+        
+        // 결원 항목 추가
+        function addAbsentItem() {
+            const container = document.getElementById('absentDetails');
+            const index = container.children.length;
+            const div = document.createElement('div');
+            div.className = 'absent-item';
+            div.innerHTML = `
+                <select name="personnelStatus.absentDetails[${index}].type" class="form-control" onchange="updateAccidentDetails()">
+                    <option value="연차1">연차1</option>
+                    <option value="연차2">연차2</option>
+                    <option value="정직">정직</option>
+                    <option value="휴직">휴직</option>
+                    <option value="산재">산재</option>
+                    <option value="병가">병가</option>
+                    <option value="경조">경조</option>
+                    <option value="근무지원조">근무지원조</option>
+                    <option value="기타">기타</option>
+                </select>
+                <input type="text" name="personnelStatus.absentDetails[${index}].employeeName" class="form-control" placeholder="직원명" onchange="updateAccidentDetails()">
+                <button type="button" class="remove-btn" onclick="removeAbsentItem(this)">삭제</button>
+            `;
+            container.appendChild(div);
+            
+            // 사고내용 자동 업데이트
+            updateAccidentDetails();
+        }
+        
+        // 결원 항목 삭제
+        function removeAbsentItem(button) {
+            button.parentElement.remove();
+            // 사고내용 자동 업데이트
+            updateAccidentDetails();
+        }
+        
+        // 사고내용 자동 업데이트 함수
+        function updateAccidentDetails() {
+            const absentDetails = document.querySelectorAll('.absent-item');
+            const accidentDetailsTextarea = document.getElementById('personnelStatus.accidentDetails');
+            
+            let accidentText = '';
+            const absentByType = {};
+            
+            // 결원 상세 정보를 사고종류별로 분류
+            absentDetails.forEach(item => {
+                const typeSelect = item.querySelector('select[name*=".type"]');
+                const nameInput = item.querySelector('input[name*=".employeeName"]');
+                
+                if (typeSelect && nameInput && nameInput.value.trim()) {
+                    const type = typeSelect.value;
+                    const name = nameInput.value.trim();
+                    
+                    if (!absentByType[type]) {
+                        absentByType[type] = [];
+                    }
+                    absentByType[type].push(name);
+                }
+            });
+            
+            // 사고내용 텍스트 생성
+            Object.keys(absentByType).forEach(type => {
+                if (absentByType[type].length > 0) {
+                    accidentText += `${type}: ${absentByType[type].join(', ')}\n`;
+                }
+            });
+            
+            // 사고내용 텍스트에 업데이트
+            if (accidentDetailsTextarea) {
+                accidentDetailsTextarea.value = accidentText.trim();
+            }
+        }
+        
+        // 근무지 항목 추가
+        function addAssignmentItem() {
+            const container = document.getElementById('workAssignment');
+            const index = container.children.length;
+            const div = document.createElement('div');
+            div.className = 'assignment-item';
+            div.innerHTML = `
+                <select name="workAssignment[${index}].region" class="form-control">
+                    <option value="해안">해안</option>
+                    <option value="성내">성내</option>
+                    <option value="시트">시트</option>
+                    <option value="매암동">매암동</option>
+                </select>
+                <input type="text" name="workAssignment[${index}].location" class="form-control" placeholder="근무지">
+                <input type="text" name="workAssignment[${index}].assignment.teamLeader" class="form-control" placeholder="반장">
+                <input type="text" name="workAssignment[${index}].assignment.supervisor" class="form-control" placeholder="조장">
+                <button type="button" class="remove-btn" onclick="removeAssignmentItem(this)">삭제</button>
+            `;
+            container.appendChild(div);
+        }
+        
+        // 근무지 항목 삭제
+        function removeAssignmentItem(button) {
+            button.parentElement.remove();
+        }
+        
+        // 금주중점 항목 추가
+        function addWeeklyFocus() {
+            const container = document.getElementById('weeklyFocus');
+            const index = container.children.length;
+            const div = document.createElement('div');
+            div.className = 'education-item';
+            div.innerHTML = `
+                <input type="text" name="education.weeklyFocus[${index}]" class="form-control">
+            `;
+            container.appendChild(div);
+        }
+        
+        // 교육내용 항목 추가
+        function addGeneralEducation() {
+            const container = document.getElementById('generalEducation');
+            const index = container.children.length;
+            const div = document.createElement('div');
+            div.className = 'education-item';
+            div.innerHTML = `
+                <input type="text" name="education.generalEducation[${index}]" class="form-control">
+            `;
+            container.appendChild(div);
+        }
+        
+
+        
+        // 폼 제출 전 검증
+        function validateForm() {
+            const dateInput = document.querySelector('input[name="workInfo.date"]');
+            const teamSelect = document.querySelector('select[name="workInfo.team"]');
+            const shiftSelect = document.querySelector('select[name="workInfo.shift"]');
+            const totalPersonnel = document.querySelector('input[name="personnelStatus.totalPersonnel"]');
+            const absentPersonnel = document.querySelector('input[name="personnelStatus.absentPersonnel"]');
+            
+            let isValid = true;
+            let errorMessages = [];
+            
+            // 필수 필드 검증
+            if (!dateInput.value) {
+                errorMessages.push('근무 날짜를 선택해주세요.');
+                isValid = false;
+            }
+            
+            if (!teamSelect.value) {
+                errorMessages.push('근무팀을 선택해주세요.');
+                isValid = false;
+            }
+            
+            if (!shiftSelect.value) {
+                errorMessages.push('근무조를 선택해주세요.');
+                isValid = false;
+            }
+            
+            // 인원 수 검증
+            const total = parseInt(totalPersonnel.value) || 0;
+            const absent = parseInt(absentPersonnel.value) || 0;
+            
+            if (total <= 0) {
+                errorMessages.push('총원은 1명 이상이어야 합니다.');
+                isValid = false;
+            }
+            
+            if (absent < 0) {
+                errorMessages.push('결원 수는 0 이상이어야 합니다.');
+                isValid = false;
+            }
+            
+            if (absent > total) {
+                errorMessages.push('결원 수는 총원보다 많을 수 없습니다.');
+                isValid = false;
+            }
+            
+            // 오류 메시지 표시
+            if (!isValid) {
+                alert('다음 오류를 수정해주세요:\n\n' + errorMessages.join('\n'));
+                return false;
+            }
+            
+            return true;
+        }
+        
+        // 폼 제출 이벤트 리스너
+        let isSubmitting = false;
+        document.querySelector('form').addEventListener('submit', function(e) {
+            if (isSubmitting) {
+                e.preventDefault();
+                return false;
+            }
+            
+            if (!validateForm()) {
+                e.preventDefault();
+                return false;
+            }
+            
+            // 디버깅: 폼 데이터 확인
+            console.log('=== 폼 제출 데이터 확인 ===');
+            const formData = new FormData(e.target);
+            console.log('결원상세 데이터:');
+            const absentDetails = document.querySelectorAll('[name^="personnelStatus.absentDetails"]');
+            absentDetails.forEach((input, index) => {
+                console.log(`  ${input.name}: ${input.value}`);
+            });
+            
+            console.log('인원편성 데이터:');
+            const workAssignments = document.querySelectorAll('[name^="workAssignment"]');
+            workAssignments.forEach((input, index) => {
+                console.log(`  ${input.name}: ${input.value}`);
+            });
+            console.log('=== 폼 제출 데이터 확인 끝 ===');
+            
+            // 제출 중 상태로 설정
+            isSubmitting = true;
+            const submitBtn = document.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.textContent = '저장 중...';
+            }
+            
+            // 5초 후 제출 상태 해제 (타임아웃 방지)
+            setTimeout(() => {
+                isSubmitting = false;
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = '저장';
+                }
+            }, 5000);
+        });
+    </script>
+
+<%- include('footer') %>
+</body>
+</html>

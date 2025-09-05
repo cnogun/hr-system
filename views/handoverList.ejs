@@ -1,0 +1,566 @@
+<%- include('header') %>
+
+<style>
+        
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        background: white;
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 20px;
+        }
+        
+        .title {
+            font-size: 28px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+            min-width: auto;
+            width: auto;
+        }
+        
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+        
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+        
+        .btn:hover {
+            opacity: 0.9;
+        }
+        
+        .filters {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .form-label {
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .form-control {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+        }
+        
+        .handovers-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+        }
+        
+        .handovers-table th,
+        .handovers-table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        
+        .handovers-table th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .handovers-table tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        
+        .handovers-table tr:hover {
+            background-color: #e9ecef;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            text-align: center;
+        }
+        
+        .status-pending {
+            background-color: #ffc107;
+            color: #212529;
+        }
+        
+        .status-in-progress {
+            background-color: #17a2b8;
+            color: white;
+        }
+        
+        .status-completed {
+            background-color: #28a745;
+            color: white;
+        }
+        
+        .status-cancelled {
+            background-color: #dc3545;
+            color: white;
+        }
+        
+        .team-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+            text-align: center;
+            margin-right: 5px;
+        }
+        
+        .team-1 {
+            background-color: #007bff;
+            color: white;
+        }
+        
+        .team-2 {
+            background-color: #28a745;
+            color: white;
+        }
+        
+        .team-3 {
+            background-color: #dc3545;
+            color: white;
+        }
+        
+        .time-category {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 10px;
+            font-weight: bold;
+            text-align: center;
+        }
+        
+        .time-day {
+            background-color: #17a2b8;
+            color: white;
+        }
+        
+        .time-night {
+            background-color: #6c757d;
+            color: white;
+        }
+        
+        .time-late {
+            background-color: #343a40;
+            color: white;
+        }
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .pagination a,
+        .pagination span {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            text-decoration: none;
+            color: #333;
+            border-radius: 4px;
+        }
+        
+        .pagination a:hover {
+            background-color: #e9ecef;
+        }
+        
+        .pagination .current {
+            background-color: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+        
+        .actions {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .btn-sm {
+            padding: 4px 8px;
+            font-size: 12px;
+        }
+        
+        .btn-info {
+            background-color: #17a2b8;
+            color: white;
+        }
+        
+        .btn-warning {
+            background-color: #ffc107;
+            color: #212529;
+        }
+        
+        .btn-danger {
+            background-color: #dc3545;
+            color: white;
+        }
+        
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-size: 16px;
+        }
+        
+        .stats-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            text-align: center;
+        }
+        
+        .stat-title {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+        }
+        
+        @media (max-width: 768px) {
+            .filters {
+                grid-template-columns: 1fr;
+            }
+            
+            .handovers-table {
+                font-size: 12px;
+            }
+            
+            .handovers-table th,
+            .handovers-table td {
+                padding: 8px 4px;
+            }
+            
+            .actions {
+                flex-direction: column;
+            }
+            
+            .stats-summary {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+
+<div class="container mt-4">
+        <!-- 헤더 -->
+        <div class="header">
+            <div class="title">일일업무 인계장 목록</div>
+            <% if (userRole === 'admin') { %>
+            <a href="/handovers/new" class="btn btn-primary">새 인계장 작성</a>
+            <% } %>
+        </div>
+
+        <!-- 통계 요약 -->
+        <div class="stats-summary">
+            <div class="stat-card">
+                <div class="stat-title">전체 인계장</div>
+                <div class="stat-value"><%= total %></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title">이번 주</div>
+                <div class="stat-value" id="thisWeekCount">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title">완료된 보고</div>
+                <div class="stat-value" id="completedReports">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title">완료율</div>
+                <div class="stat-value" id="completionRate">-</div>
+            </div>
+        </div>
+
+        <!-- 필터 -->
+        <div class="filters">
+            <div class="form-group">
+                <label class="form-label">부서</label>
+                <select class="form-control" id="departmentFilter">
+                    <option value="">전체</option>
+                    <option value="보안1팀">보안1팀</option>
+                    <option value="보안2팀">보안2팀</option>
+                    <option value="보안3팀">보안3팀</option>
+                    <option value="전체">전체</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">담당팀</label>
+                <select class="form-control" id="teamFilter">
+                    <option value="">전체</option>
+                    <option value="1반">1반</option>
+                    <option value="2반">2반</option>
+                    <option value="3반">3반</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">상태</label>
+                <select class="form-control" id="statusFilter">
+                    <option value="">전체</option>
+                    <option value="pending">대기중</option>
+                    <option value="in-progress">진행중</option>
+                    <option value="completed">완료</option>
+                    <option value="cancelled">취소</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">날짜</label>
+                <input type="date" class="form-control" id="dateFilter">
+            </div>
+            <div class="form-group">
+                <label class="form-label">&nbsp;</label>
+                <button type="button" class="btn btn-secondary" onclick="applyFilters()">검색</button>
+            </div>
+        </div>
+
+        <!-- 인계장 목록 -->
+        <% if (handovers && handovers.length > 0) { %>
+        <table class="handovers-table">
+            <thead>
+                <tr>
+                    <th>인계장 정보</th>
+                    <th>인계사항</th>
+                    <th>상태</th>
+                    <th>인계자</th>
+                    <th>작성일</th>
+                    <th>작업</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% handovers.forEach(function(handover) { %>
+                <tr>
+                    <td>
+                        <div style="font-weight: bold; margin-bottom: 5px;">
+                            <%= handover.formattedHandoverDate %>
+                        </div>
+                        <div style="font-size: 12px; color: #666;">
+                            <%= handover.department %>
+                        </div>
+                    </td>
+                    <td>
+                        <div style="font-size: 12px;">
+                            <div>전체: <%= handover.totalItemsCount %>건</div>
+                            <div>완료: <%= handover.completedReportsCount %>건</div>
+                            <div style="margin-top: 5px;">
+                                <% Object.keys(handover.teamItemsCount).forEach(function(team) { %>
+                                <span class="team-badge team-<%= team.charAt(0) %>">
+                                    <%= team %>: <%= handover.teamItemsCount[team] %>
+                                </span>
+                                <% }); %>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="status-badge status-<%= handover.status %>">
+                            <%= handover.status === 'pending' ? '대기중' : 
+                                handover.status === 'in-progress' ? '진행중' : 
+                                handover.status === 'completed' ? '완료' : '취소' %>
+                        </span>
+                    </td>
+                    <td>
+                        <div style="font-size: 12px;">
+                            <% if (handover.handoverFrom) { %>
+                            <div>인계: <%= handover.handoverFrom.name %></div>
+                            <% } %>
+                            <% if (handover.handoverTo) { %>
+                            <div>인수: <%= handover.handoverTo.name %></div>
+                            <% } %>
+                        </div>
+                    </td>
+                    <td>
+                        <div style="font-size: 12px;">
+                            <div><%= new Date(handover.createdAt).getFullYear() %>.<%= String(new Date(handover.createdAt).getMonth() + 1).padStart(2, '0') %>.<%= String(new Date(handover.createdAt).getDate()).padStart(2, '0') %></div>
+                            <div style="color: #666;"><%= new Date(handover.createdAt).toLocaleTimeString('ko-KR', {hour: '2-digit', minute: '2-digit'}) %></div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="actions">
+                            <a href="/handovers/<%= handover._id %>" class="btn btn-info btn-sm">보기</a>
+                            <% if (userRole === 'admin') { %>
+                            <a href="/handovers/<%= handover._id %>/edit" class="btn btn-warning btn-sm">수정</a>
+                            <button onclick="deleteHandover('<%= handover._id %>')" class="btn btn-danger btn-sm">삭제</button>
+                            <% } %>
+                        </div>
+                    </td>
+                </tr>
+                <% }); %>
+            </tbody>
+        </table>
+        <% } else { %>
+        <div class="no-data">
+            등록된 인계장이 없습니다.
+        </div>
+        <% } %>
+
+        <!-- 페이지네이션 -->
+        <% if (totalPages > 1) { %>
+        <div class="pagination">
+            <% if (hasPrevPage) { %>
+            <a href="?page=<%= prevPage %>">이전</a>
+            <% } %>
+            
+            <% for (let i = Math.max(1, currentPage - 2); i <= Math.min(totalPages, currentPage + 2); i++) { %>
+                <% if (i === currentPage) { %>
+                <span class="current"><%= i %></span>
+                <% } else { %>
+                <a href="?page=<%= i %>"><%= i %></a>
+                <% } %>
+            <% } %>
+            
+            <% if (hasNextPage) { %>
+            <a href="?page=<%= nextPage %>">다음</a>
+            <% } %>
+        </div>
+        <% } %>
+    </div>
+
+    <script>
+        // 통계 데이터 로드
+        document.addEventListener('DOMContentLoaded', function() {
+            loadStats();
+        });
+        
+        // 통계 로드
+        function loadStats() {
+            const today = new Date();
+            const startOfWeek = new Date(today);
+            startOfWeek.setDate(today.getDate() - today.getDay());
+            
+            fetch(`/handovers/stats/summary?startDate=${startOfWeek.toISOString().split('T')[0]}&endDate=${today.toISOString().split('T')[0]}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('thisWeekCount').textContent = data.data.totalHandovers;
+                    document.getElementById('completedReports').textContent = data.data.completedReports;
+                    document.getElementById('completionRate').textContent = data.data.completionRate + '%';
+                }
+            })
+            .catch(error => {
+                console.error('통계 로드 오류:', error);
+            });
+        }
+        
+        // 필터 적용
+        function applyFilters() {
+            const params = new URLSearchParams();
+            
+            const department = document.getElementById('departmentFilter').value;
+            const team = document.getElementById('teamFilter').value;
+            const status = document.getElementById('statusFilter').value;
+            const date = document.getElementById('dateFilter').value;
+            
+            if (department) params.append('department', department);
+            if (team) params.append('team', team);
+            if (status) params.append('status', status);
+            if (date) params.append('date', date);
+            
+            window.location.href = '/handovers?' + params.toString();
+        }
+        
+        // 인계장 삭제
+        function deleteHandover(id) {
+            if (confirm('정말로 이 인계장을 삭제하시겠습니까?')) {
+                fetch(`/handovers/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('인계장이 삭제되었습니다.');
+                        location.reload();
+                    } else {
+                        alert('삭제 중 오류가 발생했습니다: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('삭제 중 오류가 발생했습니다.');
+                });
+            }
+        }
+        
+        // URL 파라미터로 필터 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            
+            if (urlParams.get('department')) {
+                document.getElementById('departmentFilter').value = urlParams.get('department');
+            }
+            if (urlParams.get('team')) {
+                document.getElementById('teamFilter').value = urlParams.get('team');
+            }
+            if (urlParams.get('status')) {
+                document.getElementById('statusFilter').value = urlParams.get('status');
+            }
+            if (urlParams.get('date')) {
+                document.getElementById('dateFilter').value = urlParams.get('date');
+            }
+        });
+    </script>
+
+<%- include('footer') %>
+</body>
+</html>

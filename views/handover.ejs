@@ -1,0 +1,555 @@
+<%- include('header') %>
+
+<style>
+        
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        background: white;
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 20px;
+        }
+        
+        .title {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        
+        .date-info {
+            font-size: 16px;
+            color: #666;
+        }
+        
+        .handover-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            border: 1px solid #333;
+        }
+        
+        .handover-table th,
+        .handover-table td {
+            border: 1px solid #333;
+            padding: 8px 12px;
+            text-align: left;
+            vertical-align: top;
+        }
+        
+        .handover-table th {
+            background-color: #f0f0f0;
+            font-weight: bold;
+            text-align: center;
+            font-size: 13px;
+        }
+        
+        .handover-table td {
+            font-size: 12px;
+            line-height: 1.4;
+        }
+        
+        .task-type {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .task-details {
+            margin-bottom: 8px;
+        }
+        
+        .task-details div {
+            margin-bottom: 3px;
+        }
+        
+        .datetime {
+            color: #007bff;
+            font-weight: bold;
+        }
+        
+        .personnel {
+            color: #28a745;
+        }
+        
+        .location {
+            color: #6c757d;
+        }
+        
+        .content {
+            color: #333;
+        }
+        
+        .additional-info {
+            color: #dc3545;
+            font-style: italic;
+        }
+        
+        .report-completed {
+            text-align: center;
+            font-weight: bold;
+            color: #28a745;
+        }
+        
+        .team-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+            text-align: center;
+            min-width: 30px;
+        }
+        
+        .team-1 {
+            background-color: #007bff;
+            color: white;
+        }
+        
+        .team-2 {
+            background-color: #28a745;
+            color: white;
+        }
+        
+        .team-3 {
+            background-color: #dc3545;
+            color: white;
+        }
+        
+        .time-category {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 10px;
+            font-weight: bold;
+            text-align: center;
+        }
+        
+        .time-day {
+            background-color: #17a2b8;
+            color: white;
+        }
+        
+        .time-night {
+            background-color: #6c757d;
+            color: white;
+        }
+        
+        .time-late {
+            background-color: #343a40;
+            color: white;
+        }
+        
+        .summary-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .summary-card {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            text-align: center;
+            background-color: #f8f9fa;
+        }
+        
+        .summary-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        .summary-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            justify-content: center;
+        }
+        
+        .btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+            min-width: auto;
+            width: auto;
+        }
+        
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+        
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+        
+        .btn-success {
+            background-color: #28a745;
+            color: white;
+        }
+        
+        .btn:hover {
+            opacity: 0.9;
+        }
+        
+        @media print {
+            /* 인쇄 시 A4 한 장에 적절한 여백으로 보기 좋게 */
+            body {
+                background: white;
+                padding: 0;
+                font-size: 11px;
+                line-height: 1.4;
+                margin: 0;
+                min-height: auto !important;
+                display: block !important;
+            }
+            
+            .container {
+                box-shadow: none;
+                border-radius: 0;
+                padding: 1px 3px 1px 3px;
+                max-width: none;
+                margin: 0;
+            }
+            
+            .footer {
+                display: none !important;
+            }
+            
+            /* 푸터 관련 모든 요소 숨김 */
+            footer,
+            .footer,
+            .mt-auto,
+            .py-2 {
+                display: none !important;
+                visibility: hidden !important;
+                height: 0 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            
+            /* 헤더 영역 숨김 */
+            header {
+                display: none !important;
+            }
+            
+            /* 버튼 그룹 숨김 */
+            .btn-group {
+                display: none !important;
+            }
+            
+            /* Bootstrap 스크립트 및 스타일 관련 요소 숨김 */
+            .navbar,
+            .navbar-nav,
+            .nav-link,
+            .brand-logo,
+            .brand-text,
+            .navbar-toggler,
+            .dropdown-menu,
+            .toast,
+            .modal {
+                display: none !important;
+            }
+            
+            /* 컨테이너 상단 여백 제거 */
+            .container {
+                margin-top: 0 !important;
+                padding-top: 0 !important;
+                margin-bottom: 0 !important;
+            }
+            
+            /* 인계장 제목을 페이지 최상단으로 */
+            .header {
+                margin-top: 0 !important;
+                padding-top: 0 !important;
+                margin-bottom: 15px;
+                padding-bottom: 10px;
+            }
+            
+            .title {
+                font-size: 24px;
+                font-weight: bold;
+                margin-bottom: 5px;
+                margin-top: 0 !important;
+                padding-top: 0 !important;
+            }
+            
+            .date-info {
+                font-size: 12px;
+                color: #666;
+            }
+            
+            /* 요약 정보 섹션 인쇄 스타일 */
+            .summary-section {
+                display: flex !important;
+                flex-direction: row !important;
+                gap: 10px !important;
+                margin-bottom: 15px !important;
+            }
+            
+            .summary-card {
+                flex: 1 !important;
+                padding: 8px !important;
+                border: 1px solid #ddd !important;
+                border-radius: 3px !important;
+            }
+            
+            .summary-title {
+                font-size: 9px !important;
+                margin-bottom: 5px !important;
+            }
+            
+            .summary-value {
+                font-size: 16px !important;
+            }
+            
+            /* 인계장 테이블 인쇄 스타일 */
+            .handover-table {
+                width: 100% !important;
+                border-collapse: collapse !important;
+                margin-bottom: 0 !important;
+                border: 1px solid #333 !important;
+                font-size: 9px !important;
+            }
+            
+            .handover-table th,
+            .handover-table td {
+                border: 1px solid #333 !important;
+                padding: 4px 6px !important;
+                text-align: left !important;
+                vertical-align: top !important;
+                font-size: 8px !important;
+                line-height: 1.2 !important;
+            }
+            
+            .handover-table th {
+                background-color: #f0f0f0 !important;
+                font-weight: bold !important;
+                text-align: center !important;
+                font-size: 9px !important;
+            }
+            
+            .task-type {
+                font-weight: bold !important;
+                margin-bottom: 2px !important;
+                font-size: 9px !important;
+            }
+            
+            .task-details {
+                margin-bottom: 4px !important;
+            }
+            
+            .task-details div {
+                margin-bottom: 1px !important;
+                font-size: 8px !important;
+                line-height: 1.1 !important;
+            }
+            
+            .datetime {
+                color: #007bff !important;
+                font-weight: bold !important;
+            }
+            
+            .personnel {
+                color: #28a745 !important;
+            }
+            
+            .location {
+                color: #6c757d !important;
+            }
+            
+            .content {
+                color: #333 !important;
+            }
+            
+            .additional-info {
+                color: #dc3545 !important;
+                font-style: italic !important;
+            }
+            
+            .report-completed {
+                text-align: center !important;
+                font-weight: bold !important;
+                color: #28a745 !important;
+                font-size: 8px !important;
+            }
+            
+            .team-badge {
+                padding: 1px 4px !important;
+                border-radius: 8px !important;
+                font-size: 7px !important;
+                font-weight: bold !important;
+                text-align: center !important;
+                min-width: 20px !important;
+            }
+            
+            .time-category {
+                padding: 1px 3px !important;
+                border-radius: 2px !important;
+                font-size: 7px !important;
+                font-weight: bold !important;
+                text-align: center !important;
+            }
+            
+            /* 페이지 설정 - 공간 최적화 */
+            @page {
+                size: A4;
+                margin: 0.8cm;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .handover-table {
+                font-size: 10px;
+            }
+            
+            .handover-table th,
+            .handover-table td {
+                padding: 4px 6px;
+            }
+            
+            .summary-section {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+
+<div class="container mt-4">
+        <!-- 헤더 -->
+        <div class="header">
+            <div class="title">일일업무 인계장</div>
+            <div class="date-info"><%= handover.formattedHandoverDate %></div>
+        </div>
+
+        <!-- 요약 정보 -->
+        <div class="summary-section">
+            <div class="summary-card">
+                <div class="summary-title">전체 인계사항</div>
+                <div class="summary-value"><%= handover.totalItemsCount %></div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-title">완료된 보고</div>
+                <div class="summary-value"><%= handover.completedReportsCount %></div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-title">1반</div>
+                <div class="summary-value"><%= handover.teamItemsCount['1반'] || 0 %></div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-title">2반</div>
+                <div class="summary-value"><%= handover.teamItemsCount['2반'] || 0 %></div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-title">3반</div>
+                <div class="summary-value"><%= handover.teamItemsCount['3반'] || 0 %></div>
+            </div>
+        </div>
+
+        <!-- 인계장 테이블 -->
+        <table class="handover-table">
+            <thead>
+                <tr>
+                    <th style="width: 60%;">업무 내용</th>
+                    <th style="width: 15%;">보고완료</th>
+                    <th style="width: 10%;">담당팀</th>
+                    <th style="width: 15%;">시간대</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% if (handover.handoverItems && handover.handoverItems.length > 0) { %>
+                    <% handover.handoverItems.forEach(function(item, index) { %>
+                    <tr>
+                        <td>
+                            <div class="task-type">□<%= item.taskType %></div>
+                            <% if (item.taskDetails) { %>
+                                <% if (item.taskDetails.dateTime) { %>
+                                <div class="task-details">
+                                    <div class="datetime">
+                                        일시: <%= item.taskDetails.dateTime.date %> <%= item.taskDetails.dateTime.startTime %>~<%= item.taskDetails.dateTime.endTime %>
+                                    </div>
+                                    <% if (item.taskDetails.personnel) { %>
+                                    <div class="personnel">
+                                        인원: <%= item.taskDetails.personnel.company %> <%= item.taskDetails.personnel.name %>
+                                        <% if (item.taskDetails.personnel.additionalCount) { %>
+                                        외 <%= item.taskDetails.personnel.additionalCount %>명
+                                        <% } %>
+                                        <% if (item.taskDetails.personnel.phone) { %>
+                                        (<%= item.taskDetails.personnel.phone %>)
+                                        <% } %>
+                                    </div>
+                                    <% } %>
+                                    <% if (item.taskDetails.location) { %>
+                                    <div class="location">
+                                        장소: <%= item.taskDetails.location %>
+                                    </div>
+                                    <% } %>
+                                    <% if (item.taskDetails.content) { %>
+                                    <div class="content">
+                                        내용: <%= item.taskDetails.content %>
+                                    </div>
+                                    <% } %>
+                                    <% if (item.taskDetails.additionalInfo) { %>
+                                    <div class="additional-info">
+                                        <%= item.taskDetails.additionalInfo %>
+                                    </div>
+                                    <% } %>
+                                </div>
+                                <% } %>
+                            <% } %>
+                        </td>
+                        <td class="report-completed">
+                            <%= item.reportCompleted ? '보고완료' : '미완료' %>
+                        </td>
+                        <td style="text-align: center;">
+                            <span class="team-badge team-<%= item.assignedTeam.charAt(0) %>">
+                                <%= item.assignedTeam %>
+                            </span>
+                        </td>
+                        <td style="text-align: center;">
+                            <span class="time-category time-<%= item.timeCategory === '주간' ? 'day' : (item.timeCategory === '야간' ? 'night' : 'late') %>">
+                                <%= item.timeCategory %>
+                            </span>
+                        </td>
+                    </tr>
+                    <% }); %>
+                <% } else { %>
+                    <tr>
+                        <td colspan="4" style="text-align: center; padding: 20px; color: #666;">
+                            등록된 인계사항이 없습니다.
+                        </td>
+                    </tr>
+                <% } %>
+            </tbody>
+        </table>
+
+        <!-- 버튼 그룹 -->
+        <div class="btn-group">
+            <a href="/handovers" class="btn btn-secondary">목록으로</a>
+            <a href="/handovers/<%= handover._id %>/edit" class="btn btn-primary">수정</a>
+            <button onclick="window.print()" class="btn btn-success">인쇄</button>
+        </div>
+    </div>
+
+<%- include('footer') %>
+</body>
+</html>

@@ -62,6 +62,7 @@ const methodOverride = require('method-override');
 const path = require('path');
 const session = require('express-session');
 const MongoStore = require('connect-mongo');
+const flash = require('connect-flash');
 const morgan = require('morgan');
 const Employee = require('./models/Employee');
 const User = require('./models/User');
@@ -70,7 +71,7 @@ const Log = require('./models/Log');
 const app = express();
 
 // 환경변수 설정
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 10000;
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/hr_system';
 const SESSION_SECRET = process.env.SESSION_SECRET || 'hr_system_session_secret_key_2025';
 
@@ -124,6 +125,7 @@ app.use(session({
   store: MongoStore.create({ mongoUrl: MONGODB_URI }),
   cookie: { maxAge: 1000 * 60 * 60 }, // 1시간
 }));
+app.use(flash());
 app.use(morgan('dev'));
 app.use(async (req, res, next) => {
   try {
@@ -212,6 +214,11 @@ app.use(express.static(path.join(__dirname, 'public'), (err, req, res, next) => 
   }
 }));
 
+// Chrome DevTools 요청 처리 (404 방지)
+app.get('/.well-known/appspecific/com.chrome.devtools.json', (req, res) => {
+  res.status(404).json({ message: 'Not found' });
+});
+
 // 라우트 연결
 const employeeRoutes = require('./routes/employees');
 const authRoutes = require('./routes/auth');
@@ -222,6 +229,8 @@ const boardRoutes = require('./routes/boards');
 const securityRoutes = require('./routes/security');
 const attendanceRoutes = require('./routes/attendance');
 const monthlyAttendanceRoutes = require('./routes/monthlyAttendance');
+const workOrderRoutes = require('./routes/workOrders');
+const handoverRoutes = require('./routes/handovers');
 
 
 app.use('/employees', employeeRoutes);
@@ -232,6 +241,8 @@ app.use('/boards', boardRoutes);
 app.use('/security', securityRoutes);
 app.use('/attendance', attendanceRoutes);
 app.use('/monthlyAttendance', monthlyAttendanceRoutes);
+app.use('/work-orders', workOrderRoutes);
+app.use('/handovers', handoverRoutes);
 // WorkSchedule 라우트 (EJS 템플릿 사용)
 app.get('/workSchedule', async (req, res) => {
   try {

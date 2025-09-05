@@ -1,0 +1,480 @@
+<%- include('header') %>
+
+<style>
+        
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        background: white;
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+        
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+        border-bottom: 2px solid #333;
+        padding-bottom: 20px;
+    }
+        
+    .title {
+        font-size: 28px;
+        font-weight: bold;
+        color: #333;
+    }
+        
+    .btn {
+        padding: 6px 12px;
+        border: none;
+        border-radius: 3px;
+        cursor: pointer;
+        font-size: 12px;
+        text-decoration: none;
+        display: inline-block;
+        text-align: center;
+        min-width: auto;
+        width: auto;
+    }
+        
+    .btn-primary {
+        background-color: #007bff;
+        color: white;
+    }
+    
+    .btn-secondary {
+        background-color: #6c757d;
+        color: white;
+    }
+    
+    .btn:hover {
+        opacity: 0.9;
+    }
+        
+    .filters {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-bottom: 20px;
+        padding: 20px;
+        background-color: #f8f9fa;
+        border-radius: 5px;
+    }
+        
+    .form-group {
+        display: flex;
+        flex-direction: column;
+    }
+        
+    .form-label {
+        margin-bottom: 5px;
+        font-weight: bold;
+        color: #333;
+    }
+        
+    .form-control {
+        padding: 8px 12px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+    }
+        
+    .form-control:focus {
+        outline: none;
+        border-color: #007bff;
+        box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+    }
+        
+    .work-orders-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+        border: 1px solid #ddd;
+    }
+        
+    .work-orders-table th,
+    .work-orders-table td {
+        border: 1px solid #ddd;
+        padding: 12px;
+        text-align: left;
+    }
+        
+    .work-orders-table th {
+        background-color: #f8f9fa;
+        font-weight: bold;
+        color: #333;
+    }
+        
+    .work-orders-table tr:nth-child(even) {
+        background-color: #f8f9fa;
+    }
+        
+    .work-orders-table tr:hover {
+        background-color: #e9ecef;
+    }
+        
+    .status-badge {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: bold;
+        text-align: center;
+    }
+        
+    .status-pending {
+        background-color: #ffc107;
+        color: #212529;
+    }
+        
+    .status-active {
+        background-color: #17a2b8;
+        color: white;
+    }
+        
+    .status-completed {
+        background-color: #28a745;
+        color: white;
+    }
+        
+    .team-badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: bold;
+        text-align: center;
+        margin-right: 5px;
+    }
+        
+    .team-1 {
+        background-color: #007bff;
+        color: white;
+    }
+        
+    .team-2 {
+        background-color: #28a745;
+        color: white;
+    }
+        
+    .team-3 {
+        background-color: #dc3545;
+        color: white;
+    }
+        
+    .shift-badge {
+        display: inline-block;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-size: 10px;
+        font-weight: bold;
+        text-align: center;
+    }
+        
+    .shift-day {
+        background-color: #17a2b8;
+        color: white;
+    }
+        
+    .shift-night {
+        background-color: #6c757d;
+        color: white;
+    }
+        
+    .shift-late {
+        background-color: #343a40;
+        color: white;
+    }
+        
+    .pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+        margin-top: 20px;
+    }
+        
+    .pagination a,
+    .pagination span {
+        padding: 8px 12px;
+        border: 1px solid #ddd;
+        text-decoration: none;
+        color: #333;
+        border-radius: 4px;
+    }
+        
+    .pagination a:hover {
+        background-color: #e9ecef;
+    }
+        
+    .pagination .current {
+        background-color: #007bff;
+        color: white;
+        border-color: #007bff;
+    }
+        
+    .actions {
+        display: flex;
+        gap: 5px;
+    }
+        
+    .btn-sm {
+        padding: 4px 8px;
+        font-size: 12px;
+    }
+        
+    .btn-info {
+        background-color: #17a2b8;
+        color: white;
+    }
+        
+    .btn-warning {
+        background-color: #ffc107;
+        color: #212529;
+    }
+        
+    .btn-danger {
+        background-color: #dc3545;
+        color: white;
+    }
+        
+    .no-data {
+        text-align: center;
+        padding: 40px;
+        color: #666;
+        font-size: 16px;
+    }
+        
+    @media (max-width: 768px) {
+        .filters {
+            grid-template-columns: 1fr;
+        }
+            
+        .work-orders-table {
+            font-size: 12px;
+        }
+            
+        .work-orders-table th,
+        .work-orders-table td {
+            padding: 8px 4px;
+        }
+            
+        .actions {
+            flex-direction: column;
+        }
+    }
+    </style>
+
+<div class="container mt-4">
+        <!-- 헤더 -->
+        <div class="header">
+            <div class="title">근무명령서 목록</div>
+            <% if (userRole === 'admin') { %>
+            <a href="/work-orders/new" class="btn btn-primary">새 근무명령서 작성</a>
+            <% } %>
+        </div>
+
+        <!-- 필터 -->
+        <div class="filters">
+            <div class="form-group">
+                <label class="form-label">근무팀</label>
+                <select class="form-control" id="teamFilter">
+                    <option value="">전체</option>
+                    <option value="보안1반">보안1반</option>
+                    <option value="보안2반">보안2반</option>
+                    <option value="보안3반">보안3반</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">근무조</label>
+                <select class="form-control" id="shiftFilter">
+                    <option value="">전체</option>
+                    <option value="주간조">주간조</option>
+                    <option value="심야조">심야조</option>
+                    <option value="야간조">야간조</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">상태</label>
+                <select class="form-control" id="statusFilter">
+                    <option value="">전체</option>
+                    <option value="pending">대기중</option>
+                    <option value="active">진행중</option>
+                    <option value="completed">완료</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">날짜</label>
+                <input type="date" class="form-control" id="dateFilter">
+            </div>
+            <div class="form-group">
+                <label class="form-label">&nbsp;</label>
+                <button type="button" class="btn btn-secondary" onclick="applyFilters()">검색</button>
+            </div>
+        </div>
+
+        <!-- 근무명령서 목록 -->
+        <% if (workOrders && workOrders.length > 0) { %>
+        <table class="work-orders-table">
+            <thead>
+                <tr>
+                    <th>근무 정보</th>
+                    <th>인원 현황</th>
+                    <th>상태</th>
+                    <th>작성자</th>
+                    <th>작성일</th>
+                    <th>작업</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% workOrders.forEach(function(workOrder) { %>
+                <tr>
+                    <td>
+                        <div style="font-weight: bold; margin-bottom: 5px;">
+                            <span class="team-badge team-<%= workOrder.workInfo && workOrder.workInfo.team ? workOrder.workInfo.team.charAt(3) : '1' %>">
+                                <%= workOrder.workInfo && workOrder.workInfo.team ? workOrder.workInfo.team : '보안1반' %>
+                            </span>
+                            <span class="shift-badge shift-<%= workOrder.workInfo && workOrder.workInfo.shift === '주간조' ? 'day' : (workOrder.workInfo && workOrder.workInfo.shift === '야간조' ? 'night' : 'late') %>">
+                                <%= workOrder.workInfo && workOrder.workInfo.shift ? workOrder.workInfo.shift : '주간조' %>
+                            </span>
+                        </div>
+                        <div style="font-size: 12px; color: #666;">
+                            <%= workOrder.formattedWorkInfo || '근무 정보 없음' %>
+                        </div>
+                    </td>
+                    <td>
+                        <div style="font-size: 12px;">
+                            <div>총원: <%= workOrder.personnelStatus && workOrder.personnelStatus.totalPersonnel ? workOrder.personnelStatus.totalPersonnel : 0 %>명</div>
+                            <div>현재원: <%= workOrder.personnelStatus && workOrder.personnelStatus.currentPersonnel ? workOrder.personnelStatus.currentPersonnel : 0 %>명</div>
+                            <% if (workOrder.personnelStatus && workOrder.personnelStatus.absentPersonnel > 0) { %>
+                            <div style="color: #dc3545;">결원: <%= workOrder.personnelStatus.absentPersonnel %>명</div>
+                            <% } %>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="status-badge status-<%= workOrder.status %>">
+                            <%= workOrder.statusKorean %>
+                        </span>
+                    </td>
+                    <td>
+                        <div style="font-size: 12px;">
+                            <div><%= workOrder.createdBy.name %></div>
+                            <% if (workOrder.updatedBy) { %>
+                            <div style="color: #666;">수정: <%= workOrder.updatedBy.name %></div>
+                            <% } %>
+                        </div>
+                    </td>
+                    <td>
+                        <div style="font-size: 12px;">
+                            <div><%= new Date(workOrder.createdAt).getFullYear() %>.<%= String(new Date(workOrder.createdAt).getMonth() + 1).padStart(2, '0') %>.<%= String(new Date(workOrder.createdAt).getDate()).padStart(2, '0') %></div>
+                            <div style="color: #666;"><%= new Date(workOrder.createdAt).toLocaleTimeString('ko-KR', {hour: '2-digit', minute: '2-digit'}) %></div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="actions">
+                            <a href="/work-orders/<%= workOrder._id %>" class="btn btn-info btn-sm">보기</a>
+                            <% if (userRole === 'admin') { %>
+                            <a href="/work-orders/<%= workOrder._id %>/edit" class="btn btn-warning btn-sm">수정</a>
+                            <button onclick="deleteWorkOrder('<%= workOrder._id %>')" class="btn btn-danger btn-sm">삭제</button>
+                            <% } %>
+                        </div>
+                    </td>
+                </tr>
+                <% }); %>
+            </tbody>
+        </table>
+        <% } else { %>
+        <div class="no-data">
+            등록된 근무명령서가 없습니다.
+        </div>
+        <% } %>
+
+        <!-- 페이지네이션 -->
+        <% if (totalPages > 1) { %>
+        <div class="pagination">
+            <% if (hasPrevPage) { %>
+            <a href="?page=<%= prevPage %>">이전</a>
+            <% } %>
+            
+            <% for (let i = Math.max(1, currentPage - 2); i <= Math.min(totalPages, currentPage + 2); i++) { %>
+                <% if (i === currentPage) { %>
+                <span class="current"><%= i %></span>
+                <% } else { %>
+                <a href="?page=<%= i %>"><%= i %></a>
+                <% } %>
+            <% } %>
+            
+            <% if (hasNextPage) { %>
+            <a href="?page=<%= nextPage %>">다음</a>
+            <% } %>
+        </div>
+        <% } %>
+    </div>
+
+    <script>
+        // 필터 적용
+        function applyFilters() {
+            const params = new URLSearchParams();
+            
+            const team = document.getElementById('teamFilter').value;
+            const shift = document.getElementById('shiftFilter').value;
+            const status = document.getElementById('statusFilter').value;
+            const date = document.getElementById('dateFilter').value;
+            
+            if (team) params.append('team', team);
+            if (shift) params.append('shift', shift);
+            if (status) params.append('status', status);
+            if (date) params.append('date', date);
+            
+            window.location.href = '/work-orders?' + params.toString();
+        }
+        
+        // 근무명령서 삭제
+        function deleteWorkOrder(id) {
+            if (confirm('정말로 이 근무명령서를 삭제하시겠습니까?')) {
+                fetch(`/work-orders/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('근무명령서가 삭제되었습니다.');
+                        location.reload();
+                    } else {
+                        alert('삭제 중 오류가 발생했습니다: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('삭제 중 오류가 발생했습니다.');
+                });
+            }
+        }
+        
+        // URL 파라미터로 필터 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            
+            if (urlParams.get('team')) {
+                document.getElementById('teamFilter').value = urlParams.get('team');
+            }
+            if (urlParams.get('shift')) {
+                document.getElementById('shiftFilter').value = urlParams.get('shift');
+            }
+            if (urlParams.get('status')) {
+                document.getElementById('statusFilter').value = urlParams.get('status');
+            }
+            if (urlParams.get('date')) {
+                document.getElementById('dateFilter').value = urlParams.get('date');
+            }
+        });
+    </script>
+
+<%- include('footer') %>
+</body>
+</html>

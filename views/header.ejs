@@ -129,11 +129,11 @@
                 <li><a class="dropdown-item" href="/security/duty-orders">
                   <i class="fa-solid fa-clipboard-list me-2"></i> 인사명령
                 </a></li>
-                <li><a class="dropdown-item" href="/security/work-orders">
+                <li><a class="dropdown-item" href="/work-orders">
                   <i class="fa-solid fa-file-alt me-2"></i> 근무명령서
                 </a></li>
-                <li><a class="dropdown-item" href="/security/handover">
-                  <i class="fa-solid fa-exchange-alt me-2"></i> 인계사항
+                <li><a class="dropdown-item" href="/handovers">
+                  <i class="fa-solid fa-exchange-alt me-2"></i> 인계장
                 </a></li>
                 <li><a class="dropdown-item" href="/security/schedule">
                   <i class="fa-solid fa-calendar-alt me-2"></i> 일정
@@ -146,7 +146,7 @@
       </nav>
       <% } %>
       
-      <!-- 사용자 정보 및 액션 -->
+            <!-- 사용자 정보 및 액션 -->
       <div class="d-flex align-items-center gap-3 order-3">
         <% if (typeof session !== 'undefined' && session && session.userId) { %>
           <a href="/notice/new" class="btn btn-warning btn-sm me-2 d-none d-md-inline-block">
@@ -160,7 +160,7 @@
               <i class="fa-solid fa-user me-1"></i>관리자
             </div>
             <div class="fw-semibold text-dark" style="font-size: 0.9rem;">
-              <i class="fa-solid fa-user-tie me-1"></i><%= position %>
+              <i class="fa-solid fa-user-tie me-1"></i><%= typeof position !== 'undefined' ? position : '관리자' %>
             </div>
           </div>
           
@@ -182,6 +182,7 @@
   </div>
 </header>
 
+<body>
 <script>
 // 전역 변수로 이벤트 리스너 중복 등록 방지
 let dropdownInitialized = false;
@@ -191,6 +192,28 @@ let eventListenersAttached = false;
 console.log('Header script 로드됨');
 console.log('Bootstrap 상태:', typeof bootstrap);
 console.log('Document ready:', document.readyState);
+
+// EJS에서 전달된 세션 정보 확인
+console.log('=== 세션 디버깅 시작 ===');
+<% if (typeof session !== 'undefined') { %>
+  console.log('Session 존재함:', true);
+  console.log('Session 객체:', <%- JSON.stringify(session) %>);
+  console.log('Session userId:', '<%= session.userId %>');
+  console.log('Session userId 타입:', typeof '<%= session.userId %>');
+  console.log('Session userId 길이:', '<%= session.userId %>'.length);
+  console.log('Session userId가 truthy한가?', !!'<%= session.userId %>');
+  console.log('isLoggedIn 조건:', <%= typeof session !== 'undefined' && session && session.userId ? 'true' : 'false' %>);
+  
+  // 실제 조건 테스트
+  const testSession = <%- JSON.stringify(session) %>;
+  const testUserId = '<%= session.userId %>';
+  const testIsLoggedIn = typeof testSession !== 'undefined' && testSession && testUserId;
+  console.log('테스트 isLoggedIn:', testIsLoggedIn);
+<% } else { %>
+  console.log('Session 존재함:', false);
+  console.log('Session 정보: undefined');
+<% } %>
+console.log('=== 세션 디버깅 끝 ===');
 
 // Bootstrap 드롭다운이 로드될 때까지 대기
 function waitForBootstrap() {

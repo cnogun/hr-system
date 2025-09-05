@@ -1,0 +1,494 @@
+<%- include('header') %>
+
+<style>
+        
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        background: white;
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 20px;
+        }
+        
+        .title {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        
+        .form-section {
+            margin-bottom: 25px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        
+        .section-header {
+            background-color: #f8f9fa;
+            padding: 10px 15px;
+            border-bottom: 1px solid #ddd;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        .section-content {
+            padding: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+        }
+        
+        .form-control.small {
+            max-width: 150px;
+        }
+        
+        .form-control.medium {
+            max-width: 200px;
+        }
+        
+        .handover-items {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            background-color: #f8f9fa;
+        }
+        
+        .handover-item {
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 15px;
+            background-color: white;
+        }
+        
+        .handover-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .item-title {
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+            margin-right: 6px;
+            min-width: auto;
+            width: auto;
+        }
+        
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+        
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+        
+        .btn-success {
+            background-color: #28a745;
+            color: white;
+        }
+        
+        .btn-danger {
+            background-color: #dc3545;
+            color: white;
+        }
+        
+        .btn:hover {
+            opacity: 0.9;
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            justify-content: center;
+        }
+        
+        .add-btn {
+            background-color: #17a2b8;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+        
+        .remove-btn {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+            margin: 0;
+        }
+        
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .item-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+        }
+    </style>
+
+<div class="container mt-4">
+        <!-- 헤더 -->
+        <div class="header">
+            <div class="title"><%= handover ? '일일업무 인계장 수정' : '일일업무 인계장 작성' %></div>
+        </div>
+
+        <form method="POST" action="<%= handover ? `/handovers/${handover._id}` : '/handovers' %>">
+            <% if (handover) { %>
+                <input type="hidden" name="_method" value="PUT">
+            <% } %>
+
+            <!-- 기본 정보 -->
+            <div class="form-section">
+                <div class="section-header">□ 기본 정보</div>
+                <div class="section-content">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">인계장 날짜</label>
+                            <input type="date" name="handoverDate" class="form-control medium" 
+                                   value="<%= handover ? handover.handoverDate.toISOString().split('T')[0] : '' %>" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">부서</label>
+                            <select name="department" class="form-control medium" required>
+                                <option value="">선택하세요</option>
+                                <option value="보안1팀" <%= handover && handover.department === '보안1팀' ? 'selected' : '' %>>보안1팀</option>
+                                <option value="보안2팀" <%= handover && handover.department === '보안2팀' ? 'selected' : '' %>>보안2팀</option>
+                                <option value="보안3팀" <%= handover && handover.department === '보안3팀' ? 'selected' : '' %>>보안3팀</option>
+                                <option value="전체" <%= handover && handover.department === '전체' ? 'selected' : '' %>>전체</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 인계사항 -->
+            <div class="form-section">
+                <div class="section-header">□ 인계사항</div>
+                <div class="section-content">
+                    <div class="handover-items" id="handoverItems">
+                        <% if (handover && handover.handoverItems) { %>
+                            <% handover.handoverItems.forEach(function(item, index) { %>
+                            <div class="handover-item">
+                                <div class="item-header">
+                                    <div class="item-title">인계사항 #<%= index + 1 %></div>
+                                    <button type="button" class="remove-btn" onclick="removeHandoverItem(this)">삭제</button>
+                                </div>
+                                
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label">작업 구분</label>
+                                        <input type="text" name="handoverItems[<%= index %>].taskType" class="form-control" 
+                                               value="<%= item.taskType || '' %>" placeholder="예: LED 옥외 전광판, 가드레일 작업" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">담당 팀</label>
+                                        <select name="handoverItems[<%= index %>].assignedTeam" class="form-control" required>
+                                            <option value="">선택하세요</option>
+                                            <option value="1반" <%= item.assignedTeam === '1반' ? 'selected' : '' %>>1반</option>
+                                            <option value="2반" <%= item.assignedTeam === '2반' ? 'selected' : '' %>>2반</option>
+                                            <option value="3반" <%= item.assignedTeam === '3반' ? 'selected' : '' %>>3반</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">시간대</label>
+                                        <select name="handoverItems[<%= index %>].timeCategory" class="form-control" required>
+                                            <option value="">선택하세요</option>
+                                            <option value="주간" <%= item.timeCategory === '주간' ? 'selected' : '' %>>주간</option>
+                                            <option value="야간" <%= item.timeCategory === '야간' ? 'selected' : '' %>>야간</option>
+                                            <option value="심야" <%= item.timeCategory === '심야' ? 'selected' : '' %>>심야</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label">작업 날짜</label>
+                                        <input type="text" name="handoverItems[<%= index %>].taskDetails.dateTime.date" class="form-control small" 
+                                               value="<%= item.taskDetails && item.taskDetails.dateTime ? item.taskDetails.dateTime.date : '' %>" 
+                                               placeholder="예: 8/29(금)">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">시작 시간</label>
+                                        <input type="time" name="handoverItems[<%= index %>].taskDetails.dateTime.startTime" class="form-control small" 
+                                               value="<%= item.taskDetails && item.taskDetails.dateTime ? item.taskDetails.dateTime.startTime : '' %>">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">종료 시간</label>
+                                        <input type="time" name="handoverItems[<%= index %>].taskDetails.dateTime.endTime" class="form-control small" 
+                                               value="<%= item.taskDetails && item.taskDetails.dateTime ? item.taskDetails.dateTime.endTime : '' %>">
+                                    </div>
+                                </div>
+                                
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label">업체명</label>
+                                        <input type="text" name="handoverItems[<%= index %>].taskDetails.personnel.company" class="form-control" 
+                                               value="<%= item.taskDetails && item.taskDetails.personnel ? item.taskDetails.personnel.company : '' %>" 
+                                               placeholder="예: 엘지씨앤에스">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">담당자명</label>
+                                        <input type="text" name="handoverItems[<%= index %>].taskDetails.personnel.name" class="form-control" 
+                                               value="<%= item.taskDetails && item.taskDetails.personnel ? item.taskDetails.personnel.name : '' %>" 
+                                               placeholder="예: 성희준">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">추가 인원 수</label>
+                                        <input type="number" name="handoverItems[<%= index %>].taskDetails.personnel.additionalCount" class="form-control small" 
+                                               value="<%= item.taskDetails && item.taskDetails.personnel ? item.taskDetails.personnel.additionalCount : '' %>" 
+                                               placeholder="예: 2">
+                                    </div>
+                                </div>
+                                
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label">연락처</label>
+                                        <input type="text" name="handoverItems[<%= index %>].taskDetails.personnel.phone" class="form-control" 
+                                               value="<%= item.taskDetails && item.taskDetails.personnel ? item.taskDetails.personnel.phone : '' %>" 
+                                               placeholder="예: 010-3599-9666">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">작업 장소</label>
+                                        <input type="text" name="handoverItems[<%= index %>].taskDetails.location" class="form-control" 
+                                               value="<%= item.taskDetails ? item.taskDetails.location : '' %>" 
+                                               placeholder="예: 아산로 소공원 내">
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">작업 내용</label>
+                                    <textarea name="handoverItems[<%= index %>].taskDetails.content" class="form-control" rows="3" 
+                                              placeholder="예: 옥외 전광판 LMD패널 및 가드레일 1EA 보수 작업"><%= item.taskDetails ? item.taskDetails.content : '' %></textarea>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">추가 정보</label>
+                                    <textarea name="handoverItems[<%= index %>].taskDetails.additionalInfo" class="form-control" rows="2" 
+                                              placeholder="예: 상기인은 외부인으로 울산시 건설본부 발주 내용"><%= item.taskDetails ? item.taskDetails.additionalInfo : '' %></textarea>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <div class="checkbox-group">
+                                        <input type="checkbox" name="handoverItems[<%= index %>].reportCompleted" 
+                                               <%= item.reportCompleted ? 'checked' : '' %>>
+                                        <label>보고 완료</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <% }); %>
+                        <% } %>
+                    </div>
+                    <button type="button" class="add-btn" onclick="addHandoverItem()">인계사항 추가</button>
+                </div>
+            </div>
+
+            <!-- 버튼 그룹 -->
+            <div class="btn-group">
+                <a href="/handovers" class="btn btn-secondary">취소</a>
+                <button type="submit" class="btn btn-primary">
+                    <%= handover ? '수정' : '저장' %>
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        let itemIndex = <%= handover && handover.handoverItems ? handover.handoverItems.length : 0 %>;
+        
+        // 인계사항 추가
+        function addHandoverItem() {
+            const container = document.getElementById('handoverItems');
+            const div = document.createElement('div');
+            div.className = 'handover-item';
+            div.innerHTML = `
+                <div class="item-header">
+                    <div class="item-title">인계사항 #${itemIndex + 1}</div>
+                    <button type="button" class="remove-btn" onclick="removeHandoverItem(this)">삭제</button>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">작업 구분</label>
+                        <input type="text" name="handoverItems[${itemIndex}].taskType" class="form-control" 
+                               placeholder="예: LED 옥외 전광판, 가드레일 작업" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">담당 팀</label>
+                        <select name="handoverItems[${itemIndex}].assignedTeam" class="form-control" required>
+                            <option value="">선택하세요</option>
+                            <option value="1반">1반</option>
+                            <option value="2반">2반</option>
+                            <option value="3반">3반</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">시간대</label>
+                        <select name="handoverItems[${itemIndex}].timeCategory" class="form-control" required>
+                            <option value="">선택하세요</option>
+                            <option value="주간">주간</option>
+                            <option value="야간">야간</option>
+                            <option value="심야">심야</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">작업 날짜</label>
+                        <input type="text" name="handoverItems[${itemIndex}].taskDetails.dateTime.date" class="form-control small" 
+                               placeholder="예: 8/29(금)">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">시작 시간</label>
+                        <input type="time" name="handoverItems[${itemIndex}].taskDetails.dateTime.startTime" class="form-control small">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">종료 시간</label>
+                        <input type="time" name="handoverItems[${itemIndex}].taskDetails.dateTime.endTime" class="form-control small">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">업체명</label>
+                        <input type="text" name="handoverItems[${itemIndex}].taskDetails.personnel.company" class="form-control" 
+                               placeholder="예: 엘지씨앤에스">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">담당자명</label>
+                        <input type="text" name="handoverItems[${itemIndex}].taskDetails.personnel.name" class="form-control" 
+                               placeholder="예: 성희준">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">추가 인원 수</label>
+                        <input type="number" name="handoverItems[${itemIndex}].taskDetails.personnel.additionalCount" class="form-control small" 
+                               placeholder="예: 2">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">연락처</label>
+                        <input type="text" name="handoverItems[${itemIndex}].taskDetails.personnel.phone" class="form-control" 
+                               placeholder="예: 010-3599-9666">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">작업 장소</label>
+                        <input type="text" name="handoverItems[${itemIndex}].taskDetails.location" class="form-control" 
+                               placeholder="예: 아산로 소공원 내">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">작업 내용</label>
+                    <textarea name="handoverItems[${itemIndex}].taskDetails.content" class="form-control" rows="3" 
+                              placeholder="예: 옥외 전광판 LMD패널 및 가드레일 1EA 보수 작업"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">추가 정보</label>
+                    <textarea name="handoverItems[${itemIndex}].taskDetails.additionalInfo" class="form-control" rows="2" 
+                              placeholder="예: 상기인은 외부인으로 울산시 건설본부 발주 내용"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <div class="checkbox-group">
+                        <input type="checkbox" name="handoverItems[${itemIndex}].reportCompleted">
+                        <label>보고 완료</label>
+                    </div>
+                </div>
+            `;
+            container.appendChild(div);
+            itemIndex++;
+        }
+        
+        // 인계사항 삭제
+        function removeHandoverItem(button) {
+            button.parentElement.parentElement.remove();
+        }
+    </script>
+
+<%- include('footer') %>
+</body>
+</html>
