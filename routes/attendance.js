@@ -1,8 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const Employee = require('../models/Employee');
-const WorkSchedule = require('../models/WorkSchedule');
-const WorkScheduleService = require('../services/workScheduleService');
 const ExcelJS = require('exceljs');
 
 // 근태 상태에 따라 비고란 자동 설정 함수

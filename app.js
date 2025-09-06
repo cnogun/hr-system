@@ -269,8 +269,8 @@ app.get('/workSchedule', async (req, res) => {
   }
 });
 
-// WorkSchedule API 엔드포인트들
-const WorkSchedule = require('./models/WorkSchedule');
+// WorkSchedule API 엔드포인트들 (근무명령서와 무관하므로 주석 처리)
+// const WorkSchedule = require('./models/WorkSchedule');
 
 // 현재 주차 정보 조회
 app.get('/workSchedule/current-week', async (req, res) => {

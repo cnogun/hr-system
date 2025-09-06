@@ -1,0 +1,1396 @@
+<%- include('header') %>
+
+    <style>
+    /* CSS 강제 업데이트 - 2025-01-27 15:45 - 테이블 기반 레이아웃 */
+        
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+        padding: 1px 15px 1px 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        margin-top: 0 !important;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 5px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 3px;
+        }
+        
+        .title {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 3px;
+            margin-top: 0;
+        }
+        
+        .approval-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        
+        .approval-table {
+            border-collapse: collapse;
+            border: 1px solid #333;
+        }
+        
+        .approval-table th,
+        .approval-table td {
+            border: 1px solid #333;
+            padding: 8px 12px;
+            text-align: center;
+            font-size: 12px;
+        }
+        
+        .approval-table th {
+            background-color: #f0f0f0;
+            font-weight: bold;
+        }
+        
+        .approval-label {
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            width: 25px;
+            height: 50px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .approval-cell {
+            height: 35px;
+            width: 70px;
+        }
+        
+        .section {
+            margin-bottom: 5px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        
+        /* 근무조 섹션 전체 높이 조정 */
+        .work-team-section {
+            min-height: 80px;
+        }
+        
+        /* 인원현황 섹션 전체 높이 조정 */
+        .section:nth-of-type(2) {
+            min-height: 100px;
+        }
+        
+        /* 인원편성 섹션 높이 조정 */
+        .section:nth-of-type(3) {
+            min-height: 120px;
+        }
+        
+        /* 직무교육 섹션 높이 조정 */
+        .section:nth-of-type(4) {
+            min-height: 100px;
+        }
+        
+        .section-header {
+            background-color: #f8f9fa;
+            padding: 8px 12px;  /* 4px 8px → 8px 12px (적당한 패딩) */
+            border-bottom: 1px solid #ddd;
+            font-weight: bold;
+            font-size: 22px;  /* 11px → 22px (타이틀 텍스트 사이즈 100% 늘림) */
+        }
+        
+        /* 직무교육 섹션 구분선 */
+        .education-divider {
+            height: 1px;
+            background-color: #333;
+            margin: 0;
+        }
+        
+        /* 웹용에서는 구분선 숨김 */
+        .education-sub-divider,
+        .assignment-divider {
+            display: none;
+        }
+        
+        .section-content {
+            padding: 6px;
+        }
+        
+        /* 근무조 섹션 스타일 */
+        .work-team-section .section-content {
+            padding: 12px;  /* 15px → 12px (적당한 조정) */
+            text-align: left;
+            min-height: 50px;  /* 최소 높이 조정 */
+            display: flex;
+            align-items: center;  /* 세로 중앙 정렬 */
+        }
+        
+        /* 인원현황 섹션 마진 조정 */
+        .section:nth-of-type(2) {
+            margin-bottom: 4px;
+        }
+        
+        /* 인원현황 섹션 높이 조정 */
+        .section:nth-of-type(2) .section-content {
+            padding: 10px;  /* 12px → 10px (적당한 조정) */
+            min-height: 70px;  /* 최소 높이 조정 */
+        }
+        
+        /* 마지막 섹션 하단 여백 제거 */
+        .section:last-of-type {
+            margin-bottom: 0;
+        }
+        
+        .work-team-section .info-item {
+            justify-content: flex-start;
+        }
+        
+        .work-team-section .info-value {
+            font-size: 18px;
+            font-weight: 600;
+            line-height: 1.4;
+        }
+        
+        /* 인원편성 섹션 스타일 */
+        .work-assignment-section .section-content {
+            padding: 15px 15px;
+        }
+        
+        /* 야적장 아래 구분선 */
+        .work-assignment-divider {
+            height: 1px;
+            background-color: #ddd;
+            margin: 10px 0;
+        }
+        
+        /* 인원현황 테이블 스타일 */
+        .personnel-table {
+            width: 100% !important;
+            border-collapse: collapse !important;
+            border: 1px solid #ddd !important;
+            border-radius: 4px !important;
+            overflow: hidden !important;
+        }
+        
+        .personnel-th {
+            background-color: #f8f9fa !important;
+            border-right: 1px solid #ddd !important;
+            border-bottom: 1px solid #ddd !important;
+            padding: 12px 8px !important;
+            font-weight: bold !important;
+            font-size: 16px !important;
+            text-align: center !important;
+            vertical-align: middle !important;
+        }
+        
+        .personnel-details-th {
+            width: 50% !important; /* 사고내용은 2배 크기 */
+        }
+        
+        .personnel-th:last-child {
+            border-right: none !important;
+        }
+        
+        .personnel-td {
+            border-right: 1px solid #ddd !important;
+            border-bottom: 1px solid #ddd !important;
+            padding: 12px 8px !important;
+            text-align: center !important;
+            vertical-align: middle !important;
+            min-height: 60px !important;
+        }
+        
+        .personnel-details-td {
+            text-align: left !important;
+            width: 50% !important; /* 사고내용은 2배 크기 */
+        }
+        
+        .personnel-td:last-child {
+            border-right: none !important;
+        }
+        
+        .personnel-value {
+            font-size: 16px !important;
+            font-weight: 600 !important;
+        }
+        
+        /* 사고내용 그리드 스타일 */
+        .absent-grid {
+            width: 100% !important;
+            display: grid !important;
+            gap: 4px !important;
+            height: 100% !important;
+            text-align: left !important;
+        }
+        
+        /* 사고종류가 2개 이하일 때: 세로 1열 */
+        .absent-grid.vertical-layout {
+            grid-template-columns: 1fr !important;
+            grid-template-rows: repeat(auto-fit, minmax(20px, 1fr)) !important;
+        }
+        
+        /* 사고종류가 3-4개일 때: 가로 2열 */
+        .absent-grid.horizontal-layout {
+            grid-template-columns: 1fr 1fr !important;
+            grid-template-rows: repeat(auto-fit, minmax(20px, 1fr)) !important;
+        }
+        
+        /* 사고종류가 5-6개일 때: 왼쪽 3줄, 오른쪽 1줄 */
+        .absent-grid.mixed-layout {
+            grid-template-columns: 1fr 1fr !important;
+            grid-template-rows: 1fr 1fr 1fr !important;
+        }
+        
+        .absent-grid-item {
+            display: flex !important;
+            flex-direction: row !important;
+            align-items: center !important;
+            padding: 2px 4px !important;
+            border: none !important;
+            background-color: transparent !important;
+            min-height: 20px !important;
+            gap: 2px !important;
+        }
+        
+        .absent-type {
+            font-size: 14px !important;
+            font-weight: bold !important;
+            color: #333 !important;
+            margin-right: 2px !important;
+            white-space: nowrap !important;
+        }
+        
+        .absent-names {
+            font-size: 13px !important;
+            line-height: 1.3 !important;
+            color: #666 !important;
+            flex: 1 !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+        }
+        
+        .info-item {
+            display: flex;
+            align-items: center;
+        }
+        
+        .info-label {
+            font-weight: bold;
+            margin-right: 8px;
+            min-width: 60px;
+            font-size: 15px;
+        }
+        
+        .info-value {
+            flex: 1;
+            font-size: 15px;
+        }
+        
+        /* 근무조 항목은 더 넓은 공간 할당 */
+        .info-item:first-child {
+            grid-column: 1;
+        }
+        
+        .info-item:first-child .info-label {
+            min-width: 50px;
+        }
+        
+        .info-item:first-child .info-value {
+            font-size: 16px;
+            line-height: 1.3;
+            font-weight: 600;
+        }
+        
+        .absent-details {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 4px;
+            padding: 12px;
+            margin-top: 10px;
+            min-height: 60px; /* 두 줄 공간 확보 */
+        }
+        
+        .absent-item {
+            margin-bottom: 4px;
+            font-size: 12px;
+            line-height: 1.3;
+            min-height: 20px; /* 각 항목의 최소 높이 증가 */
+        }
+        
+        .work-assignment {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .assignment-column {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .assignment-header {
+            background-color: #e9ecef;
+            padding: 8px 12px;
+            font-weight: bold;
+            font-size: 13px;
+            text-align: center;
+        }
+        
+        .assignment-content {
+            padding: 10px;
+        }
+        
+        .location-group {
+            margin-bottom: 15px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        
+        .location-group:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+        
+        .location-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #333;
+        }
+        
+        .assignment-details {
+            font-size: 12px;
+            line-height: 1.4;
+        }
+        
+        .team-leader {
+            font-weight: bold;
+            color: #007bff;
+        }
+        
+        .supervisor {
+            font-weight: bold;
+            color: #28a745;
+        }
+        
+        .education-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .education-column {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .education-header {
+            background-color: #e9ecef;
+            padding: 8px 12px;
+            font-weight: bold;
+            font-size: 13px;
+            text-align: center;
+        }
+        
+        .education-content {
+            padding: 15px;
+        }
+        
+        .education-item {
+            margin-bottom: 8px;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+        
+        .education-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 6px;
+            justify-content: center;
+            margin-top: 15px;
+        }
+        
+        .btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+            min-width: auto;
+            width: auto;
+        }
+        
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+        
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+        
+        .btn-success {
+            background-color: #28a745;
+            color: white;
+        }
+        
+        .btn:hover {
+            opacity: 0.8;
+            transform: translateY(-1px);
+        }
+        
+        @media print {
+            /* 인쇄 시 A4 한 장에 적절한 여백으로 보기 좋게 */
+            body {
+                background: white;
+                padding: 0;
+                font-size: 11px;  /* 10px → 11px (가독성 향상) */
+                line-height: 1.4;  /* 1.3 → 1.4 (가독성 향상) */
+                margin: 0;
+                min-height: auto !important;
+                display: block !important;
+            }
+            
+            .container {
+                box-shadow: none;
+                border-radius: 0;
+                padding: 1px 3px 1px 3px;  /* 상하 패딩 최소화 */
+                max-width: none;
+                margin: 0;
+            }
+            
+            .footer {
+                display: none !important;  /* 인쇄 시 푸터 숨김 */
+            }
+            
+            /* 푸터 관련 모든 요소 숨김 */
+            footer,
+            .footer,
+            .mt-auto,
+            .py-2 {
+                display: none !important;
+                visibility: hidden !important;
+                height: 0 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            
+            /* 헤더 영역 숨김 */
+            header {
+                display: none !important;
+            }
+            
+            /* 버튼 그룹 숨김 */
+            .btn-group {
+                display: none !important;
+            }
+            
+            /* Bootstrap 스크립트 및 스타일 관련 요소 숨김 */
+            .navbar,
+            .navbar-nav,
+            .nav-link,
+            .brand-logo,
+            .brand-text,
+            .navbar-toggler,
+            .dropdown-menu,
+            .toast,
+            .modal {
+                display: none !important;
+            }
+            
+            /* 컨테이너 상단 여백 제거 */
+            .container {
+                margin-top: 0 !important;
+                padding-top: 0 !important;
+                margin-bottom: 0 !important;
+            }
+            
+            /* 근무명령서 제목을 페이지 최상단으로 */
+            .header {
+                margin-top: 0 !important;
+                padding-top: 0 !important;
+            }
+            
+            .title {
+                font-size: 36px;  /* 28px → 36px (타이틀 텍스트 사이즈 키움) */
+                font-weight: bold;
+                margin-bottom: 5px;  /* 10px → 5px (공간 절약) */
+                margin-top: 0 !important;
+                padding-top: 0 !important;
+            }
+            
+            .approval-section {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-top: 15px;  /* 결재란을 아래로 한 칸 내림 */
+                margin-bottom: 30px;  /* 45px → 60px (구분선과 섹션 사이 여백 더 넓힘) */
+            }
+            
+            .approval-table {
+                border-collapse: collapse;
+                border: 1px solid #333;
+            }
+            
+            .approval-table th,
+            .approval-table td {
+                border: 1px solid #333;
+                padding: 8px 10px;  /* 6px 8px → 8px 10px (결재란 높이에 맞춤) */
+                text-align: center;
+                font-size: 10px;  /* 7px → 10px (가독성 향상) */
+            }
+            
+            .approval-table th {
+                background-color: #f0f0f0;
+                font-weight: bold;
+            }
+            
+            .approval-label {
+                writing-mode: vertical-rl;
+                text-orientation: mixed;
+                width: 20px;  /* 12px → 20px (적절한 크기) */
+                height: 50px;  /* 40px → 50px (결재란 높이에 맞춤) */
+                font-size: 10px;  /* 7px → 10px (가독성 향상) */
+                font-weight: bold;
+            }
+            
+            .approval-cell {
+                height: 40px;  /* 30px → 40px (결재란 높이 증가) */
+                width: 50px;  /* 30px → 50px (적절한 크기) */
+            }
+            
+            .section {
+                break-inside: avoid;
+                margin-bottom: 6px;  /* 3px → 6px (섹션 간 적절한 간격) */
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                overflow: hidden;
+            }
+            
+            /* 마지막 섹션 하단 여백 제거 */
+            .section:last-of-type {
+                margin-bottom: 0;
+            }
+            
+            .section-header {
+                background-color: #f8f9fa;
+                padding: 6px 10px;  /* 5px 8px → 6px 10px (적당한 패딩) */
+                border-bottom: 1px solid #ddd;
+                font-weight: bold;
+                font-size: 20px;  /* 10px → 20px (타이틀 텍스트 사이즈 100% 늘림) */
+            }
+            
+            /* 직무교육 섹션 구분선 (인쇄용) */
+            .education-divider {
+                height: 1px;
+                background-color: #333;
+                margin: 0;
+            }
+            
+            /* 직무교육 하위 구분선 (금주중점, 교육내용) - 인쇄용 */
+            .education-sub-divider {
+                display: block !important;
+                height: 1px;
+                background-color: #333;
+                margin: 0;
+            }
+            
+            /* 인원편성 섹션 지역 구분선 - 인쇄용 */
+            .assignment-divider {
+                display: block !important;
+                height: 1px;
+                background-color: #333;
+                margin: 0;
+            }
+            
+            .section-content {
+                padding: 6px;  /* 4px → 6px (적절한 여백) */
+            }
+            
+            /* 근무조 섹션 인쇄 스타일 */
+            .work-team-section .section-content {
+                padding: 4px;  /* 6px → 4px (근무조 내용 한 칸 더 줄임) */
+                text-align: left;
+                min-height: 20px;  /* 25px → 20px (근무조 내용 한 칸 더 줄임) */
+                display: flex;
+                align-items: center;  /* 세로 중앙 정렬 */
+            }
+            
+            .work-team-section .info-item {
+                justify-content: flex-start;
+            }
+            
+            /* 인원현황 섹션 높이 조정 (인쇄용) */
+            .section:nth-of-type(2) .section-content {
+                padding: 10px;  /* 8px → 10px (세로 한 칸 늘림) */
+                min-height: 60px;  /* 50px → 60px (세로 한 칸 늘림) */
+            }
+            
+            /* 인원편성 섹션 높이 조정 (인쇄용) */
+            .section:nth-of-type(3) .section-content {
+                padding: 8px;  /* 6px → 8px (적절한 여백) */
+                min-height: 80px;
+            }
+            
+            /* 직무교육 섹션 높이 조정 (인쇄용) */
+            .section:nth-of-type(4) .section-content {
+                padding: 8px;  /* 6px → 8px (적절한 여백) */
+                min-height: 60px;
+            }
+            
+            .work-team-section .info-value {
+                font-size: 13px;
+                font-weight: 600;
+                line-height: 1.3;
+            }
+            
+            /* 인원편성 섹션 인쇄 스타일 */
+            .work-assignment-section .section-content {
+                padding: 15px 8px;
+            }
+            
+            /* 인원현황 헤더 인쇄 스타일 */
+            .personnel-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                background-color: #f8f9fa;
+                border: 1px solid #333;
+                border-radius: 4px 4px 0 0;
+                padding: 4px;
+                font-weight: bold;
+                font-size: 10px;
+            }
+            
+            .personnel-header-item {
+                flex: 1;
+                text-align: center;
+                padding: 2px;
+                border-right: 2px solid #333;
+            }
+            
+            .personnel-header-item:nth-child(3) {
+                flex: 2; /* 사고내용은 2배 크기 */
+            }
+            
+            .personnel-header-item:last-child {
+                border-right: none;
+            }
+            
+            /* 구분선 인쇄 스타일 */
+            .personnel-divider {
+                height: 1px;
+                background-color: #333;
+                margin: 0;
+            }
+            
+            /* 인원현황 테이블 인쇄 스타일 */
+            .personnel-table {
+                width: 100% !important;
+                border-collapse: collapse !important;
+                border: 1px solid #ddd !important;
+                border-radius: 2px !important;
+                overflow: hidden !important;
+            }
+            
+            .personnel-th {
+                background-color: #f8f9fa !important;
+                border-right: 1px solid #ddd !important;
+                border-bottom: 1px solid #ddd !important;
+                padding: 6px 4px !important;
+                font-weight: bold !important;
+                font-size: 10px !important;
+                text-align: center !important;
+                vertical-align: middle !important;
+            }
+            
+            .personnel-details-th {
+                width: 50% !important; /* 사고내용은 2배 크기 */
+            }
+            
+            .personnel-th:last-child {
+                border-right: none !important;
+            }
+            
+            .personnel-td {
+                border-right: 1px solid #ddd !important;
+                border-bottom: 1px solid #ddd !important;
+                padding: 6px 4px !important;
+                text-align: center !important;
+                vertical-align: middle !important;
+                min-height: 40px !important;
+            }
+            
+            .personnel-details-td {
+                text-align: left !important;
+                width: 50% !important; /* 사고내용은 2배 크기 */
+            }
+            
+            .personnel-td:last-child {
+                border-right: none !important;
+            }
+            
+            .personnel-value {
+                font-size: 11px !important;
+                font-weight: 600 !important;
+            }
+            
+            /* 사고내용 그리드 인쇄 스타일 */
+            .absent-grid {
+                width: 100% !important;
+                display: grid !important;
+                gap: 2px !important;
+                height: 100% !important;
+                text-align: left !important;
+            }
+            
+            /* 사고종류가 2개 이하일 때: 세로 1열 */
+            .absent-grid.vertical-layout {
+                grid-template-columns: 1fr !important;
+                grid-template-rows: repeat(auto-fit, minmax(18px, 1fr)) !important;
+            }
+            
+            /* 사고종류가 3-4개일 때: 가로 2열 */
+            .absent-grid.horizontal-layout {
+                grid-template-columns: 1fr 1fr !important;
+                grid-template-rows: repeat(auto-fit, minmax(18px, 1fr)) !important;
+            }
+            
+            /* 사고종류가 5-6개일 때: 왼쪽 3줄, 오른쪽 1줄 */
+            .absent-grid.mixed-layout {
+                grid-template-columns: 1fr 1fr !important;
+                grid-template-rows: 1fr 1fr 1fr !important;
+            }
+            
+            .absent-grid-item {
+                display: flex !important;
+                flex-direction: row !important;
+                align-items: center !important;
+                padding: 1px 2px !important;
+                border: none !important;
+                background-color: transparent !important;
+                min-height: 15px !important;
+                gap: 1px !important;
+            }
+            
+            .absent-type {
+                font-size: 9px !important;
+                font-weight: bold !important;
+                color: #333 !important;
+                margin-right: 1px !important;
+                white-space: nowrap !important;
+            }
+            
+            .absent-names {
+                font-size: 8px !important;
+                line-height: 1.2 !important;
+                color: #666 !important;
+                flex: 1 !important;
+                white-space: nowrap !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+            }
+            
+            .info-item {
+                display: flex;
+                align-items: center;
+            }
+            
+            .info-label {
+                font-weight: bold;
+                margin-right: 6px;  /* 2px → 6px (적절한 여백) */
+                min-width: 50px;  /* 30px → 50px (적절한 크기) */
+                font-size: 11px;  /* 8px → 11px (가독성 향상) */
+            }
+            
+            .info-value {
+                flex: 1;
+                font-size: 11px;  /* 8px → 11px (가독성 향상) */
+            }
+            
+            .info-item:first-child {
+                flex: 2;  /* 근무조 정보가 더 넓게 */
+            }
+            
+            .info-item:first-child .info-label {
+                min-width: 40px;  /* 45px → 40px (공간 절약) */
+            }
+            
+            .info-item:first-child .info-value {
+                font-size: 12px;  /* 13px → 12px (공간 절약) */
+                font-weight: 600;
+            }
+            
+            .info-item:not(:first-child) {
+                flex: 1;  /* 총원, 사고, 현재원은 동일한 크기 */
+            }
+            
+            .work-assignment {
+                display: flex !important;
+                flex-direction: row !important;
+                gap: 10px !important;  /* 15px → 10px (공간 절약) */
+                width: 100% !important;
+            }
+            
+            .assignment-column {
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                overflow: hidden;
+                flex: 1 !important;
+                display: block !important;
+            }
+            
+            .assignment-header {
+                background-color: #e9ecef;
+                padding: 5px 8px;  /* 8px 12px → 5px 8px (공간 절약) */
+                font-weight: bold;
+                font-size: 10px;  /* 11px → 10px (공간 절약) */
+                text-align: center;
+            }
+            
+            .assignment-content {
+                padding: 6px;  /* 10px → 6px (공간 절약) */
+            }
+            
+            .location-group {
+                margin-bottom: 6px;  /* 10px → 6px (공간 절약) */
+                border-bottom: 1px solid #eee;
+                padding-bottom: 4px;  /* 8px → 4px (공간 절약) */
+            }
+            
+            .location-group:last-child {
+                border-bottom: none;
+                margin-bottom: 0;
+            }
+            
+            .location-name {
+                font-weight: bold;
+                margin-bottom: 3px;  /* 5px → 3px (공간 절약) */
+                color: #333;
+                font-size: 9px;  /* 10px → 9px (공간 절약) */
+            }
+            
+            .assignment-details {
+                font-size: 8px;  /* 9px → 8px (공간 절약) */
+                line-height: 1.2;  /* 1.3 → 1.2 (공간 절약) */
+            }
+            
+            .team-leader {
+                font-weight: bold;
+                color: #007bff;
+            }
+            
+            .supervisor {
+                font-weight: bold;
+                color: #28a745;
+            }
+            
+            .education-section {
+                display: flex !important;
+                flex-direction: row !important;
+                gap: 15px !important;  /* 4px → 15px (수정페이지와 동일) */
+                width: 100% !important;
+            }
+            
+            .education-column {
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                overflow: hidden;
+                flex: 1 !important;
+                display: block !important;
+            }
+            
+            .education-header {
+                background-color: #e9ecef;
+                padding: 6px 8px;  /* 2px 4px → 6px 8px (수정페이지와 동일) */
+                font-weight: bold;
+                font-size: 10px;  /* 7px → 10px (수정페이지와 동일) */
+                text-align: center;
+            }
+            
+            .education-content {
+                padding: 8px;  /* 2px → 8px (수정페이지와 동일) */
+            }
+            
+            .education-item {
+                margin-bottom: 6px;  /* 2px → 6px (수정페이지와 동일) */
+                font-size: 9px;  /* 7px → 9px (수정페이지와 동일) */
+                line-height: 1.3;  /* 1.1 → 1.3 (수정페이지와 동일) */
+            }
+            
+            .absent-details {
+                background: white;
+                border: 1px solid #333;
+                border-radius: 4px;
+                padding: 8px;  /* 12px → 8px (공간 절약) */
+                min-height: 50px; /* 두 줄 공간 확보 */
+            }
+            
+            .absent-item {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 4px 0;  /* 6px 0 → 4px 0 (공간 절약) */
+                border-bottom: 1px solid #eee;
+                font-size: 9px;  /* 10px → 9px (공간 절약) */
+                margin: 0;
+            }
+            
+            .absent-item:last-child {
+                border-bottom: none;
+            }
+            
+            /* 페이지 설정 - 공간 최적화 */
+            @page {
+                size: A4;
+                margin: 0.8cm;  /* 1cm → 0.8cm (공간 절약) */
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .work-assignment,
+            .education-section {
+                grid-template-columns: 1fr;
+            }
+            
+            .personnel-header,
+            .personnel-content {
+                flex-direction: column;
+            }
+            
+            .personnel-header-item,
+            .personnel-content-item {
+                border-right: none;
+                border-bottom: 2px solid #333;
+                padding: 8px;
+            }
+            
+            .personnel-header-item:last-child,
+            .personnel-content-item:last-child {
+                border-bottom: none;
+            }
+            
+            .personnel-header-item:nth-child(3),
+            .personnel-content-item:nth-child(3),
+            .personnel-details-container {
+                flex: 1; /* 모바일에서는 사고내용도 동일한 크기 */
+            }
+            
+            .absent-content {
+                gap: 4px;
+            }
+            
+            .absent-line {
+                text-align: left;
+                padding: 4px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .personnel-header,
+            .personnel-content {
+                flex-direction: column;
+            }
+            
+            .personnel-header-item,
+            .personnel-content-item {
+                border-right: none;
+                border-bottom: 2px solid #333;
+                padding: 6px;
+            }
+            
+            .personnel-header-item:last-child,
+            .personnel-content-item:last-child {
+                border-bottom: none;
+            }
+        }
+    </style>
+
+    <div class="container">
+        <!-- 헤더 -->
+        <div class="header">
+            <div class="title">근무명령서</div>
+            <div class="approval-section">
+                <div></div>
+                <table class="approval-table">
+                    <tr>
+                        <th rowspan="2" class="approval-label">결재</th>
+                        <th>반장</th>
+                        <th>과장</th>
+                        <th>소장</th>
+                    </tr>
+                    <tr>
+                        <td class="approval-cell"></td>
+                        <td class="approval-cell"></td>
+                        <td class="approval-cell"></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- 근무조 -->
+        <div class="section work-team-section">
+            <div class="section-header">□ 근무조</div>
+            <div class="section-content">
+                <div class="info-item">
+                    <span class="info-value">
+                        <% if (workOrder.workInfo && workOrder.workInfo.date && workOrder.workInfo.team && workOrder.workInfo.shift) { %>
+                            <% 
+                                const dateObj = new Date(workOrder.workInfo.date);
+                                const year = dateObj.getFullYear();
+                                const month = dateObj.getMonth() + 1;
+                                const day = dateObj.getDate();
+                                const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
+                                const weekday = weekdays[dateObj.getDay()];
+                                const timeFormat = {
+                                    'day': '주간조(06:00~18:00)',
+                                    'night': '심야조(22:00~06:00)',
+                                    'evening': '저녁조(18:00~22:00)',
+                                    '주간조': '주간조(06:00~14:00)',
+                                    '초야조': '초야조(14:00~22:00)',
+                                    '심야조': '심야조(22:00~06:00)',
+                                    '주간특근조': '주간특근조(06:00~18:00)',
+                                    '야간특근조': '야간특근조(18:00~06:00)'
+                                };
+                                const shiftText = timeFormat[workOrder.workInfo.shift] || workOrder.workInfo.shift;
+                            %>
+                            <%= year %>년 <%= month %>월 <%= day %>일(<%= weekday %>요일)  -  <%= workOrder.workInfo.team %> <%= shiftText %>
+                        <% } else { %>
+                            <%= workOrder.formattedWorkInfo || '근무 정보 없음' %>
+                        <% } %>
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 인원현황 -->
+        <div class="section">
+            <div class="section-header">□ 인원현황(명)</div>
+            <div class="section-content">
+                <table class="personnel-table">
+                    <thead>
+                        <tr>
+                            <th class="personnel-th">총원</th>
+                            <th class="personnel-th">사고</th>
+                            <th class="personnel-th personnel-details-th">사고내용</th>
+                            <th class="personnel-th">현재원</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="personnel-td" rowspan="3" style="vertical-align: middle;">
+                                <div class="personnel-value" style="text-align: center;"><%= workOrder.personnelStatus.totalPersonnel || '-' %></div>
+                            </td>
+                            <td class="personnel-td" rowspan="3" style="vertical-align: middle;">
+                                <div class="personnel-value" style="text-align: center;"><%= workOrder.personnelStatus.absentPersonnel || '-' %></div>
+                            </td>
+                            <td class="personnel-td personnel-details-td" rowspan="3" style="vertical-align: middle;">
+                                <% 
+                                // 사고내용을 사고종류별로 분류
+                                const details = workOrder.personnelStatus.absentDetails || [];
+                                const absentByType = {
+                                    '연차1': [],
+                                    '연차2': [],
+                                    '정직': [],
+                                    '휴직': [],
+                                    '산재': [],
+                                    '병가': [],
+                                    '경조': [],
+                                    '근무지원조': [],
+                                    '기타': []
+                                };
+                                
+                                // 사고내용을 2개씩 묶어서 처리 (type, employeeName)
+                                for (let i = 0; i < details.length; i += 2) {
+                                    const type = details[i] || '';
+                                    const employeeName = details[i + 1] || '';
+                                    
+                                    if (employeeName && employeeName.trim()) {
+                                        const displayType = type || '기타';
+                                        
+                                        if (absentByType[displayType]) {
+                                            absentByType[displayType].push(employeeName);
+                                        } else {
+                                            absentByType['기타'].push(employeeName);
+                                        }
+                                    }
+                                }
+                                
+                                // 사고내용이 있는 항목만 필터링
+                                const allTypes = ['연차1', '연차2', '정직', '휴직', '산재', '병가', '경조', '기타'];
+                                const displayItems = [];
+                                
+                                allTypes.forEach(type => {
+                                    if (absentByType[type].length > 0) {
+                                        displayItems.push({ type: type, names: absentByType[type] });
+                                    }
+                                });
+                                
+                                // 최대 6개 항목으로 제한
+                                const limitedItems = displayItems.slice(0, 6);
+                                
+                                // 사고종류 개수에 따라 레이아웃 클래스 결정
+                                let layoutClass = 'vertical-layout'; // 기본값
+                                if (limitedItems.length <= 2) {
+                                    layoutClass = 'vertical-layout';
+                                } else if (limitedItems.length <= 4) {
+                                    layoutClass = 'horizontal-layout';
+                                } else {
+                                    layoutClass = 'mixed-layout';
+                                }
+                                %>
+                                
+                                <div class="absent-grid <%= layoutClass %>" style="text-align: left;">
+                                    <% if (limitedItems.length > 0) { %>
+                                        <% limitedItems.forEach(function(item, index) { %>
+                                            <div class="absent-grid-item">
+                                                <div class="absent-type"><%= item.type %>:</div>
+                                                <div class="absent-names"><%= item.names.join(', ') %></div>
+                                    </div>
+                                        <% }); %>
+                                    <% } else if (workOrder.personnelStatus.accidentDetails) { %>
+                                        <div class="absent-grid-item">
+                                            <div class="absent-type">사고내용:</div>
+                                            <div class="absent-names"><%= workOrder.personnelStatus.accidentDetails %></div>
+                                        </div>
+                                <% } else { %>
+                                    <!-- 사고내용이 없으면 공란으로 표시 -->
+                            <% } %>
+                        </div>
+                            </td>
+                            <td class="personnel-td" rowspan="3" style="vertical-align: middle;">
+                                <div class="personnel-value" style="text-align: center;"><%= workOrder.personnelStatus.currentPersonnel || '-' %></div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <!-- 이 행은 rowspan으로 인해 비어있음 -->
+                        </tr>
+                        <tr>
+                            <!-- 이 행은 rowspan으로 인해 비어있음 -->
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 인원 편성 -->
+        <div class="section work-assignment-section">
+            <div class="section-header">□ 인원편성</div>
+            <div class="section-content">
+                <table class="assignment-table">
+                    <thead>
+                        <tr>
+                            <th class="region-header">지역</th>
+                            <th class="location-header">보안근무지</th>
+                            <th class="personnel-header">반장</th>
+                            <th class="personnel-header">조장</th>
+                            <th class="personnel-header">대원1</th>
+                            <th class="personnel-header">대원2</th>
+                            <th class="personnel-header">대원3</th>
+                            <th class="personnel-header">대원4</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                            <% 
+                            const coastalAssignments = workOrder.workAssignment.filter(assignment => 
+                                assignment.region === '해안'
+                            );
+                            %>
+                            <% if (coastalAssignments.length > 0) { %>
+                                <% coastalAssignments.forEach(function(assignment) { %>
+                                <div class="location-group">
+                                    <div class="location-name"><%= assignment.location %>:</div>
+                                    <div class="assignment-details">
+                                        <% if (assignment.assignment.teamLeader) { %>
+                                        <div>반장: <span class="team-leader"><%= assignment.assignment.teamLeader %></span></div>
+                                        <% } %>
+                                        <% if (assignment.assignment.supervisor) { %>
+                                        <div>조장: <span class="supervisor"><%= assignment.assignment.supervisor %></span></div>
+                                        <% } %>
+                                        <% if (assignment.assignment.members && assignment.assignment.members.length > 0) { %>
+                                        <div><%= assignment.assignment.members.join(' ') %></div>
+                                        <% } %>
+                                    </div>
+                                </div>
+                                <% }); %>
+                            <% } else { %>
+                                <!-- 기본 해안지역 근무지 목록 표시 -->
+                                <div class="location-group">
+                                    <div class="location-name">해안입문:</div>
+                                    <div class="assignment-details" style="color: #666; font-style: italic;">근무 배정 정보 없음</div>
+                                </div>
+                                <div class="location-group">
+                                    <div class="location-name">해안출문:</div>
+                                    <div class="assignment-details" style="color: #666; font-style: italic;">근무 배정 정보 없음</div>
+                                </div>
+                                <div class="location-group">
+                                    <div class="location-name">기술교육원문:</div>
+                                    <div class="assignment-details" style="color: #666; font-style: italic;">근무 배정 정보 없음</div>
+                                </div>
+                                <div class="location-group">
+                                    <div class="location-name">교육원중문:</div>
+                                    <div class="assignment-details" style="color: #666; font-style: italic;">근무 배정 정보 없음</div>
+                                </div>
+                                <div class="location-group">
+                                    <div class="location-name">성내주차장문:</div>
+                                    <div class="assignment-details" style="color: #666; font-style: italic;">근무 배정 정보 없음</div>
+                                </div>
+                                <div class="location-group">
+                                    <div class="location-name">성내주차장초소:</div>
+                                    <div class="assignment-details" style="color: #666; font-style: italic;">근무 배정 정보 없음</div>
+                                </div>
+                                <div class="location-group">
+                                    <div class="location-name">선적중문:</div>
+                                    <div class="assignment-details" style="color: #666; font-style: italic;">근무 배정 정보 없음</div>
+                                </div>
+                                <div class="location-group">
+                                    <div class="location-name">5의장중문:</div>
+                                    <div class="assignment-details" style="color: #666; font-style: italic;">근무 배정 정보 없음</div>
+                                </div>
+                                <div class="location-group">
+                                    <div class="location-name">아산로중문:</div>
+                                    <div class="assignment-details" style="color: #666; font-style: italic;">근무 배정 정보 없음</div>
+                                </div>
+                                <div class="location-group">
+                                    <div class="location-name">항만순찰:</div>
+                                    <div class="assignment-details" style="color: #666; font-style: italic;">근무 배정 정보 없음</div>
+                                </div>
+                            <% } %>
+                        </div>
+                    </div>
+                    
+                    <div class="assignment-column">
+                        <div class="assignment-header">성내/시트/매암동 지역</div>
+                        <div class="assignment-divider"></div>
+                        <div class="assignment-content">
+                            <% 
+                            const otherAssignments = workOrder.workAssignment.filter(assignment => 
+                                assignment.region !== '해안'
+                            );
+                            %>
+                            <% if (otherAssignments.length > 0) { %>
+                                <% otherAssignments.forEach(function(assignment) { %>
+                                <div class="location-group">
+                                    <div class="location-name"><%= assignment.location %>:</div>
+                                    <div class="assignment-details">
+                                        <% if (assignment.assignment.teamLeader) { %>
+                                        <div>반장: <span class="team-leader"><%= assignment.assignment.teamLeader %></span></div>
+                                        <% } %>
+                                        <% if (assignment.assignment.supervisor) { %>
+                                        <div>조장: <span class="supervisor"><%= assignment.assignment.supervisor %></span></div>
+                                        <% } %>
+                                        <% if (assignment.assignment.members && assignment.assignment.members.length > 0) { %>
+                                        <div><%= assignment.assignment.members.join(' ') %></div>
+                                        <% } %>
+                                    </div>
+                                </div>
+                                <% }); %>
+                            <% } else { %>
+                                <!-- 기본 기타 지역 근무지 목록 표시 -->
+                                <div class="location-group">
+                                    <div class="location-name">성내문:</div>
+                                    <div class="assignment-details" style="color: #666; font-style: italic;">근무 배정 정보 없음</div>
+                                </div>
+                                <div class="location-group">
+                                    <div class="location-name">차량검색소:</div>
+                                    <div class="assignment-details" style="color: #666; font-style: italic;">근무 배정 정보 없음</div>
+                                </div>
+                                <div class="location-group">
+                                    <div class="location-name">시트1문:</div>
+                                    <div class="assignment-details" style="color: #666; font-style: italic;">근무 배정 정보 없음</div>
+                                </div>
+                                <div class="location-group">
+                                    <div class="location-name">시트1중문:</div>
+                                    <div class="assignment-details" style="color: #666; font-style: italic;">근무 배정 정보 없음</div>
+                                </div>
+                                <div class="location-group">
+                                    <div class="location-name">시트1주차장초소:</div>
+                                    <div class="assignment-details" style="color: #666; font-style: italic;">근무 배정 정보 없음</div>
+                                </div>
+                                <div class="location-group">
+                                    <div class="location-name">시트3문:</div>
+                                    <div class="assignment-details" style="color: #666; font-style: italic;">근무 배정 정보 없음</div>
+                                </div>
+                                <div class="location-group">
+                                    <div class="location-name">코일주차장:</div>
+                                    <div class="assignment-details" style="color: #666; font-style: italic;">근무 배정 정보 없음</div>
+                                </div>
+                                <div class="location-group">
+                                    <div class="location-name">엔진4부:</div>
+                                    <div class="assignment-details" style="color: #666; font-style: italic;">근무 배정 정보 없음</div>
+                                </div>
+                                <div class="location-group">
+                                    <div class="location-name">야적장초소:</div>
+                                    <div class="assignment-details" style="color: #666; font-style: italic;">근무 배정 정보 없음</div>
+                                </div>
+                                
+                                <!-- 야적장초소 아래 구분선 -->
+                                <div class="work-assignment-divider"></div>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 직무 교육 -->
+        <div class="section">
+            <div class="section-header">□ 직무(안전/보건) 교육</div>
+            <div class="education-divider"></div>
+            <div class="section-content">
+                <div class="education-section">
+                    <div class="education-column">
+                        <div class="education-header">금주중점</div>
+                        <div class="education-sub-divider"></div>
+                        <div class="education-content">
+                            <% if (workOrder.education.weeklyFocus && workOrder.education.weeklyFocus.length > 0) { %>
+                                <% workOrder.education.weeklyFocus.forEach(function(focus, index) { %>
+                                <div class="education-item"><%= (index + 1) %>. <%= focus %></div>
+                                <% }); %>
+                            <% } else { %>
+                                <div class="education-item">1. 근무기강 확립 강조</div>
+                                <div class="education-item">2. 기본적인 예의 / 직장 예의범절 준수</div>
+                                <div class="education-item">3. 근무중 안전사고 예방 철저</div>
+                            <% } %>
+                        </div>
+                    </div>
+                    
+                    <div class="education-column">
+                        <div class="education-header">교육내용</div>
+                        <div class="education-sub-divider"></div>
+                        <div class="education-content">
+                            <% if (workOrder.education.generalEducation && workOrder.education.generalEducation.length > 0) { %>
+                                <% workOrder.education.generalEducation.forEach(function(education, index) { %>
+                                <div class="education-item"><%= (index + 1) %>. <%= education %></div>
+                                <% }); %>
+                            <% } else { %>
+                                <div class="education-item">1. 보안업무 능력 강화(출입보안 업무 일관성 있게 처리 / 입문차량 키오스크 승인 여부 확인)</div>
+                                <div class="education-item">2. 근무기강 확립/근무 개강 반드시 준수 할 것/입초 근무 시 정위치 정자세 근무/복장 통일되게 관리</div>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 버튼 그룹 -->
+        <div class="btn-group">
+            <a href="/work-orders" class="btn btn-secondary">목록으로</a>
+            <a href="/work-orders/<%= workOrder._id %>/edit" class="btn btn-primary">수정</a>
+            <button onclick="window.print()" class="btn btn-success">인쇄</button>
+        </div>
+    </div>
+
+<%- include('footer') %>

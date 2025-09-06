@@ -99,20 +99,72 @@
             padding: 8px 12px;  /* 4px 8px → 8px 12px (적당한 패딩) */
             border-bottom: 1px solid #ddd;
             font-weight: bold;
-            font-size: 22px;  /* 11px → 22px (타이틀 텍스트 사이즈 100% 늘림) */
+            font-size: 12px;  /* 22px → 12px (통일) */
         }
         
-        /* 직무교육 섹션 구분선 */
+        /* 직무교육 섹션 구분선 - 테두리선과 동일하게 */
         .education-divider {
             height: 1px;
-            background-color: #333;
+            background-color: #ddd;
             margin: 0;
+            border: none;
         }
         
-        /* 웹용에서는 구분선 숨김 */
-        .education-sub-divider,
+        /* 웹용에서는 하위 구분선 숨김 */
+        .education-sub-divider {
+            display: none;
+        }
+        
         .assignment-divider {
             display: none;
+        }
+        
+        /* 직무교육 표 스타일 */
+        .education-table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1px solid #ddd;
+            margin-top: 0;
+            font-size: 12px;
+        }
+        
+        .education-table th,
+        .education-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+            vertical-align: top;
+        }
+        
+        .education-table th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+            text-align: center;
+        }
+        
+        .education-table .education-content {
+            padding: 8px;
+        }
+        
+        .education-item {
+            margin-bottom: 4px;
+            font-size: 12px;
+            line-height: 1.3;
+        }
+        
+        .education-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        /* 직무교육 섹션 내 표들 간격 */
+        .education-section {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .education-section .education-table {
+            margin-bottom: 0;
         }
         
         .section-content {
@@ -157,6 +209,82 @@
         /* 인원편성 섹션 스타일 */
         .work-assignment-section .section-content {
             padding: 15px 15px;
+        }
+        
+        .assignment-table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1px solid #ddd;
+            margin-top: 15px;
+            font-size: 12px;
+        }
+        
+        .assignment-table th,
+        .assignment-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+            vertical-align: middle;
+        }
+        
+        .assignment-table th {
+            background-color: #f0f0f0;
+            font-weight: bold;
+            font-size: 13px;
+        }
+        
+        .region-header {
+            background-color: #e9ecef !important;
+            font-size: 14px;
+            font-weight: bold;
+            width: 80px;
+        }
+        
+        .location-header {
+            background-color: #e9ecef !important;
+            font-size: 14px;
+            font-weight: bold;
+            width: 120px;
+        }
+        
+        .personnel-header {
+            background-color: #e9ecef !important;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        
+        .region-cell {
+            background-color: #e9ecef;
+            font-weight: bold;
+            text-align: center;
+            vertical-align: middle;
+            font-size: 13px;
+        }
+        
+        .location-cell {
+            text-align: left;
+            padding-left: 10px;
+            font-size: 12px;
+        }
+        
+        .region-row {
+            background-color: #f8f9fa;
+        }
+        
+        .role-label {
+            position: absolute;
+            top: 2px;
+            left: 4px;
+            font-size: 10px;
+            color: #666;
+            font-weight: bold;
+        }
+        
+        .personnel-cell {
+            position: relative;
+            text-align: center;
+            min-width: 80px;
+            font-size: 12px;
         }
         
         /* 야적장 아래 구분선 */
@@ -547,9 +675,9 @@
             .approval-table th,
             .approval-table td {
                 border: 1px solid #333;
-                padding: 8px 10px;  /* 6px 8px → 8px 10px (결재란 높이에 맞춤) */
+                padding: 10px 12px;  /* 8px 10px → 10px 12px (인쇄용 결재란 패딩 증가) */
                 text-align: center;
-                font-size: 10px;  /* 7px → 10px (가독성 향상) */
+                font-size: 9px;  /* 11px → 9px (헤더 텍스트 크기 줄임) */
             }
             
             .approval-table th {
@@ -560,15 +688,15 @@
             .approval-label {
                 writing-mode: vertical-rl;
                 text-orientation: mixed;
-                width: 20px;  /* 12px → 20px (적절한 크기) */
-                height: 50px;  /* 40px → 50px (결재란 높이에 맞춤) */
-                font-size: 10px;  /* 7px → 10px (가독성 향상) */
+                width: 20px;  /* 25px → 20px (결재 라벨 너비 줄임) */
+                height: 50px;  /* 80px → 50px (인쇄용 결재란 높이에 맞춤) */
+                font-size: 9px;  /* 11px → 9px (결재 라벨 텍스트 크기 줄임) */
                 font-weight: bold;
             }
             
             .approval-cell {
-                height: 40px;  /* 30px → 40px (결재란 높이 증가) */
-                width: 50px;  /* 30px → 50px (적절한 크기) */
+                height: 70px;  /* 50px → 70px (실제 결재 셀 높이 증가) */
+                width: 80px;  /* 60px → 80px (실제 결재 셀 너비 증가) */
             }
             
             .section {
@@ -589,7 +717,7 @@
                 padding: 6px 10px;  /* 5px 8px → 6px 10px (적당한 패딩) */
                 border-bottom: 1px solid #ddd;
                 font-weight: bold;
-                font-size: 20px;  /* 10px → 20px (타이틀 텍스트 사이즈 100% 늘림) */
+                font-size: 12px;  /* 20px → 12px (통일) */
             }
             
             /* 직무교육 섹션 구분선 (인쇄용) */
@@ -599,12 +727,71 @@
                 margin: 0;
             }
             
-            /* 직무교육 하위 구분선 (금주중점, 교육내용) - 인쇄용 */
+            /* 직무교육 하위 구분선 (금주중점, 교육내용) - 인쇄용만 표시 */
             .education-sub-divider {
                 display: block !important;
                 height: 1px;
-                background-color: #333;
-                margin: 0;
+                background-color: #ddd;
+                margin: 2px 0 4px 0;
+                border: none;
+                width: 100%;
+            }
+            
+            /* 직무교육 표 스타일 - 인쇄용 */
+            .education-table {
+                width: 100%;
+                border-collapse: collapse;
+                border: 1px solid #ddd;
+                margin-top: 0;
+                font-size: 11px;
+            }
+            
+            .education-table th,
+            .education-table td {
+                border: 1px solid #ddd;
+                padding: 6px;
+                text-align: left;
+                vertical-align: top;
+            }
+            
+            .education-table th {
+                background-color: #f8f9fa;
+                font-weight: bold;
+                text-align: center;
+                font-size: 11px;
+            }
+            
+            .education-table .education-content {
+                padding: 6px;
+            }
+            
+            .education-item {
+                margin-bottom: 3px;
+                font-size: 11px;
+                line-height: 1.2;
+            }
+            
+            .education-item:last-child {
+                margin-bottom: 0;
+            }
+            
+            /* 직무교육 섹션 내 표들 간격 - 인쇄용 */
+            .education-section {
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .education-section .education-table {
+                margin-bottom: 0;
+            }
+            
+            /* 직무교육 헤더 스타일 - 인쇄용 */
+            .education-header {
+                font-weight: bold;
+                font-size: 11px;
+                margin-bottom: 2px;
+                padding: 2px 0;
             }
             
             /* 인원편성 섹션 지역 구분선 - 인쇄용 */
@@ -661,8 +848,85 @@
                 padding: 15px 8px;
             }
             
+            .assignment-table {
+                width: 100%;
+                border-collapse: collapse;
+                border: 1px solid #ddd;
+                margin-top: 5px;
+                font-size: 10px;
+            }
+            
+            .assignment-table th,
+            .assignment-table td {
+                border: 1px solid #ddd;
+                padding: 3px;
+                text-align: center;
+                vertical-align: middle;
+            }
+            
+            .assignment-table th {
+                background-color: #f0f0f0;
+                font-weight: bold;
+                font-size: 11px;
+            }
+            
+            .region-header {
+                background-color: #e0e0e0 !important;
+                font-size: 12px;
+                font-weight: bold;
+                width: 60px;
+            }
+            
+            .location-header {
+                background-color: #e0e0e0 !important;
+                font-size: 12px;
+                font-weight: bold;
+                width: 100px;
+            }
+            
+            .assignment-table .personnel-header {
+                background-color: #e0e0e0 !important;
+                font-size: 12px;
+                font-weight: bold;
+                text-align: center !important;
+            }
+            
+            .assignment-table th[colspan="6"] {
+                text-align: center !important;
+                vertical-align: middle !important;
+            }
+            
+            .assignment-table th.personnel-header[colspan="6"] {
+                text-align: center !important;
+                vertical-align: middle !important;
+            }
+            
+            .region-cell {
+                background-color: #e0e0e0;
+                font-weight: bold;
+                text-align: center;
+                vertical-align: middle;
+                font-size: 10px;
+            }
+            
+            .location-cell {
+                text-align: left;
+                padding-left: 3px;
+                font-size: 10px;
+            }
+            
+            .personnel-cell {
+                text-align: center;
+                min-width: 50px;
+                font-size: 10px;
+            }
+            
+            .region-row {
+                background-color: #f5f5f5;
+            }
+            
             /* 인원현황 헤더 인쇄 스타일 */
-            .personnel-header {
+            .personnel-status-section .personnel-header {
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
@@ -1166,10 +1430,7 @@
                                             <div class="absent-names"><%= workOrder.personnelStatus.accidentDetails %></div>
                                         </div>
                                 <% } else { %>
-                                        <div class="absent-grid-item">
-                                            <div class="absent-type">사고내용:</div>
-                                            <div class="absent-names">-</div>
-                                        </div>
+                                    <!-- 사고내용이 없으면 공란으로 표시 -->
                             <% } %>
                         </div>
                             </td>
@@ -1192,150 +1453,655 @@
         <div class="section work-assignment-section">
             <div class="section-header">□ 인원편성</div>
             <div class="section-content">
-                <div class="work-assignment">
-                    <div class="assignment-column">
-                        <div class="assignment-header">해안 지역</div>
-                        <div class="assignment-divider"></div>
-                        <div class="assignment-content">
-                            <% 
-                            const coastalAssignments = workOrder.workAssignment.filter(assignment => 
-                                assignment.region === '해안'
-                            );
-                            %>
-                            <% if (coastalAssignments.length > 0) { %>
-                                <% coastalAssignments.forEach(function(assignment) { %>
-                                <div class="location-group">
-                                    <div class="location-name"><%= assignment.location %>:</div>
-                                    <div class="assignment-details">
-                                        <% if (assignment.assignment.teamLeader) { %>
-                                        <div>반장: <span class="team-leader"><%= assignment.assignment.teamLeader %></span></div>
-                                        <% } %>
-                                        <% if (assignment.assignment.supervisor) { %>
-                                        <div>조장: <span class="supervisor"><%= assignment.assignment.supervisor %></span></div>
-                                        <% } %>
-                                        <% if (assignment.assignment.members && assignment.assignment.members.length > 0) { %>
-                                        <div><%= assignment.assignment.members.join(' ') %></div>
-                                        <% } %>
-                                    </div>
-                                </div>
-                                <% }); %>
-                            <% } else { %>
-                                <!-- 기본 해안지역 근무지 목록 표시 -->
-                                <div class="location-group">
-                                    <div class="location-name">해안입문:</div>
-                                    <div class="assignment-details" style="color: #666; font-style: italic;">근무 배정 정보 없음</div>
-                                </div>
-                                <div class="location-group">
-                                    <div class="location-name">해안출문:</div>
-                                    <div class="assignment-details" style="color: #666; font-style: italic;">근무 배정 정보 없음</div>
-                                </div>
-                                <div class="location-group">
-                                    <div class="location-name">기술교육원문:</div>
-                                    <div class="assignment-details" style="color: #666; font-style: italic;">근무 배정 정보 없음</div>
-                                </div>
-                                <div class="location-group">
-                                    <div class="location-name">교육원중문:</div>
-                                    <div class="assignment-details" style="color: #666; font-style: italic;">근무 배정 정보 없음</div>
-                                </div>
-                                <div class="location-group">
-                                    <div class="location-name">성내주차장문:</div>
-                                    <div class="assignment-details" style="color: #666; font-style: italic;">근무 배정 정보 없음</div>
-                                </div>
-                                <div class="location-group">
-                                    <div class="location-name">성내주차장초소:</div>
-                                    <div class="assignment-details" style="color: #666; font-style: italic;">근무 배정 정보 없음</div>
-                                </div>
-                                <div class="location-group">
-                                    <div class="location-name">선적중문:</div>
-                                    <div class="assignment-details" style="color: #666; font-style: italic;">근무 배정 정보 없음</div>
-                                </div>
-                                <div class="location-group">
-                                    <div class="location-name">5의장중문:</div>
-                                    <div class="assignment-details" style="color: #666; font-style: italic;">근무 배정 정보 없음</div>
-                                </div>
-                                <div class="location-group">
-                                    <div class="location-name">아산로중문:</div>
-                                    <div class="assignment-details" style="color: #666; font-style: italic;">근무 배정 정보 없음</div>
-                                </div>
-                                <div class="location-group">
-                                    <div class="location-name">항만순찰:</div>
-                                    <div class="assignment-details" style="color: #666; font-style: italic;">근무 배정 정보 없음</div>
-                                </div>
-                            <% } %>
-                        </div>
-                    </div>
-                    
-                    <div class="assignment-column">
-                        <div class="assignment-header">성내/시트/매암동 지역</div>
-                        <div class="assignment-divider"></div>
-                        <div class="assignment-content">
-                            <% 
-                            const otherAssignments = workOrder.workAssignment.filter(assignment => 
-                                assignment.region !== '해안'
-                            );
-                            %>
-                            <% if (otherAssignments.length > 0) { %>
-                                <% otherAssignments.forEach(function(assignment) { %>
-                                <div class="location-group">
-                                    <div class="location-name"><%= assignment.location %>:</div>
-                                    <div class="assignment-details">
-                                        <% if (assignment.assignment.teamLeader) { %>
-                                        <div>반장: <span class="team-leader"><%= assignment.assignment.teamLeader %></span></div>
-                                        <% } %>
-                                        <% if (assignment.assignment.supervisor) { %>
-                                        <div>조장: <span class="supervisor"><%= assignment.assignment.supervisor %></span></div>
-                                        <% } %>
-                                        <% if (assignment.assignment.members && assignment.assignment.members.length > 0) { %>
-                                        <div><%= assignment.assignment.members.join(' ') %></div>
-                                        <% } %>
-                                    </div>
-                                </div>
-                                <% }); %>
-                            <% } else { %>
-                                <!-- 기본 기타 지역 근무지 목록 표시 -->
-                                <div class="location-group">
-                                    <div class="location-name">성내문:</div>
-                                    <div class="assignment-details" style="color: #666; font-style: italic;">근무 배정 정보 없음</div>
-                                </div>
-                                <div class="location-group">
-                                    <div class="location-name">차량검색소:</div>
-                                    <div class="assignment-details" style="color: #666; font-style: italic;">근무 배정 정보 없음</div>
-                                </div>
-                                <div class="location-group">
-                                    <div class="location-name">시트1문:</div>
-                                    <div class="assignment-details" style="color: #666; font-style: italic;">근무 배정 정보 없음</div>
-                                </div>
-                                <div class="location-group">
-                                    <div class="location-name">시트1중문:</div>
-                                    <div class="assignment-details" style="color: #666; font-style: italic;">근무 배정 정보 없음</div>
-                                </div>
-                                <div class="location-group">
-                                    <div class="location-name">시트1주차장초소:</div>
-                                    <div class="assignment-details" style="color: #666; font-style: italic;">근무 배정 정보 없음</div>
-                                </div>
-                                <div class="location-group">
-                                    <div class="location-name">시트3문:</div>
-                                    <div class="assignment-details" style="color: #666; font-style: italic;">근무 배정 정보 없음</div>
-                                </div>
-                                <div class="location-group">
-                                    <div class="location-name">코일주차장:</div>
-                                    <div class="assignment-details" style="color: #666; font-style: italic;">근무 배정 정보 없음</div>
-                                </div>
-                                <div class="location-group">
-                                    <div class="location-name">엔진4부:</div>
-                                    <div class="assignment-details" style="color: #666; font-style: italic;">근무 배정 정보 없음</div>
-                                </div>
-                                <div class="location-group">
-                                    <div class="location-name">야적장초소:</div>
-                                    <div class="assignment-details" style="color: #666; font-style: italic;">근무 배정 정보 없음</div>
-                                </div>
-                                
-                                <!-- 야적장초소 아래 구분선 -->
-                                <div class="work-assignment-divider"></div>
-                            <% } %>
-                        </div>
-                    </div>
-                </div>
+                <table class="assignment-table">
+                    <thead>
+                        <tr>
+                            <th class="region-header">지역</th>
+                            <th class="location-header">보안근무지</th>
+                            <th colspan="6" class="personnel-header">편성</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <%
+                        // 헬퍼 함수: 특정 지역과 위치의 데이터를 찾는 함수
+                        function findAssignmentData(region, location) {
+                            if (!workOrder.workAssignment) return null;
+                            
+                                // workAssignment가 배열인 경우 (정상적인 경우)
+    if (Array.isArray(workOrder.workAssignment)) {
+      return workOrder.workAssignment.find(assignment =>
+        assignment.region === region && assignment.location === location
+      );
+    }
+    // workAssignment가 객체인 경우 (위치별 키로 저장된 경우)
+    else if (typeof workOrder.workAssignment === 'object') {
+      const locationKey = Object.keys(workOrder.workAssignment).find(key =>
+        workOrder.workAssignment[key] &&
+        workOrder.workAssignment[key].region === region &&
+        workOrder.workAssignment[key].location === location
+      );
+      return locationKey ? workOrder.workAssignment[locationKey] : null;
+    }
+                            
+                            return null;
+                        }
+                        %>
+                        <!-- 해안지역 -->
+                        <tr class="region-row">
+                            <td rowspan="10" class="region-cell">해안지역</td>
+                            <td class="location-cell">해안입문</td>
+                            <td class="personnel-cell">
+                                <div class="role-label">반장</div>
+                                <% const coastalGateData = findAssignmentData('해안', '해안입문'); %>
+                                <% if (coastalGateData && coastalGateData.assignment && coastalGateData.assignment.teamLeader) { %>
+                                    <%= coastalGateData.assignment.teamLeader %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                            <td class="personnel-cell">
+                                <div class="role-label">조장</div>
+                                <% if (coastalGateData && coastalGateData.assignment && coastalGateData.assignment.supervisor) { %>
+                                    <%= coastalGateData.assignment.supervisor %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                            <td class="personnel-cell">
+                                <% if (coastalGateData && coastalGateData.assignment && coastalGateData.assignment.members && coastalGateData.assignment.members[0]) { %>
+                                    <%= coastalGateData.assignment.members[0] %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                            <td class="personnel-cell">
+                                <% if (coastalGateData && coastalGateData.assignment && coastalGateData.assignment.members && coastalGateData.assignment.members[1]) { %>
+                                    <%= coastalGateData.assignment.members[1] %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                            <td class="personnel-cell">
+                                <% if (coastalGateData && coastalGateData.assignment && coastalGateData.assignment.members && coastalGateData.assignment.members[2]) { %>
+                                    <%= coastalGateData.assignment.members[2] %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                            <td class="personnel-cell">
+                                <% if (coastalGateData && coastalGateData.assignment && coastalGateData.assignment.members && coastalGateData.assignment.members[3]) { %>
+                                    <%= coastalGateData.assignment.members[3] %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="location-cell">해안출문</td>
+                            <td class="personnel-cell">
+                                <% const coastalExitData = findAssignmentData('해안', '해안출문'); %>
+                                <% if (coastalExitData && coastalExitData.assignment && coastalExitData.assignment.teamLeader) { %>
+                                    <%= coastalExitData.assignment.teamLeader %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                            <td class="personnel-cell">
+                                <% if (coastalExitData && coastalExitData.assignment && coastalExitData.assignment.supervisor) { %>
+                                    <%= coastalExitData.assignment.supervisor %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                            <td class="personnel-cell">
+                                <% if (coastalExitData && coastalExitData.assignment && coastalExitData.assignment.members && coastalExitData.assignment.members[0]) { %>
+                                    <%= coastalExitData.assignment.members[0] %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                            <td class="personnel-cell">
+                                <% if (coastalExitData && coastalExitData.assignment && coastalExitData.assignment.members && coastalExitData.assignment.members[1]) { %>
+                                    <%= coastalExitData.assignment.members[1] %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                            <td class="personnel-cell">
+                                <% if (coastalExitData && coastalExitData.assignment && coastalExitData.assignment.members && coastalExitData.assignment.members[2]) { %>
+                                    <%= coastalExitData.assignment.members[2] %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                            <td class="personnel-cell">
+                                <% if (coastalExitData && coastalExitData.assignment && coastalExitData.assignment.members && coastalExitData.assignment.members[3]) { %>
+                                    <%= coastalExitData.assignment.members[3] %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="location-cell">기술교육원문</td>
+                            <td class="personnel-cell">
+                                <% const techEduData = findAssignmentData('해안', '기술교육원문'); %>
+                                <% if (techEduData && techEduData.assignment && techEduData.assignment.teamLeader) { %>
+                                    <%= techEduData.assignment.teamLeader %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                            <td class="personnel-cell">
+                                <% if (techEduData && techEduData.assignment && techEduData.assignment.supervisor) { %>
+                                    <%= techEduData.assignment.supervisor %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                            <td class="personnel-cell">
+                                <% if (techEduData && techEduData.assignment && techEduData.assignment.members && techEduData.assignment.members[0]) { %>
+                                    <%= techEduData.assignment.members[0] %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                            <td class="personnel-cell">
+                                <% if (techEduData && techEduData.assignment && techEduData.assignment.members && techEduData.assignment.members[1]) { %>
+                                    <%= techEduData.assignment.members[1] %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                            <td class="personnel-cell">-</td>
+                            <td class="personnel-cell">-</td>
+                        </tr>
+                        <tr>
+                            <td class="location-cell">교육원중문</td>
+                            <td class="personnel-cell">
+                                <% const eduCenterData = findAssignmentData('해안', '교육원중문'); %>
+                                <% if (eduCenterData && eduCenterData.assignment && eduCenterData.assignment.teamLeader) { %>
+                                    <%= eduCenterData.assignment.teamLeader %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                            <td class="personnel-cell">
+                                <% if (eduCenterData && eduCenterData.assignment && eduCenterData.assignment.supervisor) { %>
+                                    <%= eduCenterData.assignment.supervisor %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                            <td class="personnel-cell">
+                                <% if (eduCenterData && eduCenterData.assignment && eduCenterData.assignment.members && eduCenterData.assignment.members[0]) { %>
+                                    <%= eduCenterData.assignment.members[0] %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                            <td class="personnel-cell">-</td>
+                            <td class="personnel-cell">-</td>
+                            <td class="personnel-cell">-</td>
+                        </tr>
+                        <tr>
+                            <td class="location-cell">성내주차장문</td>
+                            <td class="personnel-cell">
+                                <% const parkingGateData = findAssignmentData('해안', '성내주차장문'); %>
+                                <% if (parkingGateData && parkingGateData.assignment && parkingGateData.assignment.teamLeader) { %>
+                                    <%= parkingGateData.assignment.teamLeader %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                            <td class="personnel-cell">
+                                <% if (parkingGateData && parkingGateData.assignment && parkingGateData.assignment.supervisor) { %>
+                                    <%= parkingGateData.assignment.supervisor %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                            <td class="personnel-cell">
+                                <% if (parkingGateData && parkingGateData.assignment && parkingGateData.assignment.members && parkingGateData.assignment.members[0]) { %>
+                                    <%= parkingGateData.assignment.members[0] %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                            <td class="personnel-cell">-</td>
+                            <td class="personnel-cell">-</td>
+                            <td class="personnel-cell">-</td>
+                        </tr>
+                        <tr>
+                            <td class="location-cell">성내주차장초소</td>
+                            <td class="personnel-cell">
+                                <% const parkingPostData = findAssignmentData('해안', '성내주차장초소'); %>
+                                <% if (parkingPostData && parkingPostData.assignment && parkingPostData.assignment.teamLeader) { %>
+                                    <%= parkingPostData.assignment.teamLeader %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                            <td class="personnel-cell">
+                                <% if (parkingPostData && parkingPostData.assignment && parkingPostData.assignment.supervisor) { %>
+                                    <%= parkingPostData.assignment.supervisor %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                            <td class="personnel-cell">
+                                <% if (parkingPostData && parkingPostData.assignment && parkingPostData.assignment.members && parkingPostData.assignment.members[0]) { %>
+                                    <%= parkingPostData.assignment.members[0] %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                            <td class="personnel-cell">-</td>
+                            <td class="personnel-cell">-</td>
+                            <td class="personnel-cell">-</td>
+                        </tr>
+                        <tr>
+                            <td class="location-cell">선적중문</td>
+                            <td class="personnel-cell">
+                                <% const shippingGateData = findAssignmentData('해안', '선적중문'); %>
+                                <% if (shippingGateData && shippingGateData.assignment && shippingGateData.assignment.teamLeader) { %>
+                                    <%= shippingGateData.assignment.teamLeader %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                            <td class="personnel-cell">
+                                <% if (shippingGateData && shippingGateData.assignment && shippingGateData.assignment.supervisor) { %>
+                                    <%= shippingGateData.assignment.supervisor %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                            <td class="personnel-cell">
+                                <% if (shippingGateData && shippingGateData.assignment && shippingGateData.assignment.members && shippingGateData.assignment.members[0]) { %>
+                                    <%= shippingGateData.assignment.members[0] %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                            <td class="personnel-cell">
+                                <% if (shippingGateData && shippingGateData.assignment && shippingGateData.assignment.members && shippingGateData.assignment.members[1]) { %>
+                                    <%= shippingGateData.assignment.members[1] %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                            <td class="personnel-cell">-</td>
+                            <td class="personnel-cell">-</td>
+                        </tr>
+                        <tr>
+                            <td class="location-cell">5의장중문</td>
+                            <td class="personnel-cell">
+                                <% const fifthGateData = findAssignmentData('해안', '5의장중문'); %>
+                                <% if (fifthGateData && fifthGateData.assignment && fifthGateData.assignment.teamLeader) { %>
+                                    <%= fifthGateData.assignment.teamLeader %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                            <td class="personnel-cell">
+                                <% if (fifthGateData && fifthGateData.assignment && fifthGateData.assignment.supervisor) { %>
+                                    <%= fifthGateData.assignment.supervisor %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                            <td class="personnel-cell">
+                                <% if (fifthGateData && fifthGateData.assignment && fifthGateData.assignment.members && fifthGateData.assignment.members[0]) { %>
+                                    <%= fifthGateData.assignment.members[0] %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                            <td class="personnel-cell">-</td>
+                            <td class="personnel-cell">-</td>
+                            <td class="personnel-cell">-</td>
+                        </tr>
+                        <tr>
+                            <td class="location-cell">아산로중문</td>
+                            <td class="personnel-cell">
+                                <% const asanroGateData = findAssignmentData('해안', '아산로중문'); %>
+                                <% if (asanroGateData && asanroGateData.assignment && asanroGateData.assignment.teamLeader) { %>
+                                    <%= asanroGateData.assignment.teamLeader %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                            <td class="personnel-cell">
+                                <% if (asanroGateData && asanroGateData.assignment && asanroGateData.assignment.supervisor) { %>
+                                    <%= asanroGateData.assignment.supervisor %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                            <td class="personnel-cell">
+                                <% if (asanroGateData && asanroGateData.assignment && asanroGateData.assignment.members && asanroGateData.assignment.members[0]) { %>
+                                    <%= asanroGateData.assignment.members[0] %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                            <td class="personnel-cell">-</td>
+                            <td class="personnel-cell">-</td>
+                            <td class="personnel-cell">-</td>
+                        </tr>
+                        <tr>
+                            <td class="location-cell">항만순찰</td>
+                            <td class="personnel-cell">
+                                <% const portPatrolData = findAssignmentData('해안', '항만순찰'); %>
+                                <% if (portPatrolData && portPatrolData.assignment && portPatrolData.assignment.teamLeader) { %>
+                                    <%= portPatrolData.assignment.teamLeader %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                            <td class="personnel-cell">
+                                <% if (portPatrolData && portPatrolData.assignment && portPatrolData.assignment.supervisor) { %>
+                                    <%= portPatrolData.assignment.supervisor %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                            <td class="personnel-cell">
+                                <% if (portPatrolData && portPatrolData.assignment && portPatrolData.assignment.members && portPatrolData.assignment.members[0]) { %>
+                                    <%= portPatrolData.assignment.members[0] %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                            <td class="personnel-cell">-</td>
+                            <td class="personnel-cell">-</td>
+                            <td class="personnel-cell">-</td>
+                        </tr>
+                        
+                        <!-- 성내지역 -->
+                        <tr class="region-row">
+                            <td rowspan="2" class="region-cell">성내지역</td>
+                            <td class="location-cell">성내문</td>
+                            <td class="personnel-cell">
+                                <% const sngGateData = findAssignmentData('성내', '성내문'); %>
+                                <% if (sngGateData && sngGateData.assignment && sngGateData.assignment.teamLeader) { %>
+                                    <%= sngGateData.assignment.teamLeader %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                            <td class="personnel-cell">
+                                <% if (sngGateData && sngGateData.assignment && sngGateData.assignment.supervisor) { %>
+                                    <%= sngGateData.assignment.supervisor %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                            <td class="personnel-cell">
+                                <% if (sngGateData && sngGateData.assignment && sngGateData.assignment.members && sngGateData.assignment.members[0]) { %>
+                                    <%= sngGateData.assignment.members[0] %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                            <td class="personnel-cell">-</td>
+                            <td class="personnel-cell">-</td>
+                            <td class="personnel-cell">-</td>
+                        </tr>
+                        <tr>
+                            <td class="location-cell">차량검색소</td>
+                            <td class="personnel-cell">
+                                <% const vehicleSearchData = findAssignmentData('성내', '차량검색소'); %>
+                                <% if (vehicleSearchData && vehicleSearchData.assignment && vehicleSearchData.assignment.teamLeader) { %>
+                                    <%= vehicleSearchData.assignment.teamLeader %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                            <td class="personnel-cell">
+                                <% if (vehicleSearchData && vehicleSearchData.assignment && vehicleSearchData.assignment.supervisor) { %>
+                                    <%= vehicleSearchData.assignment.supervisor %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                            <td class="personnel-cell">
+                                <% if (vehicleSearchData && vehicleSearchData.assignment && vehicleSearchData.assignment.members && vehicleSearchData.assignment.members[0]) { %>
+                                    <%= vehicleSearchData.assignment.members[0] %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                            <td class="personnel-cell">-</td>
+                            <td class="personnel-cell">-</td>
+                            <td class="personnel-cell">-</td>
+                        </tr>
+                        
+                        <!-- 시트지역 -->
+                        <tr class="region-row">
+                            <td rowspan="5" class="region-cell">시트지역</td>
+                            <td class="location-cell">시트1문</td>
+                            <td class="personnel-cell">
+                                <div class="role-label">조장</div>
+                                <% const sheet1GateData = findAssignmentData('시트', '시트1문'); %>
+                                <% if (sheet1GateData && sheet1GateData.assignment && sheet1GateData.assignment.supervisor) { %>
+                                    <%= sheet1GateData.assignment.supervisor %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                            <td class="personnel-cell">
+                                <% if (sheet1GateData && sheet1GateData.assignment && sheet1GateData.assignment.teamLeader) { %>
+                                    <%= sheet1GateData.assignment.teamLeader %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                            <td class="personnel-cell">
+                                <% if (sheet1GateData && sheet1GateData.assignment && sheet1GateData.assignment.members && sheet1GateData.assignment.members[0]) { %>
+                                    <%= sheet1GateData.assignment.members[0] %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                            <td class="personnel-cell">
+                                <% if (sheet1GateData && sheet1GateData.assignment && sheet1GateData.assignment.members && sheet1GateData.assignment.members[1]) { %>
+                                    <%= sheet1GateData.assignment.members[1] %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                            <td class="personnel-cell">
+                                <% if (sheet1GateData && sheet1GateData.assignment && sheet1GateData.assignment.members && sheet1GateData.assignment.members[2]) { %>
+                                    <%= sheet1GateData.assignment.members[2] %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                            <td class="personnel-cell">-</td>
+                        </tr>
+                        <tr>
+                            <td class="location-cell">시트1중문</td>
+                            <td class="personnel-cell">
+                                <% const sheet1MidGateData = findAssignmentData('시트', '시트1중문'); %>
+                                <% if (sheet1MidGateData && sheet1MidGateData.assignment && sheet1MidGateData.assignment.teamLeader) { %>
+                                    <%= sheet1MidGateData.assignment.teamLeader %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                            <td class="personnel-cell">
+                                <% if (sheet1MidGateData && sheet1MidGateData.assignment && sheet1MidGateData.assignment.supervisor) { %>
+                                    <%= sheet1MidGateData.assignment.supervisor %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                            <td class="personnel-cell">
+                                <% if (sheet1MidGateData && sheet1MidGateData.assignment && sheet1MidGateData.assignment.members && sheet1MidGateData.assignment.members[0]) { %>
+                                    <%= sheet1MidGateData.assignment.members[0] %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                            <td class="personnel-cell">
+                                <% if (sheet1MidGateData && sheet1MidGateData.assignment && sheet1MidGateData.assignment.members && sheet1MidGateData.assignment.members[1]) { %>
+                                    <%= sheet1MidGateData.assignment.members[1] %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                            <td class="personnel-cell">-</td>
+                            <td class="personnel-cell">-</td>
+                        </tr>
+                        <tr>
+                            <td class="location-cell">시트1주차장초소</td>
+                            <td class="personnel-cell">
+                                <% if (workOrder.workAssignment && workOrder.workAssignment[14] && workOrder.workAssignment[14].assignment && workOrder.workAssignment[14].assignment.teamLeader) { %>
+                                    <%= workOrder.workAssignment[14].assignment.teamLeader %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                            <td class="personnel-cell">
+                                <% if (workOrder.workAssignment && workOrder.workAssignment[14] && workOrder.workAssignment[14].assignment && workOrder.workAssignment[14].assignment.supervisor) { %>
+                                    <%= workOrder.workAssignment[14].assignment.supervisor %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                            <td class="personnel-cell">
+                                <% if (workOrder.workAssignment && workOrder.workAssignment[14] && workOrder.workAssignment[14].assignment && workOrder.workAssignment[14].assignment.members && workOrder.workAssignment[14].assignment.members[0]) { %>
+                                    <%= workOrder.workAssignment[14].assignment.members[0] %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                            <td class="personnel-cell">-</td>
+                            <td class="personnel-cell">-</td>
+                            <td class="personnel-cell">-</td>
+                        </tr>
+                        <tr>
+                            <td class="location-cell">시트3문</td>
+                            <td class="personnel-cell">
+                                <% if (workOrder.workAssignment && workOrder.workAssignment[15] && workOrder.workAssignment[15].assignment && workOrder.workAssignment[15].assignment.teamLeader) { %>
+                                    <%= workOrder.workAssignment[15].assignment.teamLeader %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                            <td class="personnel-cell">
+                                <% if (workOrder.workAssignment && workOrder.workAssignment[15] && workOrder.workAssignment[15].assignment && workOrder.workAssignment[15].assignment.supervisor) { %>
+                                    <%= workOrder.workAssignment[15].assignment.supervisor %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                            <td class="personnel-cell">
+                                <% if (workOrder.workAssignment && workOrder.workAssignment[15] && workOrder.workAssignment[15].assignment && workOrder.workAssignment[15].assignment.members && workOrder.workAssignment[15].assignment.members[0]) { %>
+                                    <%= workOrder.workAssignment[15].assignment.members[0] %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                            <td class="personnel-cell">
+                                <% if (workOrder.workAssignment && workOrder.workAssignment[15] && workOrder.workAssignment[15].assignment && workOrder.workAssignment[15].assignment.members && workOrder.workAssignment[15].assignment.members[1]) { %>
+                                    <%= workOrder.workAssignment[15].assignment.members[1] %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                            <td class="personnel-cell">-</td>
+                            <td class="personnel-cell">-</td>
+                        </tr>
+                        <tr>
+                            <td class="location-cell">코일주차장</td>
+                            <td class="personnel-cell">
+                                <% if (workOrder.workAssignment && workOrder.workAssignment[16] && workOrder.workAssignment[16].assignment && workOrder.workAssignment[16].assignment.teamLeader) { %>
+                                    <%= workOrder.workAssignment[16].assignment.teamLeader %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                            <td class="personnel-cell">
+                                <% if (workOrder.workAssignment && workOrder.workAssignment[16] && workOrder.workAssignment[16].assignment && workOrder.workAssignment[16].assignment.supervisor) { %>
+                                    <%= workOrder.workAssignment[16].assignment.supervisor %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                            <td class="personnel-cell">
+                                <% if (workOrder.workAssignment && workOrder.workAssignment[16] && workOrder.workAssignment[16].assignment && workOrder.workAssignment[16].assignment.members && workOrder.workAssignment[16].assignment.members[0]) { %>
+                                    <%= workOrder.workAssignment[16].assignment.members[0] %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                            <td class="personnel-cell">-</td>
+                            <td class="personnel-cell">-</td>
+                            <td class="personnel-cell">-</td>
+                        </tr>
+                        
+                        <!-- 매암동지역 -->
+                        <tr class="region-row">
+                            <td rowspan="2" class="region-cell">매암동지역</td>
+                            <td class="location-cell">엔진4부</td>
+                            <td class="personnel-cell">
+                                <div class="role-label">조장</div>
+                                <% if (workOrder.workAssignment && workOrder.workAssignment[17] && workOrder.workAssignment[17].assignment && workOrder.workAssignment[17].assignment.supervisor) { %>
+                                    <%= workOrder.workAssignment[17].assignment.supervisor %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                            <td class="personnel-cell">
+                                <% if (workOrder.workAssignment && workOrder.workAssignment[17] && workOrder.workAssignment[17].assignment && workOrder.workAssignment[17].assignment.teamLeader) { %>
+                                    <%= workOrder.workAssignment[17].assignment.teamLeader %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                            <td class="personnel-cell">
+                                <% if (workOrder.workAssignment && workOrder.workAssignment[17] && workOrder.workAssignment[17].assignment && workOrder.workAssignment[17].assignment.members && workOrder.workAssignment[17].assignment.members[0]) { %>
+                                    <%= workOrder.workAssignment[17].assignment.members[0] %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                            <td class="personnel-cell">-</td>
+                            <td class="personnel-cell">-</td>
+                            <td class="personnel-cell">-</td>
+                        </tr>
+                        <tr>
+                            <td class="location-cell">야적장초소</td>
+                            <td class="personnel-cell">
+                                <% if (workOrder.workAssignment && workOrder.workAssignment[18] && workOrder.workAssignment[18].assignment && workOrder.workAssignment[18].assignment.teamLeader) { %>
+                                    <%= workOrder.workAssignment[18].assignment.teamLeader %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                            <td class="personnel-cell">
+                                <% if (workOrder.workAssignment && workOrder.workAssignment[18] && workOrder.workAssignment[18].assignment && workOrder.workAssignment[18].assignment.supervisor) { %>
+                                    <%= workOrder.workAssignment[18].assignment.supervisor %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                            <td class="personnel-cell">
+                                <% if (workOrder.workAssignment && workOrder.workAssignment[18] && workOrder.workAssignment[18].assignment && workOrder.workAssignment[18].assignment.members && workOrder.workAssignment[18].assignment.members[0]) { %>
+                                    <%= workOrder.workAssignment[18].assignment.members[0] %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                            <td class="personnel-cell">-</td>
+                            <td class="personnel-cell">-</td>
+                            <td class="personnel-cell">-</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
 
@@ -1345,36 +2111,52 @@
             <div class="education-divider"></div>
             <div class="section-content">
                 <div class="education-section">
-                    <div class="education-column">
-                        <div class="education-header">금주중점</div>
-                        <div class="education-sub-divider"></div>
-                        <div class="education-content">
-                            <% if (workOrder.education.weeklyFocus && workOrder.education.weeklyFocus.length > 0) { %>
-                                <% workOrder.education.weeklyFocus.forEach(function(focus, index) { %>
-                                <div class="education-item"><%= (index + 1) %>. <%= focus %></div>
-                                <% }); %>
-                            <% } else { %>
-                                <div class="education-item">1. 근무기강 확립 강조</div>
-                                <div class="education-item">2. 기본적인 예의 / 직장 예의범절 준수</div>
-                                <div class="education-item">3. 근무중 안전사고 예방 철저</div>
-                            <% } %>
-                        </div>
-                    </div>
+                    <!-- 금주중점 표 -->
+                    <table class="education-table">
+                        <thead>
+                            <tr>
+                                <th class="education-header">금주중점</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="education-content">
+                                    <% if (workOrder.education.weeklyFocus && workOrder.education.weeklyFocus.length > 0) { %>
+                                        <% workOrder.education.weeklyFocus.forEach(function(focus, index) { %>
+                                        <div class="education-item"><%= (index + 1) %>. <%= focus %></div>
+                                        <% }); %>
+                                    <% } else { %>
+                                        <div class="education-item">1. 근무기강 확립 강조</div>
+                                        <div class="education-item">2. 기본적인 예의 / 직장 예의범절 준수</div>
+                                        <div class="education-item">3. 근무중 안전사고 예방 철저</div>
+                                    <% } %>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                     
-                    <div class="education-column">
-                        <div class="education-header">교육내용</div>
-                        <div class="education-sub-divider"></div>
-                        <div class="education-content">
-                            <% if (workOrder.education.generalEducation && workOrder.education.generalEducation.length > 0) { %>
-                                <% workOrder.education.generalEducation.forEach(function(education, index) { %>
-                                <div class="education-item"><%= (index + 1) %>. <%= education %></div>
-                                <% }); %>
-                            <% } else { %>
-                                <div class="education-item">1. 보안업무 능력 강화(출입보안 업무 일관성 있게 처리 / 입문차량 키오스크 승인 여부 확인)</div>
-                                <div class="education-item">2. 근무기강 확립/근무 개강 반드시 준수 할 것/입초 근무 시 정위치 정자세 근무/복장 통일되게 관리</div>
-                            <% } %>
-                        </div>
-                    </div>
+                    <!-- 교육내용 표 -->
+                    <table class="education-table">
+                        <thead>
+                            <tr>
+                                <th class="education-header">교육내용</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="education-content">
+                                    <% if (workOrder.education.generalEducation && workOrder.education.generalEducation.length > 0) { %>
+                                        <% workOrder.education.generalEducation.forEach(function(education, index) { %>
+                                        <div class="education-item"><%= (index + 1) %>. <%= education %></div>
+                                        <% }); %>
+                                    <% } else { %>
+                                        <div class="education-item">1. 보안업무 능력 강화(출입보안 업무 일관성 있게 처리 / 입문차량 키오스크 승인 여부 확인)</div>
+                                        <div class="education-item">2. 근무기강 확립/근무 개강 반드시 준수 할 것/입초 근무 시 정위치 정자세 근무/복장 통일되게 관리</div>
+                                    <% } %>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
