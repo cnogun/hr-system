@@ -421,15 +421,15 @@ router.post('/auto-attendance', async (req, res) => {
                 if (nameMatch) {
                   const memberNumber = parseInt(nameMatch[1]);
                   if (memberNumber >= 11 && memberNumber <= 20) { // 2조(11-20번)
-                    // 2조(선택조 10명): 야간특근
-                    status = '출근(야특)';
-                    checkIn = '18:00';
-                    checkOut = '06:00';
-                    basic = '8';        // 기본 8시간
-                    overtime = '0';     // 연장 0시간
-                    special = '12';     // 특근 12시간 (8×1.5 가중치)
-                    specialOvertime = '8'; // 특근연장 8시간 (4×2.0 가중치)
-                    night = '4';        // 야간 4시간 (8×0.5 가중치)
+                      // 2조(선택조 10명): 야간특근
+                      status = '출근(야특)';
+                      checkIn = '18:00';
+                      checkOut = '06:00';
+                      basic = '8';        // 기본 8시간
+                      overtime = '0';     // 연장 0시간
+                      special = '12';     // 특근 12시간 (8×1.5 가중치)
+                      specialOvertime = '8'; // 특근연장 8시간 (4×2.0 가중치)
+                      night = '4';        // 야간 4시간 (8×0.5 가중치)
                     note = getNoteByStatus(status);
                     console.log(`1팀 2조 일요일 야간특근 설정: ${emp.name} (선택조 10명)`);
                   } else {
@@ -525,28 +525,28 @@ router.post('/auto-attendance', async (req, res) => {
           }
                  } else {
            // 평일 근무 로직 - 수정된 순환규칙 적용
-           if (cycleWeek === 0) { // 3주차: 1팀 심야, 2팀 주간, 3팀 초야
+           if (cycleWeek === 0) { // 37주차: 1팀 초야, 2팀 심야, 3팀 주간
              if (teamNumber === '1') {
+               status = '출근(초)';
+               checkIn = '14:00';
+               checkOut = '22:00';
+               basic = '8';
+               note = getNoteByStatus(status);
+             } else if (teamNumber === '2') {
                status = '출근(심)';
                checkIn = '22:00';
                checkOut = '06:00';
                basic = '8';
                night = '4';        // 야간 4시간 (8×0.5 가중치)
                note = getNoteByStatus(status);
-             } else if (teamNumber === '2') {
+             } else if (teamNumber === '3') {
                status = '출근(주)';
                checkIn = '06:00';
                checkOut = '14:00';
-               basic = '8';
-               note = getNoteByStatus(status);
-             } else if (teamNumber === '3') {
-               status = '출근(초)';
-               checkIn = '14:00';
-               checkOut = '22:00';
                basic = '8';
                note = getNoteByStatus(status);
              }
-           } else if (cycleWeek === 1) { // 1주차: 1팀 주간, 2팀 초야, 3팀 심야
+           } else if (cycleWeek === 1) { // 38주차: 1팀 주간, 2팀 초야, 3팀 심야
              if (teamNumber === '1') {
                status = '출근(주)';
                checkIn = '06:00';
@@ -567,24 +567,24 @@ router.post('/auto-attendance', async (req, res) => {
                night = '4';        // 야간 4시간 (8×0.5 가중치)
                note = getNoteByStatus(status);
              }
-           } else if (cycleWeek === 2) { // 2주차: 1팀 초야, 2팀 심야, 3팀 주간
+           } else if (cycleWeek === 2) { // 39주차: 1팀 심야, 2팀 주간, 3팀 초야
              if (teamNumber === '1') {
-               status = '출근(초)';
-               checkIn = '14:00';
-               checkOut = '22:00';
-               basic = '8';
-               note = getNoteByStatus(status);
-             } else if (teamNumber === '2') {
                status = '출근(심)';
                checkIn = '22:00';
                checkOut = '06:00';
                basic = '8';
                night = '4';        // 야간 4시간 (8×0.5 가중치)
                note = getNoteByStatus(status);
-             } else if (teamNumber === '3') {
+             } else if (teamNumber === '2') {
                status = '출근(주)';
                checkIn = '06:00';
                checkOut = '14:00';
+               basic = '8';
+               note = getNoteByStatus(status);
+             } else if (teamNumber === '3') {
+               status = '출근(초)';
+               checkIn = '14:00';
+               checkOut = '22:00';
                basic = '8';
                note = getNoteByStatus(status);
              }

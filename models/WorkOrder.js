@@ -67,7 +67,10 @@ const workOrderSchema = new mongoose.Schema({
       type: Number,
       default: 0
     },
-    absentDetails: [String], // ["연차1", "성시경", "연차2", "김아름"] 형태의 문자열 배열
+    absentDetails: [{
+      type: String, // "연차1", "병가", "산재" 등
+      employeeName: String // "홍길동", "김철수" 등
+    }], // [{type: "연차1", employeeName: "홍길동"}] 형태의 객체 배열
     currentPersonnel: {
       type: Number,
       required: true
@@ -98,6 +101,9 @@ const workOrderSchema = new mongoose.Schema({
   // 직무 교육
   education: {
     weeklyFocus: [{
+      type: String
+    }],
+    content: [{
       type: String
     }],
     generalEducation: [{
@@ -235,7 +241,14 @@ workOrderSchema.virtual('absentSummary').get(function() {
   if (!this.personnelStatus || !this.personnelStatus.absentDetails) return '';
   
   const summary = this.personnelStatus.absentDetails.map(detail => {
-    return `${detail.type}${detail.days || ''}:${detail.employeeName}`;
+    if (typeof detail === 'string') {
+      // 기존 문자열 형태의 데이터 처리
+      return detail;
+    } else if (detail && detail.type && detail.employeeName) {
+      // 새로운 객체 형태의 데이터 처리
+      return `${detail.type}:${detail.employeeName}`;
+    }
+    return '';
   }).join(' ');
   
   return summary;

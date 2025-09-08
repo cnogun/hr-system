@@ -11,7 +11,288 @@
  */
 const express = require('express');
 const router = express.Router();
-const WorkOrder = require('../models/WorkOrder');
+const mongoose = require('mongoose');
+
+// WorkOrder 모델이 이미 존재하는지 확인하고 제거
+if (mongoose.models.WorkOrder) {
+  delete mongoose.models.WorkOrder;
+}
+
+// 스키마를 직접 정의하여 모델 생성
+const workOrderSchema = new mongoose.Schema({
+  // 기본 정보
+  title: {
+    type: String,
+    required: true,
+    trim: true,
+    default: '근무명령서'
+  },
+  
+  // 결재 정보
+  approval: {
+    supervisor: {
+      type: String,
+      required: true,
+      default: '안종환'
+    },
+    department: {
+      type: String,
+      required: true,
+      default: '소장'
+    }
+  },
+  
+  // 근무 정보
+  workInfo: {
+    date: {
+      type: Date,
+      required: true
+    },
+    team: {
+      type: String,
+      required: true,
+      enum: ['보안1반', '보안2반', '보안3반']
+    },
+    shift: {
+      type: String,
+      required: true,
+      enum: ['주간', '초야', '심야', '주간특근', '야간특근', '휴무', '주간조', '초야조', '심야조', '주간특근조', '야간특근조']
+    },
+    workTime: {
+      start: String, // "22:00"
+      end: String    // "06:00"
+    }
+  },
+  
+  // 인원 현황
+  personnelStatus: {
+    totalPersonnel: {
+      type: Number,
+      required: true,
+      default: 40
+    },
+    absentPersonnel: {
+      type: Number,
+      default: 0
+    },
+    absentDetails: [{
+      type: { type: String }, // "연차1", "병가", "산재" 등
+      employeeName: String // "홍길동", "김철수" 등
+    }], // [{type: "연차1", employeeName: "홍길동"}] 형태의 객체 배열
+    currentPersonnel: {
+      type: Number,
+      required: true
+    },
+    accidentDetails: {
+      type: String,
+      default: ''
+    }
+  },
+  
+  // 근무 편성
+  workAssignment: [{
+    region: {
+      type: String,
+      required: true
+    },
+    location: {
+      type: String,
+      required: true
+    },
+    assignment: {
+      teamLeader: String,
+      supervisor: String,
+      members: [String]
+    }
+  }],
+  
+  // 직무 교육
+  education: {
+    weeklyFocus: [{
+      type: String
+    }],
+    content: [{
+      type: String
+    }],
+    generalEducation: [{
+      type: String
+    }]
+  },
+  
+  // 기존 필드들
+  priority: {
+    type: String,
+    enum: ['high', 'medium', 'low'],
+    required: true,
+    default: 'medium'
+  },
+  department: {
+    type: String,
+    required: true,
+    enum: ['보안1팀', '보안2팀', '보안3팀', '전체']
+  },
+  status: {
+    type: String,
+    enum: ['pending', 'active', 'completed'],
+    default: 'pending'
+  },
+  progress: {
+    type: Number,
+    min: 0,
+    max: 100,
+    default: 0
+  },
+  deadline: {
+    type: Date
+  },
+  assignedTo: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }],
+  attachments: [{
+    fileName: String,
+    originalName: String,
+    filePath: String,
+    fileSize: Number,
+    mimeType: String
+  }],
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+  updatedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
+  comments: [{
+    content: String,
+    author: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    createdAt: {
+      type: Date,
+      default: Date.now
+    }
+  }]
+}, {
+  timestamps: true
+});
+
+// 인덱스 설정
+workOrderSchema.index({ department: 1, status: 1 });
+workOrderSchema.index({ priority: 1, status: 1 });
+workOrderSchema.index({ createdBy: 1 });
+workOrderSchema.index({ createdAt: -1 });
+workOrderSchema.index({ 'workInfo.date': -1 });
+workOrderSchema.index({ 'workInfo.team': 1, 'workInfo.shift': 1 });
+
+// 가상 필드: 우선순위 한글명
+workOrderSchema.virtual('priorityKorean').get(function() {
+  const priorities = {
+    'high': '긴급',
+    'medium': '보통',
+    'low': '낮음'
+  };
+  return priorities[this.priority] || this.priority;
+});
+
+// 가상 필드: 상태 한글명
+workOrderSchema.virtual('statusKorean').get(function() {
+  const statuses = {
+    'pending': '대기중',
+    'active': '진행중',
+    'completed': '완료'
+  };
+  return statuses[this.status] || this.status;
+});
+
+// 가상 필드: 마감일 임박 여부
+workOrderSchema.virtual('isDeadlineApproaching').get(function() {
+  if (!this.deadline) return false;
+  const now = new Date();
+  const deadline = new Date(this.deadline);
+  const diffDays = (deadline - now) / (1000 * 60 * 60 * 24);
+  return diffDays <= 3 && diffDays > 0;
+});
+
+// 가상 필드: 마감일 지남 여부
+workOrderSchema.virtual('isOverdue').get(function() {
+  if (!this.deadline) return false;
+  const now = new Date();
+  const deadline = new Date(this.deadline);
+  return deadline < now && this.status !== 'completed';
+});
+
+// 가상 필드: 근무 정보 포맷팅
+workOrderSchema.virtual('formattedWorkInfo').get(function() {
+  if (!this.workInfo) return '';
+  const date = new Date(this.workInfo.date);
+  const year = date.getFullYear().toString().slice(-2);
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const day = date.getDate().toString().padStart(2, '0');
+  const dayOfWeek = ['일', '월', '화', '수', '목', '금', '토'][date.getDay()];
+  
+  const team = this.workInfo.team || '';
+  const shift = this.workInfo.shift || '';
+  const startTime = this.workInfo.workTime && this.workInfo.workTime.start ? this.workInfo.workTime.start : '';
+  const endTime = this.workInfo.workTime && this.workInfo.workTime.end ? this.workInfo.workTime.end : '';
+  
+  const timeInfo = startTime && endTime ? `(${startTime}~${endTime})` : '';
+  
+  return `${year}. ${month}. ${day}(${dayOfWeek}) ${team} ${shift}${timeInfo}`;
+});
+
+// 가상 필드: 결원 사유 요약
+workOrderSchema.virtual('absentSummary').get(function() {
+  if (!this.personnelStatus || !this.personnelStatus.absentDetails) return '';
+  
+  const summary = this.personnelStatus.absentDetails.map(detail => {
+    if (typeof detail === 'string') {
+      // 기존 문자열 형태의 데이터 처리
+      return detail;
+    } else if (detail && detail.type && detail.employeeName) {
+      // 새로운 객체 형태의 데이터 처리
+      return `${detail.type}:${detail.employeeName}`;
+    }
+    return '';
+  }).join(' ');
+  
+  return summary;
+});
+
+// 진행률 업데이트 시 상태 자동 변경
+workOrderSchema.pre('save', function(next) {
+  if (this.isModified('progress')) {
+    if (this.progress === 100 && this.status !== 'completed') {
+      this.status = 'completed';
+    } else if (this.progress > 0 && this.status === 'pending') {
+      this.status = 'active';
+    }
+  }
+  
+  // 현재 인원 자동 계산
+  if (this.isModified('personnelStatus')) {
+    if (this.personnelStatus.totalPersonnel && this.personnelStatus.absentPersonnel !== undefined) {
+      this.personnelStatus.currentPersonnel = this.personnelStatus.totalPersonnel - this.personnelStatus.absentPersonnel;
+    }
+  }
+  
+  next();
+});
+
+// 완료된 명령서는 수정 불가
+workOrderSchema.pre('save', function(next) {
+  if (this.isModified() && this.status === 'completed') {
+    const error = new Error('완료된 근무명령서는 수정할 수 없습니다.');
+    return next(error);
+  }
+  next();
+});
+
+// 모델 생성
+const WorkOrder = mongoose.model('WorkOrder', workOrderSchema);
 const User = require('../models/User');
 const Employee = require('../models/Employee');
 const Log = require('../models/Log');
@@ -142,11 +423,19 @@ router.get('/', isLoggedIn, async (req, res) => {
 // 근무명령서 작성 폼
 router.get('/new', isLoggedIn, adminOnly, async (req, res) => {
   try {
+    // findAssignmentData 함수 정의
+    const findAssignmentData = (workAssignment, location, field) => {
+      if (!workAssignment || !Array.isArray(workAssignment)) return '';
+      const assignment = workAssignment.find(item => item.location === location);
+      return assignment && assignment.assignment ? assignment.assignment[field] || '' : '';
+    };
+
     res.render('workOrderForm', {
       workOrder: null,
       user: req.session.user,
       userRole: req.session.userRole,
-      session: req.session
+      session: req.session,
+      findAssignmentData: findAssignmentData
     });
   } catch (error) {
     console.error('근무명령서 작성 폼 오류:', error);
@@ -202,14 +491,44 @@ router.post('/', isLoggedIn, adminOnly, async (req, res) => {
     }
     
     if (req.body.personnelStatus) {
+      // absentDetails 데이터 변환 및 처리
+      let processedAbsentDetails = [];
+      
+      if (req.body.personnelStatus.absentDetails && Array.isArray(req.body.personnelStatus.absentDetails)) {
+        req.body.personnelStatus.absentDetails.forEach(detail => {
+          if (detail && detail.type && detail.employeeName) {
+            // type과 employeeName이 배열인 경우 처리
+            if (Array.isArray(detail.type) && Array.isArray(detail.employeeName)) {
+              // 배열 길이가 같은지 확인하고 매칭
+              const minLength = Math.min(detail.type.length, detail.employeeName.length);
+              for (let i = 0; i < minLength; i++) {
+                if (detail.type[i] && detail.employeeName[i] && 
+                    typeof detail.type[i] === 'string' && typeof detail.employeeName[i] === 'string' &&
+                    detail.type[i].trim() && detail.employeeName[i].trim()) {
+                  processedAbsentDetails.push({
+                    type: detail.type[i].trim(),
+                    employeeName: detail.employeeName[i].trim()
+                  });
+                }
+              }
+            } else if (typeof detail.type === 'string' && typeof detail.employeeName === 'string') {
+              // 단일 값인 경우
+              if (detail.type.trim() && detail.employeeName.trim()) {
+                processedAbsentDetails.push({
+                  type: detail.type.trim(),
+                  employeeName: detail.employeeName.trim()
+                });
+              }
+            }
+          }
+        });
+      }
+      
       workOrderData.personnelStatus = {
         totalPersonnel: parseInt(req.body.personnelStatus.totalPersonnel),
         absentPersonnel: parseInt(req.body.personnelStatus.absentPersonnel),
         currentPersonnel: parseInt(req.body.personnelStatus.currentPersonnel),
-        absentDetails: (req.body.personnelStatus.absentDetails || []).filter(detail => 
-          detail && detail.type && detail.employeeName && 
-          typeof detail.employeeName === 'string' && detail.employeeName.trim()
-        ).map(detail => [detail.type, detail.employeeName]).flat(),
+        absentDetails: processedAbsentDetails,
         accidentDetails: req.body.personnelStatus.accidentDetails || ''
       };
     }
@@ -228,7 +547,7 @@ router.post('/', isLoggedIn, adminOnly, async (req, res) => {
         
         // 배열 형태의 데이터 처리 (브라우저에서 전송되는 형태)
         if (Array.isArray(item) && item.length >= 3) {
-          const [teamLeader, region, location, supervisor, ...members] = item;
+          const [teamLeader, supervisor, region, location, ...members] = item;
           
           // 빈 문자열이 아닌 대원들만 필터링
           const filteredMembers = members.filter(member => member && member.trim());
@@ -288,18 +607,31 @@ router.post('/', isLoggedIn, adminOnly, async (req, res) => {
         }
       });
       
-      workOrderData.workAssignment = workAssignments;
-      console.log('🔧 POST 최종 workAssignment:', JSON.stringify(workAssignments, null, 2));
+      // 빈 region과 location 필터링
+      const filteredAssignments = workAssignments.filter(assignment => 
+        assignment.region && assignment.region.trim() && 
+        assignment.location && assignment.location.trim()
+      );
+      
+      workOrderData.workAssignment = filteredAssignments;
+      console.log('🔧 POST 최종 workAssignment (필터링 후):', JSON.stringify(filteredAssignments, null, 2));
     }
     
     if (req.body.education) {
       workOrderData.education = {
         weeklyFocus: (req.body.education.weeklyFocus || []).filter(focus => focus && focus.trim()),
+        content: (req.body.education.content || []).filter(content => content && content.trim()),
         generalEducation: (req.body.education.generalEducation || []).filter(education => education && education.trim())
       };
     }
     
     console.log('📝 저장할 데이터:', JSON.stringify(workOrderData, null, 2));
+    
+    // 각 섹션별 데이터 확인
+    console.log('🔍 사고내용 데이터:', JSON.stringify(workOrderData.personnelStatus?.absentDetails, null, 2));
+    console.log('🔍 교육내용 데이터:', JSON.stringify(workOrderData.education?.content, null, 2));
+    console.log('🔍 근무편성 데이터:', JSON.stringify(workOrderData.workAssignment, null, 2));
+    
     const workOrder = new WorkOrder(workOrderData);
     await workOrder.save();
     console.log('✅ 근무명령서 저장 완료:', workOrder._id);
@@ -358,12 +690,20 @@ router.post('/', isLoggedIn, adminOnly, async (req, res) => {
       }
     };
     
+    // findAssignmentData 함수 정의
+    const findAssignmentData = (workAssignment, location, field) => {
+      if (!workAssignment || !Array.isArray(workAssignment)) return '';
+      const assignment = workAssignment.find(item => item.location === location);
+      return assignment && assignment.assignment ? assignment.assignment[field] || '' : '';
+    };
+
     res.render('workOrderForm', {
       workOrder: workOrderWithData,
       user: req.session.user,
       userRole: req.session.userRole,
       session: req.session,
-      errors: [errorMessage]
+      errors: [errorMessage],
+      findAssignmentData: findAssignmentData
     });
   }
 });
@@ -388,11 +728,19 @@ router.get('/:id/edit', isLoggedIn, adminOnly, async (req, res) => {
     console.log('🔧 workAssignment 길이:', workOrder.workAssignment ? workOrder.workAssignment.length : 0);
     console.log('🔧 workAssignment 전체 데이터:', JSON.stringify(workOrder.workAssignment, null, 2));
     
-    res.render('workOrderForm', {
+    // findAssignmentData 함수 정의
+    const findAssignmentData = (workAssignment, location, field) => {
+      if (!workAssignment || !Array.isArray(workAssignment)) return '';
+      const assignment = workAssignment.find(item => item.location === location);
+      return assignment && assignment.assignment ? assignment.assignment[field] || '' : '';
+    };
+
+    res.render('workOrder_edit', {
       workOrder,
       user: req.session.user,
       userRole: req.session.userRole,
-      session: req.session
+      session: req.session,
+      findAssignmentData: findAssignmentData
     });
   } catch (error) {
     console.error('근무명령서 수정 폼 오류:', error);
@@ -488,9 +836,23 @@ router.get('/:id', isLoggedIn, async (req, res) => {
     // 포맷된 근무조 정보 추가
     workOrder.formattedWorkInfo = formatWorkInfo(workOrder);
     
+    // findAssignmentData 함수 정의
+    const findAssignmentData = (workAssignment, location, field, index) => {
+      if (!workAssignment || !Array.isArray(workAssignment)) return '';
+      const assignment = workAssignment.find(item => item.location === location);
+      if (!assignment || !assignment.assignment) return '';
+      
+      if (index !== undefined) {
+        return assignment.assignment[field] && assignment.assignment[field][index] ? assignment.assignment[field][index] : '';
+      }
+      
+      return assignment.assignment[field] || '';
+    };
+
     console.log('✅ WorkOrder 렌더링 시작');
     res.render('workOrder', {
       workOrder,
+      findAssignmentData: findAssignmentData,
       user: req.session.user,
       userRole: req.session.userRole,
       session: req.session
@@ -553,14 +915,44 @@ router.put('/:id', isLoggedIn, adminOnly, async (req, res) => {
     }
     
     if (req.body.personnelStatus) {
+      // absentDetails 데이터 변환 및 처리
+      let processedAbsentDetails = [];
+      
+      if (req.body.personnelStatus.absentDetails && Array.isArray(req.body.personnelStatus.absentDetails)) {
+        req.body.personnelStatus.absentDetails.forEach(detail => {
+          if (detail && detail.type && detail.employeeName) {
+            // type과 employeeName이 배열인 경우 처리
+            if (Array.isArray(detail.type) && Array.isArray(detail.employeeName)) {
+              // 배열 길이가 같은지 확인하고 매칭
+              const minLength = Math.min(detail.type.length, detail.employeeName.length);
+              for (let i = 0; i < minLength; i++) {
+                if (detail.type[i] && detail.employeeName[i] && 
+                    typeof detail.type[i] === 'string' && typeof detail.employeeName[i] === 'string' &&
+                    detail.type[i].trim() && detail.employeeName[i].trim()) {
+                  processedAbsentDetails.push({
+                    type: detail.type[i].trim(),
+                    employeeName: detail.employeeName[i].trim()
+                  });
+                }
+              }
+            } else if (typeof detail.type === 'string' && typeof detail.employeeName === 'string') {
+              // 단일 값인 경우
+              if (detail.type.trim() && detail.employeeName.trim()) {
+                processedAbsentDetails.push({
+                  type: detail.type.trim(),
+                  employeeName: detail.employeeName.trim()
+                });
+              }
+            }
+          }
+        });
+      }
+      
       updateData.personnelStatus = {
         totalPersonnel: parseInt(req.body.personnelStatus.totalPersonnel),
         absentPersonnel: parseInt(req.body.personnelStatus.absentPersonnel),
         currentPersonnel: parseInt(req.body.personnelStatus.currentPersonnel),
-        absentDetails: (req.body.personnelStatus.absentDetails || []).filter(detail => 
-          detail && detail.type && detail.employeeName && 
-          typeof detail.employeeName === 'string' && detail.employeeName.trim()
-        ).map(detail => [detail.type, detail.employeeName]).flat(),
+        absentDetails: processedAbsentDetails,
         accidentDetails: req.body.personnelStatus.accidentDetails || ''
       };
     }
@@ -581,7 +973,7 @@ router.put('/:id', isLoggedIn, adminOnly, async (req, res) => {
         
         // 배열 형태의 데이터 처리 (브라우저에서 전송되는 형태)
         if (Array.isArray(item) && item.length >= 3) {
-          const [teamLeader, region, location, supervisor, ...members] = item;
+          const [teamLeader, supervisor, region, location, ...members] = item;
           
           // 빈 문자열이 아닌 대원들만 필터링
           const filteredMembers = members.filter(member => member && member.trim());
@@ -641,14 +1033,21 @@ router.put('/:id', isLoggedIn, adminOnly, async (req, res) => {
         }
       });
       
-      console.log('📝 처리된 workAssignments (PUT):', workAssignments);
-      updateData.workAssignment = workAssignments;
-      console.log('🔧 PUT 최종 workAssignment:', JSON.stringify(workAssignments, null, 2));
+      // 빈 region과 location 필터링
+      const filteredAssignments = workAssignments.filter(assignment => 
+        assignment.region && assignment.region.trim() && 
+        assignment.location && assignment.location.trim()
+      );
+      
+      console.log('📝 처리된 workAssignments (PUT, 필터링 후):', filteredAssignments);
+      updateData.workAssignment = filteredAssignments;
+      console.log('🔧 PUT 최종 workAssignment (필터링 후):', JSON.stringify(filteredAssignments, null, 2));
     }
     
     if (req.body.education) {
       updateData.education = {
         weeklyFocus: (req.body.education.weeklyFocus || []).filter(focus => focus && focus.trim()),
+        content: (req.body.education.content || []).filter(content => content && content.trim()),
         generalEducation: (req.body.education.generalEducation || []).filter(education => education && education.trim())
       };
     }
@@ -719,7 +1118,7 @@ router.post('/:id', isLoggedIn, adminOnly, async (req, res) => {
           req.body.workInfo.team.replace('반', '팀') : '전체'
       };
       
-      // 중첩된 객체 구조 처리
+      // 중첩된 객체 구조 처리 
       if (req.body.workInfo) {
         updateData.workInfo = {
           date: new Date(req.body.workInfo.date),
@@ -733,14 +1132,44 @@ router.post('/:id', isLoggedIn, adminOnly, async (req, res) => {
       }
       
       if (req.body.personnelStatus) {
+        // absentDetails 데이터 변환 및 처리
+        let processedAbsentDetails = [];
+        
+        if (req.body.personnelStatus.absentDetails && Array.isArray(req.body.personnelStatus.absentDetails)) {
+          req.body.personnelStatus.absentDetails.forEach(detail => {
+            if (detail && detail.type && detail.employeeName) {
+              // type과 employeeName이 배열인 경우 처리
+              if (Array.isArray(detail.type) && Array.isArray(detail.employeeName)) {
+                // 배열 길이가 같은지 확인하고 매칭
+                const minLength = Math.min(detail.type.length, detail.employeeName.length);
+                for (let i = 0; i < minLength; i++) {
+                  if (detail.type[i] && detail.employeeName[i] && 
+                      typeof detail.type[i] === 'string' && typeof detail.employeeName[i] === 'string' &&
+                      detail.type[i].trim() && detail.employeeName[i].trim()) {
+                    processedAbsentDetails.push({
+                      type: detail.type[i].trim(),
+                      employeeName: detail.employeeName[i].trim()
+                    });
+                  }
+                }
+              } else if (typeof detail.type === 'string' && typeof detail.employeeName === 'string') {
+                // 단일 값인 경우
+                if (detail.type.trim() && detail.employeeName.trim()) {
+                  processedAbsentDetails.push({
+                    type: detail.type.trim(),
+                    employeeName: detail.employeeName.trim()
+                  });
+                }
+              }
+            }
+          });
+        }
+        
         updateData.personnelStatus = {
           totalPersonnel: parseInt(req.body.personnelStatus.totalPersonnel),
           absentPersonnel: parseInt(req.body.personnelStatus.absentPersonnel),
           currentPersonnel: parseInt(req.body.personnelStatus.currentPersonnel),
-          absentDetails: (req.body.personnelStatus.absentDetails || []).filter(detail => 
-            detail && detail.type && detail.employeeName && 
-            typeof detail.employeeName === 'string' && detail.employeeName.trim()
-          ).map(detail => [detail.type, detail.employeeName]).flat(),
+          absentDetails: processedAbsentDetails,
           accidentDetails: req.body.personnelStatus.accidentDetails || ''
         };
       }
@@ -878,6 +1307,7 @@ router.post('/:id', isLoggedIn, adminOnly, async (req, res) => {
       if (req.body.education) {
         updateData.education = {
           weeklyFocus: (req.body.education.weeklyFocus || []).filter(focus => focus && focus.trim()),
+          content: (req.body.education.content || []).filter(content => content && content.trim()),
           generalEducation: (req.body.education.generalEducation || []).filter(education => education && education.trim())
         };
       }
