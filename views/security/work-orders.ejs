@@ -117,6 +117,47 @@
         margin-bottom: 1rem;
       }
     }
+    
+    /* 인쇄 스타일 */
+    @media print {
+      .btn,
+      nav,
+      .breadcrumb,
+      .stats-summary,
+      .filter-section,
+      .modal {
+        display: none !important;
+      }
+      
+      .container {
+        max-width: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+      
+      .work-order-card {
+        box-shadow: none !important;
+        border: 1px solid #ddd !important;
+        margin-bottom: 1rem !important;
+        page-break-inside: avoid;
+      }
+      
+      .card-body {
+        padding: 1rem !important;
+      }
+      
+      h2, h3, h4, h5, h6 {
+        color: #000 !important;
+      }
+      
+      .text-muted {
+        color: #666 !important;
+      }
+      
+      .work-order-list {
+        margin-top: 1rem;
+      }
+    }
   </style>
 </head>
 <body>
@@ -125,11 +166,22 @@
   <div class="container mt-4 flex-grow-1">
     <div class="row">
       <div class="col-12">
-        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4">
-          <h2 class="mb-3 mb-md-0">
+        <!-- 제목 중앙 정렬 -->
+        <div class="text-center mb-4">
+          <h2 class="mb-0">
             <i class="fas fa-file-alt text-primary me-2"></i><%= title %>
           </h2>
+        </div>
+        
+        <!-- 우측 상단 버튼들 -->
+        <div class="d-flex justify-content-end mb-4">
           <div class="d-flex gap-2">
+            <a href="/work-orders" class="btn btn-outline-secondary">
+              <i class="fas fa-list me-1"></i>목록
+            </a>
+            <button class="btn btn-info" onclick="printWorkOrders()">
+              <i class="fas fa-print me-1"></i>인쇄
+            </button>
             <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newWorkOrderModal">
               <i class="fas fa-plus me-1"></i>새 명령서
             </button>
@@ -680,6 +732,38 @@
         console.error('완료 처리 오류:', error);
         alert('완료 처리 중 오류가 발생했습니다.');
       }
+    }
+
+    // 인쇄 기능
+    function printWorkOrders() {
+      // 인쇄 시 불필요한 요소들 숨기기
+      const elementsToHide = [
+        '.btn',
+        'nav',
+        '.breadcrumb',
+        '.stats-summary',
+        '.filter-section',
+        '.modal'
+      ];
+      
+      // 요소들 숨기기
+      elementsToHide.forEach(selector => {
+        const elements = document.querySelectorAll(selector);
+        elements.forEach(el => {
+          el.style.display = 'none';
+        });
+      });
+      
+      // 인쇄 실행
+      window.print();
+      
+      // 인쇄 후 요소들 다시 보이기
+      elementsToHide.forEach(selector => {
+        const elements = document.querySelectorAll(selector);
+        elements.forEach(el => {
+          el.style.display = '';
+        });
+      });
     }
   </script>
 </body>

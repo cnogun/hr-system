@@ -11,11 +11,17 @@
       background: linear-gradient(135deg, #f8fafc 0%, #e2eafc 100%);
       min-height: 100vh;
     }
+    .container-fluid {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 15px;
+    }
     .detail-card {
       background: white;
       border-radius: 12px;
       box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-      margin-bottom: 2rem;
+      margin-bottom: 1.5rem;
+      height: fit-content;
     }
     .priority-high { 
       border-left: 4px solid #dc3545; 
@@ -37,6 +43,8 @@
     .status-pending { background-color: #6c757d; color: white; }
     .status-active { background-color: #007bff; color: white; }
     .status-completed { background-color: #28a745; color: white; }
+    
+    
     .info-item {
       display: flex;
       align-items: center;
@@ -61,42 +69,133 @@
       border-radius: 12px;
       padding: 1.5rem;
       box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-      margin-bottom: 2rem;
+      margin-bottom: 1.5rem;
+      height: fit-content;
     }
     .action-buttons {
       background: white;
       border-radius: 12px;
       padding: 1.5rem;
       box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+      height: fit-content;
+    }
+    
+    /* 목록 버튼 회색 배경 스타일 */
+    .btn-secondary {
+      background-color: #6c757d !important;
+      border-color: #6c757d !important;
+      color: white !important;
+    }
+    
+    .btn-secondary:hover {
+      background-color: #5a6268 !important;
+      border-color: #545b62 !important;
+      color: white !important;
+    }
+    
+    /* 반응형 레이아웃 최적화 */
+    @media (max-width: 1200px) {
+      .col-xl-9 {
+        margin-bottom: 1rem;
+      }
+      .col-xl-3 {
+        margin-top: 0;
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .detail-card {
+        padding: 1rem;
+        margin-bottom: 1rem;
+      }
+      .progress-section,
+      .action-buttons {
+        padding: 1rem;
+        margin-bottom: 1rem;
+      }
+    }
+    
+    /* 브레드크럼 중앙 정렬 */
+    .breadcrumb.justify-content-center {
+      display: flex;
+      justify-content: center;
+    }
+    
+    /* 인쇄 스타일 */
+    @media print {
+      .action-buttons,
+      .btn,
+      nav,
+      .breadcrumb,
+      .navbar,
+      .footer {
+        display: none !important;
+      }
+      
+      .container {
+        max-width: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+      
+      .detail-card {
+        box-shadow: none !important;
+        border: 1px solid #ddd !important;
+        margin-bottom: 1rem !important;
+        page-break-inside: avoid;
+      }
+      
+      .card-body {
+        padding: 1rem !important;
+      }
+      
+      h2, h3, h4, h5, h6 {
+        color: #000 !important;
+      }
+      
+      .text-muted {
+        color: #666 !important;
+      }
     }
   </style>
 </head>
 <body>
   <%- include('../header') %>
   
-  <div class="container mt-4 flex-grow-1">
+  <div class="container-fluid mt-4 flex-grow-1">
     <div class="row">
       <div class="col-12">
-        <!-- 헤더 -->
-        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4">
-          <div>
-            <h2 class="mb-2">
-              <i class="fas fa-file-alt text-primary me-2"></i>근무명령서 상세
-            </h2>
-            <nav aria-label="breadcrumb">
-              <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="/security/work-orders">근무명령서</a></li>
-                <li class="breadcrumb-item active">상세보기</li>
-              </ol>
-            </nav>
-          </div>
+
+        <!-- 제목 중앙 정렬 -->
+        <div class="text-center mb-4">
+          <h2 class="mb-2">
+            <i class="fas fa-file-alt text-primary me-2"></i>근무명령서 상세
+          </h2>
+          <nav aria-label="breadcrumb" class="justify-content-center">
+            <ol class="breadcrumb justify-content-center">
+              <li class="breadcrumb-item"><a href="/security/work-orders">근무명령서</a></li>
+              <li class="breadcrumb-item active">상세보기</li>
+            </ol>
+          </nav>
+        </div>
+        
+        <!-- 우측 상단 버튼들 -->
+        <div class="d-flex justify-content-end mb-4">
           <div class="d-flex gap-2">
-            <a href="/security/work-orders" class="btn btn-outline-secondary">
-              <i class="fas fa-arrow-left me-1"></i>목록으로
+            <a href="/security/work-orders" class="btn btn-secondary">
+              <i class="fas fa-list me-1"></i>목록
             </a>
+            <button class="btn btn-info" onclick="printWorkOrder()">
+              <i class="fas fa-print me-1"></i>인쇄
+            </button>
             <% if (workOrder.status !== 'completed') { %>
               <button class="btn btn-success" onclick="completeOrder()">
                 <i class="fas fa-check me-1"></i>완료처리
+              </button>
+            <% } %>
+            <% if (workOrder.status === 'active') { %>
+              <button class="btn btn-warning" onclick="updateProgress()">
+                <i class="fas fa-edit me-1"></i>진행률 수정
               </button>
             <% } %>
           </div>
@@ -110,9 +209,9 @@
           </div>
         <% } %>
 
-        <div class="row">
+        <div class="row g-3">
           <!-- 메인 정보 -->
-          <div class="col-lg-8">
+          <div class="col-xl-9 col-lg-8">
             <!-- 기본 정보 -->
             <div class="detail-card priority-<%= workOrder.priority %>">
               <div class="card-body">
@@ -177,6 +276,45 @@
               </div>
             </div>
 
+            <!-- 사고내용 -->
+            <% if (workOrder.personnelStatus && workOrder.personnelStatus.absentDetails && workOrder.personnelStatus.absentDetails.length > 0) { %>
+              <div class="detail-card">
+                <div class="card-body">
+                  <h5 class="card-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>사고내용
+                  </h5>
+                  <div class="accident-content" style="text-align: left;">
+                    <%
+                      // 사고내용을 원하는 순서로 정렬
+                      const absentDetails = workOrder.personnelStatus.absentDetails;
+                      const sortedDetails = [];
+                      
+                      // 정렬 순서 정의
+                      const sortOrder = ['연차1', '연차2', '기타', '정직', '병가', '산재', '휴직', '경조', '결근', '근무지원조'];
+                      
+                      // 각 순서에 따라 정렬
+                      sortOrder.forEach(type => {
+                        const items = absentDetails.filter(item => item.type === type);
+                        sortedDetails.push(...items);
+                      });
+                      
+                      // 순서에 없는 타입들 추가
+                      absentDetails.forEach(item => {
+                        if (!sortOrder.includes(item.type)) {
+                          sortedDetails.push(item);
+                        }
+                      });
+                    %>
+                    <% sortedDetails.forEach((detail, index) => { %>
+                      <div style="margin-bottom: 5px; text-align: left !important; display: block !important;">
+                        <%= detail.type %>: <%= detail.employeeName %>
+                      </div>
+                    <% }); %>
+                  </div>
+                </div>
+              </div>
+            <% } %>
+
             <!-- 담당자 -->
             <% if (workOrder.assignedTo && workOrder.assignedTo.length > 0) { %>
               <div class="detail-card">
@@ -229,7 +367,7 @@
           </div>
 
           <!-- 사이드바 -->
-          <div class="col-lg-4">
+          <div class="col-xl-3 col-lg-4">
             <!-- 진행률 -->
             <div class="progress-section">
               <h5 class="mb-3">
@@ -275,15 +413,6 @@
                   </button>
                 <% } %>
                 
-                <% if (workOrder.status !== 'completed') { %>
-                  <button class="btn btn-success" onclick="completeOrder()">
-                    <i class="fas fa-check me-1"></i>완료처리
-                  </button>
-                <% } %>
-                
-                <a href="/security/work-orders" class="btn btn-outline-secondary">
-                  <i class="fas fa-list me-1"></i>목록으로
-                </a>
               </div>
             </div>
 
@@ -339,8 +468,6 @@
       </div>
     </div>
   </div>
-  
-  <%- include('../footer') %>
   
   <script>
 
@@ -430,6 +557,36 @@
         console.error('완료 처리 오류:', error);
         alert('완료 처리 중 오류가 발생했습니다.');
       }
+    }
+
+    // 인쇄 기능
+    function printWorkOrder() {
+      // 인쇄 시 불필요한 요소들 숨기기
+      const elementsToHide = [
+        '.action-buttons',
+        '.btn',
+        'nav',
+        '.breadcrumb'
+      ];
+      
+      // 요소들 숨기기
+      elementsToHide.forEach(selector => {
+        const elements = document.querySelectorAll(selector);
+        elements.forEach(el => {
+          el.style.display = 'none';
+        });
+      });
+      
+      // 인쇄 실행
+      window.print();
+      
+      // 인쇄 후 요소들 다시 보이기
+      elementsToHide.forEach(selector => {
+        const elements = document.querySelectorAll(selector);
+        elements.forEach(el => {
+          el.style.display = '';
+        });
+      });
     }
   </script>
 </body>
