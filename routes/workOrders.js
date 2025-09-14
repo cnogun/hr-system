@@ -486,6 +486,7 @@ router.post('/', isLoggedIn, adminOnly, async (req, res) => {
         team: req.body.workInfo.team,
         shift: req.body.workInfo.shift,
         workTime: {
+          display: req.body.workInfo['workTime.display'] || '',
           start: req.body.workInfo['workTime.start'] || '',
           end: req.body.workInfo['workTime.end'] || ''
         }
@@ -526,8 +527,16 @@ router.post('/', isLoggedIn, adminOnly, async (req, res) => {
         });
       }
       
+      // 평일/휴일 판단하여 총원 자동 설정
+      const workDate = new Date(workOrderData.workInfo.date);
+      const dayOfWeek = workDate.getDay(); // 0: 일요일, 1: 월요일, ..., 6: 토요일
+      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6; // 토요일(6) 또는 일요일(0)
+      
+      // 평일이면 40명, 휴일이면 30명으로 자동 설정
+      const autoTotalPersonnel = isWeekend ? 30 : 40;
+      
       workOrderData.personnelStatus = {
-        totalPersonnel: parseInt(req.body.personnelStatus.totalPersonnel),
+        totalPersonnel: parseInt(req.body.personnelStatus.totalPersonnel) || autoTotalPersonnel,
         absentPersonnel: parseInt(req.body.personnelStatus.absentPersonnel),
         currentPersonnel: parseInt(req.body.personnelStatus.currentPersonnel),
         absentDetails: processedAbsentDetails,
@@ -564,7 +573,69 @@ router.post('/', isLoggedIn, adminOnly, async (req, res) => {
       { key: '야적장초소', region: '매암동지역' }
     ];
     
-    // 각 위치별로 데이터 수집
+    // workAssignment 객체에서 데이터 수집
+    if (req.body.workAssignment) {
+      locations.forEach(location => {
+        const assignmentData = req.body.workAssignment[location.key];
+        
+        // 새로운 방식: assignment 객체가 있는 경우
+        if (assignmentData && assignmentData.assignment) {
+          const teamLeader = assignmentData.assignment.teamLeader || '';
+          const supervisor = assignmentData.assignment.supervisor || '';
+          const members = [];
+          
+          // 대원 데이터 수집 (members 배열)
+          if (assignmentData.assignment.members) {
+            for (let i = 0; i < 10; i++) { // 최대 10명까지
+              const member = assignmentData.assignment.members[i];
+              if (member && member.trim()) {
+                members.push(member.trim());
+              }
+            }
+          }
+          
+          // 데이터가 있는 경우만 추가
+          if (teamLeader || supervisor || members.length > 0) {
+            workAssignments.push({
+              region: assignmentData.region || location.region,
+              location: location.key,
+              assignment: {
+                teamLeader: teamLeader,
+                supervisor: supervisor,
+                members: members
+              }
+            });
+          }
+        }
+        // 이전 방식: 배열 형태로 전송되는 경우 (작성 페이지)
+        else if (assignmentData && Array.isArray(assignmentData)) {
+          const members = [];
+          
+          // 배열에서 대원 이름들 추출 (앞의 2개 요소가 대원 이름)
+          for (let i = 0; i < assignmentData.length - 2; i++) {
+            const member = assignmentData[i];
+            if (member && member.trim()) {
+              members.push(member.trim());
+            }
+          }
+          
+          // 데이터가 있는 경우만 추가
+          if (members.length > 0) {
+            workAssignments.push({
+              region: location.region,
+              location: location.key,
+              assignment: {
+                teamLeader: '',
+                supervisor: '',
+                members: members
+              }
+            });
+          }
+        }
+      });
+    }
+    
+    // 기존 방식도 지원 (하위 호환성)
     locations.forEach(location => {
       const teamLeader = req.body[`teamLeader_${location.key}`] || '';
       const supervisor = req.body[`supervisor_${location.key}`] || '';
@@ -578,8 +649,9 @@ router.post('/', isLoggedIn, adminOnly, async (req, res) => {
         }
       }
       
-      // 데이터가 있는 경우만 추가
-      if (teamLeader || supervisor || members.length > 0) {
+      // 기존 방식으로 데이터가 있고, 아직 추가되지 않은 경우만 추가
+      if ((teamLeader || supervisor || members.length > 0) && 
+          !workAssignments.find(wa => wa.location === location.key)) {
         workAssignments.push({
           region: location.region,
           location: location.key,
@@ -589,17 +661,10 @@ router.post('/', isLoggedIn, adminOnly, async (req, res) => {
             members: members
           }
         });
-        
-        console.log(`🔧 처리된 ${location.key}:`, {
-          teamLeader: teamLeader,
-          supervisor: supervisor,
-          members: members
-        });
       }
     });
     
     workOrderData.workAssignment = workAssignments;
-    console.log('🔧 최종 workAssignment:', JSON.stringify(workAssignments, null, 2));
     
     if (req.body.education) {
       workOrderData.education = {
@@ -845,14 +910,10 @@ router.get('/:id', isLoggedIn, async (req, res) => {
       const assignment = workAssignment.find(item => item.location === location);
       if (!assignment || !assignment.assignment) return '';
       
-      console.log(`🔍 findAssignmentData 호출: location=${location}, field=${field}, index=${index}`);
-      console.log(`🔍 assignment 데이터:`, assignment);
       
       if (index !== undefined) {
         // members 배열의 특정 인덱스 접근
         if (field === 'members' && Array.isArray(assignment.assignment[field])) {
-          console.log(`🔍 members 배열:`, assignment.assignment[field]);
-          console.log(`🔍 index ${index} 값:`, assignment.assignment[field][index]);
           return assignment.assignment[field][index] || '';
         }
         return assignment.assignment[field] && assignment.assignment[field][index] ? assignment.assignment[field][index] : '';
@@ -921,6 +982,7 @@ router.put('/:id', isLoggedIn, adminOnly, async (req, res) => {
         team: req.body.workInfo.team,
         shift: req.body.workInfo.shift,
         workTime: {
+          display: req.body.workInfo['workTime.display'] || '',
           start: req.body.workInfo['workTime.start'],
           end: req.body.workInfo['workTime.end']
         }
@@ -961,8 +1023,16 @@ router.put('/:id', isLoggedIn, adminOnly, async (req, res) => {
         });
       }
       
+      // 평일/휴일 판단하여 총원 자동 설정
+      const workDate = new Date(updateData.workInfo.date);
+      const dayOfWeek = workDate.getDay(); // 0: 일요일, 1: 월요일, ..., 6: 토요일
+      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6; // 토요일(6) 또는 일요일(0)
+      
+      // 평일이면 40명, 휴일이면 30명으로 자동 설정
+      const autoTotalPersonnel = isWeekend ? 30 : 40;
+      
       updateData.personnelStatus = {
-        totalPersonnel: parseInt(req.body.personnelStatus.totalPersonnel),
+        totalPersonnel: parseInt(req.body.personnelStatus.totalPersonnel) || autoTotalPersonnel,
         absentPersonnel: parseInt(req.body.personnelStatus.absentPersonnel),
         currentPersonnel: parseInt(req.body.personnelStatus.currentPersonnel),
         absentDetails: processedAbsentDetails,
@@ -1000,7 +1070,48 @@ router.put('/:id', isLoggedIn, adminOnly, async (req, res) => {
       { key: '야적장초소', region: '매암동지역' }
     ];
     
-    // req.body에서 실제로 전송된 모든 위치를 동적으로 수집
+    // workAssignment 객체에서 데이터 수집 (새로운 방식)
+    if (req.body.workAssignment) {
+      locations.forEach(location => {
+        const assignmentData = req.body.workAssignment[location.key];
+        if (assignmentData && assignmentData.assignment) {
+          const teamLeader = assignmentData.assignment.teamLeader || '';
+          const supervisor = assignmentData.assignment.supervisor || '';
+          const members = [];
+          
+          // 대원 데이터 수집 (members 배열)
+          if (assignmentData.assignment.members) {
+            for (let i = 0; i < 10; i++) { // 최대 10명까지
+              const member = assignmentData.assignment.members[i];
+              if (member && member.trim()) {
+                members.push(member.trim());
+              }
+            }
+          }
+          
+          // 데이터가 있는 경우만 추가
+          if (teamLeader || supervisor || members.length > 0) {
+            workAssignments.push({
+              region: assignmentData.region || location.region,
+              location: location.key,
+              assignment: {
+                teamLeader: teamLeader,
+                supervisor: supervisor,
+                members: members
+              }
+            });
+            
+            console.log(`🔧 PUT 처리된 ${location.key}:`, {
+              teamLeader: teamLeader,
+              supervisor: supervisor,
+              members: members
+            });
+          }
+        }
+      });
+    }
+    
+    // 기존 방식도 지원 (하위 호환성)
     const foundLocations = new Set();
     
     // req.body의 모든 키를 분석하여 위치명 추출
@@ -1056,8 +1167,9 @@ router.put('/:id', isLoggedIn, adminOnly, async (req, res) => {
         condition: !!(teamLeader || supervisor || members.length > 0)
       });
       
-      // 데이터가 있는 경우만 추가
-      if (teamLeader || supervisor || members.length > 0) {
+      // 기존 방식으로 데이터가 있고, 아직 추가되지 않은 경우만 추가
+      if ((teamLeader || supervisor || members.length > 0) && 
+          !workAssignments.find(wa => wa.location === locationKey)) {
         workAssignments.push({
           region: region,
           location: locationKey,
@@ -1204,8 +1316,16 @@ router.post('/:id', isLoggedIn, adminOnly, async (req, res) => {
           });
         }
         
+        // 평일/휴일 판단하여 총원 자동 설정
+        const workDate = new Date(updateData.workInfo.date);
+        const dayOfWeek = workDate.getDay(); // 0: 일요일, 1: 월요일, ..., 6: 토요일
+        const isWeekend = dayOfWeek === 0 || dayOfWeek === 6; // 토요일(6) 또는 일요일(0)
+        
+        // 평일이면 40명, 휴일이면 30명으로 자동 설정
+        const autoTotalPersonnel = isWeekend ? 30 : 40;
+        
         updateData.personnelStatus = {
-          totalPersonnel: parseInt(req.body.personnelStatus.totalPersonnel),
+          totalPersonnel: parseInt(req.body.personnelStatus.totalPersonnel) || autoTotalPersonnel,
           absentPersonnel: parseInt(req.body.personnelStatus.absentPersonnel),
           currentPersonnel: parseInt(req.body.personnelStatus.currentPersonnel),
           absentDetails: processedAbsentDetails,
@@ -1242,7 +1362,48 @@ router.post('/:id', isLoggedIn, adminOnly, async (req, res) => {
         { key: '야적장초소', region: '매암동지역' }
       ];
       
-      // req.body에서 실제로 전송된 모든 위치를 동적으로 수집
+      // workAssignment 객체에서 데이터 수집 (새로운 방식)
+      if (req.body.workAssignment) {
+        locations.forEach(location => {
+          const assignmentData = req.body.workAssignment[location.key];
+          if (assignmentData && assignmentData.assignment) {
+            const teamLeader = assignmentData.assignment.teamLeader || '';
+            const supervisor = assignmentData.assignment.supervisor || '';
+            const members = [];
+            
+            // 대원 데이터 수집 (members 배열)
+            if (assignmentData.assignment.members) {
+              for (let i = 0; i < 10; i++) { // 최대 10명까지
+                const member = assignmentData.assignment.members[i];
+                if (member && member.trim()) {
+                  members.push(member.trim());
+                }
+              }
+            }
+            
+            // 데이터가 있는 경우만 추가
+            if (teamLeader || supervisor || members.length > 0) {
+              workAssignments.push({
+                region: assignmentData.region || location.region,
+                location: location.key,
+                assignment: {
+                  teamLeader: teamLeader,
+                  supervisor: supervisor,
+                  members: members
+                }
+              });
+              
+              console.log(`🔧 PATCH 처리된 ${location.key}:`, {
+                teamLeader: teamLeader,
+                supervisor: supervisor,
+                members: members
+              });
+            }
+          }
+        });
+      }
+      
+      // 기존 방식도 지원 (하위 호환성)
       const foundLocations = new Set();
       
       // req.body의 모든 키를 분석하여 위치명 추출
@@ -1304,8 +1465,9 @@ router.post('/:id', isLoggedIn, adminOnly, async (req, res) => {
           membersTruthy: members.length > 0
         });
         
-        // 데이터가 있는 경우만 추가
-        if (teamLeader || supervisor || members.length > 0) {
+        // 기존 방식으로 데이터가 있고, 아직 추가되지 않은 경우만 추가
+        if ((teamLeader || supervisor || members.length > 0) && 
+            !workAssignments.find(wa => wa.location === locationKey)) {
           workAssignments.push({
             region: region,
             location: locationKey,
@@ -1316,7 +1478,7 @@ router.post('/:id', isLoggedIn, adminOnly, async (req, res) => {
             }
           });
           
-          console.log(`🔧 POST-to-PUT 처리된 ${locationKey}:`, {
+          console.log(`🔧 POST-to-PUT 기존 방식으로 처리된 ${locationKey}:`, {
             teamLeader: teamLeader,
             supervisor: supervisor,
             members: members

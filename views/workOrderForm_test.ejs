@@ -96,11 +96,11 @@
             background-color: #e9ecef;
             font-weight: bold;
             text-align: center;
-            width: 30%;
+            width: 25%;
         }
         
         .work-assignment-table .personnel-col {
-            width: 55%;
+            width: 60%;
             text-align: left;
         }
         
@@ -155,7 +155,7 @@
         }
         
         .assignment-left .location-col, .assignment-right .location-col {
-            width: 30%;
+            width: 25%;
             text-align: center;
             vertical-align: middle;
             font-weight: bold;
@@ -163,7 +163,7 @@
         }
         
         .assignment-left .personnel-col, .assignment-right .personnel-col {
-            width: 55%;
+            width: 60%;
             text-align: left;
         }
         
@@ -296,7 +296,12 @@
                                     </tr>
                                     
                                     <tr>
-                                        <td class="location-col">기술교육원문</td>
+                                        <td rowspan="2" class="location-col">기술교육원문</td>
+                                        <td class="personnel-col">
+                                            <div style="text-align: left;">조장: <input type="text" name="supervisor_기술교육원문" value="" style="width: 80px; border: 1px solid #ddd; padding: 2px;"></div>
+                                        </td>
+                                    </tr>
+                                    <tr>
                                         <td class="personnel-col">
                                             <input type="text" name="member_기술교육원문_0" value="" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
                                             <input type="text" name="member_기술교육원문_1" value="" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
@@ -327,24 +332,30 @@
                                     <tr>
                                         <td class="location-col">선적중문</td>
                                         <td class="personnel-col">
-                                            <input type="text" name="member_선적중문_0" value="" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
-                                            <input type="text" name="member_선적중문_1" value="" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
+                                            <input type="text" name="workAssignment[선적중문].assignment.members[0]" value="" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
+                                            <input type="text" name="workAssignment[선적중문].assignment.members[1]" value="" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
+                                            <input type="hidden" name="workAssignment[선적중문].region" value="해안지역">
+                                            <input type="hidden" name="workAssignment[선적중문].location" value="선적중문">
                                         </td>
                                     </tr>
                                     
                                     <tr>
                                         <td class="location-col">5의장중문</td>
                                         <td class="personnel-col">
-                                            <input type="text" name="member_5의장중문_0" value="" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
-                                            <input type="text" name="member_5의장중문_1" value="" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
+                                            <input type="text" name="workAssignment[5의장중문].assignment.members[0]" value="" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
+                                            <input type="text" name="workAssignment[5의장중문].assignment.members[1]" value="" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
+                                            <input type="hidden" name="workAssignment[5의장중문].region" value="해안지역">
+                                            <input type="hidden" name="workAssignment[5의장중문].location" value="5의장중문">
                                         </td>
                                     </tr>
                                     
                                     <tr>
                                         <td class="location-col">아산로중문</td>
                                         <td class="personnel-col">
-                                            <input type="text" name="member_아산로중문_0" value="" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
-                                            <input type="text" name="member_아산로중문_1" value="" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
+                                            <input type="text" name="workAssignment[아산로중문].assignment.members[0]" value="" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
+                                            <input type="text" name="workAssignment[아산로중문].assignment.members[1]" value="" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
+                                            <input type="hidden" name="workAssignment[아산로중문].region" value="해안지역">
+                                            <input type="hidden" name="workAssignment[아산로중문].location" value="아산로중문">
                                         </td>
                                     </tr>
                                     
@@ -411,6 +422,7 @@
                                         <td class="personnel-col">
                                             <input type="text" name="member_시트1문_0" value="" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
                                             <input type="text" name="member_시트1문_1" value="" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
+                                            <input type="text" name="member_시트1문_2" value="" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
                                         </td>
                                     </tr>
                                     

@@ -100,11 +100,245 @@
             background-color: #e9ecef;
             font-weight: bold;
             text-align: center;
-            width: 30%;
+            width: 25%;
         }
         
         .work-assignment-table .personnel-col {
-            width: 55%;
+            width: 60%;
+        }
+        
+        /* 모바일 최적화 */
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+                margin: 0;
+                max-width: 100%;
+            }
+            
+            .form-section {
+                margin-bottom: 10px;
+            }
+            
+            .section-header {
+                padding: 8px 12px;
+                font-size: 13px;
+            }
+            
+            .section-content {
+                padding: 15px;
+            }
+            
+            .form-row {
+                flex-direction: column;
+                margin-bottom: 10px;
+            }
+            
+            .form-group {
+                margin-right: 0;
+                margin-bottom: 10px;
+                width: 100%;
+            }
+            
+            .form-group label {
+                font-size: 11px;
+                margin-bottom: 3px;
+            }
+            
+            .form-control {
+                font-size: 11px;
+                padding: 6px;
+                width: 100%;
+            }
+            
+            .work-assignment-table {
+                font-size: 10px;
+                width: 100%;
+                overflow-x: auto;
+                display: block;
+                white-space: nowrap;
+            }
+            
+            .work-assignment-table th,
+            .work-assignment-table td {
+                padding: 4px 2px;
+                font-size: 10px;
+                min-width: 60px;
+            }
+            
+            .work-assignment-table .region-col {
+                width: 20%;
+                min-width: 50px;
+            }
+            
+            .work-assignment-table .location-col {
+                width: 30%;
+                min-width: 80px;
+            }
+            
+            .work-assignment-table .personnel-col {
+                width: 50%;
+                min-width: 120px;
+            }
+            
+            .work-assignment-table input[type="text"] {
+                font-size: 9px;
+                padding: 2px;
+                width: 100%;
+                min-width: 50px;
+            }
+            
+            .btn {
+                padding: 8px 12px;
+                font-size: 11px;
+                margin-bottom: 5px;
+                width: 100%;
+            }
+            
+            .btn-group {
+                display: flex;
+                flex-direction: column;
+                width: 100%;
+            }
+            
+            .btn-group .btn {
+                margin-right: 0;
+                margin-bottom: 5px;
+            }
+            
+            .form-control[style*="min-width"] {
+                min-width: 100% !important;
+            }
+            
+            .table-responsive {
+                border: none;
+                margin-bottom: 10px;
+            }
+            
+            .table-responsive table {
+                margin-bottom: 0;
+            }
+            
+            .alert {
+                padding: 10px;
+                margin-bottom: 10px;
+                font-size: 11px;
+            }
+            
+            .card {
+                margin-bottom: 10px;
+            }
+            
+            .card-header {
+                padding: 8px 12px;
+                font-size: 12px;
+            }
+            
+            .card-body {
+                padding: 10px;
+            }
+            
+            h1, h2, h3, h4, h5, h6 {
+                font-size: 14px;
+                margin-bottom: 8px;
+            }
+            
+            .text-muted {
+                font-size: 10px;
+            }
+            
+            .badge {
+                font-size: 9px;
+                padding: 3px 6px;
+            }
+            
+            .form-check {
+                margin-bottom: 8px;
+            }
+            
+            .form-check-label {
+                font-size: 10px;
+            }
+            
+            .input-group {
+                margin-bottom: 8px;
+            }
+            
+            .input-group-text {
+                font-size: 10px;
+                padding: 6px 8px;
+            }
+            
+            .dropdown-menu {
+                font-size: 11px;
+                min-width: 200px;
+            }
+            
+            .modal-dialog {
+                margin: 10px;
+                max-width: calc(100% - 20px);
+            }
+            
+            .modal-content {
+                border-radius: 8px;
+            }
+            
+            .modal-header {
+                padding: 10px 15px;
+                font-size: 13px;
+            }
+            
+            .modal-body {
+                padding: 15px;
+            }
+            
+            .modal-footer {
+                padding: 10px 15px;
+            }
+            
+            .modal-footer .btn {
+                width: auto;
+                margin: 0 2px;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .container {
+                padding: 5px;
+            }
+            
+            .section-content {
+                padding: 10px;
+            }
+            
+            .form-control {
+                font-size: 10px;
+                padding: 4px;
+            }
+            
+            .work-assignment-table {
+                font-size: 9px;
+            }
+            
+            .work-assignment-table th,
+            .work-assignment-table td {
+                padding: 2px 1px;
+                font-size: 9px;
+            }
+            
+            .work-assignment-table input[type="text"] {
+                font-size: 8px;
+                padding: 1px;
+            }
+            
+            .btn {
+                padding: 6px 10px;
+                font-size: 10px;
+            }
+            
+            .section-header {
+                padding: 6px 10px;
+                font-size: 12px;
+            }
         }
         
         .work-assignment-table .personnel-col input {
@@ -160,7 +394,7 @@
         }
         
         .assignment-left .location-col, .assignment-right .location-col {
-            width: 30%;
+            width: 25%;
             text-align: center;
             vertical-align: middle;
             font-weight: bold;
@@ -168,7 +402,7 @@
         }
         
         .assignment-left .personnel-col, .assignment-right .personnel-col {
-            width: 55%;
+            width: 60%;
             text-align: left;
         }
         
@@ -378,8 +612,8 @@
                             <tr>
                                 <td class="location-col">선적중문</td>
                                 <td class="personnel-col">
-                                    <input type="text" name="teamLeader_선적중문" value="" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
-                                    <input type="text" name="supervisor_선적중문" value="" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
+                                    <input type="text" name="workAssignment[선적중문].assignment.members[0]" value="" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
+                                    <input type="text" name="workAssignment[선적중문].assignment.members[1]" value="" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
                                     <input type="hidden" name="workAssignment[선적중문].region" value="해안지역">
                                     <input type="hidden" name="workAssignment[선적중문].location" value="선적중문">
                                 </td>
@@ -388,8 +622,8 @@
                             <tr>
                                 <td class="location-col">5의장중문</td>
                                 <td class="personnel-col">
-                                    <input type="text" name="teamLeader_5의장중문" value="" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
-                                    <input type="text" name="supervisor_5의장중문" value="" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
+                                    <input type="text" name="workAssignment[5의장중문].assignment.members[0]" value="" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
+                                    <input type="text" name="workAssignment[5의장중문].assignment.members[1]" value="" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
                                     <input type="hidden" name="workAssignment[5의장중문].region" value="해안지역">
                                     <input type="hidden" name="workAssignment[5의장중문].location" value="5의장중문">
                                 </td>
@@ -398,8 +632,8 @@
                             <tr>
                                 <td class="location-col">아산로중문</td>
                                 <td class="personnel-col">
-                                    <input type="text" name="teamLeader_아산로중문" value="" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
-                                    <input type="text" name="supervisor_아산로중문" value="" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
+                                    <input type="text" name="workAssignment[아산로중문].assignment.members[0]" value="" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
+                                    <input type="text" name="workAssignment[아산로중문].assignment.members[1]" value="" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
                                     <input type="hidden" name="workAssignment[아산로중문].region" value="해안지역">
                                     <input type="hidden" name="workAssignment[아산로중문].location" value="아산로중문">
                                 </td>
@@ -484,6 +718,7 @@
                                     <div style="display: flex; gap: 5px; flex-wrap: wrap;">
                                         <input type="text" name="member_시트1문_0" value="" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
                                         <input type="text" name="member_시트1문_1" value="" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
+                                        <input type="text" name="member_시트1문_2" value="" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
                                     </div>
                                 </td>
                             </tr>
@@ -806,6 +1041,23 @@
                 workShiftField.value = '휴무';
             } else {
                 workShiftField.value = '';
+            }
+            
+            // 총원 자동 설정 (평일: 40명, 휴일: 30명)
+            const totalPersonnelField = document.getElementById('totalPersonnel');
+            const absentPersonnelField = document.getElementById('absentPersonnel');
+            const currentPersonnelField = document.getElementById('currentPersonnel');
+            
+            if (dayOfWeek === 0 || dayOfWeek === 6) {
+                // 주말/공휴일: 30명
+                totalPersonnelField.value = '30';
+                const absent = parseInt(absentPersonnelField.value) || 0;
+                currentPersonnelField.value = 30 - absent;
+            } else {
+                // 평일: 40명
+                totalPersonnelField.value = '40';
+                const absent = parseInt(absentPersonnelField.value) || 0;
+                currentPersonnelField.value = 40 - absent;
             }
         }
 
