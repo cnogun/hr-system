@@ -182,7 +182,6 @@
   </div>
 </header>
 
-<body>
 <script>
 // 전역 변수로 이벤트 리스너 중복 등록 방지
 let dropdownInitialized = false;
@@ -562,9 +561,14 @@ function setActiveMenuForCurrentPage(currentPath) {
 </script>
 
 <style>
+/* body 스타일 */
 body { 
   background: linear-gradient(135deg, #f8fafc 0%, #e2eafc 100%);
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
 }
 
 /* 브랜드 스타일 */

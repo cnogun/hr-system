@@ -1,12 +1,19 @@
 <%- include('header') %>
 
-<div class="flex-grow-1">
-    <style>
+<body>
+<style>
+        /* 푸터를 바디에서 분리하여 화면 하단에 고정 */
         body {
-            font-family: 'Malgun Gothic', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
             margin: 0;
-            padding: 20px;
-            background-color: #f5f5f5;
+            padding: 0;
+        }
+        
+        .flex-grow-1 {
+            flex: 1;
+            padding-bottom: 0;
         }
         
         .container {
@@ -165,81 +172,6 @@
             text-align: left;
         }
         
-        .assignment-left .personnel-col input, .assignment-right .personnel-col input {
-            width: 80px !important;
-            border: 1px solid #ddd !important;
-            padding: 2px !important;
-            text-align: left !important;
-            font-size: 12px !important;
-            display: inline-block !important;
-            margin: 2px !important;
-            background-color: white !important;
-        }
-        
-        /* 모든 input 필드 강제 표시 */
-        input[type="text"] {
-            display: inline-block !important;
-            visibility: visible !important;
-            opacity: 1 !important;
-            background-color: white !important;
-            border: 2px solid #007bff !important;
-            width: 80px !important;
-            height: 30px !important;
-            padding: 6px !important;
-            margin: 3px !important;
-        }
-        
-        .assignment-left .personnel-col, .assignment-right .personnel-col {
-            white-space: nowrap;
-            text-align: center;
-            padding: 8px;
-        }
-        
-        .assignment-left .personnel-col label, .assignment-right .personnel-col label {
-            font-weight: bold !important;
-            margin-right: 8px !important;
-            color: #007bff !important;
-            font-size: 14px !important;
-            display: inline-block !important;
-        }
-        
-        .assignment-left .personnel-col input:focus, .assignment-right .personnel-col input:focus {
-            outline: none;
-            border-color: #007bff;
-            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
-        }
-        
-        /* 좌우 행 정렬을 위한 추가 스타일 */
-        .assignment-container {
-            display: flex;
-            gap: 20px;
-            align-items: flex-start;
-        }
-        
-        .assignment-left, .assignment-right {
-            flex: 1;
-            min-height: 600px;
-        }
-        
-        .assignment-left table tbody tr, .assignment-right table tbody tr {
-            height: 20px;
-        }
-        
-        /* 통합된 보안근무지 스타일 */
-        .assignment-left .location-col[rowspan], .assignment-right .location-col[rowspan] {
-            border-left: none !important;
-            background-color: #f8f9fa !important;
-            font-weight: bold !important;
-            vertical-align: middle !important;
-            text-align: center !important;
-        }
-        
-        /* 통합된 보안근무지와 인접한 편성 컬럼의 왼쪽 테두리 제거 */
-        .assignment-left .location-col[rowspan] + .personnel-col, 
-        .assignment-right .location-col[rowspan] + .personnel-col {
-            border-left: none !important;
-        }
-        
         .btn {
             padding: 10px 20px;
             border: none;
@@ -260,8 +192,8 @@
         }
         
     </style>
-</head>
-<body>
+
+<div class="flex-grow-1">
     <div class="container">
         <!-- 제목과 버튼 -->
         <div class="d-flex justify-content-between align-items-center mb-4">
@@ -269,7 +201,7 @@
             <div class="btn-group">
                 <a href="/work-orders" class="btn btn-secondary">목록</a>
                 <button type="submit" form="workOrderForm" class="btn btn-primary">저장</button>
-                <a href="/work-orders/<%= workOrder._id %>" class="btn btn-info">보기</a>
+                <a href="/work-orders/<%= workOrder._id %>" class="btn btn-success">보기</a>
                 <button type="button" class="btn btn-warning" onclick="history.back()">취소</button>
             </div>
         </div>
@@ -356,6 +288,7 @@
                 </div>
             </div>
 
+
             <!-- 근무 편성 -->
             <div class="form-section">
                 <div class="section-header">□ 근무 편성 (수정)</div>
@@ -368,7 +301,7 @@
                                     <tr style="height: 20px;">
                                         <th class="region-col" style="vertical-align: middle;">지역</th>
                                         <th class="location-col" style="vertical-align: middle;">보안근무지</th>
-                                        <th class="personnel-col" style="vertical-align: middle;">편성</th>
+                                        <th class="personnel-col" style="vertical-align: middle; text-align: center;">편성</th>
                             </tr>
                         </thead>
                                 <tr style="height: 1px; background-color: #ddd;">
@@ -380,12 +313,13 @@
                                 <td rowspan="12" class="region-col">해안지역</td>
                                 <td class="location-col">해안입문</td>
                                 <td class="personnel-col">
-                                    <div style="display: flex; gap: 5px; flex-wrap: wrap;">
-                                        <div style="text-align: left;">반장: <input type="text" name="workAssignment[해안입문].assignment.teamLeader" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '해안입문', 'teamLeader') : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px;"></div>
-                                        <div style="text-align: left;">조장: <input type="text" name="workAssignment[해안입문].assignment.supervisor" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '해안입문', 'supervisor') : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px;"></div>
-                                        <input type="text" name="workAssignment[해안입문].assignment.members[0]" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '해안입문', 'members', 0) : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
-                                        <input type="text" name="workAssignment[해안입문].assignment.members[1]" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '해안입문', 'members', 1) : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
-                                        <input type="text" name="workAssignment[해안입문].assignment.members[2]" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '해안입문', 'members', 2) : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
+                                    <div style="display: flex; flex-direction: column; gap: 5px;">
+                                        <div style="text-align: left;">조장: <input type="text" name="supervisor_해안입문" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '해안입문', 'supervisor') : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px;"></div>
+                                        <div style="display: flex; gap: 5px;">
+                                            <input type="text" name="member_해안입문_0" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '해안입문', 'members', 0) : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px;">
+                                            <input type="text" name="member_해안입문_1" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '해안입문', 'members', 1) : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px;">
+                                            <input type="text" name="member_해안입문_2" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '해안입문', 'members', 2) : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px;">
+                                        </div>
                                     </div>
                                     <input type="hidden" name="workAssignment[해안입문].region" value="해안지역">
                                     <input type="hidden" name="workAssignment[해안입문].location" value="해안입문">
@@ -395,32 +329,31 @@
                             <tr>
                                 <td class="location-col">해안출문</td>
                                 <td class="personnel-col">
-                                    <input type="text" name="workAssignment[해안출문].assignment.members[0]" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '해안출문', 'members', 0) : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
-                                    <input type="text" name="workAssignment[해안출문].assignment.members[1]" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '해안출문', 'members', 1) : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
-                                    <input type="text" name="workAssignment[해안출문].assignment.members[2]" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '해안출문', 'members', 2) : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
+                                    <input type="text" name="member_해안출문_0" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '해안출문', 'members', 0) : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
+                                    <input type="text" name="member_해안출문_1" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '해안출문', 'members', 1) : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
+                                    <input type="text" name="member_해안출문_2" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '해안출문', 'members', 2) : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
                                     <input type="hidden" name="workAssignment[해안출문].region" value="해안지역">
                                     <input type="hidden" name="workAssignment[해안출문].location" value="해안출문">
-                                    <input type="hidden" name="workAssignment[해안출문].assignment.teamLeader" value="">
-                                    <input type="hidden" name="workAssignment[해안출문].assignment.supervisor" value="">
                                 </td>
                             </tr>
                             
                             <tr>
                                 <td class="location-col">기술교육원문</td>
                                 <td class="personnel-col">
-                                    <input type="text" name="workAssignment[기술교육원문].assignment.members[0]" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '기술교육원문', 'members', 0) : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
-                                    <input type="text" name="workAssignment[기술교육원문].assignment.members[1]" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '기술교육원문', 'members', 1) : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
-                                    <input type="hidden" name="workAssignment[기술교육원문].region" value="해안지역">
-                                    <input type="hidden" name="workAssignment[기술교육원문].location" value="기술교육원문">
-                                    <input type="hidden" name="workAssignment[기술교육원문].assignment.teamLeader" value="">
-                                    <input type="hidden" name="workAssignment[기술교육원문].assignment.supervisor" value="">
+                                    <div style="display: flex; flex-direction: column; gap: 5px;">
+                                        <div style="text-align: left;">조장: <input type="text" name="supervisor_기술교육원문" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '기술교육원문', 'supervisor') : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px;"></div>
+                                        <div style="display: flex; gap: 5px;">
+                                            <input type="text" name="member_기술교육원문_0" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '기술교육원문', 'members', 0) : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px;">
+                                            <input type="text" name="member_기술교육원문_1" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '기술교육원문', 'members', 1) : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px;">
+                                        </div>
+                                    </div>
                                 </td>
                             </tr>
                             
                             <tr>
                                 <td class="location-col">교육원중문</td>
                                 <td class="personnel-col">
-                                    <input type="text" name="workAssignment[교육원중문].assignment.members[0]" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '교육원중문', 'members', 0) : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
+                                    <input type="text" name="member_교육원중문_0" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '교육원중문', 'members', 0) : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
                                     <input type="hidden" name="workAssignment[교육원중문].region" value="해안지역">
                                     <input type="hidden" name="workAssignment[교육원중문].location" value="교육원중문">
                                     <input type="hidden" name="workAssignment[교육원중문].assignment.teamLeader" value="">
@@ -431,7 +364,7 @@
                             <tr>
                                 <td class="location-col">성내주차장문</td>
                                 <td class="personnel-col">
-                                    <input type="text" name="workAssignment[성내주차장문].assignment.members[0]" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '성내주차장문', 'members', 0) : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
+                                    <input type="text" name="member_성내주차장문_0" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '성내주차장문', 'members', 0) : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
                                     <input type="hidden" name="workAssignment[성내주차장문].region" value="해안지역">
                                     <input type="hidden" name="workAssignment[성내주차장문].location" value="성내주차장문">
                                     <input type="hidden" name="workAssignment[성내주차장문].assignment.teamLeader" value="">
@@ -442,7 +375,7 @@
                             <tr>
                                 <td class="location-col">성내주차장초소</td>
                                 <td class="personnel-col">
-                                    <input type="text" name="workAssignment[성내주차장초소].assignment.members[0]" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '성내주차장초소', 'members', 0) : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
+                                    <input type="text" name="member_성내주차장초소_0" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '성내주차장초소', 'members', 0) : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
                                     <input type="hidden" name="workAssignment[성내주차장초소].region" value="해안지역">
                                     <input type="hidden" name="workAssignment[성내주차장초소].location" value="성내주차장초소">
                                     <input type="hidden" name="workAssignment[성내주차장초소].assignment.teamLeader" value="">
@@ -453,44 +386,32 @@
                             <tr>
                                 <td class="location-col">선적중문</td>
                                 <td class="personnel-col">
-                                    <input type="text" name="workAssignment[선적중문].assignment.members[0]" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '선적중문', 'members', 0) : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
-                                    <input type="text" name="workAssignment[선적중문].assignment.members[1]" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '선적중문', 'members', 1) : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
-                                    <input type="hidden" name="workAssignment[선적중문].region" value="해안지역">
-                                    <input type="hidden" name="workAssignment[선적중문].location" value="선적중문">
-                                    <input type="hidden" name="workAssignment[선적중문].assignment.teamLeader" value="">
-                                    <input type="hidden" name="workAssignment[선적중문].assignment.supervisor" value="">
+                                    <input type="text" name="member_선적중문_0" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '선적중문', 'members', 0) : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
+                                    <input type="text" name="member_선적중문_1" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '선적중문', 'members', 1) : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
                                 </td>
                             </tr>
                             
                             <tr>
                                 <td class="location-col">5의장중문</td>
                                 <td class="personnel-col">
-                                    <input type="text" name="workAssignment[5의장중문].assignment.members[0]" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '5의장중문', 'members', 0) : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
-                                    <input type="text" name="workAssignment[5의장중문].assignment.members[1]" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '5의장중문', 'members', 1) : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
-                                    <input type="hidden" name="workAssignment[5의장중문].region" value="해안지역">
-                                    <input type="hidden" name="workAssignment[5의장중문].location" value="5의장중문">
-                                    <input type="hidden" name="workAssignment[5의장중문].assignment.teamLeader" value="">
-                                    <input type="hidden" name="workAssignment[5의장중문].assignment.supervisor" value="">
+                                    <input type="text" name="member_5의장중문_0" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '5의장중문', 'members', 0) : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
+                                    <input type="text" name="member_5의장중문_1" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '5의장중문', 'members', 1) : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
                                 </td>
                             </tr>
                             
                             <tr>
                                 <td class="location-col">아산로중문</td>
                                 <td class="personnel-col">
-                                    <input type="text" name="workAssignment[아산로중문].assignment.members[0]" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '아산로중문', 'members', 0) : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
-                                    <input type="text" name="workAssignment[아산로중문].assignment.members[1]" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '아산로중문', 'members', 1) : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
-                                    <input type="hidden" name="workAssignment[아산로중문].region" value="해안지역">
-                                    <input type="hidden" name="workAssignment[아산로중문].location" value="아산로중문">
-                                    <input type="hidden" name="workAssignment[아산로중문].assignment.teamLeader" value="">
-                                    <input type="hidden" name="workAssignment[아산로중문].assignment.supervisor" value="">
+                                    <input type="text" name="member_아산로중문_0" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '아산로중문', 'members', 0) : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
+                                    <input type="text" name="member_아산로중문_1" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '아산로중문', 'members', 1) : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
                                 </td>
                             </tr>
                             
                             <tr>
                                 <td class="location-col">항만순찰</td>
                                 <td class="personnel-col">
-                                    <input type="text" name="workAssignment[항만순찰].assignment.members[0]" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '항만순찰', 'members', 0) : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
-                                    <input type="text" name="workAssignment[항만순찰].assignment.members[1]" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '항만순찰', 'members', 1) : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
+                                    <input type="text" name="member_항만순찰_0" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '항만순찰', 'members', 0) : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
+                                    <input type="text" name="member_항만순찰_1" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '항만순찰', 'members', 1) : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
                                     <input type="hidden" name="workAssignment[항만순찰].region" value="해안지역">
                                     <input type="hidden" name="workAssignment[항만순찰].location" value="항만순찰">
                                     <input type="hidden" name="workAssignment[항만순찰].assignment.teamLeader" value="">
@@ -508,7 +429,7 @@
                             <tr style="height: 20px;">
                                 <th class="region-col" style="vertical-align: middle;">지역</th>
                                 <th class="location-col" style="vertical-align: middle;">보안근무지</th>
-                                <th class="personnel-col" style="vertical-align: middle;">편성</th>
+                                <th class="personnel-col" style="vertical-align: middle; text-align: center;">편성</th>
                             </tr>
                         </thead>
                         <tr style="height: 1px; background-color: #ddd;">
@@ -517,23 +438,29 @@
                         <tbody>
                             <!-- 성내지역 -->
                             <tr>
-                                <td rowspan="2" class="region-col">성내지역</td>
-                                <td class="location-col">성내문</td>
-                                <td class="personnel-col">
-                                    <input type="text" name="workAssignment[성내문].assignment.members[0]" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '성내문', 'members', 0) : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
-                                    <input type="text" name="workAssignment[성내문].assignment.members[1]" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '성내문', 'members', 1) : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
+                                <td rowspan="3" class="region-col">성내지역</td>
+                                <td rowspan="2" class="location-col">성내문</td>
+                                <td class="personnel-col" style="border: none; border-right: 1px solid #ddd;">
+                                    <input type="text" name="member_성내문_0" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '성내문', 'members', 0) : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 0; border-bottom: none; border-right: none;">
+                                    <input type="text" name="member_성내문_1" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '성내문', 'members', 1) : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 0; border-bottom: none; border-left: none;">
                                     <input type="hidden" name="workAssignment[성내문].region" value="성내지역">
                                     <input type="hidden" name="workAssignment[성내문].location" value="성내문">
                                     <input type="hidden" name="workAssignment[성내문].assignment.teamLeader" value="">
                                     <input type="hidden" name="workAssignment[성내문].assignment.supervisor" value="">
                                 </td>
                             </tr>
+                            <tr>
+                                <td class="personnel-col" style="border: none; border-right: 1px solid #ddd;">
+                                    <input type="text" name="member_성내문_2" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '성내문', 'members', 2) : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 0; border-top: none; border-right: none;">
+                                    <input type="text" name="member_성내문_3" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '성내문', 'members', 3) : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 0; border-top: none; border-left: none;">
+                                </td>
+                            </tr>
                             
                             <tr>
                                 <td class="location-col">차량검색소</td>
                                 <td class="personnel-col">
-                                    <input type="text" name="workAssignment[차량검색소].assignment.members[0]" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '차량검색소', 'members', 0) : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
-                                    <input type="text" name="workAssignment[차량검색소].assignment.members[1]" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '차량검색소', 'members', 1) : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
+                                    <input type="text" name="member_차량검색소_0" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '차량검색소', 'members', 0) : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
+                                    <input type="text" name="member_차량검색소_1" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '차량검색소', 'members', 1) : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
                                     <input type="hidden" name="workAssignment[차량검색소].region" value="성내지역">
                                     <input type="hidden" name="workAssignment[차량검색소].location" value="차량검색소">
                                     <input type="hidden" name="workAssignment[차량검색소].assignment.teamLeader" value="">
@@ -547,7 +474,7 @@
                                 <td rowspan="2" class="location-col">시트1문</td>
                                 <td class="personnel-col" style="border: none; border-right: 1px solid #ddd;">
                                     <div style="display: flex; gap: 60px; justify-content: flex-start;">
-                                        <div style="text-align: left;">조장: <input type="text" name="workAssignment[시트1문].assignment.supervisor" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '시트1문', 'supervisor') : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px;"></div>
+                                        <div style="text-align: left;">조장: <input type="text" name="supervisor_시트1문" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '시트1문', 'supervisor') : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px;"></div>
                                     </div>
                                     <input type="hidden" name="workAssignment[시트1문].region" value="시트지역">
                                     <input type="hidden" name="workAssignment[시트1문].location" value="시트1문">
@@ -557,8 +484,8 @@
                             <tr>
                                 <td class="personnel-col" style="border: none; border-right: 1px solid #ddd;">
                                     <div style="display: flex; gap: 5px; flex-wrap: wrap;">
-                                        <input type="text" name="workAssignment[시트1문].assignment.members[0]" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '시트1문', 'members', 0) : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
-                                        <input type="text" name="workAssignment[시트1문].assignment.members[1]" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '시트1문', 'members', 1) : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
+                                        <input type="text" name="member_시트1문_0" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '시트1문', 'members', 0) : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
+                                        <input type="text" name="member_시트1문_1" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '시트1문', 'members', 1) : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
                                     </div>
                                 </td>
                             </tr>
@@ -566,8 +493,8 @@
                             <tr>
                                 <td class="location-col">시트1중문</td>
                                 <td class="personnel-col">
-                                    <input type="text" name="workAssignment[시트1중문].assignment.members[0]" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '시트1중문', 'members', 0) : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
-                                    <input type="text" name="workAssignment[시트1중문].assignment.members[1]" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '시트1중문', 'members', 1) : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
+                                    <input type="text" name="member_시트1중문_0" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '시트1중문', 'members', 0) : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
+                                    <input type="text" name="member_시트1중문_1" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '시트1중문', 'members', 1) : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
                                     <input type="hidden" name="workAssignment[시트1중문].region" value="시트지역">
                                     <input type="hidden" name="workAssignment[시트1중문].location" value="시트1중문">
                                     <input type="hidden" name="workAssignment[시트1중문].assignment.teamLeader" value="">
@@ -578,7 +505,7 @@
                             <tr>
                                 <td class="location-col">시트1주차장초소</td>
                                 <td class="personnel-col">
-                                    <input type="text" name="workAssignment[시트1주차장초소].assignment.members[0]" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '시트1주차장초소', 'members', 0) : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
+                                    <input type="text" name="member_시트1주차장초소_0" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '시트1주차장초소', 'members', 0) : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
                                     <input type="hidden" name="workAssignment[시트1주차장초소].region" value="시트지역">
                                     <input type="hidden" name="workAssignment[시트1주차장초소].location" value="시트1주차장초소">
                                     <input type="hidden" name="workAssignment[시트1주차장초소].assignment.teamLeader" value="">
@@ -589,8 +516,8 @@
                             <tr>
                                 <td class="location-col">시트3문</td>
                                 <td class="personnel-col">
-                                    <input type="text" name="workAssignment[시트3문].assignment.members[0]" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '시트3문', 'members', 0) : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
-                                    <input type="text" name="workAssignment[시트3문].assignment.members[1]" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '시트3문', 'members', 1) : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
+                                    <input type="text" name="member_시트3문_0" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '시트3문', 'members', 0) : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
+                                    <input type="text" name="member_시트3문_1" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '시트3문', 'members', 1) : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
                                     <input type="hidden" name="workAssignment[시트3문].region" value="시트지역">
                                     <input type="hidden" name="workAssignment[시트3문].location" value="시트3문">
                                     <input type="hidden" name="workAssignment[시트3문].assignment.teamLeader" value="">
@@ -601,7 +528,7 @@
                             <tr>
                                 <td class="location-col">코일주차장</td>
                                 <td class="personnel-col">
-                                    <input type="text" name="workAssignment[코일주차장].assignment.members[0]" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '코일주차장', 'members', 0) : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
+                                    <input type="text" name="member_코일주차장_0" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '코일주차장', 'members', 0) : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
                                     <input type="hidden" name="workAssignment[코일주차장].region" value="시트지역">
                                     <input type="hidden" name="workAssignment[코일주차장].location" value="코일주차장">
                                     <input type="hidden" name="workAssignment[코일주차장].assignment.teamLeader" value="">
@@ -615,11 +542,11 @@
                                 <td class="location-col">엔진4부</td>
                                 <td class="personnel-col">
                                     <div style="display: flex; gap: 60px; justify-content: flex-start; margin-bottom: 5px;">
-                                        <div style="text-align: left;">조장: <input type="text" name="workAssignment[엔진4부].assignment.supervisor" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '엔진4부', 'supervisor') : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px;"></div>
+                                        <div style="text-align: left;">조장: <input type="text" name="supervisor_엔진4부" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '엔진4부', 'supervisor') : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px;"></div>
                                     </div>
                                     <div>
-                                        <input type="text" name="workAssignment[엔진4부].assignment.members[0]" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '엔진4부', 'members', 0) : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
-                                        <input type="text" name="workAssignment[엔진4부].assignment.members[1]" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '엔진4부', 'members', 1) : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
+                                        <input type="text" name="member_엔진4부_0" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '엔진4부', 'members', 0) : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
+                                        <input type="text" name="member_엔진4부_1" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '엔진4부', 'members', 1) : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
                                     </div>
                                     <input type="hidden" name="workAssignment[엔진4부].region" value="매암동지역">
                                     <input type="hidden" name="workAssignment[엔진4부].location" value="엔진4부">
@@ -630,7 +557,7 @@
                             <tr>
                                 <td class="location-col">야적장초소</td>
                                 <td class="personnel-col">
-                                    <input type="text" name="workAssignment[야적장초소].assignment.members[0]" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '야적장초소', 'members', 0) : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
+                                    <input type="text" name="member_야적장초소_0" value="<%= workOrder ? findAssignmentData(workOrder.workAssignment, '야적장초소', 'members', 0) : '' %>" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
                                     <input type="hidden" name="workAssignment[야적장초소].region" value="매암동지역">
                                     <input type="hidden" name="workAssignment[야적장초소].location" value="야적장초소">
                                     <input type="hidden" name="workAssignment[야적장초소].assignment.teamLeader" value="">
@@ -673,14 +600,100 @@
     </div>
 
     <script>
-        // 페이지 로드 시 자동입력 실행 (새 명령서 작성 시 초기화)
+        // 근무편성 데이터 찾기 함수
+        function findAssignmentData(workAssignment, location, field, index = null) {
+            if (!workAssignment || !Array.isArray(workAssignment)) {
+                return '';
+            }
+            
+            const assignment = workAssignment.find(item => item.location === location);
+            if (!assignment || !assignment.assignment) {
+                return '';
+            }
+            
+            if (field === 'teamLeader') {
+                return assignment.assignment.teamLeader || '';
+            } else if (field === 'supervisor') {
+                return assignment.assignment.supervisor || '';
+            } else if (field === 'members' && index !== null) {
+                return assignment.assignment.members && assignment.assignment.members[index] ? assignment.assignment.members[index] : '';
+            }
+            
+            return '';
+        }
+
+        // 페이지 로드 시 자동입력 실행 (수정페이지에서는 기존 데이터 로드)
         document.addEventListener('DOMContentLoaded', function() {
-            autoFillWorkInfo();
-            autoFillPersonnelInfo();
-            autoFillEducationInfo();
-            clearWorkAssignmentTable();
+            loadExistingData();
             displayTodaySchedule();
         });
+
+        // 폼 제출 시 디버깅
+        document.getElementById('workOrderForm').addEventListener('submit', function(e) {
+            console.log('🔧 수정페이지 폼 제출 시작');
+            
+            // workAssignment 관련 데이터 수집
+            const workAssignmentData = {};
+            const locations = ['해안입문', '해안출문', '기술교육원문', '교육원중문', '성내주차장문', '성내주차장초소', 
+                             '선적중문', '5의장중문', '아산로중문', '항만순찰', '성내문', '차량검색소', 
+                             '시트1문', '시트1중문', '시트1주차장초소', '시트3문', '코일주차장', '엔진4부', '야적장초소'];
+            
+            locations.forEach(location => {
+                const teamLeader = document.querySelector(`input[name="teamLeader_${location}"]`)?.value || '';
+                const supervisor = document.querySelector(`input[name="supervisor_${location}"]`)?.value || '';
+                const members = [];
+                
+                for (let i = 0; i < 10; i++) {
+                    const member = document.querySelector(`input[name="member_${location}_${i}"]`)?.value || '';
+                    if (member.trim()) {
+                        members.push(member.trim());
+                    }
+                }
+                
+                if (teamLeader || supervisor || members.length > 0) {
+                    workAssignmentData[location] = {
+                        teamLeader: teamLeader,
+                        supervisor: supervisor,
+                        members: members
+                    };
+                }
+            });
+            
+            console.log('🔧 수정페이지 전송할 workAssignment 데이터:', workAssignmentData);
+        });
+
+        // 기존 데이터 로드 함수
+        function loadExistingData() {
+            // 사고내용 로드
+            loadAccidentItems();
+            
+            // 교육내용 로드
+            loadEducationContent();
+        }
+
+        // 사고내용 로드
+        function loadAccidentItems() {
+            <% if (workOrder.personnelStatus && workOrder.personnelStatus.absentDetails && workOrder.personnelStatus.absentDetails.length > 0) { %>
+                <% workOrder.personnelStatus.absentDetails.forEach(function(detail) { %>
+                    addAccidentItem('<%= detail.type %>', '<%= detail.employeeName %>');
+                <% }); %>
+            <% } %>
+        }
+
+        // 교육내용 로드
+        function loadEducationContent() {
+            <% if (workOrder.education && workOrder.education.weeklyFocus && workOrder.education.weeklyFocus.length > 0) { %>
+                <% workOrder.education.weeklyFocus.forEach(function(focus) { %>
+                    addWeeklyFocus('<%= focus %>');
+                <% }); %>
+            <% } %>
+            
+            <% if (workOrder.education && workOrder.education.content && workOrder.education.content.length > 0) { %>
+                <% workOrder.education.content.forEach(function(content) { %>
+                    addEducationContent('<%= content %>');
+                <% }); %>
+            <% } %>
+        }
 
         // 근무정보 자동입력 (새 명령서 작성 시 초기화)
         function autoFillWorkInfo() {
@@ -967,8 +980,6 @@
             document.getElementById('currentPersonnel').value = current;
         });
 
-        
-
         // 근무반 선택 시 근무시간 자동입력
         document.getElementById('workTeam').addEventListener('change', updateWorkTime);
         
@@ -1096,8 +1107,11 @@
             return '주간';
         }
 
-        
     </script>
+
+    </div>
 </div>
 
 <%- include('footer') %>
+</body>
+</html>

@@ -722,10 +722,20 @@ router.get('/:id/edit', isLoggedIn, adminOnly, async (req, res) => {
     console.log('🔧 workAssignment 전체 데이터:', JSON.stringify(workOrder.workAssignment, null, 2));
     
     // findAssignmentData 함수 정의
-    const findAssignmentData = (workAssignment, location, field) => {
+    const findAssignmentData = (workAssignment, location, field, index) => {
       if (!workAssignment || !Array.isArray(workAssignment)) return '';
       const assignment = workAssignment.find(item => item.location === location);
-      return assignment && assignment.assignment ? assignment.assignment[field] || '' : '';
+      if (!assignment || !assignment.assignment) return '';
+      
+      if (index !== undefined) {
+        // members 배열의 특정 인덱스 접근
+        if (field === 'members' && Array.isArray(assignment.assignment[field])) {
+          return assignment.assignment[field][index] || '';
+        }
+        return assignment.assignment[field] && assignment.assignment[field][index] ? assignment.assignment[field][index] : '';
+      }
+      
+      return assignment.assignment[field] || '';
     };
 
     res.render('workOrder_edit', {
@@ -852,6 +862,7 @@ router.get('/:id', isLoggedIn, async (req, res) => {
     };
     
     console.log('✅ WorkOrder 렌더링 시작');
+    console.log('✅ 보기페이지 workOrder.workAssignment:', JSON.stringify(workOrder.workAssignment, null, 2));
     res.render('workOrder', {
       workOrder,
       findAssignmentData: findAssignmentData,
@@ -959,121 +970,117 @@ router.put('/:id', isLoggedIn, adminOnly, async (req, res) => {
       };
     }
     
-    if (req.body.workAssignment) {
-      // workAssignment 객체 처리 - 위치별 키로 처리
-      const workAssignments = [];
+    // 새로운 간단한 name 속성 구조 처리 (작성페이지와 동일한 방식)
+    const workAssignments = [];
+    
+    console.log('🔧 PUT 새로운 name 속성 구조 처리 시작');
+    console.log('🔧 PUT req.body 키들:', Object.keys(req.body));
+    console.log('🔧 PUT req.body 전체:', JSON.stringify(req.body, null, 2));
+    
+    // 모든 위치 정의
+    const locations = [
+      { key: '해안입문', region: '해안지역' },
+      { key: '해안출문', region: '해안지역' },
+      { key: '기술교육원문', region: '해안지역' },
+      { key: '교육원중문', region: '해안지역' },
+      { key: '성내주차장문', region: '해안지역' },
+      { key: '성내주차장초소', region: '해안지역' },
+      { key: '선적중문', region: '해안지역' },
+      { key: '5의장중문', region: '해안지역' },
+      { key: '아산로중문', region: '해안지역' },
+      { key: '항만순찰', region: '해안지역' },
+      { key: '성내문', region: '성내지역' },
+      { key: '차량검색소', region: '성내지역' },
+      { key: '시트1문', region: '시트지역' },
+      { key: '시트1중문', region: '시트지역' },
+      { key: '시트1주차장초소', region: '시트지역' },
+      { key: '시트3문', region: '시트지역' },
+      { key: '코일주차장', region: '시트지역' },
+      { key: '엔진4부', region: '매암동지역' },
+      { key: '야적장초소', region: '매암동지역' }
+    ];
+    
+    // req.body에서 실제로 전송된 모든 위치를 동적으로 수집
+    const foundLocations = new Set();
+    
+    // req.body의 모든 키를 분석하여 위치명 추출
+    Object.keys(req.body).forEach(key => {
+      if (key.startsWith('teamLeader_')) {
+        const location = key.replace('teamLeader_', '');
+        foundLocations.add(location);
+      } else if (key.startsWith('supervisor_')) {
+        const location = key.replace('supervisor_', '');
+        foundLocations.add(location);
+      } else if (key.startsWith('member_')) {
+        const parts = key.split('_');
+        if (parts.length >= 3) {
+          const location = parts.slice(1, -1).join('_'); // member_위치명_번호에서 위치명 추출
+          foundLocations.add(location);
+        }
+      }
+    });
+    
+    console.log('🔧 발견된 위치들:', Array.from(foundLocations));
+    
+    // 각 발견된 위치별로 데이터 수집
+    foundLocations.forEach(locationKey => {
+      const teamLeader = req.body[`teamLeader_${locationKey}`] || '';
+      const supervisor = req.body[`supervisor_${locationKey}`] || '';
+      const members = [];
       
-      console.log('🔧 PUT workAssignment 객체 처리 시작');
-      console.log('🔧 PUT workAssignment 키들:', Object.keys(req.body.workAssignment));
-      console.log('🔧 PUT workAssignment 전체 데이터:', JSON.stringify(req.body.workAssignment, null, 2));
-      
-      // 각 위치별로 처리
-      Object.keys(req.body.workAssignment).forEach(locationKey => {
-        const item = req.body.workAssignment[locationKey];
-        
-        console.log(`🔧 처리 중인 키: ${locationKey}`, item);
-        
-        // 배열 형태의 데이터 처리 (실제 전송되는 형태)
-        if (Array.isArray(item) && item.length >= 3) {
-          // 배열 순서: [대원이름, region, location, ...추가대원들] (이전 방식)
-          const [firstMember, region, location, ...additionalMembers] = item;
-          
-          // 빈 문자열이 아닌 대원들만 필터링
-          const allMembers = [firstMember, ...additionalMembers].filter(member => member && member.trim());
-          
-          workAssignments.push({
-            region: region || '',
-            location: location || '',
-        assignment: {
-              teamLeader: '',
-              supervisor: '',
-              members: allMembers
-            }
-          });
-          
-          console.log(`🔧 PUT 처리된 assignment[${locationKey}]:`, {
-            region: region || '',
-            location: location || '',
-            teamLeader: '',
-            supervisor: '',
-            members: allMembers
-          });
-        }
-        // 객체 형태의 데이터 처리 (수정된 폼 구조)
-        else if (item && typeof item === 'object' && item.region && item.location) {
-          // members 배열 처리
-          const members = [];
-          if (item.assignment && item.assignment.members) {
-            if (Array.isArray(item.assignment.members)) {
-              members.push(...item.assignment.members.filter(member => member && member.trim()));
-            }
-          }
-          
-          workAssignments.push({
-            region: item.region || '',
-            location: item.location || '',
-            assignment: {
-              teamLeader: item.assignment?.teamLeader || '',
-              supervisor: item.assignment?.supervisor || '',
-              members: members
-            }
-          });
-          
-          console.log(`🔧 PUT 처리된 assignment[${locationKey}]:`, {
-            region: item.region || '',
-            location: item.location || '',
-            teamLeader: item.assignment?.teamLeader || '',
-            supervisor: item.assignment?.supervisor || '',
-            members: members
-          });
-        }
-        // 객체 형태의 데이터 처리 (기존 방식)
-        else if (item && typeof item === 'object' && item.region && item.location) {
-          // members 배열 처리
-          const members = [];
-          if (item.assignment && item.assignment.members) {
-            if (Array.isArray(item.assignment.members)) {
-              members.push(...item.assignment.members.filter(member => member && member.trim()));
-            } else {
-              Object.keys(item.assignment.members).forEach(memberKey => {
-                const member = item.assignment.members[memberKey];
-                if (member && member.trim()) {
-                  members.push(member.trim());
-                }
-              });
-            }
-          }
-          
-          workAssignments.push({
-            region: item.region,
-            location: item.location,
-            assignment: {
-              teamLeader: item.assignment?.teamLeader || '',
-              supervisor: item.assignment?.supervisor || '',
-              members: members
-            }
-          });
-          
-          console.log(`🔧 PUT 처리된 assignment[${locationKey}]:`, {
-            region: item.region,
-            location: item.location,
-            teamLeader: item.assignment?.teamLeader || '',
-            supervisor: item.assignment?.supervisor || '',
-            members: members
-          });
-        }
+      console.log(`🔧 ${locationKey} 데이터 수집 시작:`, {
+        teamLeader: teamLeader,
+        supervisor: supervisor,
+        teamLeaderKey: `teamLeader_${locationKey}`,
+        supervisorKey: `supervisor_${locationKey}`
       });
       
-      // 빈 region과 location 필터링
-      const filteredAssignments = workAssignments.filter(assignment => 
-        assignment.region && assignment.region.trim() && 
-        assignment.location && assignment.location.trim()
-      );
+      // 대원 데이터 수집 (member_위치명_0, member_위치명_1, ...)
+      for (let i = 0; i < 10; i++) { // 최대 10명까지
+        const member = req.body[`member_${locationKey}_${i}`];
+        if (member && member.trim()) {
+          members.push(member.trim());
+        }
+      }
       
-      console.log('📝 처리된 workAssignments (PUT, 필터링 후):', filteredAssignments);
-      updateData.workAssignment = filteredAssignments;
-      console.log('🔧 PUT 최종 workAssignment (필터링 후):', JSON.stringify(filteredAssignments, null, 2));
-    }
+      console.log(`🔧 ${locationKey} members:`, members);
+      
+      // 지역 정보 찾기 (기존 locations 배열에서)
+      const locationInfo = locations.find(loc => loc.key === locationKey);
+      const region = locationInfo ? locationInfo.region : '기타지역';
+      
+      console.log(`🔧 ${locationKey} 조건 확인:`, {
+        hasTeamLeader: !!teamLeader,
+        hasSupervisor: !!supervisor,
+        hasMembers: members.length > 0,
+        condition: !!(teamLeader || supervisor || members.length > 0)
+      });
+      
+      // 데이터가 있는 경우만 추가
+      if (teamLeader || supervisor || members.length > 0) {
+        workAssignments.push({
+          region: region,
+          location: locationKey,
+          assignment: {
+            teamLeader: teamLeader,
+            supervisor: supervisor,
+            members: members
+          }
+        });
+        
+        console.log(`🔧 PUT 처리된 ${locationKey}:`, {
+          teamLeader: teamLeader,
+          supervisor: supervisor,
+          members: members
+        });
+      } else {
+        console.log(`🔧 ${locationKey}: 데이터 없음으로 제외`);
+      }
+    });
+    
+    updateData.workAssignment = workAssignments;
+    console.log('🔧 PUT 최종 workAssignment:', JSON.stringify(workAssignments, null, 2));
+    console.log('🔧 PUT updateData 전체:', JSON.stringify(updateData, null, 2));
     
     if (req.body.education) {
       updateData.education = {
@@ -1083,7 +1090,8 @@ router.put('/:id', isLoggedIn, adminOnly, async (req, res) => {
       };
     }
     
-    await WorkOrder.findByIdAndUpdate(workOrderId, updateData);
+    const updatedWorkOrder = await WorkOrder.findByIdAndUpdate(req.params.id, updateData, { new: true });
+    console.log('🔧 PUT 업데이트 후 workOrder.workAssignment:', JSON.stringify(updatedWorkOrder.workAssignment, null, 2));
     
     // 로그 기록
     await Log.create({
@@ -1095,7 +1103,7 @@ router.put('/:id', isLoggedIn, adminOnly, async (req, res) => {
     });
     
     req.flash('success', '근무명령서가 성공적으로 수정되었습니다.');
-    res.redirect(`/work-orders/${req.params.id}`);
+    res.redirect(`/work-orders/${req.params.id}/edit`);
   } catch (error) {
     console.error('근무명령서 수정 오류:', error);
     console.error('오류 상세:', error);
@@ -1205,135 +1213,121 @@ router.post('/:id', isLoggedIn, adminOnly, async (req, res) => {
         };
       }
       
-      if (req.body.workAssignment) {
-        // workAssignment 배열 처리 - 폼에서 전송된 객체 배열을 구조화된 객체로 변환
-        const workAssignments = [];
-        
-        console.log('🔧 POST-to-PUT workAssignment 데이터:', JSON.stringify(req.body.workAssignment, null, 2));
-        console.log('🔧 POST-to-PUT workAssignment 타입:', typeof req.body.workAssignment);
-        console.log('🔧 POST-to-PUT workAssignment 배열 여부:', Array.isArray(req.body.workAssignment));
-        console.log('🔧 POST-to-PUT workAssignment 키들:', Object.keys(req.body.workAssignment));
-        
-        if (Array.isArray(req.body.workAssignment)) {
-          // 폼에서 전송된 배열을 순회하며 처리 - 실제로는 평면화된 배열
-          console.log('🔧 배열 형태 workAssignment 처리 시작');
-          console.log('🔧 배열 길이:', req.body.workAssignment.length);
-          
-          // 실제 데이터 구조 분석을 위해 처음 20개 항목 출력
-          console.log('🔧 처음 20개 항목:', req.body.workAssignment.slice(0, 20));
-          
-          // 실제 데이터 구조 분석을 위해 처음 30개 항목 출력
-          console.log('🔧 처음 30개 항목:', req.body.workAssignment.slice(0, 30));
-          
-          // 데이터를 순차적으로 처리하면서 region과 location을 찾아서 그룹화
-          let i = 0;
-          while (i < req.body.workAssignment.length) {
-            const item = req.body.workAssignment[i];
-            
-            // region과 location이 연속으로 나오는 패턴 찾기
-            if (typeof item === 'string' && item && 
-                i + 1 < req.body.workAssignment.length && 
-                typeof req.body.workAssignment[i + 1] === 'string' && 
-                req.body.workAssignment[i + 1]) {
-              
-              const region = item;
-              const location = req.body.workAssignment[i + 1];
-              
-              console.log(`🔧 발견된 지역/위치: ${region} - ${location}`);
-              
-              // 이전 항목들에서 teamLeader와 supervisor 찾기
-              let teamLeader = '';
-              let supervisor = '';
-              let members = [];
-              
-              // 현재 위치에서 역방향으로 teamLeader와 supervisor 찾기
-              for (let j = i - 1; j >= 0; j--) {
-                const prevItem = req.body.workAssignment[j];
-                if (typeof prevItem === 'string' && prevItem && !teamLeader) {
-                  teamLeader = prevItem;
-                } else if (typeof prevItem === 'string' && prevItem && !supervisor && prevItem !== teamLeader) {
-                  supervisor = prevItem;
-                  break;
-                }
-              }
-              
-              // 다음 항목들에서 members 배열 찾기
-              for (let j = i + 2; j < req.body.workAssignment.length; j++) {
-                const nextItem = req.body.workAssignment[j];
-                if (Array.isArray(nextItem)) {
-                  members = nextItem.map(member => member || '');
-                  break;
-                }
-              }
-              
-              console.log(`🔧 처리된 assignment:`, {
-                teamLeader, region, location, supervisor, members
-              });
-              
-              workAssignments.push({
-                region: region,
-                location: location,
-                assignment: {
-                  teamLeader: teamLeader,
-                  supervisor: supervisor,
-                  members: members
-                }
-              });
-              
-              // 다음 region을 찾기 위해 5개씩 건너뛰기
-              i += 5;
-            } else {
-              i++;
-            }
+      // 새로운 간단한 name 속성 구조 처리 (작성페이지와 동일한 방식)
+      const workAssignments = [];
+      
+      console.log('🔧 POST-to-PUT 새로운 name 속성 구조 처리 시작');
+      console.log('🔧 POST-to-PUT req.body 키들:', Object.keys(req.body));
+      
+      // 모든 위치 정의
+      const locations = [
+        { key: '해안입문', region: '해안지역' },
+        { key: '해안출문', region: '해안지역' },
+        { key: '기술교육원문', region: '해안지역' },
+        { key: '교육원중문', region: '해안지역' },
+        { key: '성내주차장문', region: '해안지역' },
+        { key: '성내주차장초소', region: '해안지역' },
+        { key: '선적중문', region: '해안지역' },
+        { key: '5의장중문', region: '해안지역' },
+        { key: '아산로중문', region: '해안지역' },
+        { key: '항만순찰', region: '해안지역' },
+        { key: '성내문', region: '성내지역' },
+        { key: '차량검색소', region: '성내지역' },
+        { key: '시트1문', region: '시트지역' },
+        { key: '시트1중문', region: '시트지역' },
+        { key: '시트1주차장초소', region: '시트지역' },
+        { key: '시트3문', region: '시트지역' },
+        { key: '코일주차장', region: '시트지역' },
+        { key: '엔진4부', region: '매암동지역' },
+        { key: '야적장초소', region: '매암동지역' }
+      ];
+      
+      // req.body에서 실제로 전송된 모든 위치를 동적으로 수집
+      const foundLocations = new Set();
+      
+      // req.body의 모든 키를 분석하여 위치명 추출
+      Object.keys(req.body).forEach(key => {
+        if (key.startsWith('teamLeader_')) {
+          const location = key.replace('teamLeader_', '');
+          foundLocations.add(location);
+        } else if (key.startsWith('supervisor_')) {
+          const location = key.replace('supervisor_', '');
+          foundLocations.add(location);
+        } else if (key.startsWith('member_')) {
+          const parts = key.split('_');
+          if (parts.length >= 3) {
+            const location = parts.slice(1, -1).join('_'); // member_위치명_번호에서 위치명 추출
+            foundLocations.add(location);
           }
-        } else {
-          // 객체인 경우 - workAssignment[0], workAssignment[1] 형태로 전송됨
-          console.log('🔧 객체 형태 workAssignment 처리 시작');
-        Object.keys(req.body.workAssignment).forEach(key => {
-          const assignment = req.body.workAssignment[key];
-            console.log(`🔧 처리 중인 키: ${key}`, assignment);
-            
-          if (assignment && assignment.region && assignment.location) {
-              // members 배열 처리 - workAssignment[0].assignment.members[0], members[1] 형태
-            const members = [];
-            if (assignment.assignment && assignment.assignment.members) {
-                if (Array.isArray(assignment.assignment.members)) {
-                  members.push(...assignment.assignment.members.filter(member => member && member.trim()));
-                } else {
-                  // 객체 형태의 members 처리
-              Object.keys(assignment.assignment.members).forEach(memberKey => {
-                const member = assignment.assignment.members[memberKey];
-                if (member && member.trim()) {
-                  members.push(member.trim());
-                }
-              });
-                }
-              }
-              
-              console.log(`🔧 처리된 assignment ${key}:`, {
-                region: assignment.region,
-                location: assignment.location,
-                teamLeader: assignment.assignment?.teamLeader,
-                supervisor: assignment.assignment?.supervisor,
-                members: members
-              });
-            
-            workAssignments.push({
-              region: assignment.region,
-              location: assignment.location,
-              assignment: {
-                teamLeader: assignment.assignment && assignment.assignment.teamLeader ? assignment.assignment.teamLeader : '',
-                supervisor: assignment.assignment && assignment.assignment.supervisor ? assignment.assignment.supervisor : '',
-                members: members
-              }
-            });
-          }
+        }
+      });
+      
+      console.log('🔧 POST-to-PUT 발견된 위치들:', Array.from(foundLocations));
+      
+      // 각 발견된 위치별로 데이터 수집
+      foundLocations.forEach(locationKey => {
+        const teamLeader = req.body[`teamLeader_${locationKey}`] || '';
+        const supervisor = req.body[`supervisor_${locationKey}`] || '';
+        const members = [];
+        
+        console.log(`🔧 ${locationKey} 데이터 수집 시작:`, {
+          teamLeader: teamLeader,
+          supervisor: supervisor,
+          teamLeaderKey: `teamLeader_${locationKey}`,
+          supervisorKey: `supervisor_${locationKey}`
         });
+        
+        // 대원 데이터 수집 (member_위치명_0, member_위치명_1, ...)
+        for (let i = 0; i < 10; i++) { // 최대 10명까지
+          const member = req.body[`member_${locationKey}_${i}`];
+          if (member && member.trim()) {
+            members.push(member.trim());
+          }
         }
         
-        updateData.workAssignment = workAssignments;
-        console.log('📝 처리된 workAssignments (POST-to-PUT):', JSON.stringify(workAssignments, null, 2));
-      }
+        console.log(`🔧 ${locationKey} members:`, members);
+        
+        // 지역 정보 찾기 (기존 locations 배열에서)
+        const locationInfo = locations.find(loc => loc.key === locationKey);
+        const region = locationInfo ? locationInfo.region : '기타지역';
+        
+        console.log(`🔧 ${locationKey} 조건 확인:`, {
+          hasTeamLeader: !!teamLeader,
+          hasSupervisor: !!supervisor,
+          hasMembers: members.length > 0,
+          condition: !!(teamLeader || supervisor || members.length > 0),
+          teamLeaderValue: teamLeader,
+          supervisorValue: supervisor,
+          membersCount: members.length,
+          teamLeaderTruthy: !!teamLeader,
+          supervisorTruthy: !!supervisor,
+          membersTruthy: members.length > 0
+        });
+        
+        // 데이터가 있는 경우만 추가
+        if (teamLeader || supervisor || members.length > 0) {
+          workAssignments.push({
+            region: region,
+            location: locationKey,
+            assignment: {
+              teamLeader: teamLeader,
+              supervisor: supervisor,
+              members: members
+            }
+          });
+          
+          console.log(`🔧 POST-to-PUT 처리된 ${locationKey}:`, {
+            teamLeader: teamLeader,
+            supervisor: supervisor,
+            members: members
+          });
+        } else {
+          console.log(`🔧 ${locationKey}: 데이터 없음으로 제외`);
+        }
+      });
+      
+      updateData.workAssignment = workAssignments;
+      console.log('🔧 POST-to-PUT 최종 workAssignment:', JSON.stringify(workAssignments, null, 2));
       
       if (req.body.education) {
         updateData.education = {
@@ -1343,7 +1337,8 @@ router.post('/:id', isLoggedIn, adminOnly, async (req, res) => {
         };
       }
       
-      await WorkOrder.findByIdAndUpdate(workOrderId, updateData);
+      const updatedWorkOrder = await WorkOrder.findByIdAndUpdate(req.params.id, updateData, { new: true });
+      console.log('🔧 POST-to-PUT 업데이트 후 workOrder.workAssignment:', JSON.stringify(updatedWorkOrder.workAssignment, null, 2));
       
       // 로그 기록
       await Log.create({
@@ -1355,7 +1350,7 @@ router.post('/:id', isLoggedIn, adminOnly, async (req, res) => {
       });
       
       req.flash('success', '근무명령서가 성공적으로 수정되었습니다.');
-      res.redirect(`/work-orders/${workOrderId}`);
+      res.redirect(`/work-orders/${req.params.id}/edit`);
       return;
     }
     

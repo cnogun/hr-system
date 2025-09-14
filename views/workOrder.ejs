@@ -1,13 +1,8 @@
 <%- include('header') %>
 
+<body>
 <div class="flex-grow-1">
-    <style>
-        body {
-            font-family: 'Malgun Gothic', sans-serif;
-            margin: 0;
-            padding: 20px;
-            background-color: #f5f5f5;
-        }
+<style>
         
         .container {
             max-width: 1200px;
@@ -307,8 +302,7 @@
             color: white;
         }
     </style>
-</head>
-<body>
+
     <div class="container">
         <!-- 제목 (보기페이지용) -->
         <div class="d-flex justify-content-between align-items-center mb-4">
@@ -510,20 +504,21 @@
                             <td colspan="3" style="padding: 0; height: 1px;"></td>
                         </tr>
                         <tbody>
-                                    <!-- 해안입문 (반장+조장, 대원3명) -->
-                                    <tr style="height: 20px;">
+                                    <!-- 해안입문 (조장, 대원3명) -->
+                                    <tr style="height: 40px;">
                                         <td rowspan="12" class="region-col" style="text-align: center; vertical-align: middle;">해안<br>지역</td>
                                         <td class="location-col" style="vertical-align: middle;">해안입문</td>
                                         <td class="personnel-col" style="width: 300px; text-align: center; vertical-align: middle;">
-                                            <div style="padding: 5px; background-color: #f8f9fa; border: none; border-radius: 3px; height: 20px; display: flex; align-items: center; width: 100%; margin-bottom: 5px;">
-                                                <div style="width: 50%; text-align: left; padding-left: 10px;">반장: <%= workOrder ? findAssignmentData(workOrder.workAssignment, '해안입문', 'assignment.teamLeader') : '' %></div>
-                                                <div style="width: 50%; text-align: left; padding-left: 10px;">조장: <%= workOrder ? findAssignmentData(workOrder.workAssignment, '해안입문', 'assignment.supervisor') : '' %></div>
-                                            </div>
-                                            <div style="padding: 5px; background-color: #f8f9fa; border: none; border-radius: 3px; height: 20px; display: flex; align-items: center; justify-content: center;">
-                                                <div style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;">
-                                                    <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '해안입문', 'members', 0) : '' %></div>
-                                                    <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '해안입문', 'members', 1) : '' %></div>
-                                                    <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '해안입문', 'members', 2) : '' %></div>
+                                            <div style="display: flex; flex-direction: column; gap: 5px; padding: 5px;">
+                                                <div style="padding: 5px; background-color: #f8f9fa; border: none; border-radius: 3px; height: 20px; display: flex; align-items: center; width: 100%;">
+                                                    <div style="width: 100%; text-align: left; padding-left: 10px;">조장: <%= workOrder ? findAssignmentData(workOrder.workAssignment, '해안입문', 'supervisor') : '' %></div>
+                                                </div>
+                                                <div style="padding: 5px; background-color: #f8f9fa; border: none; border-radius: 3px; height: 20px; display: flex; align-items: center; justify-content: center;">
+                                                    <div style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;">
+                                                        <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '해안입문', 'members', 0) : '' %></div>
+                                                        <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '해안입문', 'members', 1) : '' %></div>
+                                                        <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '해안입문', 'members', 2) : '' %></div>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </td>
@@ -534,32 +529,32 @@
                                         <td class="location-col" style="vertical-align: middle;">해안출문</td>
                                         <td class="personnel-col" style="width: 300px; text-align: center; vertical-align: middle;">
                                             <div style="padding: 5px; background-color: #f8f9fa; border: none; border-radius: 3px; height: 20px; display: flex; align-items: center; justify-content: center;">
-                                                <% 
-                   // 직접 데이터 접근으로 테스트
-                   const haeanChulmunData = workOrder ? workOrder.workAssignment.find(item => item.location === '해안출문') : null;
-                                                const haeanChulmunMembers = haeanChulmunData && haeanChulmunData.assignment && haeanChulmunData.assignment.members ? haeanChulmunData.assignment.members : [];
-                                                %>
                                                 <div style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;">
-                                                    <div><%= haeanChulmunMembers[0] || '' %></div>
-                                                    <div><%= haeanChulmunMembers[1] || '' %></div>
-                                                    <div><%= haeanChulmunMembers[2] || '' %></div>
+                                                    <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '해안출문', 'members', 0) : '' %></div>
+                                                    <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '해안출문', 'members', 1) : '' %></div>
+                                                    <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '해안출문', 'members', 2) : '' %></div>
                                     </div>
                                 </div>
                                         </td>
                             </tr>
                             
-                                    <!-- 기술교육원문 (대원2명) -->
-                                    <tr style="height: 20px;">
+                                    <!-- 기술교육원문 (조장, 대원2명) -->
+                                    <tr style="height: 40px;">
                                         <td class="location-col" style="vertical-align: middle;">기술교육원문</td>
                                         <td class="personnel-col" style="width: 300px; text-align: center; vertical-align: middle;">
-                                            <div style="padding: 5px; background-color: #f8f9fa; border: none; border-radius: 3px; height: 20px; display: flex; align-items: center; justify-content: center;">
-                                                <div style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;">
-                                                    <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '기술교육원문', 'teamLeader') : '' %></div>
-                                                    <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '기술교육원문', 'supervisor') : '' %></div>
-                                </div>
-                                </div>
+                                            <div style="display: flex; flex-direction: column; gap: 5px; padding: 5px;">
+                                                <div style="padding: 5px; background-color: #f8f9fa; border: none; border-radius: 3px; height: 20px; display: flex; align-items: center; width: 100%;">
+                                                    <div style="width: 100%; text-align: left; padding-left: 10px;">조장: <%= workOrder ? findAssignmentData(workOrder.workAssignment, '기술교육원문', 'supervisor') : '' %></div>
+                                                </div>
+                                                <div style="padding: 5px; background-color: #f8f9fa; border: none; border-radius: 3px; height: 20px; display: flex; align-items: center; justify-content: center;">
+                                                    <div style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;">
+                                                        <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '기술교육원문', 'members', 0) : '' %></div>
+                                                        <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '기술교육원문', 'members', 1) : '' %></div>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </td>
-                            </tr>
+                                    </tr>
                             
                                     <!-- 교육원중문 (대원1명) -->
                                     <tr style="height: 20px;">
@@ -606,12 +601,12 @@
                                         <td class="personnel-col" style="width: 300px; text-align: center; vertical-align: middle;">
                                             <div style="padding: 5px; background-color: #f8f9fa; border: none; border-radius: 3px; height: 20px; display: flex; align-items: center; justify-content: center;">
                                                 <div style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;">
-                                                    <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '선적중문', 'teamLeader') : '' %></div>
-                                                    <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '선적중문', 'supervisor') : '' %></div>
-                                </div>
-                                </div>
+                                                    <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '선적중문', 'members', 0) : '' %></div>
+                                                    <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '선적중문', 'members', 1) : '' %></div>
+                                                </div>
+                                            </div>
                                         </td>
-                            </tr>
+                                    </tr>
                             
                                     <!-- 5의장중문 (대원2명) -->
                                     <tr style="height: 20px;">
@@ -619,12 +614,12 @@
                                         <td class="personnel-col" style="width: 300px; text-align: center; vertical-align: middle;">
                                             <div style="padding: 5px; background-color: #f8f9fa; border: none; border-radius: 3px; height: 20px; display: flex; align-items: center; justify-content: center;">
                                                 <div style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;">
-                                                    <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '5의장중문', 'teamLeader') : '' %></div>
-                                                    <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '5의장중문', 'supervisor') : '' %></div>
-                        </div>
-                    </div>
+                                                    <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '5의장중문', 'members', 0) : '' %></div>
+                                                    <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '5의장중문', 'members', 1) : '' %></div>
+                                                </div>
+                                            </div>
                                         </td>
-                            </tr>
+                                    </tr>
                             
                                     <!-- 아산로중문 (대원2명) -->
                                     <tr style="height: 20px;">
@@ -632,12 +627,12 @@
                                         <td class="personnel-col" style="width: 300px; text-align: center; vertical-align: middle;">
                                             <div style="padding: 5px; background-color: #f8f9fa; border: none; border-radius: 3px; height: 20px; display: flex; align-items: center; justify-content: center;">
                                                 <div style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;">
-                                                    <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '아산로중문', 'teamLeader') : '' %></div>
-                                                    <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '아산로중문', 'supervisor') : '' %></div>
-                                    </div>
-                                </div>
+                                                    <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '아산로중문', 'members', 0) : '' %></div>
+                                                    <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '아산로중문', 'members', 1) : '' %></div>
+                                                </div>
+                                            </div>
                                         </td>
-                            </tr>
+                                    </tr>
                             
                                     <!-- 항만순찰 (대원2명, 1행) -->
                                     <tr style="height: 20px;">
@@ -692,16 +687,8 @@
                                                     <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '차량검색소', 'supervisor') : '' %></div>
                                                     <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '차량검색소', 'members', 0) : '' %></div>
                                                     <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '차량검색소', 'members', 1) : '' %></div>
-                        </div>
-                    </div>
-                                        </td>
-                                        <td class="personnel-col" style="width: 300px; text-align: center; vertical-align: middle;">
-                                            <div style="padding: 5px; background-color: #f8f9fa; border: none; border-radius: 3px; height: 20px; display: flex; align-items: center; justify-content: center;">
-                                                <div style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;">
-                                                    <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '차량검색소', 'members', 2) : '' %></div>
-                                                    <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '차량검색소', 'members', 3) : '' %></div>
-                        </div>
-                    </div>
+                                                </div>
+                                            </div>
                                         </td>
                             </tr>
 
@@ -712,7 +699,7 @@
                                         <td class="personnel-col" style="width: 300px; text-align: center; vertical-align: middle; border: none; border-right: 1px solid #ddd;">
                                             <div style="padding: 5px; background-color: #f8f9fa; border: none; border-radius: 3px; height: 20px; display: flex; align-items: center; justify-content: flex-start;">
                                                 <div style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: flex-start;">
-                                                    <div style="text-align: left;">조장: <%= workOrder ? findAssignmentData(workOrder.workAssignment, '시트1문', 'assignment.supervisor') : '' %></div>
+                                                    <div style="text-align: left;">조장: <%= workOrder ? findAssignmentData(workOrder.workAssignment, '시트1문', 'supervisor') : '' %></div>
                                                 </div>
                                             </div>
                                         </td>
@@ -777,7 +764,7 @@
                                         <td class="personnel-col" style="width: 300px; text-align: center; vertical-align: middle;">
                                             <div style="padding: 5px; background-color: #f8f9fa; border: none; border-radius: 3px; height: 20px; display: flex; align-items: center; justify-content: flex-start; margin-bottom: 5px;">
                                                 <div style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: flex-start;">
-                                                    <div style="text-align: left;">조장: <%= workOrder ? findAssignmentData(workOrder.workAssignment, '엔진4부', 'assignment.supervisor') : '' %></div>
+                                                    <div style="text-align: left;">조장: <%= workOrder ? findAssignmentData(workOrder.workAssignment, '엔진4부', 'supervisor') : '' %></div>
                                                 </div>
                                             </div>
                                             <div style="padding: 5px; background-color: #f8f9fa; border: none; border-radius: 3px; height: 20px; display: flex; align-items: center; justify-content: center;">
@@ -872,10 +859,14 @@
                 size: A4;
             }
             body { 
-                margin: 0; 
-                padding: 0;
-                font-size: 11px;
-                line-height: 1.3;
+                margin: 0 !important; 
+                padding: 0 !important;
+                font-size: 11px !important;
+                line-height: 1.3 !important;
+                background: white !important;
+                min-height: auto !important;
+                display: block !important;
+                flex-direction: initial !important;
             }
             .no-print { display: none !important; }
             header { display: none !important; }
@@ -1097,6 +1088,9 @@
             }
         }
     </style>
+
 </div>
 
 <%- include('footer') %>
+</body>
+</html>
