@@ -1,0 +1,175 @@
+/* 인쇄 최적화 공통 CSS */
+/* 작성자: 시스템 관리자 */
+/* 목적: 모든 페이지의 인쇄 기능 최적화 */
+
+/* 인쇄 미리보기 스타일 */
+.print-preview {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 9999;
+    overflow-y: auto;
+}
+
+.print-preview-content {
+    background: white;
+    margin: 20px auto;
+    padding: 20px;
+    max-width: 210mm; /* A4 너비 */
+    min-height: 297mm; /* A4 높이 */
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    position: relative;
+}
+
+.print-preview-header {
+    position: sticky;
+    top: 0;
+    background: #f8f9fa;
+    padding: 10px 20px;
+    border-bottom: 1px solid #dee2e6;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 10000;
+}
+
+.print-preview-close {
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.print-preview-print {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    margin-right: 10px;
+}
+
+/* 인쇄 미리보기에서 인쇄 스타일 적용 */
+.print-preview .print-preview-content {
+    /* A4 용지 최적화 설정 */
+    @page {
+        size: A4;
+        margin: 15mm 12mm 15mm 12mm;
+    }
+    
+    /* 인쇄 시 스타일 적용 */
+    font-size: 12px;
+    line-height: 1.2;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    
+    /* 불필요한 요소 숨김 */
+    .no-print,
+    .btn,
+    button,
+    .print-button,
+    header,
+    footer,
+    .header,
+    .footer,
+    .navbar,
+    .navbar-nav,
+    .nav-link,
+    .brand-logo,
+    .brand-text,
+    .navbar-toggler,
+    .dropdown-menu,
+    .toast,
+    .modal {
+        display: none !important;
+    }
+    
+    /* 테이블 최적화 */
+    table {
+        border-collapse: collapse;
+        width: 100%;
+        page-break-inside: avoid;
+        break-inside: avoid;
+    }
+    
+    table th,
+    table td {
+        border: 1px solid #333;
+        padding: 3px;
+        font-size: 12px;
+    }
+    
+    /* 섹션 최적화 */
+    .form-section,
+    .section {
+        page-break-inside: avoid;
+        break-inside: avoid;
+        margin-bottom: 8px;
+    }
+    
+    /* 제목 스타일 */
+    h1, h2, h3, h4, h5, h6 {
+        page-break-after: avoid;
+        break-after: avoid;
+    }
+}
+
+/* 인쇄 버튼 스타일 개선 */
+.print-btn {
+    background: #28a745;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    margin-right: 5px;
+    transition: background-color 0.3s;
+}
+
+.print-btn:hover {
+    background: #218838;
+}
+
+.print-preview-btn {
+    background: #17a2b8;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    margin-right: 5px;
+    transition: background-color 0.3s;
+}
+
+.print-preview-btn:hover {
+    background: #138496;
+}
+
+/* 반응형 인쇄 버튼 */
+@media (max-width: 768px) {
+    .print-btn,
+    .print-preview-btn {
+        padding: 6px 12px;
+        font-size: 12px;
+    }
+    
+    .print-preview-header {
+        padding: 8px 15px;
+    }
+    
+    .print-preview-close,
+    .print-preview-print {
+        padding: 6px 12px;
+        font-size: 12px;
+    }
+}

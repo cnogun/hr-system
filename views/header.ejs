@@ -17,8 +17,13 @@
 <style>
 /* 추가 모바일 최적화 */
 @media (max-width: 768px) {
+  .brand-text {
+    margin-right: 1rem;
+  }
+  
   .brand-text h2 {
-    font-size: 1.2rem;
+    font-size: 1.1rem;
+    white-space: nowrap;
   }
   
   .brand-text small {
@@ -50,11 +55,70 @@
     padding: 0.25rem 0.5rem;
     font-size: 0.8rem;
   }
+  
+  /* 모바일 헤더 레이아웃 최적화 */
+  .container-fluid {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+  
+  /* 브랜드 텍스트 줄바꿈 방지 */
+  .brand-text {
+    min-width: 0;
+    flex-shrink: 0;
+  }
+  
+  .brand-logo i {
+    font-size: 1.25rem !important;
+  }
+  
+  .brand-text h2 {
+    font-size: 1.1rem;
+    line-height: 1.2;
+  }
+  
+  .navbar-toggler {
+    border: none;
+    padding: 0.25rem 0.5rem;
+  }
+  
+  .navbar-toggler:focus {
+    box-shadow: none;
+  }
+  
+  /* 모바일 버튼들 스타일 */
+  .d-flex.gap-2 {
+    gap: 0.5rem !important;
+  }
+  
+  .btn-outline-danger.btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.8rem;
+    border-radius: 0.375rem;
+  }
+  
+  .btn-outline-danger.btn-sm i {
+    font-size: 0.75rem;
+  }
+  
+  /* 모바일에서 중앙 정렬 */
+  .justify-content-center {
+    justify-content: center !important;
+  }
+  
+  .mb-2 {
+    margin-bottom: 0.5rem !important;
+  }
 }
 
 @media (max-width: 576px) {
+  .brand-text {
+    margin-right: 0.5rem;
+  }
+  
   .brand-text h2 {
-    font-size: 1rem;
+    font-size: 0.9rem;
+    white-space: nowrap;
   }
   
   .brand-text small {
@@ -86,29 +150,82 @@
     padding: 0.2rem 0.4rem;
     font-size: 0.7rem;
   }
+  
+  /* 작은 화면에서 헤더 최적화 */
+  .container-fluid {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+  
+  /* 브랜드 텍스트 줄바꿈 방지 */
+  .brand-text {
+    min-width: 0;
+    flex-shrink: 0;
+  }
+  
+  .brand-logo i {
+    font-size: 1rem !important;
+  }
+  
+  .brand-text h2 {
+    font-size: 0.9rem;
+    line-height: 1.1;
+  }
+  
+  .brand-text {
+    margin-left: 0.5rem;
+  }
+  
+  /* 작은 화면에서 우측 버튼들 최적화 */
+  .d-flex.gap-2 {
+    gap: 0.25rem !important;
+  }
+  
+  .btn-outline-danger.btn-sm {
+    padding: 0.2rem 0.4rem;
+    font-size: 0.7rem;
+  }
+  
+  .btn-outline-danger.btn-sm i {
+    font-size: 0.65rem;
+  }
+  
+  .navbar-toggler {
+    padding: 0.2rem 0.4rem;
+  }
 }
 </style>
 
 <header class="sticky-top shadow-lg bg-white border-bottom">
   <div class="container-fluid py-3">
-    <div class="d-flex justify-content-between align-items-center">
-      <!-- 햄버거 메뉴 버튼 (모바일에서만 표시, 좌측 배치) -->
-      <% if (typeof session !== 'undefined' && session && session.userId) { %>
-        <button class="navbar-toggler d-lg-none order-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon"></span>
-        </button>
-      <% } %>
-      
+    <!-- 모든 화면에서 가로 레이아웃 -->
+    <div class="d-flex flex-row justify-content-between align-items-center">
       <!-- 로고 및 브랜드 -->
-      <div class="d-flex align-items-center gap-3 flex-grow-1 justify-content-center justify-content-lg-start">
+      <div class="d-flex align-items-center gap-2">
         <div class="brand-logo">
           <i class="fa-solid fa-users-gear fa-2x text-primary"></i>
         </div>
-        <div class="brand-text">
-          <h2 class="mb-0 fw-bold text-primary">인사관리 시스템</h2>
-          <small class="text-muted">Human Resource Management System</small>
+        <div class="brand-text" style="margin-right: 2rem;">
+          <h2 class="mb-0 fw-bold text-primary" style="white-space: nowrap !important; word-break: keep-all !important; overflow: hidden !important; font-size: 1.4rem !important;">보안근무 관리 시스템</h2>
+          <small class="text-muted d-none d-md-inline">Security Work Management System</small>
         </div>
       </div>
+      
+      <!-- 모바일 버튼들 (햄버거 메뉴 + 로그아웃) -->
+      <% if (typeof session !== 'undefined' && session && session.userId) { %>
+        <div class="d-flex align-items-center gap-2">
+          <!-- 햄버거 메뉴 버튼 -->
+          <button class="navbar-toggler d-lg-none" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          
+          <!-- 모바일 로그아웃 버튼 -->
+          <a href="/logout" class="btn btn-outline-danger btn-sm d-lg-none" style="white-space: nowrap;">
+            <i class="fa-solid fa-sign-out-alt me-1"></i>
+            <span class="d-none d-sm-inline">로그아웃</span>
+          </a>
+        </div>
+      <% } %>
       
       <% if (typeof session !== 'undefined' && session && session.userId) { %>
       <!-- 네비게이션 메뉴 -->
@@ -224,24 +341,30 @@
             <!-- 사용자 정보 및 액션 -->
       <div class="d-flex align-items-center gap-3 order-3">
         <% if (typeof session !== 'undefined' && session && session.userId) { %>
-          <a href="/notice/new" class="btn btn-warning btn-sm me-2 d-none d-md-inline-block">
+          <a href="/notice/new" class="btn btn-warning btn-sm me-2 d-none d-md-inline-block" style="white-space: nowrap;">
             <i class="fa-solid fa-bullhorn me-1"></i> 시스템 공지
           </a>
           
           <div class="vr mx-2 d-none d-md-block" style="height: 35px; opacity: 0.3;"></div>
           
-          <div class="user-info text-end d-none d-md-block">
-            <div class="fw-semibold text-primary" style="font-size: 0.9rem;">
-              <i class="fa-solid fa-user me-1"></i>관리자
-            </div>
-            <div class="fw-semibold text-dark" style="font-size: 0.9rem;">
-              <i class="fa-solid fa-user-tie me-1"></i><%= typeof position !== 'undefined' ? position : '관리자' %>
+          <div class="user-info d-none d-md-block">
+            <div class="d-flex align-items-center gap-2">
+              <div class="fw-semibold text-primary" style="font-size: 0.9rem; white-space: nowrap;">
+                <i class="fa-solid fa-user me-1"></i>관리자
+              </div>
+              <% if (typeof position !== 'undefined' && position && position !== '관리자') { %>
+              <div class="fw-semibold text-dark" style="font-size: 0.9rem; white-space: nowrap;">
+                <i class="fa-solid fa-user-tie me-1"></i><%= position %>
+              </div>
+              <% } %>
             </div>
           </div>
           
-          <a href="/auth/logout" class="btn btn-outline-danger btn-sm">
-            <i class="fa-solid fa-right-from-bracket me-1"></i> <span class="d-none d-sm-inline">로그아웃</span>
+          <!-- 데스크톱 로그아웃 버튼 -->
+          <a href="/logout" class="btn btn-outline-danger btn-sm d-none d-md-inline-block" style="white-space: nowrap;">
+            <i class="fa-solid fa-sign-out-alt me-1"></i>로그아웃
           </a>
+          
         <% } else { %>
           <div class="auth-actions">
             <a href="/auth/login" class="btn btn-primary btn-sm me-2">
@@ -650,9 +773,9 @@ body {
 .brand-logo {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
-  padding: 1rem;
-  border-radius: 20px;
-  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.25);
+  padding: 0.75rem;
+  border-radius: 16px;
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.25);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
@@ -681,6 +804,7 @@ body {
 
 .brand-text {
   transition: all 0.3s ease;
+  margin-right: 2rem;
 }
 
 .brand-text h2 {
@@ -689,6 +813,9 @@ body {
   -webkit-text-fill-color: transparent;
   background-clip: text;
   transition: all 0.3s ease;
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+  overflow: hidden !important;
 }
 
 .brand-text:hover h2 {
@@ -747,17 +874,22 @@ body {
   border-color: transparent;
 }
 
-.navbar-nav .nav-link.active {
-  color: white;
-  background-color: transparent;
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.25);
+/* 모든 메뉴 active 상태 통일 */
+.navbar-nav .nav-link.active,
+.navbar-nav .dropdown-toggle.active {
+  color: white !important;
+  background-color: transparent !important;
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.25) !important;
+  transform: translateY(-2px) !important;
+  border-color: transparent !important;
 }
 
- /* 하위 메뉴 active 상태 스타일 */
+ /* 하위 메뉴 active 상태 스타일 통일 */
  .dropdown-item.active {
    color: #667eea !important;
    background-color: rgba(102, 126, 234, 0.1) !important;
-   font-weight: 600;
+   font-weight: 600 !important;
+   border-left: 3px solid #667eea !important;
  }
 
 /* 드롭다운 스타일 */
@@ -886,8 +1018,8 @@ body {
   background: rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  padding: 1rem 1.25rem;
-  border-radius: 16px;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.3);
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -965,31 +1097,136 @@ body {
 
 /* 반응형 디자인 */
 @media (max-width: 991.98px) {
-  /* 모바일에서 네비게이션 메뉴 스타일 */
+  /* 모바일에서 네비게이션 메뉴 스타일 - 화면 중앙 모달 */
   .navbar-collapse {
-    background: rgba(255, 255, 255, 0.95);
+    background: rgba(255, 255, 255, 0.98);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    padding: 1.5rem;
+    padding: 2rem;
     border-radius: 20px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-    margin-top: 1rem;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    position: absolute;
-    top: 100%;
-    left: 0.5rem;
-    right: 0.5rem;
-    z-index: 1000;
-    transform: translateY(-10px);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.8);
+    width: 90vw;
+    max-width: 400px;
+    z-index: 1050;
     opacity: 0;
     visibility: hidden;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
   
   .navbar-collapse.show {
-    transform: translateY(0);
+    transform: translate(-50%, -50%) scale(1);
     opacity: 1;
     visibility: visible;
+  }
+  
+  /* 모바일 네비게이션 오버레이 */
+  .navbar-collapse::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: -1;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+  }
+  
+  .navbar-collapse.show::before {
+    opacity: 1;
+    visibility: visible;
+  }
+  
+  /* 모바일에서 드롭다운 메뉴 스타일 - 화면 중앙 모달 */
+  .dropdown-menu {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) scale(0.8) !important;
+    width: 90vw !important;
+    max-width: 400px !important;
+    margin: 0 !important;
+    border: none !important;
+    display: none !important;
+    background-color: #ffffff !important;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2) !important;
+    border-radius: 16px !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    z-index: 1050 !important;
+    max-height: 80vh !important;
+    overflow-y: auto !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  }
+  
+  .dropdown-menu.show {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: translate(-50%, -50%) scale(1) !important;
+  }
+  
+  /* 모바일 드롭다운 오버레이 */
+  .dropdown-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    background-color: rgba(0, 0, 0, 0.5) !important;
+    z-index: 1040 !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    transition: all 0.3s ease !important;
+  }
+  
+  .dropdown-overlay.show {
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+  
+  /* 모바일 드롭다운 헤더 */
+  .dropdown-menu::before {
+    content: attr(data-title) !important;
+    display: block !important;
+    padding: 1rem 1.5rem !important;
+    font-size: 1.1rem !important;
+    font-weight: 600 !important;
+    color: #333 !important;
+    background-color: #f8f9fa !important;
+    border-bottom: 1px solid #dee2e6 !important;
+    border-radius: 16px 16px 0 0 !important;
+    position: relative !important;
+  }
+  
+  .dropdown-menu::after {
+    content: '×' !important;
+    position: absolute !important;
+    top: 1rem !important;
+    right: 1.5rem !important;
+    font-size: 1.5rem !important;
+    color: #6c757d !important;
+    cursor: pointer !important;
+    z-index: 1 !important;
+    width: 30px !important;
+    height: 30px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 50% !important;
+    background-color: rgba(0, 0, 0, 0.05) !important;
+    transition: background-color 0.2s ease !important;
+  }
+  
+  .dropdown-menu::after:hover {
+    background-color: rgba(0, 0, 0, 0.1) !important;
   }
   
   .navbar-nav {
@@ -1027,21 +1264,195 @@ body {
     left: 0;
   }
   
+  /* 모바일에서 모든 메뉴 active 상태 통일 */
   .navbar-nav .nav-link:hover,
-  .navbar-nav .nav-link.active {
-    color: white;
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
-    border-color: transparent;
+  .navbar-nav .nav-link.active,
+  .navbar-nav .dropdown-toggle.active {
+    color: white !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3) !important;
+    border-color: transparent !important;
   }
   
-  /* 모바일에서 드롭다운 메뉴 스타일 */
+  /* 모바일에서 드롭다운 메뉴 스타일 - 화면 중앙에 모달 형태 */
   .dropdown-menu {
-    position: static !important;
-    float: none;
-    width: 100%;
-    margin-top: 0.75rem;
-    border: none;
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) scale(0.8) !important;
+    width: 90vw !important;
+    max-width: 400px !important;
+    margin: 0 !important;
+    border: none !important;
+    pointer-events: none !important;
+    background-color: #ffffff !important;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2) !important;
+    border-radius: 16px !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    z-index: 1050 !important;
+    max-height: 80vh !important;
+    overflow-y: auto !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  }
+  
+  .dropdown-menu.show {
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: translate(-50%, -50%) scale(1) !important;
+    pointer-events: auto !important;
+  }
+  
+  .dropdown-toggle::after {
+    display: inline-block !important;
+    margin-left: 0.255em !important;
+    vertical-align: 0.255em !important;
+    content: "" !important;
+    border-top: 0.3em solid !important;
+    border-right: 0.3em solid transparent !important;
+    border-bottom: 0 !important;
+    border-left: 0.3em solid transparent !important;
+  }
+  
+  .dropdown-toggle[aria-expanded="true"]::after {
+    transform: rotate(180deg) !important;
+  }
+  
+  /* 모바일 드롭다운 아이템 스타일 */
+  .dropdown-item {
+    padding: 0.75rem 1rem !important;
+    font-size: 0.9rem !important;
+    border-bottom: 1px solid #e9ecef !important;
+  }
+  
+  .dropdown-item:last-child {
+    border-bottom: none !important;
+  }
+  
+  .dropdown-item:hover {
+    background-color: #e9ecef !important;
+  }
+  
+  .dropdown-header {
+    padding: 0.5rem 1rem !important;
+    font-size: 0.8rem !important;
+    font-weight: 600 !important;
+    color: #6c757d !important;
+    background-color: #f8f9fa !important;
+    border-bottom: 1px solid #dee2e6 !important;
+  }
+  
+  /* 모바일 드롭다운 오버레이 */
+  .dropdown-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    background-color: rgba(0, 0, 0, 0.5) !important;
+    z-index: 1040 !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    transition: all 0.3s ease !important;
+  }
+  
+  .dropdown-overlay.show {
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+  
+  /* 모바일 드롭다운 헤더 */
+  .dropdown-menu::before {
+    content: attr(data-title) !important;
+    display: block !important;
+    padding: 1rem 1.5rem !important;
+    font-size: 1.1rem !important;
+    font-weight: 600 !important;
+    color: #333 !important;
+    background-color: #f8f9fa !important;
+    border-bottom: 1px solid #dee2e6 !important;
+    border-radius: 16px 16px 0 0 !important;
+    position: relative !important;
+  }
+  
+  .dropdown-menu::after {
+    content: '×' !important;
+    position: absolute !important;
+    top: 1rem !important;
+    right: 1.5rem !important;
+    font-size: 1.5rem !important;
+    color: #6c757d !important;
+    cursor: pointer !important;
+    z-index: 1 !important;
+    width: 30px !important;
+    height: 30px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 50% !important;
+    background-color: rgba(0, 0, 0, 0.05) !important;
+    transition: background-color 0.2s ease !important;
+  }
+  
+  .dropdown-menu::after:hover {
+    background-color: rgba(0, 0, 0, 0.1) !important;
+  }
+  
+  /* 모바일 드롭다운 헤더 스타일 */
+  .dropdown-menu .mobile-dropdown-header {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 1rem !important;
+    background-color: #667eea !important;
+    color: white !important;
+    border-radius: 0 0 12px 12px !important;
+    margin: 0 !important;
+    border-bottom: none !important;
+  }
+  
+  .dropdown-menu .mobile-dropdown-header h6 {
+    margin: 0 !important;
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+    color: white !important;
+  }
+  
+  .dropdown-menu .mobile-dropdown-close {
+    background: none !important;
+    border: none !important;
+    color: white !important;
+    font-size: 1.5rem !important;
+    padding: 0 !important;
+    cursor: pointer !important;
+    width: 30px !important;
+    height: 30px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 50% !important;
+    transition: background-color 0.2s ease !important;
+  }
+  
+  .dropdown-menu .mobile-dropdown-close:hover {
+    background-color: rgba(255, 255, 255, 0.2) !important;
+  }
+  
+  /* 모바일 드롭다운 오버레이 */
+  .dropdown-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    background-color: rgba(0, 0, 0, 0.5) !important;
+    z-index: 1040 !important;
+    display: none !important;
+  }
+  
+  .dropdown-overlay.show {
+    display: block !important;
+  }
     border-radius: 16px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
     background: rgba(255, 255, 255, 0.9);
@@ -1254,14 +1665,15 @@ body {
   }
   
   .brand-text h2 {
-    font-size: 1.25rem;
+    font-size: 1.1rem;
+    white-space: nowrap;
   }
   
-  /* 작은 화면에서 메뉴 최적화 */
+  /* 작은 화면에서 메뉴 최적화 - 중앙 모달 */
   .navbar-collapse {
-    left: 0.25rem;
-    right: 0.25rem;
-    padding: 1.25rem;
+    width: 95vw;
+    max-width: 350px;
+    padding: 1.5rem;
     border-radius: 16px;
   }
   
@@ -1314,4 +1726,182 @@ body {
   padding: 1rem;
   font-weight: 500;
 }
-</style> 
+</style>
+
+<script>
+// 모바일에서 드롭다운 메뉴 작동을 위한 JavaScript
+document.addEventListener('DOMContentLoaded', function() {
+  // 오버레이 생성
+  function createOverlay() {
+    let overlay = document.querySelector('.dropdown-overlay');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.className = 'dropdown-overlay';
+      document.body.appendChild(overlay);
+    }
+    return overlay;
+  }
+  
+  // 드롭다운 메뉴 닫기 함수
+  function closeAllDropdowns() {
+    document.querySelectorAll('.dropdown-menu.show').forEach(function(menu) {
+      menu.classList.remove('show');
+      const toggle = menu.closest('.dropdown').querySelector('.dropdown-toggle');
+      if (toggle) {
+        toggle.setAttribute('aria-expanded', 'false');
+      }
+    });
+    
+    const overlay = document.querySelector('.dropdown-overlay');
+    if (overlay) {
+      overlay.classList.remove('show');
+    }
+  }
+  
+  // 모바일에서 드롭다운 토글 처리
+  const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
+  
+  dropdownToggles.forEach(function(toggle) {
+    toggle.addEventListener('click', function(e) {
+      // 모바일에서만 커스텀 처리
+      if (window.innerWidth <= 768) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const dropdown = this.closest('.dropdown');
+        const menu = dropdown.querySelector('.dropdown-menu');
+        const menuTitle = this.textContent.trim();
+        
+        // 메뉴 제목 설정
+        menu.setAttribute('data-title', menuTitle);
+        
+        // 현재 드롭다운 토글
+        if (menu.classList.contains('show')) {
+          // 이미 열려있으면 닫기
+          closeAllDropdowns();
+        } else {
+          // 다른 드롭다운 메뉴 닫기
+          closeAllDropdowns();
+          
+          // 현재 드롭다운 열기
+          const overlay = createOverlay();
+          menu.classList.add('show');
+          overlay.classList.add('show');
+          this.setAttribute('aria-expanded', 'true');
+        }
+      }
+      // 데스크톱에서는 기본 동작 허용 (preventDefault 호출하지 않음)
+    });
+  });
+  
+  // 드롭다운 아이템 클릭 시 페이지 이동 허용
+  const dropdownItems = document.querySelectorAll('.dropdown-item');
+  dropdownItems.forEach(function(item) {
+    item.addEventListener('click', function(e) {
+      // 모바일에서만 메뉴 닫기
+      if (window.innerWidth <= 768) {
+        closeAllDropdowns();
+      }
+      
+      // href가 있는 경우 페이지 이동 (preventDefault 호출하지 않음)
+      const href = this.getAttribute('href');
+      if (href && href !== '#') {
+        // 약간의 지연 후 페이지 이동 (모달 닫기 애니메이션 완료 후)
+        setTimeout(function() {
+          window.location.href = href;
+        }, 100);
+      }
+      // 기본 동작 허용 (preventDefault 호출하지 않음)
+    });
+  });
+  
+  // 햄버거 메뉴 클릭 시 네비게이션 메뉴 중앙 모달 표시
+  const navbarToggler = document.querySelector('.navbar-toggler');
+  const navbarCollapse = document.querySelector('.navbar-collapse');
+  
+  if (navbarToggler && navbarCollapse) {
+    navbarToggler.addEventListener('click', function(e) {
+      // 모바일에서만 preventDefault 호출
+      if (window.innerWidth <= 768) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // 네비게이션 메뉴 토글
+        if (navbarCollapse.classList.contains('show')) {
+          navbarCollapse.classList.remove('show');
+          this.setAttribute('aria-expanded', 'false');
+        } else {
+          navbarCollapse.classList.add('show');
+          this.setAttribute('aria-expanded', 'true');
+        }
+      }
+      // 데스크톱에서는 기본 동작 허용
+    });
+  }
+  
+  // 네비게이션 링크 클릭 시 페이지 이동 허용 (모바일 햄버거 메뉴)
+  const navLinks = document.querySelectorAll('.navbar-nav .nav-link');
+  navLinks.forEach(function(link) {
+    link.addEventListener('click', function(e) {
+      // 모바일에서 네비게이션 메뉴 닫기
+      const navbarCollapse = document.querySelector('.navbar-collapse');
+      if (navbarCollapse && navbarCollapse.classList.contains('show')) {
+        navbarCollapse.classList.remove('show');
+        const navbarToggler = document.querySelector('.navbar-toggler');
+        if (navbarToggler) {
+          navbarToggler.setAttribute('aria-expanded', 'false');
+        }
+      }
+      
+      // 드롭다운 메뉴들도 닫기
+      closeAllDropdowns();
+      
+      // href가 있는 경우 페이지 이동 (preventDefault 호출하지 않음)
+      const href = this.getAttribute('href');
+      if (href && href !== '#') {
+        // 약간의 지연 후 페이지 이동 (모달 닫기 애니메이션 완료 후)
+        setTimeout(function() {
+          window.location.href = href;
+        }, 100);
+      }
+      // 기본 동작 허용 (preventDefault 호출하지 않음)
+    });
+  });
+  
+  // 오버레이 클릭 시 닫기 (드롭다운 + 네비게이션 메뉴)
+  document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('dropdown-overlay')) {
+      closeAllDropdowns();
+    }
+    
+    // 네비게이션 메뉴 오버레이 클릭 시 닫기
+    if (e.target.classList.contains('navbar-collapse') && e.target.classList.contains('show')) {
+      const navbarCollapse = document.querySelector('.navbar-collapse');
+      if (navbarCollapse) {
+        navbarCollapse.classList.remove('show');
+        const navbarToggler = document.querySelector('.navbar-toggler');
+        if (navbarToggler) {
+          navbarToggler.setAttribute('aria-expanded', 'false');
+        }
+      }
+    }
+  });
+  
+  // ESC 키로 닫기 (드롭다운 + 네비게이션 메뉴)
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      closeAllDropdowns();
+      
+      // 네비게이션 메뉴도 닫기
+      const navbarCollapse = document.querySelector('.navbar-collapse');
+      if (navbarCollapse && navbarCollapse.classList.contains('show')) {
+        navbarCollapse.classList.remove('show');
+        const navbarToggler = document.querySelector('.navbar-toggler');
+        if (navbarToggler) {
+          navbarToggler.setAttribute('aria-expanded', 'false');
+        }
+      }
+    }
+  });
+});
+</script> 

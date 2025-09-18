@@ -425,10 +425,220 @@
             color: white;
         }
         
+        
+        /* 인쇄 스타일 - 기본 여백에 최적화 */
+        @media print {
+            * {
+                font-size: 8px !important;
+                line-height: 1.0 !important;
+            }
+            
+            .container, .row, .col, .form-group, .form-control, .btn, .table, .table td, .table th {
+                font-size: 8px !important;
+                line-height: 1.0 !important;
+                padding: 2px !important;
+                margin: 1px !important;
+            }
+            body {
+                margin: 0 !important;
+                padding: 0 !important;
+                font-size: 8px !important;
+                line-height: 1.0 !important;
+            }
+            
+            .container {
+                max-width: 100% !important;
+                margin: 0 !important;
+                padding: 2px !important;
+                box-shadow: none !important;
+                border-radius: 0 !important;
+            }
+            
+            .form-section {
+                margin-bottom: 1px !important;
+                page-break-inside: avoid !important;
+            }
+            
+            .section-header {
+                padding: 0px 2px !important;
+                font-size: 8px !important;
+                background-color: #f0f0f0 !important;
+                -webkit-print-color-adjust: exact;
+                color-adjust: exact;
+            }
+            
+            .section-content {
+                padding: 2px !important;
+            }
+            
+            .form-row {
+                margin-bottom: 1px !important;
+            }
+            
+            .form-group {
+                margin-right: 2px !important;
+            }
+            
+            .form-group label {
+                font-size: 6px !important;
+                margin-bottom: 0px !important;
+            }
+            
+            .form-control {
+                font-size: 6px !important;
+                padding: 0px !important;
+                border: 1px solid #000 !important;
+            }
+            
+            /* 근무편성 테이블 가로 배치 */
+            .assignment-container {
+                display: flex !important;
+                flex-direction: row !important;
+                justify-content: space-between !important;
+                gap: 3px !important;
+                page-break-inside: avoid !important;
+            }
+            
+            .assignment-left, .assignment-right {
+                flex: 0 0 40% !important;
+                width: 40% !important;
+                max-width: 40% !important;
+                overflow: hidden !important;
+                page-break-inside: avoid !important;
+            }
+            
+            .assignment-left table, .assignment-right table {
+                width: 100% !important;
+                font-size: 6px !important;
+                border-collapse: collapse !important;
+                border: none !important;
+                table-layout: fixed !important;
+            }
+            
+            .assignment-left th, .assignment-right th {
+                background-color: #f0f0f0 !important;
+                -webkit-print-color-adjust: exact;
+                color-adjust: exact;
+                padding: 2px !important;
+                font-size: 6px !important;
+                border: 1px solid #000 !important;
+                height: 15px !important;
+                min-height: 15px !important;
+            }
+            
+            .assignment-left td, .assignment-right td {
+                padding: 2px !important;
+                border: 1px solid #000 !important;
+                font-size: 6px !important;
+                height: 15px !important;
+                min-height: 15px !important;
+            }
+            
+            /* 우측 테이블 행 높이 추가 증가 */
+            .assignment-right th, .assignment-right td {
+                height: 18px !important;
+                min-height: 18px !important;
+                padding: 3px !important;
+            }
+            
+            .assignment-left .region-col, .assignment-right .region-col {
+                background-color: #e0e0e0 !important;
+                -webkit-print-color-adjust: exact;
+                color-adjust: exact;
+                font-weight: bold;
+                width: 20% !important;
+                min-width: 20% !important;
+                max-width: 20% !important;
+            }
+            
+            .assignment-left .location-col, .assignment-right .location-col {
+                background-color: #f0f0f0 !important;
+                -webkit-print-color-adjust: exact;
+                color-adjust: exact;
+                font-weight: bold;
+                width: 30% !important;
+                min-width: 30% !important;
+                max-width: 30% !important;
+            }
+            
+            .assignment-left .personnel-col, .assignment-right .personnel-col {
+                width: 50% !important;
+                min-width: 50% !important;
+                max-width: 50% !important;
+            }
+            
+            /* 버튼 숨기기 */
+            .btn, .btn-group {
+                display: none !important;
+            }
+            
+            /* 헤더 숨기기 */
+            .d-flex.justify-content-between {
+                display: none !important;
+            }
+            
+            /* 페이지 나누기 방지 */
+            .form-section,
+            .assignment-container,
+            .work-assignment-table,
+            .section-content {
+                page-break-inside: avoid !important;
+            }
+            
+            /* 인쇄 시 여백 - 상하 여백 최소화, 좌우 여백 증가 */
+            @page {
+                margin: 0.5cm 2cm 0.5cm 2cm !important;
+                size: A4 !important;
+            }
+            
+            /* 텍스트 영역 최적화 */
+            textarea {
+                font-size: 8px !important;
+                padding: 2px !important;
+                border: 1px solid #000 !important;
+                resize: none !important;
+                line-height: 1.0 !important;
+                height: auto !important;
+                min-height: 18px !important;
+                max-height: 35px !important;
+            }
+            
+            /* 인라인 스타일 덮어쓰기 - 인쇄 시 강제 적용 */
+            *[style*="font-size: 14px"] {
+                font-size: 8px !important;
+            }
+            *[style*="font-size: 12px"] {
+                font-size: 8px !important;
+            }
+            *[style*="font-size: 7px"] {
+                font-size: 8px !important;
+            }
+            table[style*="font-size"] {
+                font-size: 8px !important;
+            }
+            input[style*="font-size"] {
+                font-size: 8px !important;
+            }
+            button[style*="font-size"] {
+                font-size: 8px !important;
+            }
+            select[style*="font-size"] {
+                font-size: 8px !important;
+            }
+            textarea[style*="font-size"] {
+                font-size: 8px !important;
+            }
+            
+            /* 컨테이너 인라인 스타일 덮어쓰기 */
+            .container[style*="font-size"] {
+                font-size: 8px !important;
+            }
+        }
+        
     </style>
 
 <div class="flex-grow-1">
-    <div class="container">
+    <div class="container" style="padding: 3px !important; font-size: 7px !important;">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h1 class="mb-0">근무명령서 작성</h1>
             <div class="btn-group">
@@ -736,7 +946,7 @@
                             </tr>
                             
                             <tr>
-                                <td class="location-col">시트1주차장초소</td>
+                                <td class="location-col">시트1주차장<br>초소</td>
                                 <td class="personnel-col">
                                     <input type="text" name="member_시트1주차장초소_0" value="" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
                                     <input type="text" name="workAssignment[시트1주차장초소].assignment.members[1]" value="" style="width: 80px; border: 1px solid #ddd; padding: 2px; margin: 2px;">
@@ -1210,7 +1420,7 @@
                 container.innerHTML = `
                     <div class="col-md-12">
                         <div class="alert alert-info">
-                            <h6><i class="fa-solid fa-calendar-day me-2"></i>2025년 9월 7일 일요일 특근근무</h6>
+                            <h6><i class="fa-solid fa-calendar-day me-2"></i>${today.getFullYear()}년 ${today.getMonth() + 1}월 ${today.getDate()}일 일요일 특근근무</h6>
                             <div class="row mt-3">
                                 <div class="col-md-6">
                                     <div class="card border-success">
@@ -1262,32 +1472,6 @@
             }
         }
 
-        // 주차 계산 함수 (3주 주기)
-        function getWeekCycle(date) {
-            // 기준일: 2025년 1월 1일 (수요일)을 1주차로 설정
-            const baseDate = new Date('2025-01-01');
-            const targetDate = new Date(date);
-            
-            // 주차 시작일 계산 (월요일)
-            const getWeekStart = (date) => {
-                const day = date.getDay();
-                const diff = date.getDate() - day + (day === 0 ? -6 : 1);
-                const weekStart = new Date(date);
-                weekStart.setDate(diff);
-                weekStart.setHours(0, 0, 0, 0);
-                return weekStart;
-            };
-            
-            const baseWeekStart = getWeekStart(baseDate);
-            const targetWeekStart = getWeekStart(targetDate);
-            
-            // 주차 차이 계산
-            const timeDiff = targetWeekStart.getTime() - baseWeekStart.getTime();
-            const weekDiff = Math.floor(timeDiff / (7 * 24 * 60 * 60 * 1000));
-            
-            // 3주 주기로 순환 (1, 2, 3, 1, 2, 3...)
-            return (weekDiff % 3) + 1;
-        }
 
         // 주차 계산 함수 (1월 1일 수요일부터 시작, 기준일 조정)
         function getWeekNumber(date) {

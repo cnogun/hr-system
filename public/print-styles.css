@@ -1,0 +1,483 @@
+/* 인쇄 전용 CSS - workOrder.ejs 전용 */
+
+@media print {
+    @page {
+        margin: 20mm 20mm 10mm 15mm !important; /* 상 20mm, 하 10mm, 좌 15mm, 우 20mm */
+        size: A4 !important;
+    }
+    
+    /* 브라우저 호환성을 위한 강제 스타일 */
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    
+    /* 기본 인쇄 스타일 설정 */
+    body {
+        margin: 0 !important;
+        padding: 0 !important;
+        font-family: Arial, sans-serif !important;
+        font-size: 12px !important;
+        line-height: 1.2 !important;
+        color: black !important;
+        background: white !important;
+    }
+    
+    /* 인쇄 시 숨김 */
+    .print-btn, .print-preview-btn, [onclick*="window.print()"], 
+    .btn, .btn-primary, .btn-secondary, .btn-sm, .btn-lg,
+    a[href*="list"], a[href*="edit"], a[href*="modify"],
+    button[onclick*="list"], button[onclick*="edit"], button[onclick*="modify"] {
+        display: none !important;
+    }
+    
+    /* 헤더와 푸터 제거 */
+    header, .header, nav, .navbar, footer, .footer {
+        display: none !important;
+    }
+    
+    /* 근무명령서 제목 */
+    .print-title-approval h1 {
+        font-size: 42px !important;
+        font-weight: bold !important;
+        text-align: center !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    
+    
+    /* 섹션 헤더 스타일 */
+    .section-header h5 {
+        font-size: 12px !important;
+        font-weight: bold !important;
+        margin: 5px 0 !important;
+        padding: 3px 0 !important;
+    }
+    
+    /* 결재표 완전 재작성 - 충돌 방지 */
+    .print-only:not(.approval-position) {
+        display: none !important;
+    }
+    
+    .print-only.approval-position {
+        display: block !important;
+        position: absolute !important;
+        right: 0px !important;
+        top: 60px !important;
+        width: 234px !important;
+        height: 93px !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        z-index: 1000 !important;
+        background: white !important;
+        margin-bottom: 0 !important;
+        padding-bottom: 0px !important;
+    }
+    
+    /* 결재표 통합 스타일 - 10% 크기 감소 */
+    .print-only .approval-table {
+        width: 234px !important;
+        height: 93px !important;
+        border-collapse: collapse !important;
+        border: 1px solid #000 !important;
+        margin: 0 !important;
+        padding: 1px !important;
+        table-layout: fixed !important;
+        background: white !important;
+        display: table !important;
+    }
+    
+    .print-only .approval-table th,
+    .print-only .approval-table td {
+        border: 1px solid #000 !important;
+        text-align: center !important;
+        vertical-align: middle !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        font-size: 14px !important;
+        line-height: 1.2 !important;
+        background: white !important;
+    }
+    
+    /* 결재 라벨 셀 - 1열 너비 20% 감소 */
+    .print-only .approval-table th:first-child {
+        width: 38px !important;
+        height: 93px !important;
+        background-color: #f0f0f0 !important;
+        font-weight: bold !important;
+        font-size: 13px !important;
+    }
+    
+    /* 타이틀 행 - 너비 재조정 */
+    .print-only .approval-table tr:first-child th:not(:first-child) {
+        width: 65px !important;
+        height: 30px !important;
+        background-color: #f0f0f0 !important;
+        font-weight: bold !important;
+        font-size: 13px !important;
+    }
+    
+    /* 서명란 행 - 너비 재조정 정사각형 */
+    .print-only .approval-table tr:last-child td {
+        width: 65px !important;
+        height: 63px !important;
+        background-color: white !important;
+    }
+    
+    
+    
+    /* 근무정보 섹션 상단 간격 조정 - 결재표 아래로 배치 (공간 최적화) */
+    .form-section:first-of-type {
+        margin-top: 129px !important;
+        border-top: none !important;
+        padding-top: 0px !important;
+        margin-bottom: 0px !important;
+    }
+    
+    /* 근무정보 섹션 내용 블록을 좌측으로 붙이기 */
+    .form-section:first-of-type .section-content {
+        padding-left: 0px !important;
+        margin-left: 0px !important;
+        padding-top: 0px !important;
+        padding-bottom: 0px !important;
+        margin-top: 0px !important;
+        margin-bottom: 0px !important;
+    }
+    
+    /* 근무정보 섹션 헤더 패딩 최소화 */
+    .form-section:first-of-type .section-header {
+        padding: 2px 15px !important;
+        margin-bottom: 0px !important;
+        margin-top: 0px !important;
+    }
+    
+    /* 근무정보 섹션 데이터를 블록 안에서 한 칸 띄우고 좌정렬 */
+    .form-section:first-of-type .form-control {
+        margin-left: 0px !important;
+        padding-left: 0px !important;
+        text-align: left !important;
+    }
+    
+    /* 근무정보 데이터 크기 */
+    .form-section .form-control,
+    .form-section .form-control * {
+        font-size: 17px !important;
+    }
+    
+    /* 인사현황 데이터 크기 */
+    .personnel-status .col-4 .form-control {
+        font-size: 15px !important;
+    }
+    
+    /* 교육내용 헤더 크기 */
+    .education-section table th {
+        font-size: 12px !important;
+    }
+    
+    /* 섹션 간격 최적화 - 한 페이지 맞추기 */
+    .form-section {
+        margin-bottom: 1px !important;
+        padding: 1px !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+    }
+    
+    /* 인원현황 섹션 상단 패딩 및 마진 조정 - 근무정보 섹션과 여백 최소화 */
+    .form-section:nth-child(2) {
+        padding-top: 1px !important;
+        margin-top: 0px !important;
+    }
+    
+    .section-header {
+        margin-bottom: 1px !important;
+        margin-top: 0px !important;
+        padding: 0px 0px !important;
+    }
+    
+    .section-content {
+        margin-bottom: 0px !important;
+        margin-top: 0px !important;
+        padding: 1px 0px !important;
+    }
+    
+    /* 교육 섹션 간격 최적화 */
+    .education-section {
+        margin-top: 0px !important;
+        margin-bottom: 1px !important;
+        padding: 1px !important;
+    }
+    
+    /* 교육 섹션 내용 좌정렬 */
+    .education-section table td {
+        text-align: left !important;
+        vertical-align: top !important;
+    }
+    
+    .education-section .form-control {
+        text-align: left !important;
+    }
+    
+    /* 교육 섹션 데이터 내용 좌정렬 강화 */
+    .education-section table td .form-control,
+    .education-section .form-control,
+    .education-section input,
+    .education-section textarea {
+        text-align: left !important;
+        justify-content: flex-start !important;
+    }
+    
+    /* 직무교육 섹션 "금주중점", "교육내용" 데이터 좌정렬 */
+    .education-section table tbody tr td {
+        text-align: left !important;
+    }
+    
+    .education-section table tbody tr td .form-control {
+        text-align: left !important;
+        display: block !important;
+        width: 100% !important;
+    }
+    
+    /* 근무편성 테이블 컨테이너 */
+    .assignment-container {
+        display: flex !important;
+        width: 100% !important;
+        gap: 5px !important;
+        margin: 0px 0 !important;
+        padding: 3px !important;
+    }
+    
+    .assignment-left, .assignment-right {
+        flex: 1 !important;
+        width: 50% !important;
+    }
+    
+    /* 근무편성 테이블 기본 스타일 */
+    .assignment-left table, .assignment-right table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        border: 1px solid #000 !important;
+        border-radius: 2px !important;
+        overflow: hidden !important;
+    }
+    
+    .assignment-left th, .assignment-right th,
+    .assignment-left td, .assignment-right td {
+        border: 1px solid #000 !important;
+        text-align: center !important;
+        vertical-align: middle !important;
+        padding: 1px !important;
+        line-height: 1.2 !important;
+        font-size: 12px !important;
+    }
+    
+    /* 근무편성 데이터 중앙정렬 */
+    .assignment-left .personnel-col,
+    .assignment-right .personnel-col {
+        text-align: center !important;
+        vertical-align: middle !important;
+    }
+    
+    .assignment-left .personnel-col div,
+    .assignment-right .personnel-col div {
+        text-align: center !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+    }
+    
+    /* 근무편성 테이블 높이 조정 */
+    .assignment-left table tbody tr {
+        height: 32px !important;
+    }
+    
+    .assignment-right table tbody tr {
+        height: 32px !important;
+    }
+    
+    .assignment-left td, .assignment-right td {
+        height: 32px !important;
+    }
+    
+    /* 근무편성 편성셀 내부 div 높이 */
+    .assignment-left .personnel-col div,
+    .assignment-right .personnel-col div {
+        height: 28px !important;
+        padding: 1px !important;
+        background-color: #f8f9fa !important;
+        border: none !important;
+        border-radius: 2px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+    
+    .assignment-left .personnel-col div div,
+    .assignment-right .personnel-col div div {
+        display: flex !important;
+        gap: 15px !important;
+        flex-wrap: wrap !important;
+        justify-content: center !important;
+        flex-direction: row !important; /* 가로 배치 */
+        height: 20px !important;
+    }
+    
+    /* 모든 근무지의 테두리선 명시적 유지 (그룹화 제외) */
+    
+    /* 좌측 테이블 - 해안지역 모든 근무지 테두리선 유지 (더 구체적인 선택자) */
+    .assignment-left .work-assignment-table tbody tr td.region-col,
+    .assignment-left .work-assignment-table tbody tr td.location-col,
+    .assignment-left .work-assignment-table tbody tr td.personnel-col {
+        border-top: 1px solid #000 !important;
+        border-left: 1px solid #000 !important;
+        border-right: 1px solid #000 !important;
+        border-bottom: 1px solid #000 !important;
+    }
+    
+    /* 우측 테이블 - 성내/시트/매암동지역 모든 근무지 테두리선 유지 (더 구체적인 선택자) */
+    .assignment-right .work-assignment-table tbody tr td.region-col,
+    .assignment-right .work-assignment-table tbody tr td.location-col,
+    .assignment-right .work-assignment-table tbody tr td.personnel-col {
+        border-top: 1px solid #000 !important;
+        border-left: 1px solid #000 !important;
+        border-right: 1px solid #000 !important;
+        border-bottom: 1px solid #000 !important;
+    }
+    
+    /* 조장이 있는 근무지의 편성 내부 구분선만 제거 (근무지 간 구분선은 유지) */
+    
+    /* 해안입문 - 조장 편성셀 하단선만 제거, 다른 테두리선 복원 (좌측 테이블 1행) */
+    .assignment-left.assignment-left .work-assignment-table tbody tr:nth-child(1) td.personnel-col {
+        border-top: 1px solid #000 !important;
+        border-left: 1px solid #000 !important;
+        border-right: 1px solid #000 !important;
+        border-bottom: none !important;
+    }
+    
+    /* 해안입문 - 대원 편성셀 하단선과 우측선 복원 (좌측 테이블 2행) */
+    .assignment-left.assignment-left .work-assignment-table tbody tr:nth-child(2) td.personnel-col {
+        border-top: none !important;
+        border-left: 1px solid #000 !important;
+        border-right: 1px solid #000 !important;
+        border-bottom: 1px solid #000 !important;
+    }
+    
+     /* 기술교육원문 - 조장 편성셀 하단선만 제거, 다른 테두리선 복원 (좌측 테이블 4행) */
+     .assignment-left.assignment-left .work-assignment-table tbody tr:nth-child(4) td.personnel-col {
+         border-top: 1px solid #000 !important;
+         border-left: 1px solid #000 !important;
+         border-right: 1px solid #000 !important;
+         border-bottom: none !important;
+     }
+     
+     /* 시트1문 - 조장 편성셀 하단선만 제거, 다른 테두리선 복원 (우측 테이블 4행) */
+     .assignment-right.assignment-right .work-assignment-table tbody tr:nth-child(4) td.personnel-col {
+         border-top: 1px solid #000 !important;
+         border-left: 1px solid #000 !important;
+         border-right: 1px solid #000 !important;
+         border-bottom: none !important;
+     }
+    
+    /* 엔진4문 - 조장 편성셀 하단선만 제거, 다른 테두리선 복원 (우측 테이블 10행) */
+    .assignment-right.assignment-right .work-assignment-table tbody tr:nth-child(10) td.personnel-col {
+        border-top: 1px solid #000 !important;
+        border-left: 1px solid #000 !important;
+        border-right: 1px solid #000 !important;
+        border-bottom: none !important;
+    }
+    
+    /* 성내문 - 대원1,2와 대원3,4 사이 구분선만 제거, 다른 테두리선 복원 (우측 테이블 1행) */
+    .assignment-right.assignment-right .work-assignment-table tbody tr:nth-child(1) td.personnel-col {
+        border-top: 1px solid #000 !important;
+        border-left: 1px solid #000 !important;
+        border-right: 1px solid #000 !important;
+        border-bottom: none !important;
+    }
+    
+    /* 성내문 - 대원3,4 편성셀 하단선과 우측선 복원 (우측 테이블 2행) */
+    .assignment-right.assignment-right .work-assignment-table tbody tr:nth-child(2) td.personnel-col {
+        border-top: none !important;
+        border-left: 1px solid #000 !important;
+        border-right: 1px solid #000 !important;
+        border-bottom: 1px solid #000 !important;
+    }
+    
+    /* 차량검색소 대원 편성셀 하단선 유지 (우측 테이블 3행) */
+    .assignment-right.assignment-right .work-assignment-table tbody tr:nth-child(3) td.personnel-col {
+        border-bottom: 1px solid #000 !important;
+    }
+    
+    /* 지역셀의 모든 테두리선 명시적 유지 - rowspan으로 여러 행을 차지하는 지역셀 */
+    .assignment-left .work-assignment-table .region-col,
+    .assignment-right .work-assignment-table .region-col {
+        border-top: 1px solid #000 !important;
+        border-left: 1px solid #000 !important;
+        border-right: 1px solid #000 !important;
+        border-bottom: 1px solid #000 !important;
+    }
+    
+    /* 해안지역셀 하단선 강제 유지 (좌측 테이블 마지막 행) */
+    .assignment-left .work-assignment-table tbody tr:nth-child(12) .region-col {
+        border-bottom: 1px solid #000 !important;
+    }
+    
+    /* 매암동지역셀 하단선 강제 유지 (우측 테이블 마지막 행) */
+    .assignment-right .work-assignment-table tbody tr:nth-child(12) .region-col {
+        border-bottom: 1px solid #000 !important;
+    }
+    
+    /* 추가: 지역셀들의 특정 위치 하단선 보강 */
+    .assignment-left .work-assignment-table tbody tr:last-child .region-col,
+    .assignment-right .work-assignment-table tbody tr:last-child .region-col {
+        border-bottom: 1px solid #000 !important;
+    }
+    
+    /* 근무지셀의 모든 테두리선 유지 */
+    .assignment-left .work-assignment-table .location-col,
+    .assignment-right .work-assignment-table .location-col {
+        border-top: 1px solid #000 !important;
+        border-left: 1px solid #000 !important;
+        border-right: 1px solid #000 !important;
+        border-bottom: 1px solid #000 !important;
+    }
+    
+    /* 테이블 헤더의 모든 테두리선 유지 */
+    .assignment-left .work-assignment-table thead th,
+    .assignment-right .work-assignment-table thead th {
+        border-top: 1px solid #000 !important;
+        border-left: 1px solid #000 !important;
+        border-right: 1px solid #000 !important;
+        border-bottom: 1px solid #000 !important;
+    }
+    
+    /* 기타 테이블 스타일 */
+    .form-section table, .education-section table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        border: 1px solid #000 !important;
+        border-radius: 2px !important;
+        overflow: hidden !important;
+    }
+    
+    .form-section table th, .form-section table td,
+    .education-section table th, .education-section table td {
+        border: 1px solid #000 !important;
+        text-align: center !important;
+        vertical-align: middle !important;
+        padding: 1px !important;
+        line-height: 1.2 !important;
+    }
+    
+    /* 페이지 최적화 */
+    .container {
+        max-width: none !important;
+        width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+    
+    /* 페이지 분할 방지 */
+    .form-section, .assignment-container, .education-section {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+    }
+}
