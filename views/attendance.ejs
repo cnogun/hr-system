@@ -509,6 +509,9 @@ function toggleTimeInputs(employeeId) {
           checkInInput.value = '06:00';
           checkOutInput.value = '14:00';
           if (basicInput) basicInput.value = '8';
+          // 비고란 자동 설정
+          const noteInput = document.querySelector(`input[name="${employeeId}_note"]`);
+          if (noteInput) noteInput.value = '평일주간';
           break;
           
         case '출근(초)':
@@ -518,6 +521,9 @@ function toggleTimeInputs(employeeId) {
           checkInInput.value = '14:00';
           checkOutInput.value = '22:00';
           if (basicInput) basicInput.value = '8';
+          // 비고란 자동 설정
+          const noteInput2 = document.querySelector(`input[name="${employeeId}_note"]`);
+          if (noteInput2) noteInput2.value = '평일 초야';
           break;
           
         case '출근(심)':
@@ -528,14 +534,17 @@ function toggleTimeInputs(employeeId) {
           checkOutInput.value = '06:00';
           if (basicInput) basicInput.value = '8';
           if (nightInput) {
-            nightInput.value = '8';
-            console.log('출근(심) 상태에서 야간시간 즉시 설정: 8시간');
+            nightInput.value = '4';
+            console.log('출근(심) 상태에서 야간시간 즉시 설정: 4시간 (가중치 적용)');
           }
+          // 비고란 자동 설정
+          const noteInput3 = document.querySelector(`input[name="${employeeId}_note"]`);
+          if (noteInput3) noteInput3.value = '평일 심야';
           // 심야 근무시 야간시간 강제 설정 (이중 보장)
           setTimeout(() => {
             if (nightInput) {
-              nightInput.value = '8';
-              console.log('출근(심) 상태에서 야간시간 강제 설정: 8시간');
+              nightInput.value = '4';
+              console.log('출근(심) 상태에서 야간시간 강제 설정: 4시간 (가중치 적용)');
             }
             calculateTotalTime(employeeId);
           }, 100);
@@ -543,8 +552,8 @@ function toggleTimeInputs(employeeId) {
           // 추가 강제 설정 (500ms 후)
           setTimeout(() => {
             if (nightInput) {
-              nightInput.value = '8';
-              console.log('출근(심) 상태에서 야간시간 추가 강제 설정: 8시간');
+              nightInput.value = '4';
+              console.log('출근(심) 상태에서 야간시간 추가 강제 설정: 4시간 (가중치 적용)');
             }
             calculateTotalTime(employeeId);
           }, 500);
@@ -557,6 +566,9 @@ function toggleTimeInputs(employeeId) {
           checkInInput.value = '06:00';
           checkOutInput.value = '18:00';
           if (basicInput) basicInput.value = '12';
+          // 비고란 자동 설정
+          const noteInput4 = document.querySelector(`input[name="${employeeId}_note"]`);
+          if (noteInput4) noteInput4.value = '사무근무';
           break;
           
         case '출근(주특)':
@@ -566,8 +578,11 @@ function toggleTimeInputs(employeeId) {
           checkInInput.value = '06:00';
           checkOutInput.value = '18:00';
           if (basicInput) basicInput.value = '8';
-          if (specialInput) specialInput.value = '8';
-          if (specialOvertimeInput) specialOvertimeInput.value = '4';
+          if (specialInput) specialInput.value = '12';
+          if (specialOvertimeInput) specialOvertimeInput.value = '8';
+          // 비고란 자동 설정
+          const noteInput5 = document.querySelector(`input[name="${employeeId}_note"]`);
+          if (noteInput5) noteInput5.value = '주간특근';
           break;
           
         case '출근(야특)':
@@ -577,14 +592,17 @@ function toggleTimeInputs(employeeId) {
           checkInInput.value = '18:00';
           checkOutInput.value = '06:00';
           if (basicInput) basicInput.value = '8';
-          if (specialInput) specialInput.value = '8';
-          if (specialOvertimeInput) specialOvertimeInput.value = '4';
-          if (nightInput) nightInput.value = '8';
+          if (specialInput) specialInput.value = '12';
+          if (specialOvertimeInput) specialOvertimeInput.value = '8';
+          if (nightInput) nightInput.value = '4';
+          // 비고란 자동 설정
+          const noteInput6 = document.querySelector(`input[name="${employeeId}_note"]`);
+          if (noteInput6) noteInput6.value = '야간특근';
           // 주말 야간 근무시 야간시간 강제 설정
           setTimeout(() => {
             if (nightInput) {
-              nightInput.value = '8';
-              console.log('출근(야특) 상태에서 야간시간 강제 설정: 8시간');
+              nightInput.value = '4';
+              console.log('출근(야특) 상태에서 야간시간 강제 설정: 4시간 (가중치 적용)');
             }
             calculateTotalTime(employeeId);
           }, 100);
@@ -601,6 +619,16 @@ function toggleTimeInputs(employeeId) {
             basicInput.disabled = false;
             basicInput.value = '8';
           }
+          // 비고란 자동 설정
+          const noteInput7 = document.querySelector(`input[name="${employeeId}_note"]`);
+          if (noteInput7) {
+            switch(statusSelect.value) {
+              case '경조휴가': noteInput7.value = '경조 휴가'; break;
+              case '월차휴가': noteInput7.value = '월차 휴가'; break;
+              case '연차휴가': noteInput7.value = '연차 휴가'; break;
+              case '병가': noteInput7.value = '병가'; break;
+            }
+          }
           break;
 
         case '반차':
@@ -612,20 +640,43 @@ function toggleTimeInputs(employeeId) {
             basicInput.value = '4';
           }
           if (nightInput) nightInput.disabled = false;
+          // 비고란 자동 설정
+          const noteInput8 = document.querySelector(`input[name="${employeeId}_note"]`);
+          if (noteInput8) noteInput8.value = '반차';
           break;
           
         case '지각':
         case '조퇴':
-    checkInInput.disabled = false;
-    checkOutInput.disabled = false;
+          checkInInput.disabled = false;
+          checkOutInput.disabled = false;
           timeInputs.forEach(input => input.disabled = false);
+          // 비고란 자동 설정
+          const noteInput9 = document.querySelector(`input[name="${employeeId}_note"]`);
+          if (noteInput9) {
+            switch(statusSelect.value) {
+              case '지각': noteInput9.value = '지각'; break;
+              case '조퇴': noteInput9.value = '조퇴'; break;
+            }
+          }
           break;
           
         default:
           // 산재, 출장, 결근 등
-    checkInInput.disabled = true;
-    checkOutInput.disabled = true;
+          checkInInput.disabled = true;
+          checkOutInput.disabled = true;
           timeInputs.forEach(input => input.disabled = true);
+          // 비고란 자동 설정
+          const noteInput10 = document.querySelector(`input[name="${employeeId}_note"]`);
+          if (noteInput10) {
+            switch(statusSelect.value) {
+              case '산재': noteInput10.value = '산재'; break;
+              case '출장': noteInput10.value = '출장'; break;
+              case '결근': noteInput10.value = '결근'; break;
+              case '정기휴무': noteInput10.value = '정기 휴무'; break;
+              case '휴무': noteInput10.value = '휴무'; break;
+              default: noteInput10.value = statusSelect.value; break;
+            }
+          }
           break;
       }
       
@@ -644,7 +695,7 @@ function toggleTimeInputs(employeeId) {
       }, 500);
     }
 
-    // 총시간 자동 계산
+    // 총시간 자동 계산 (가중치가 이미 적용된 값들을 단순 합계)
     function calculateTotalTime(employeeId) {
       const basic = parseFloat(document.querySelector(`input[name="${employeeId}_basic"]`).value) || 0;
       const overtime = parseFloat(document.querySelector(`input[name="${employeeId}_overtime"]`).value) || 0;
@@ -652,8 +703,8 @@ function toggleTimeInputs(employeeId) {
       const specialOvertime = parseFloat(document.querySelector(`input[name="${employeeId}_specialOvertime"]`).value) || 0;
       const night = parseFloat(document.querySelector(`input[name="${employeeId}_night"]`).value) || 0;
       
-      // 총시간 계산: 단순 합계 (이미 가중치가 적용된 값들)
-      // 주말 근무: 기본(8) + 특근(12) + 특연(8) + 야간(4) = 8 + 12 + 8 + 4 = 32시간
+      // 총시간 계산: 가중치가 이미 적용된 값들을 단순 합계
+      // 모든 값(기본, 연장, 특근, 특연, 야간)이 이미 가중치가 적용된 값이므로 단순 합계
       const totalTime = basic + overtime + special + specialOvertime + night;
       
       const totalInput = document.querySelector(`input[name="${employeeId}_totalTime"]`);
@@ -684,26 +735,26 @@ function toggleTimeInputs(employeeId) {
       console.log(`야간시간 계산 - 직원ID: ${employeeId}, 출근: ${checkInHour}:${checkInMin}, 퇴근: ${checkOutHour}:${checkOutMin}`);
       console.log(`파싱된 시간 - 출근시간: ${checkInHour}시, 퇴근시간: ${checkOutHour}시`);
       
-      // 야간 근무 감지 (22:00~06:00)
+      // 야간 근무 감지 (22:00~06:00) - 가중치 적용된 값으로 설정
       if (checkInHour >= 18 && checkOutHour <= 6) {
-        // 야간 특근: 18:00~06:00 (다음날) - 야간시간 8시간 고정
-        nightTime = 8;
-        console.log('야간 특근 감지: 야간시간 8시간으로 설정');
+        // 야간 특근: 18:00~06:00 (다음날) - 야간시간 4시간 (8×0.5 가중치 적용)
+        nightTime = 4;
+        console.log('야간 특근 감지: 야간시간 4시간으로 설정 (가중치 적용)');
       } else if (checkInHour >= 22 && checkOutHour <= 6) {
-        // 심야 정상근무: 22:00~06:00 - 야간시간 8시간 고정
-        nightTime = 8;
-        console.log('심야 근무 감지: 야간시간 8시간으로 설정');
+        // 심야 정상근무: 22:00~06:00 - 야간시간 4시간 (8×0.5 가중치 적용)
+        nightTime = 4;
+        console.log('심야 근무 감지: 야간시간 4시간으로 설정 (가중치 적용)');
       } else if (checkInHour >= 22 || checkOutHour <= 6) {
-        // 22:00~06:00 구간에 해당하는 경우 - 야간시간 8시간 고정
-        nightTime = 8;
-        console.log('일반 야간시간: 야간시간 8시간으로 설정');
+        // 22:00~06:00 구간에 해당하는 경우 - 야간시간 4시간 (8×0.5 가중치 적용)
+        nightTime = 4;
+        console.log('일반 야간시간: 야간시간 4시간으로 설정 (가중치 적용)');
       } else if (checkInHour >= 18 && checkOutHour <= 23) {
-        // 18:00~23:59 구간 (야간 특근의 시작 부분) - 야간시간 8시간 고정
-        nightTime = 8;
-        console.log('야간 특근 시작 부분 감지: 야간시간 8시간으로 설정');
+        // 18:00~23:59 구간 (야간 특근의 시작 부분) - 야간시간 4시간 (8×0.5 가중치 적용)
+        nightTime = 4;
+        console.log('야간 특근 시작 부분 감지: 야간시간 4시간으로 설정 (가중치 적용)');
       }
       
-      console.log(`최종 야간시간: ${nightTime}시간 (야간수당 ${nightTime * 0.5}시간)`);
+      console.log(`최종 야간시간: ${nightTime}시간 (가중치 적용된 값)`);
       nightInput.value = nightTime;
       
       // 총시간 재계산
@@ -1209,15 +1260,31 @@ async function loadAttendanceData() {
       return '주간'; // 기본값
     }
 
-    // 팀별 근무 형태를 주차에 따라 동적으로 계산
+    // 팀별 근무 형태를 선택된 날짜의 주차에 따라 동적으로 계산
     function updateTeamWorkSchedule() {
-      const today = new Date();
-      const weekNumber = getWeekNumber(today);
+      const dateInput = document.getElementById('attendanceDate');
+      const selectedDate = dateInput ? new Date(dateInput.value) : new Date();
+      const weekNumber = getWeekNumber(selectedDate);
       
-      // 주차별 팀 근무 순환 로직
+      // 주차별 팀 근무 순환 로직 (평일 기준)
       const team1Schedule = getTeamSchedule(1, weekNumber);
       const team2Schedule = getTeamSchedule(2, weekNumber);
       const team3Schedule = getTeamSchedule(3, weekNumber);
+      
+      console.log('=== 선택된 날짜의 근무형태 (주차별 순환) ===');
+      console.log(`선택된 날짜: ${selectedDate.toISOString().split('T')[0]}`);
+      console.log(`${weekNumber}주차 팀 근무 형태: 1팀=${team1Schedule}, 2팀=${team2Schedule}, 3팀=${team3Schedule}`);
+      
+      // 주차 정보 표시 업데이트
+      const currentWeekInfo = document.getElementById('currentWeekInfo');
+      if (currentWeekInfo) {
+        const year = selectedDate.getFullYear();
+        const month = selectedDate.getMonth() + 1;
+        const day = selectedDate.getDate();
+        const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+        const dayName = dayNames[selectedDate.getDay()];
+        currentWeekInfo.textContent = `${year}년 ${month}월 ${day}일(${dayName}) - ${weekNumber}주차 팀 근무 형태`;
+      }
       
       // UI 업데이트 - 팀 근무 형태
       document.getElementById('team1Schedule').textContent = team1Schedule;
@@ -1242,6 +1309,70 @@ async function loadAttendanceData() {
       }
       if (team3TimeElement) {
         team3TimeElement.textContent = getTimeRange(team3Schedule);
+      }
+      
+      // 근태상태 자동 설정
+      updateAttendanceStatusBySchedule(team1Schedule, team2Schedule, team3Schedule);
+    }
+    
+    // 팀 근무형태에 따라 근태상태 자동 설정
+    function updateAttendanceStatusBySchedule(team1Schedule, team2Schedule, team3Schedule) {
+      const dateInput = document.getElementById('attendanceDate');
+      const selectedDate = dateInput ? new Date(dateInput.value) : new Date();
+      const dayOfWeek = selectedDate.getDay(); // 0: 일요일, 1: 월요일, ..., 6: 토요일
+      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6; // 토요일(6) 또는 일요일(0)
+      
+      const statusSelects = document.querySelectorAll('select[name$="_status"]');
+      
+      statusSelects.forEach(select => {
+        const employeeId = select.name.replace('_status', '');
+        const employeeRow = select.closest('tr');
+        const departmentCell = employeeRow.querySelector('td:nth-child(2) .badge');
+        
+        if (departmentCell) {
+          const department = departmentCell.textContent.trim();
+          let expectedStatus = '';
+          
+          if (isWeekend) {
+            // 주말 근무 로직
+            if (department.includes('보안1팀')) {
+              expectedStatus = '정기휴무'; // 주말에는 1팀 휴무
+            } else if (department.includes('보안2팀')) {
+              expectedStatus = '출근(주특)'; // 주말에는 2팀 주간특근
+            } else if (department.includes('보안3팀')) {
+              expectedStatus = '출근(야특)'; // 주말에는 3팀 야간특근
+            } else {
+              expectedStatus = '휴무'; // 보안팀이 아닌 경우 휴무
+            }
+          } else {
+            // 평일 근무 로직
+            if (department.includes('보안1팀')) {
+              expectedStatus = getStatusBySchedule(team1Schedule);
+            } else if (department.includes('보안2팀')) {
+              expectedStatus = getStatusBySchedule(team2Schedule);
+            } else if (department.includes('보안3팀')) {
+              expectedStatus = getStatusBySchedule(team3Schedule);
+            } else {
+              expectedStatus = '출근(주)'; // 보안팀이 아닌 경우 평일 근무
+            }
+          }
+          
+          // 근태상태가 비어있거나 다른 상태인 경우에만 자동 설정
+          if (select.value === '' || select.value !== expectedStatus) {
+            select.value = expectedStatus;
+            toggleTimeInputs(employeeId);
+          }
+        }
+      });
+    }
+    
+    // 근무형태에 따른 근태상태 반환
+    function getStatusBySchedule(schedule) {
+      switch(schedule) {
+        case '주간': return '출근(주)';
+        case '초야': return '출근(초)';
+        case '심야': return '출근(심)';
+        default: return '출근(주)';
       }
     }
     
@@ -1283,8 +1414,11 @@ async function loadAttendanceData() {
       loadAttendanceData();
     });
     
-    // 날짜 변경 시 요일 업데이트
-    document.getElementById('attendanceDate').addEventListener('change', updateDayOfWeek);
+    // 날짜 변경 시 요일 및 팀 근무형태 업데이트
+    document.getElementById('attendanceDate').addEventListener('change', function() {
+      updateDayOfWeek();
+      updateTeamWorkSchedule();
+    });
 
 
 </script>

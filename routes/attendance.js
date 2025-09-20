@@ -1,7 +1,27 @@
 const express = require('express');
 const router = express.Router();
 const Employee = require('../models/Employee');
+const WorkSchedule = require('../models/WorkSchedule');
 const ExcelJS = require('exceljs');
+
+// 주차 번호 계산 함수
+function getWeekNumber(date) {
+  const yearStart = new Date(2025, 0, 1, 6, 0, 0); // 2025년 1월 1일 06:00
+  const targetDate = new Date(date);
+  
+  // 월요일 06:00으로 조정
+  const dayOfWeek = targetDate.getDay();
+  const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+  
+  const monday6am = new Date(targetDate);
+  monday6am.setDate(targetDate.getDate() - mondayOffset);
+  monday6am.setHours(6, 0, 0, 0);
+  
+  const weekDiff = Math.floor((monday6am - yearStart) / (7 * 24 * 60 * 60 * 1000));
+  const weekNumber = weekDiff + 2; // 1월 1일 수요일이 1주차, 1월 6일 월요일이 2주차
+  
+  return weekNumber;
+}
 
 // 근태 상태에 따라 비고란 자동 설정 함수
 function getNoteByStatus(status) {
@@ -159,7 +179,7 @@ router.get('/data/:date', async (req, res) => {
     });
 
     const attendanceData = {};
-    employees.forEach(emp => {
+    for (const emp of employees) {
       if (emp.attendance && emp.attendance.has(date)) {
         // MongoDB Map 타입을 일반 객체로 변환
         const dateData = emp.attendance.get(date);
@@ -167,7 +187,7 @@ router.get('/data/:date', async (req, res) => {
       } else {
         attendanceData[emp._id] = {};
       }
-    });
+    }
 
     res.json({ success: true, data: attendanceData });
 
@@ -238,51 +258,19 @@ router.post('/auto-attendance', async (req, res) => {
     // 2025년 1월 1일부터의 주차 계산 (월요일 06시 기준)
     const yearStart = new Date(2025, 0, 1); // 2025년 1월 1일
     
-    // 이번주(현재 주)를 3주차로 강제 설정
-    let weekNumber;
-    const today = new Date();
-    const currentWeekStart = new Date(today);
-    currentWeekStart.setDate(today.getDate() - today.getDay() + 1); // 이번주 월요일
-    currentWeekStart.setHours(0, 0, 0, 0);
-    
-    const targetWeekStart = new Date(targetDate);
-    targetWeekStart.setDate(targetDate.getDate() - targetDate.getDay() + 1); // 대상 날짜의 주 월요일
-    targetWeekStart.setHours(0, 0, 0, 0);
-    
-    // 이번주인지 확인 (월요일 기준)
-    if (targetWeekStart.getTime() === currentWeekStart.getTime()) {
-      weekNumber = 3; // 이번주는 3주차로 설정
-    } else if ((targetDate.getFullYear() === 2025 && targetDate.getMonth() === 7 && targetDate.getDate() === 26) ||
-               (targetDate.getFullYear() === 2025 && targetDate.getMonth() === 7 && targetDate.getDate() === 30) ||
-               (targetDate.getFullYear() === 2025 && targetDate.getMonth() === 8 && targetDate.getDate() === 6) ||
-               (targetDate.getFullYear() === 2025 && targetDate.getMonth() === 8 && targetDate.getDate() === 7)) {
-      weekNumber = 3; // 특별 날짜들도 3주차로 설정
-    } else {
-      // 해당 날짜가 속한 주의 월요일 06시를 찾기
-      const dayOfWeek = targetDate.getDay(); // 0: 일요일, 1: 월요일, ..., 6: 토요일
-      const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // 일요일이면 6, 월요일이면 0
-      
-      const monday6am = new Date(targetDate);
-      monday6am.setDate(targetDate.getDate() - mondayOffset);
-      monday6am.setHours(6, 0, 0, 0);
-      
-      // 2025년 1월 1일(수)부터의 주차 계산
-      const weekDiff = Math.floor((monday6am - yearStart) / (7 * 24 * 60 * 60 * 1000));
-      weekNumber = weekDiff + 1; // 1부터 시작하는 주차 번호 + 보정값
-    }
+    // 올바른 주차 계산 사용
+    const weekNumber = getWeekNumber(targetDate);
     
     // 3주 주기 계산 (3주차일 때 1팀 심야, 2팀 주간, 3팀 초야)
     let cycleWeek = weekNumber % 3; // 0: 3주차, 1: 1주차, 2: 2주차
     
     console.log(`=== 주차 계산 디버깅 ===`);
     console.log(`대상 날짜: ${date}, 요일: ${dayOfWeek} (0:일, 1:월, ..., 6:토)`);
-    console.log(`이번주 월요일: ${currentWeekStart.toISOString().split('T')[0]}`);
-    console.log(`대상 주 월요일: ${targetWeekStart.toISOString().split('T')[0]}`);
     console.log(`weekNumber: ${weekNumber}, cycleWeek: ${cycleWeek}`);
-    console.log(`=== 이번주 팀 근무형태 (3주차) ===`);
-    console.log(`1팀: ${cycleWeek === 0 ? '심야' : cycleWeek === 1 ? '주간' : '초야'} (22:00~06:00)`);
-    console.log(`2팀: ${cycleWeek === 0 ? '주간' : cycleWeek === 1 ? '초야' : '심야'} (06:00~14:00)`);
-    console.log(`3팀: ${cycleWeek === 0 ? '초야' : cycleWeek === 1 ? '심야' : '주간'} (14:00~22:00)`);
+    console.log(`=== 이번주 팀 근무형태 (${weekNumber}주차) ===`);
+    console.log(`1팀: ${cycleWeek === 0 ? '초야' : cycleWeek === 1 ? '주간' : '심야'}`);
+    console.log(`2팀: ${cycleWeek === 0 ? '심야' : cycleWeek === 1 ? '초야' : '주간'}`);
+    console.log(`3팀: ${cycleWeek === 0 ? '주간' : cycleWeek === 1 ? '심야' : '초야'}`);
 
     // 직원 조회 (부서별 필터링 적용)
     let employeeQuery = { status: '재직' };
@@ -312,7 +300,7 @@ router.post('/auto-attendance', async (req, res) => {
     
     const autoAttendanceData = {};
 
-    employees.forEach(emp => {
+    for (const emp of employees) {
       let status = '';
       let checkIn = '';
       let checkOut = '';
@@ -336,192 +324,730 @@ router.post('/auto-attendance', async (req, res) => {
                  if (isWeekend) {
            // 주말 근무 로직
            if (dayOfWeek === 6) { // 토요일
-             if (emp.department === '보안1팀') {
-               // 보안1팀: 3주차 토요일 1조,3조,4조(30명) 야간특근, 2조(선택조 10명) 정기휴무
-               console.log(`1팀 ${emp.name} 토요일 근무 처리 - cycleWeek: ${cycleWeek}`);
-               if (cycleWeek === 0) { // 3주차: 심야근무
-                 const nameMatch = emp.name.match(/보안1팀원(\d+)/);
-                 if (nameMatch) {
-                   const memberNumber = parseInt(nameMatch[1]);
-                   if (memberNumber >= 11 && memberNumber <= 20) { // 2조(11-20번, 선택조)
-                     // 2조(선택조 10명): 정기휴무
-                     status = '정기휴무';
-                     basic = '8';
-                     note = getNoteByStatus(status);
-                     console.log(`1팀 2조 토요일 정기휴무 설정: ${emp.name} (선택조 10명)`);
+             // 주차별 팀 근무 형태 확인
+             const weekNumber = getWeekNumber(targetDate);
+             const cycle = (weekNumber - 1) % 3;
+             
+             let team1Schedule, team2Schedule, team3Schedule;
+             if (cycle === 0) {
+               team1Schedule = '초야'; team2Schedule = '심야'; team3Schedule = '주간';
+             } else if (cycle === 1) {
+               team1Schedule = '주간'; team2Schedule = '초야'; team3Schedule = '심야';
+             } else {
+               team1Schedule = '심야'; team2Schedule = '주간'; team3Schedule = '초야';
+             }
+             
+             // 주말 스케줄에서 조별 편성 명단 조회
+             const weekStart = new Date(targetDate);
+             weekStart.setDate(targetDate.getDate() - targetDate.getDay() + 1); // 월요일
+             weekStart.setHours(6, 0, 0, 0);
+             
+             const weekEnd = new Date(weekStart);
+             weekEnd.setDate(weekStart.getDate() + 6);
+             weekEnd.setHours(6, 0, 0, 0);
+             
+             const schedule = await WorkSchedule.findOne({
+               weekStartDate: weekStart,
+               weekEndDate: weekEnd,
+               status: 'active'
+             });
+             
+             if (schedule && schedule.weekendSchedule) {
+               // 조별 편성 명단이 있는 경우
+               const teamData = schedule.weekendSchedule[emp.department.replace('보안', 'team')];
+               
+               if (teamData) {
+                 // A조, B조, 1조, 2조, 3조, 4조 명단 파싱
+                 const aGroupMembers = teamData.aGroup ? teamData.aGroup.split('\n').filter(line => line.trim()) : [];
+                 const bGroupMembers = teamData.bGroup ? teamData.bGroup.split('\n').filter(line => line.trim()) : [];
+                 const group1Members = teamData.group1 ? teamData.group1.split('\n').filter(line => line.trim()) : [];
+                 const group2Members = teamData.group2 ? teamData.group2.split('\n').filter(line => line.trim()) : [];
+                 const group3Members = teamData.group3 ? teamData.group3.split('\n').filter(line => line.trim()) : [];
+                 const group4Members = teamData.group4 ? teamData.group4.split('\n').filter(line => line.trim()) : [];
+                 
+                 // 직원이 어느 조에 속하는지 확인
+                 const isInAGroup = aGroupMembers.includes(emp.name);
+                 const isInBGroup = bGroupMembers.includes(emp.name);
+                 const isInGroup1 = group1Members.includes(emp.name);
+                 const isInGroup2 = group2Members.includes(emp.name);
+                 const isInGroup3 = group3Members.includes(emp.name);
+                 const isInGroup4 = group4Members.includes(emp.name);
+                 
+                 if (emp.department === '보안1팀') {
+                   if (team1Schedule === '초야') {
+                     // 1팀이 초야팀일 때: 1조~4조 중 3개조 (30명) - 선택조 1개 제외
+                     if (isInGroup1 || isInGroup2 || isInGroup3) {
+                       status = '출근(주특)';
+                       checkIn = '06:00';
+                       checkOut = '18:00';
+                       basic = '8';
+                       overtime = '0';
+                       special = '12';
+                       specialOvertime = '8';
+                       night = '0';
+                       note = getNoteByStatus(status);
+                       console.log(`1팀 초야 ${emp.name} 토요일 주간특근 설정`);
+                     } else {
+                        status = '정기휴무';
+                        checkIn = '';
+                        checkOut = '';
+                        basic = '8';
+                        overtime = '0';
+                        special = '0';
+                        specialOvertime = '0';
+                        night = '0';
+                       note = getNoteByStatus(status);
+                       console.log(`1팀 초야 ${emp.name} 토요일 정기휴무 설정`);
+                     }
+                   } else if (team1Schedule === '심야') {
+                     // 1팀이 심야팀일 때: 1조~4조 중 3개조 (30명) - 선택조 1개 제외
+                     if (isInGroup1 || isInGroup2 || isInGroup3) {
+                        status = '출근(야특)';
+                        checkIn = '18:00';
+                        checkOut = '06:00';
+                        basic = '8';
+                        overtime = '0';
+                        special = '12';
+                        specialOvertime = '8';
+                        night = '4';
+                       note = getNoteByStatus(status);
+                       console.log(`1팀 심야 ${emp.name} 토요일 야간특근 설정`);
+                     } else {
+                        status = '정기휴무';
+                        checkIn = '';
+                        checkOut = '';
+                        basic = '8';
+                        overtime = '0';
+                        special = '0';
+                        specialOvertime = '0';
+                        night = '0';
+                       note = getNoteByStatus(status);
+                       console.log(`1팀 심야 ${emp.name} 토요일 정기휴무 설정`);
+                     }
                    } else {
-                     // 1조, 3조, 4조(30명): 야간특근
-                     status = '출근(야특)';
-                     checkIn = '18:00';
-                     checkOut = '06:00';
-                     basic = '8';        // 기본 8시간
-                     overtime = '0';     // 연장 0시간
-                     special = '12';     // 특근 12시간 (8×1.5 가중치)
-                     specialOvertime = '8'; // 특근연장 8시간 (4×2.0 가중치)
-                     night = '4';        // 야간 4시간 (8×0.5 가중치)
+                     // 1팀이 주간팀일 때: 토요일 휴무
+                        status = '정기휴무';
+                        checkIn = '';
+                        checkOut = '';
+                        basic = '8';
+                        overtime = '0';
+                        special = '0';
+                        specialOvertime = '0';
+                        night = '0';
                      note = getNoteByStatus(status);
-                     console.log(`1팀 ${emp.name} 토요일 야간특근 설정 (1,3,4조 30명)`);
+                     console.log(`1팀 주간 ${emp.name} 토요일 정기휴무 설정`);
                    }
-                 } else {
-                   console.log(`1팀 이름 매칭 안됨, 기본값 설정 안함: ${emp.name}`);
+                 } else if (emp.department === '보안2팀') {
+                   if (team2Schedule === '초야') {
+                     // 2팀이 초야팀일 때: 1조~4조 중 3개조 (30명) - 선택조 1개 제외
+                     if (isInGroup1 || isInGroup2 || isInGroup3) {
+                       status = '출근(주특)';
+                       checkIn = '06:00';
+                       checkOut = '18:00';
+                       basic = '8';
+                       overtime = '0';
+                       special = '12';
+                       specialOvertime = '8';
+                       night = '0';
+                       note = getNoteByStatus(status);
+                       console.log(`2팀 초야 ${emp.name} 토요일 주간특근 설정`);
+                     } else {
+                        status = '정기휴무';
+                        checkIn = '';
+                        checkOut = '';
+                        basic = '8';
+                        overtime = '0';
+                        special = '0';
+                        specialOvertime = '0';
+                        night = '0';
+                       note = getNoteByStatus(status);
+                       console.log(`2팀 초야 ${emp.name} 토요일 정기휴무 설정`);
+                     }
+                   } else if (team2Schedule === '심야') {
+                     // 2팀이 심야팀일 때: 1조~4조 중 3개조 (30명) - 선택조 1개 제외
+                     if (isInGroup1 || isInGroup2 || isInGroup3) {
+                        status = '출근(야특)';
+                        checkIn = '18:00';
+                        checkOut = '06:00';
+                        basic = '8';
+                        overtime = '0';
+                        special = '12';
+                        specialOvertime = '8';
+                        night = '4';
+                       note = getNoteByStatus(status);
+                       console.log(`2팀 심야 ${emp.name} 토요일 야간특근 설정`);
+                     } else {
+                        status = '정기휴무';
+                        checkIn = '';
+                        checkOut = '';
+                        basic = '8';
+                        overtime = '0';
+                        special = '0';
+                        specialOvertime = '0';
+                        night = '0';
+                       note = getNoteByStatus(status);
+                       console.log(`2팀 심야 ${emp.name} 토요일 정기휴무 설정`);
+                     }
+                   } else {
+                     // 2팀이 주간팀일 때: 토요일 휴무
+                        status = '정기휴무';
+                        checkIn = '';
+                        checkOut = '';
+                        basic = '8';
+                        overtime = '0';
+                        special = '0';
+                        specialOvertime = '0';
+                        night = '0';
+                     note = getNoteByStatus(status);
+                     console.log(`2팀 주간 ${emp.name} 토요일 정기휴무 설정`);
+                   }
+                 } else if (emp.department === '보안3팀') {
+                   if (team3Schedule === '초야') {
+                     // 3팀이 초야팀일 때: 1조~4조 중 3개조 (30명) - 선택조 1개 제외
+                     if (isInGroup1 || isInGroup2 || isInGroup3) {
+                       status = '출근(주특)';
+                       checkIn = '06:00';
+                       checkOut = '18:00';
+                       basic = '8';
+                       overtime = '0';
+                       special = '12';
+                       specialOvertime = '8';
+                       night = '0';
+                       note = getNoteByStatus(status);
+                       console.log(`3팀 초야 ${emp.name} 토요일 주간특근 설정`);
+                     } else {
+                        status = '정기휴무';
+                        checkIn = '';
+                        checkOut = '';
+                        basic = '8';
+                        overtime = '0';
+                        special = '0';
+                        specialOvertime = '0';
+                        night = '0';
+                       note = getNoteByStatus(status);
+                       console.log(`3팀 초야 ${emp.name} 토요일 정기휴무 설정`);
+                     }
+                   } else if (team3Schedule === '심야') {
+                     // 3팀이 심야팀일 때: 1조~4조 중 3개조 (30명) - 선택조 1개 제외
+                     if (isInGroup1 || isInGroup2 || isInGroup3) {
+                        status = '출근(야특)';
+                        checkIn = '18:00';
+                        checkOut = '06:00';
+                        basic = '8';
+                        overtime = '0';
+                        special = '12';
+                        specialOvertime = '8';
+                        night = '4';
+                       note = getNoteByStatus(status);
+                       console.log(`3팀 심야 ${emp.name} 토요일 야간특근 설정`);
+                     } else {
+                        status = '정기휴무';
+                        checkIn = '';
+                        checkOut = '';
+                        basic = '8';
+                        overtime = '0';
+                        special = '0';
+                        specialOvertime = '0';
+                        night = '0';
+                       note = getNoteByStatus(status);
+                       console.log(`3팀 심야 ${emp.name} 토요일 정기휴무 설정`);
+                     }
+                   } else {
+                     // 3팀이 주간팀일 때: 토요일 휴무
+                        status = '정기휴무';
+                        checkIn = '';
+                        checkOut = '';
+                        basic = '8';
+                        overtime = '0';
+                        special = '0';
+                        specialOvertime = '0';
+                        night = '0';
+                     note = getNoteByStatus(status);
+                     console.log(`3팀 주간 ${emp.name} 토요일 정기휴무 설정`);
+                   }
                  }
                } else {
-                 console.log(`1팀 weekendGroup 없음, 기본값 설정 안함: ${emp.name}`);
-               }
-             } else if (emp.department === '보안2팀') {
-               // 보안2팀: 3주차 토요일 전원 정기휴무
-               console.log(`2팀 ${emp.name} 토요일 근무 처리 - cycleWeek: ${cycleWeek}`);
-               if (cycleWeek === 0) { // 3주차: 주간근무
+                 // 조별 편성 명단이 없는 경우 기본 로직 사용
+                 console.log(`${emp.department} 조별 편성 명단이 없습니다. 기본 로직을 사용합니다.`);
                  status = '정기휴무';
                  basic = '8';
                  note = getNoteByStatus(status);
-                 console.log(`2팀 ${emp.name} 토요일 정기휴무 설정 (전원)`);
-               } else {
-                 console.log(`2팀 weekendGroup 없음, 기본값 설정 안함: ${emp.name}`);
                }
-                           } else if (emp.department === '보안3팀') {
-                // 보안3팀: 3주차 토요일 1조,3조,4조(30명) 주간특근, 2조(선택조 10명) 정기휴무
-                console.log(`3팀 ${emp.name} 토요일 근무 처리 - cycleWeek: ${cycleWeek}`);
-                if (cycleWeek === 0) { // 3주차: 초야근무
-                  const nameMatch = emp.name.match(/보안3팀원(\d+)/);
-                  if (nameMatch) {
-                    const memberNumber = parseInt(nameMatch[1]);
-                    if (memberNumber >= 11 && memberNumber <= 20) { // 2조(11-20번, 선택조)
-                      // 2조(선택조 10명): 정기휴무
-                      status = '정기휴무';
-                      basic = '8';
-                      note = getNoteByStatus(status);
-                      console.log(`3팀 2조 토요일 정기휴무 설정: ${emp.name} (선택조 10명)`);
-                    } else {
-                      // 1조, 3조, 4조(30명): 주간특근
+             } else {
+               // 주말 스케줄이 없는 경우 기본 로직 사용
+               console.log('주말 스케줄이 없습니다. 기본 로직을 사용합니다.');
+               
+               // 토요일 기본 로직
+               if (emp.department === '보안1팀') {
+                 // 1팀은 토요일 정기휴무 (40명)
+                        status = '정기휴무';
+                        checkIn = '';
+                        checkOut = '';
+                        basic = '8';
+                        overtime = '0';
+                        special = '0';
+                        specialOvertime = '0';
+                        night = '0';
+                 note = getNoteByStatus(status);
+                 console.log(`1팀 ${emp.name} 토요일 정기휴무 설정 (기본 로직)`);
+               } else if (emp.department === '보안2팀') {
+                 // 2팀은 토요일 1~3조 주간특근 (30명) + 4조 휴무 (10명)
+                 const nameMatch = emp.name.match(/(\d+)$/);
+                 const nameNumber = nameMatch ? parseInt(nameMatch[1]) : 0;
+                 
+                 if (nameNumber <= 30) {
+                   // 1~30번: 주간특근
+                   status = '출근(주특)';
+                   checkIn = '06:00';
+                   checkOut = '18:00';
+                   basic = '8';
+                   special = '12';
+                   specialOvertime = '8';
+                   night = '0';
+                   note = getNoteByStatus(status);
+                   console.log(`2팀 ${emp.name} 토요일 주간특근 설정 (기본 로직)`);
+                 } else {
+                   // 31~40번: 휴무
+                        status = '정기휴무';
+                        checkIn = '';
+                        checkOut = '';
+                        basic = '8';
+                        overtime = '0';
+                        special = '0';
+                        specialOvertime = '0';
+                        night = '0';
+                   note = getNoteByStatus(status);
+                   console.log(`2팀 ${emp.name} 토요일 정기휴무 설정 (기본 로직)`);
+                 }
+               } else if (emp.department === '보안3팀') {
+                 // 3팀은 토요일 1~3조 야간특근 (30명) + 4조 휴무 (10명)
+                 const nameMatch = emp.name.match(/(\d+)$/);
+                 const nameNumber = nameMatch ? parseInt(nameMatch[1]) : 0;
+                 
+                 if (nameNumber <= 30) {
+                   // 1~30번: 야간특근
+                        status = '출근(야특)';
+                        checkIn = '18:00';
+                        checkOut = '06:00';
+                        basic = '8';
+                        overtime = '0';
+                        special = '12';
+                        specialOvertime = '8';
+                        night = '4';
+                   note = getNoteByStatus(status);
+                   console.log(`3팀 ${emp.name} 토요일 야간특근 설정 (기본 로직)`);
+                 } else {
+                   // 31~40번: 휴무
+                        status = '정기휴무';
+                        checkIn = '';
+                        checkOut = '';
+                        basic = '8';
+                        overtime = '0';
+                        special = '0';
+                        specialOvertime = '0';
+                        night = '0';
+                   note = getNoteByStatus(status);
+                   console.log(`3팀 ${emp.name} 토요일 정기휴무 설정 (기본 로직)`);
+                 }
+               } else {
+                 status = '정기휴무';
+                 basic = '8';
+                 note = getNoteByStatus(status);
+               }
+             }
+           } else if (dayOfWeek === 0) { // 일요일
+            // 주차별 팀 근무 형태 확인
+            const weekNumber = getWeekNumber(targetDate);
+            const cycle = (weekNumber - 1) % 3;
+            
+            let team1Schedule, team2Schedule, team3Schedule;
+            if (cycle === 0) {
+              team1Schedule = '초야'; team2Schedule = '심야'; team3Schedule = '주간';
+            } else if (cycle === 1) {
+              team1Schedule = '주간'; team2Schedule = '초야'; team3Schedule = '심야';
+            } else {
+              team1Schedule = '심야'; team2Schedule = '주간'; team3Schedule = '초야';
+            }
+            
+            // 주말 스케줄에서 조별 편성 명단 조회
+            const weekStart = new Date(targetDate);
+            weekStart.setDate(targetDate.getDate() - targetDate.getDay() + 1); // 월요일
+            weekStart.setHours(6, 0, 0, 0);
+            
+            const weekEnd = new Date(weekStart);
+            weekEnd.setDate(weekStart.getDate() + 6);
+            weekEnd.setHours(6, 0, 0, 0);
+            
+            const schedule = await WorkSchedule.findOne({
+              weekStartDate: weekStart,
+              weekEndDate: weekEnd,
+              status: 'active'
+            });
+            
+            if (schedule && schedule.weekendSchedule) {
+              // 조별 편성 명단이 있는 경우
+              const teamData = schedule.weekendSchedule[emp.department.replace('보안', 'team')];
+              
+              if (teamData) {
+                // A조, B조, 1조, 2조, 3조, 4조 명단 파싱
+                const aGroupMembers = teamData.aGroup ? teamData.aGroup.split('\n').filter(line => line.trim()) : [];
+                const bGroupMembers = teamData.bGroup ? teamData.bGroup.split('\n').filter(line => line.trim()) : [];
+                const group1Members = teamData.group1 ? teamData.group1.split('\n').filter(line => line.trim()) : [];
+                const group2Members = teamData.group2 ? teamData.group2.split('\n').filter(line => line.trim()) : [];
+                const group3Members = teamData.group3 ? teamData.group3.split('\n').filter(line => line.trim()) : [];
+                const group4Members = teamData.group4 ? teamData.group4.split('\n').filter(line => line.trim()) : [];
+                
+                // 직원이 어느 조에 속하는지 확인
+                const isInAGroup = aGroupMembers.includes(emp.name);
+                const isInBGroup = bGroupMembers.includes(emp.name);
+                const isInGroup1 = group1Members.includes(emp.name);
+                const isInGroup2 = group2Members.includes(emp.name);
+                const isInGroup3 = group3Members.includes(emp.name);
+                const isInGroup4 = group4Members.includes(emp.name);
+                
+                if (emp.department === '보안1팀') {
+                  if (team1Schedule === '주간') {
+                    // 1팀이 주간팀일 때: A조(주간) 또는 B조(야간)
+                    if (isInAGroup) {
                       status = '출근(주특)';
                       checkIn = '06:00';
                       checkOut = '18:00';
-                      basic = '8';        // 기본 8시간
-                      overtime = '0';     // 연장 0시간
-                      special = '12';     // 특근 12시간 (8×1.5 가중치)
-                      specialOvertime = '8'; // 특근연장 8시간 (4×2.0 가중치)
+                      basic = '8';
+                      special = '12';
+                      specialOvertime = '8';
+                      night = '0';
                       note = getNoteByStatus(status);
-                      console.log(`3팀 ${emp.name} 토요일 주간특근 설정 (1,3,4조 30명)`);
+                      console.log(`1팀 A조 ${emp.name} 일요일 주간특근 설정`);
+                    } else if (isInBGroup) {
+                        status = '출근(야특)';
+                        checkIn = '18:00';
+                        checkOut = '06:00';
+                        basic = '8';
+                        overtime = '0';
+                        special = '12';
+                        specialOvertime = '8';
+                        night = '4';
+                      note = getNoteByStatus(status);
+                      console.log(`1팀 B조 ${emp.name} 일요일 야간특근 설정`);
+                    } else {
+                        status = '정기휴무';
+                        checkIn = '';
+                        checkOut = '';
+                        basic = '8';
+                        overtime = '0';
+                        special = '0';
+                        specialOvertime = '0';
+                        night = '0';
+                      note = getNoteByStatus(status);
+                      console.log(`1팀 ${emp.name} 일요일 정기휴무 설정`);
+                    }
+                  } else if (team1Schedule === '심야') {
+                    // 1팀이 심야팀일 때: 2조(선택조) 10명 야간특근
+                    if (isInGroup2) {
+                        status = '출근(야특)';
+                        checkIn = '18:00';
+                        checkOut = '06:00';
+                        basic = '8';
+                        overtime = '0';
+                        special = '12';
+                        specialOvertime = '8';
+                        night = '4';
+                      note = getNoteByStatus(status);
+                      console.log(`1팀 2조 ${emp.name} 일요일 야간특근 설정`);
+                    } else {
+                        status = '정기휴무';
+                        checkIn = '';
+                        checkOut = '';
+                        basic = '8';
+                        overtime = '0';
+                        special = '0';
+                        specialOvertime = '0';
+                        night = '0';
+                      note = getNoteByStatus(status);
+                      console.log(`1팀 ${emp.name} 일요일 정기휴무 설정`);
                     }
                   } else {
-                    console.log(`3팀 이름 매칭 안됨, 기본값 설정 안함: ${emp.name}`);
+                    // 1팀이 초야팀일 때: 2조(선택조) 10명 주간특근
+                    if (isInGroup2) {
+                      status = '출근(주특)';
+                      checkIn = '06:00';
+                      checkOut = '18:00';
+                      basic = '8';
+                      special = '12';
+                      specialOvertime = '8';
+                      night = '0';
+                      note = getNoteByStatus(status);
+                      console.log(`1팀 2조 ${emp.name} 일요일 주간특근 설정`);
+                    } else {
+                        status = '정기휴무';
+                        checkIn = '';
+                        checkOut = '';
+                        basic = '8';
+                        overtime = '0';
+                        special = '0';
+                        specialOvertime = '0';
+                        night = '0';
+                      note = getNoteByStatus(status);
+                      console.log(`1팀 ${emp.name} 일요일 정기휴무 설정`);
+                    }
                   }
-                } else {
-                  console.log(`3팀 weekendGroup 없음, 기본값 설정 안함: ${emp.name}`);
-                }
-              }
-           } else if (dayOfWeek === 0) { // 일요일
-            if (emp.department === '보안1팀') {
-              // 보안1팀: 3주차 일요일 2조(선택조 10명) 야간특근
-              console.log(`1팀 ${emp.name} 일요일 근무 처리 - cycleWeek: ${cycleWeek}`);
-              if (cycleWeek === 0) { // 3주차: 심야근무
-                // 1팀은 2조(선택조 10명)만 야간특근, 나머지는 정기휴무
-                const nameMatch = emp.name.match(/보안1팀원(\d+)/);
-                if (nameMatch) {
-                  const memberNumber = parseInt(nameMatch[1]);
-                  if (memberNumber >= 11 && memberNumber <= 20) { // 2조(11-20번)
-                      // 2조(선택조 10명): 야간특근
-                      status = '출근(야특)';
-                      checkIn = '18:00';
-                      checkOut = '06:00';
-                      basic = '8';        // 기본 8시간
-                      overtime = '0';     // 연장 0시간
-                      special = '12';     // 특근 12시간 (8×1.5 가중치)
-                      specialOvertime = '8'; // 특근연장 8시간 (4×2.0 가중치)
-                      night = '4';        // 야간 4시간 (8×0.5 가중치)
-                    note = getNoteByStatus(status);
-                    console.log(`1팀 2조 일요일 야간특근 설정: ${emp.name} (선택조 10명)`);
+                } else if (emp.department === '보안2팀') {
+                  if (team2Schedule === '주간') {
+                    // 2팀이 주간팀일 때: A조(주간) 또는 B조(야간) - 하지만 일요일은 1조만 근무
+                    if (isInGroup1) {
+                      status = '출근(주특)';
+                      checkIn = '06:00';
+                      checkOut = '18:00';
+                      basic = '8';
+                      special = '12';
+                      specialOvertime = '8';
+                      night = '0';
+                      note = getNoteByStatus(status);
+                      console.log(`2팀 1조 ${emp.name} 일요일 주간특근 설정`);
+                    } else {
+                        status = '정기휴무';
+                        checkIn = '';
+                        checkOut = '';
+                        basic = '8';
+                        overtime = '0';
+                        special = '0';
+                        specialOvertime = '0';
+                        night = '0';
+                      note = getNoteByStatus(status);
+                      console.log(`2팀 ${emp.name} 일요일 정기휴무 설정`);
+                    }
+                  } else if (team2Schedule === '초야') {
+                    // 2팀이 초야팀일 때: 1조(선택조) 10명 주간특근
+                    if (isInGroup1) {
+                      status = '출근(주특)';
+                      checkIn = '06:00';
+                      checkOut = '18:00';
+                      basic = '8';
+                      special = '12';
+                      specialOvertime = '8';
+                      night = '0';
+                      note = getNoteByStatus(status);
+                      console.log(`2팀 1조 ${emp.name} 일요일 주간특근 설정`);
+                    } else {
+                        status = '정기휴무';
+                        checkIn = '';
+                        checkOut = '';
+                        basic = '8';
+                        overtime = '0';
+                        special = '0';
+                        specialOvertime = '0';
+                        night = '0';
+                      note = getNoteByStatus(status);
+                      console.log(`2팀 ${emp.name} 일요일 정기휴무 설정`);
+                    }
                   } else {
-                    // 1조, 3조, 4조: 정기휴무
-                    status = '정기휴무';
-                    basic = '8';
-                    note = getNoteByStatus(status);
-                    console.log(`1팀 ${emp.name} 일요일 정기휴무 설정 (2조가 아님)`);
+                    // 2팀이 심야팀일 때: 1조(선택조) 10명 야간특근
+                    if (isInGroup1) {
+                        status = '출근(야특)';
+                        checkIn = '18:00';
+                        checkOut = '06:00';
+                        basic = '8';
+                        overtime = '0';
+                        special = '12';
+                        specialOvertime = '8';
+                        night = '4';
+                      note = getNoteByStatus(status);
+                      console.log(`2팀 1조 ${emp.name} 일요일 야간특근 설정`);
+                    } else {
+                        status = '정기휴무';
+                        checkIn = '';
+                        checkOut = '';
+                        basic = '8';
+                        overtime = '0';
+                        special = '0';
+                        specialOvertime = '0';
+                        night = '0';
+                      note = getNoteByStatus(status);
+                      console.log(`2팀 ${emp.name} 일요일 정기휴무 설정`);
+                    }
                   }
-                } else {
-                  // 이름 매칭 안됨: 기본값 없음
-                  console.log(`1팀 이름 매칭 안됨, 기본값 설정 안함: ${emp.name}`);
+                } else if (emp.department === '보안3팀') {
+                  if (team3Schedule === '주간') {
+                    // 3팀이 주간팀일 때: A조(주간) 또는 B조(야간) - 하지만 일요일은 1조만 근무
+                    if (isInGroup1) {
+                      status = '출근(주특)';
+                      checkIn = '06:00';
+                      checkOut = '18:00';
+                      basic = '8';
+                      special = '12';
+                      specialOvertime = '8';
+                      night = '0';
+                      note = getNoteByStatus(status);
+                      console.log(`3팀 1조 ${emp.name} 일요일 주간특근 설정`);
+                    } else {
+                        status = '정기휴무';
+                        checkIn = '';
+                        checkOut = '';
+                        basic = '8';
+                        overtime = '0';
+                        special = '0';
+                        specialOvertime = '0';
+                        night = '0';
+                      note = getNoteByStatus(status);
+                      console.log(`3팀 ${emp.name} 일요일 정기휴무 설정`);
+                    }
+                  } else if (team3Schedule === '심야') {
+                    // 3팀이 심야팀일 때: 1조(선택조) 10명 야간특근
+                    if (isInGroup1) {
+                        status = '출근(야특)';
+                        checkIn = '18:00';
+                        checkOut = '06:00';
+                        basic = '8';
+                        overtime = '0';
+                        special = '12';
+                        specialOvertime = '8';
+                        night = '4';
+                      note = getNoteByStatus(status);
+                      console.log(`3팀 1조 ${emp.name} 일요일 야간특근 설정`);
+                    } else {
+                        status = '정기휴무';
+                        checkIn = '';
+                        checkOut = '';
+                        basic = '8';
+                        overtime = '0';
+                        special = '0';
+                        specialOvertime = '0';
+                        night = '0';
+                      note = getNoteByStatus(status);
+                      console.log(`3팀 ${emp.name} 일요일 정기휴무 설정`);
+                    }
+                  } else {
+                    // 3팀이 초야팀일 때: 1조(선택조) 10명 주간특근
+                    if (isInGroup1) {
+                      status = '출근(주특)';
+                      checkIn = '06:00';
+                      checkOut = '18:00';
+                      basic = '8';
+                      special = '12';
+                      specialOvertime = '8';
+                      night = '0';
+                      note = getNoteByStatus(status);
+                      console.log(`3팀 1조 ${emp.name} 일요일 주간특근 설정`);
+                    } else {
+                        status = '정기휴무';
+                        checkIn = '';
+                        checkOut = '';
+                        basic = '8';
+                        overtime = '0';
+                        special = '0';
+                        specialOvertime = '0';
+                        night = '0';
+                      note = getNoteByStatus(status);
+                      console.log(`3팀 ${emp.name} 일요일 정기휴무 설정`);
+                    }
+                  }
                 }
               } else {
-                // 1,2주차: 기본값 없음
-                console.log(`1팀 weekendGroup 없음, 기본값 설정 안함: ${emp.name}`);
+                // 조별 편성 명단이 없는 경우 기본 로직 사용
+                console.log(`${emp.department} 조별 편성 명단이 없습니다. 기본 로직을 사용합니다.`);
+                status = '정기휴무';
+                basic = '8';
+                note = getNoteByStatus(status);
               }
-            } else if (emp.department === '보안2팀') {
-              // 보안2팀: 3주차 일요일 A/B조 구분 근무 (주간근무이므로)
-              console.log(`2팀 ${emp.name} 일요일 근무 처리 - cycleWeek: ${cycleWeek}`);
-              if (cycleWeek === 0) { // 3주차: 주간근무
-                // 2팀도 A조/B조 구분이 필요함
-                // 임시로 이름 기준으로 A조/B조 구분 (실제로는 weekendGroup 필드 필요)
-                const memberIndex = ['보안2팀원1', '보안2팀원2', '보안2팀원3', '보안2팀원4', '보안2팀원5', '보안2팀원6', '보안2팀원7', '보안2팀원8', '보안2팀원9', '보안2팀원10', '보안2팀원11', '보안2팀원12', '보안2팀원13', '보안2팀원14', '보안2팀원15', '보안2팀원16', '보안2팀원17', '보안2팀원18', '보안2팀원19', '보안2팀원20', '보안2팀원21', '보안2팀원22', '보안2팀원23', '보안2팀원24', '보안2팀원25', '보안2팀원26', '보안2팀원27', '보안2팀원28', '보안2팀원29', '보안2팀원30', '보안2팀원31', '보안2팀원32', '보안2팀원33', '보안2팀원34', '보안2팀원35', '보안2팀원36', '보안2팀원37', '보안2팀원38', '보안2팀원39', '보안2팀원40'].indexOf(emp.name);
+            } else {
+              // 주말 스케줄이 없는 경우 기본 로직 사용
+              console.log('주말 스케줄이 없습니다. 기본 로직을 사용합니다.');
+              
+              // 일요일 기본 로직
+              if (emp.department === '보안1팀') {
+                // 1팀은 일요일 A조 주간특근 (20명) + B조 야간특근 (20명)
+                const nameMatch = emp.name.match(/(\d+)$/);
+                const nameNumber = nameMatch ? parseInt(nameMatch[1]) : 0;
                 
-                if (memberIndex !== -1) {
-                  if (memberIndex < 20) {
-                    // A조(20명): 주간특근
-                    status = '출근(주특)';
-                    checkIn = '06:00';
-                    checkOut = '18:00';
-                    basic = '8';        // 기본 8시간
-                    overtime = '0';     // 연장 0시간
-                    special = '12';     // 특근 12시간 (8×1.5 가중치)
-                    specialOvertime = '8'; // 특근연장 8시간 (4×2.0 가중치)
-                    note = getNoteByStatus(status);
-                    console.log(`2팀 A조 일요일 주간특근 설정: ${emp.name}`);
-                  } else {
-                    // B조(20명): 야간특근
-                    status = '출근(야특)';
-                    checkIn = '18:00';
-                    checkOut = '06:00';
-                    basic = '8';        // 기본 8시간
-                    overtime = '0';     // 연장 0시간
-                    special = '12';     // 특근 12시간 (8×1.5 가중치)
-                    specialOvertime = '8'; // 특근연장 8시간 (4×2.0 가중치)
-                    night = '4';        // 야간 4시간 (8×0.5 가중치)
-                    note = getNoteByStatus(status);
-                    console.log(`2팀 B조 일요일 야간특근 설정: ${emp.name}`);
-                  }
+                if (nameNumber <= 20) {
+                  // 1~20번: A조 주간특근
+                  status = '출근(주특)';
+                  checkIn = '06:00';
+                  checkOut = '18:00';
+                  basic = '8';
+                  special = '8';
+                  specialOvertime = '4';
+                  night = '0';
+                  note = getNoteByStatus(status);
+                  console.log(`1팀 A조 ${emp.name} 일요일 주간특근 설정 (기본 로직)`);
                 } else {
-                  // 이름 매칭 안됨: 기본값 없음
-                  console.log(`2팀 이름 매칭 안됨, 기본값 설정 안함: ${emp.name}`);
+                  // 21~40번: B조 야간특근
+                        status = '출근(야특)';
+                        checkIn = '18:00';
+                        checkOut = '06:00';
+                        basic = '8';
+                        overtime = '0';
+                        special = '12';
+                        specialOvertime = '8';
+                        night = '4';
+                  note = getNoteByStatus(status);
+                  console.log(`1팀 B조 ${emp.name} 일요일 야간특근 설정 (기본 로직)`);
+                }
+              } else if (emp.department === '보안2팀') {
+                // 2팀은 일요일 1조 주간특근 (10명) + 나머지 휴무 (30명)
+                const nameMatch = emp.name.match(/(\d+)$/);
+                const nameNumber = nameMatch ? parseInt(nameMatch[1]) : 0;
+                
+                if (nameNumber <= 10) {
+                  // 1~10번: 1조 주간특근
+                  status = '출근(주특)';
+                  checkIn = '06:00';
+                  checkOut = '18:00';
+                  basic = '8';
+                  special = '8';
+                  specialOvertime = '4';
+                  night = '0';
+                  note = getNoteByStatus(status);
+                  console.log(`2팀 1조 ${emp.name} 일요일 주간특근 설정 (기본 로직)`);
+                } else {
+                  // 11~40번: 휴무
+                        status = '정기휴무';
+                        checkIn = '';
+                        checkOut = '';
+                        basic = '8';
+                        overtime = '0';
+                        special = '0';
+                        specialOvertime = '0';
+                        night = '0';
+                  note = getNoteByStatus(status);
+                  console.log(`2팀 ${emp.name} 일요일 정기휴무 설정 (기본 로직)`);
+                }
+              } else if (emp.department === '보안3팀') {
+                // 3팀은 일요일 1조 야간특근 (10명) + 나머지 휴무 (30명)
+                const nameMatch = emp.name.match(/(\d+)$/);
+                const nameNumber = nameMatch ? parseInt(nameMatch[1]) : 0;
+                
+                if (nameNumber <= 10) {
+                  // 1~10번: 1조 야간특근
+                        status = '출근(야특)';
+                        checkIn = '18:00';
+                        checkOut = '06:00';
+                        basic = '8';
+                        overtime = '0';
+                        special = '12';
+                        specialOvertime = '8';
+                        night = '4';
+                  note = getNoteByStatus(status);
+                  console.log(`3팀 1조 ${emp.name} 일요일 야간특근 설정 (기본 로직)`);
+                } else {
+                  // 11~40번: 휴무
+                        status = '정기휴무';
+                        checkIn = '';
+                        checkOut = '';
+                        basic = '8';
+                        overtime = '0';
+                        special = '0';
+                        specialOvertime = '0';
+                        night = '0';
+                  note = getNoteByStatus(status);
+                  console.log(`3팀 ${emp.name} 일요일 정기휴무 설정 (기본 로직)`);
                 }
               } else {
-                // 1,2주차: 기본값 없음
-                console.log(`2팀 weekendGroup 없음, 기본값 설정 안함: ${emp.name}`);
+                status = '정기휴무';
+                basic = '8';
+                note = getNoteByStatus(status);
               }
-                         } else if (emp.department === '보안3팀') {
-               // 보안3팀: 3주차 일요일 2조(선택조 10명) 주간특근, 나머지 30명 정기휴무
-               console.log(`3팀 ${emp.name} 일요일 근무 처리 - cycleWeek: ${cycleWeek}`);
-               if (cycleWeek === 0) { // 3주차: 초야근무
-                 const nameMatch = emp.name.match(/보안3팀원(\d+)/);
-                 if (nameMatch) {
-                   const memberNumber = parseInt(nameMatch[1]);
-                   if (memberNumber >= 11 && memberNumber <= 20) { // 2조(11-20번, 선택조)
-                     // 2조(선택조 10명): 주간특근
-                     status = '출근(주특)';
-                     checkIn = '06:00';
-                     checkOut = '18:00';
-                     basic = '8';        // 기본 8시간
-                     overtime = '0';     // 연장 0시간
-                     special = '12';     // 특근 12시간 (8×1.5 가중치)
-                     specialOvertime = '8'; // 특근연장 8시간 (4×2.0 가중치)
-                     note = getNoteByStatus(status);
-                     console.log(`3팀 2조 일요일 주간특근 설정: ${emp.name} (선택조 10명)`);
-                   } else {
-                     // 1조, 3조, 4조(30명): 정기휴무
-                     status = '정기휴무';
-                     basic = '8';
-                     note = getNoteByStatus(status);
-                     console.log(`3팀 ${emp.name} 일요일 정기휴무 설정 (2조가 아님)`);
-                   }
-                 } else {
-                   // 이름 매칭 안됨: 기본값 없음
-                   console.log(`3팀 이름 매칭 안됨, 기본값 설정 안함: ${emp.name}`);
-                 }
-               } else {
-                 // 1,2주차: 기본값 없음
-                 console.log(`3팀 weekendGroup 없음, 기본값 설정 안함: ${emp.name}`);
-               }
-             }
+            }
           }
                  } else {
            // 평일 근무 로직 - 수정된 순환규칙 적용
@@ -531,19 +1057,30 @@ router.post('/auto-attendance', async (req, res) => {
                checkIn = '14:00';
                checkOut = '22:00';
                basic = '8';
+               overtime = '0';
+               special = '0';
+               specialOvertime = '0';
+               night = '0';
                note = getNoteByStatus(status);
              } else if (teamNumber === '2') {
                status = '출근(심)';
                checkIn = '22:00';
                checkOut = '06:00';
                basic = '8';
-               night = '4';        // 야간 4시간 (8×0.5 가중치)
+               overtime = '0';
+               special = '0';
+               specialOvertime = '0';
+               night = '4';        // 야간 4시간 (가중치 적용된 시간)
                note = getNoteByStatus(status);
              } else if (teamNumber === '3') {
                status = '출근(주)';
                checkIn = '06:00';
                checkOut = '14:00';
                basic = '8';
+               overtime = '0';
+               special = '0';
+               specialOvertime = '0';
+               night = '0';
                note = getNoteByStatus(status);
              }
            } else if (cycleWeek === 1) { // 38주차: 1팀 주간, 2팀 초야, 3팀 심야
@@ -552,19 +1089,30 @@ router.post('/auto-attendance', async (req, res) => {
                checkIn = '06:00';
                checkOut = '14:00';
                basic = '8';
+               overtime = '0';
+               special = '0';
+               specialOvertime = '0';
+               night = '0';
                note = getNoteByStatus(status);
              } else if (teamNumber === '2') {
                status = '출근(초)';
                checkIn = '14:00';
                checkOut = '22:00';
                basic = '8';
+               overtime = '0';
+               special = '0';
+               specialOvertime = '0';
+               night = '0';
                note = getNoteByStatus(status);
              } else if (teamNumber === '3') {
                status = '출근(심)';
                checkIn = '22:00';
                checkOut = '06:00';
                basic = '8';
-               night = '4';        // 야간 4시간 (8×0.5 가중치)
+               overtime = '0';
+               special = '0';
+               specialOvertime = '0';
+               night = '4';        // 야간 4시간 (가중치 적용된 시간)
                note = getNoteByStatus(status);
              }
            } else if (cycleWeek === 2) { // 39주차: 1팀 심야, 2팀 주간, 3팀 초야
@@ -573,19 +1121,30 @@ router.post('/auto-attendance', async (req, res) => {
                checkIn = '22:00';
                checkOut = '06:00';
                basic = '8';
-               night = '4';        // 야간 4시간 (8×0.5 가중치)
+               overtime = '0';
+               special = '0';
+               specialOvertime = '0';
+               night = '4';        // 야간 4시간 (가중치 적용된 시간)
                note = getNoteByStatus(status);
              } else if (teamNumber === '2') {
                status = '출근(주)';
                checkIn = '06:00';
                checkOut = '14:00';
                basic = '8';
+               overtime = '0';
+               special = '0';
+               specialOvertime = '0';
+               night = '0';
                note = getNoteByStatus(status);
              } else if (teamNumber === '3') {
                status = '출근(초)';
                checkIn = '14:00';
                checkOut = '22:00';
                basic = '8';
+               overtime = '0';
+               special = '0';
+               specialOvertime = '0';
+               night = '0';
                note = getNoteByStatus(status);
              }
            }
@@ -609,13 +1168,13 @@ router.post('/auto-attendance', async (req, res) => {
 
       // 자동 입력 데이터 저장
       if (status) {
-        // 총시간 계산 (각 항목 합계)
+        // 총시간 계산 (가중치 적용)
         let totalTime = 0;
         if (basic) totalTime += parseInt(basic) || 0;
         if (overtime) totalTime += parseInt(overtime) || 0;
-        if (special) totalTime += parseInt(special) || 0;
-        if (specialOvertime) totalTime += parseInt(specialOvertime) || 0;
-        if (night) totalTime += parseInt(night) || 0;
+        if (special) totalTime += (parseInt(special) || 0) * 1.5;
+        if (specialOvertime) totalTime += (parseInt(specialOvertime) || 0) * 2;
+        if (night) totalTime += (parseInt(night) || 0) * 0.5;
         
         // 디버깅: 각 항목별 값과 총시간 로그
         console.log(`📊 ${emp.name} 총시간 계산:`, {
@@ -643,7 +1202,7 @@ router.post('/auto-attendance', async (req, res) => {
       } else {
         console.log(`❌ 직원 ${emp.name} 상태 미설정:`, { teamNumber, dayOfWeek, cycleWeek, isWeekend });
       }
-    });
+    }
 
     console.log('=== 최종 autoAttendanceData ===');
     console.log('저장된 직원 수:', Object.keys(autoAttendanceData).length);

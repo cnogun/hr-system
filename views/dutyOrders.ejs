@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>인사명령 관리</title>
+  
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  
+  <style>
+    body { 
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+      background-color: #f8f9fa;
+    }
+    
+    .duty-order-container .card {
+      border: none;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      border-radius: 12px;
+    }
+    
+    .duty-order-container .card-header {
+      border-radius: 12px 12px 0 0 !important;
+      font-weight: 600;
+    }
+    
+    .status-badge {
+      font-size: 0.8rem;
+      padding: 0.4rem 0.8rem;
+      border-radius: 20px;
+    }
+    
+    .priority-badge {
+      font-size: 0.75rem;
+      padding: 0.3rem 0.6rem;
+      border-radius: 15px;
+    }
+    
+    .order-number {
+      font-family: 'Courier New', monospace;
+      font-weight: bold;
+      color: #495057;
+    }
+    
+    .employee-item {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 0.75rem;
+      margin-bottom: 0.5rem;
+    }
+    
+    .filter-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+    
+    .btn-action {
+      min-width: 80px;
+    }
+  </style>
+</head>
+<body>
+  
+  <!-- 헤더 포함 -->
+  <%- include('header') %>
+  
+  <!-- 메인 컨테이너 -->
+  <div class="container mt-4 duty-order-container">
+    <div class="row">
+      <div class="col-12">
+        <!-- 페이지 헤더 -->
+        <div class="text-center mb-5">
+          <h1 class="display-4 text-primary mb-3">
+            인사명령 관리
+          </h1>
+          <p class="lead text-muted">보안요원 인사명령을 생성하고 관리합니다.</p>
+        </div>
+
+        <!-- 필터 및 검색 -->
+        <div class="card filter-card mb-4">
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-md-3">
+                <label class="form-label text-white">명령 유형</label>
+                <select class="form-select" id="orderTypeFilter">
+                  <option value="">전체</option>
+                  <option value="근무배정">근무배정</option>
+                  <option value="직급변경">직급변경</option>
+                  <option value="부서이동">부서이동</option>
+                  <option value="특별업무">특별업무</option>
+                  <option value="휴직/복직">휴직/복직</option>
+                  <option value="퇴직">퇴직</option>
+                  <option value="기타">기타</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label text-white">상태</label>
+                <select class="form-select" id="statusFilter">
+                  <option value="">전체</option>
+                  <option value="대기">대기</option>
+                  <option value="시행">시행</option>
+                  <option value="완료">완료</option>
+                  <option value="취소">취소</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label text-white">부서</label>
+                <select class="form-select" id="departmentFilter">
+                  <option value="">전체</option>
+                  <option value="보안1팀">보안1팀</option>
+                  <option value="보안2팀">보안2팀</option>
+                  <option value="보안3팀">보안3팀</option>
+                  <option value="전체">전체</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label text-white">우선순위</label>
+                <select class="form-select" id="priorityFilter">
+                  <option value="">전체</option>
+                  <option value="긴급">긴급</option>
+                  <option value="높음">높음</option>
+                  <option value="보통">보통</option>
+                  <option value="낮음">낮음</option>
+                </select>
+              </div>
+            </div>
+            <div class="row mt-3">
+              <div class="col-12 text-center">
+                <button class="btn btn-light me-2" onclick="applyFilters()">
+                  필터 적용
+                </button>
+                <button class="btn btn-outline-light" onclick="resetFilters()">
+                  초기화
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 인사명령 목록 -->
+        <div class="card shadow-sm">
+          <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">인사명령 목록</h5>
+            <button class="btn btn-light" onclick="showCreateModal()">
+              새 인사명령
+            </button>
+          </div>
+          <div class="card-body">
+            <div id="dutyOrdersList">
+              <!-- 인사명령 목록이 여기에 동적으로 로드됩니다 -->
+            </div>
+            
+            <!-- 페이지네이션 -->
+            <nav aria-label="인사명령 페이지네이션" class="mt-4">
+              <ul class="pagination justify-content-center" id="pagination">
+                <!-- 페이지네이션이 여기에 동적으로 생성됩니다 -->
+              </ul>
+            </nav>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 인사명령 생성/수정 모달 -->
+  <div class="modal fade" id="dutyOrderModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modalTitle">새 인사명령</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="dutyOrderForm">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">명령 제목</label>
+                <input type="text" class="form-control" id="title" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">명령 유형</label>
+                <select class="form-select" id="orderType" required>
+                  <option value="근무배정">근무배정</option>
+                  <option value="직급변경">직급변경</option>
+                  <option value="부서이동">부서이동</option>
+                  <option value="특별업무">특별업무</option>
+                  <option value="휴직/복직">휴직/복직</option>
+                  <option value="퇴직">퇴직</option>
+                  <option value="기타">기타</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">대상 부서</label>
+                <select class="form-select" id="department" required>
+                  <option value="보안1팀">보안1팀</option>
+                  <option value="보안2팀">보안2팀</option>
+                  <option value="보안3팀">보안3팀</option>
+                  <option value="전체">전체</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">우선순위</label>
+                <select class="form-select" id="priority" required>
+                  <option value="보통">보통</option>
+                  <option value="낮음">낮음</option>
+                  <option value="높음">높음</option>
+                  <option value="긴급">긴급</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">시행일</label>
+                <input type="date" class="form-control" id="effectiveDate" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">마감일</label>
+                <input type="date" class="form-control" id="deadline">
+              </div>
+              <div class="col-12">
+                <label class="form-label">명령 내용</label>
+                <textarea class="form-control" id="content" rows="4" required></textarea>
+              </div>
+              <div class="col-12">
+                <label class="form-label">대상 직원</label>
+                <div id="assignedEmployees">
+                  <!-- 직원 선택 영역 -->
+                </div>
+                <button type="button" class="btn btn-outline-primary btn-sm mt-2" onclick="addEmployee()">
+                  직원 추가
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+          <button type="button" class="btn btn-primary" onclick="saveDutyOrder()">저장</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 인사명령 상세 모달 -->
+  <div class="modal fade" id="dutyOrderDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">인사명령 상세</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body" id="dutyOrderDetail">
+          <!-- 상세 내용이 여기에 로드됩니다 -->
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+          <div id="actionButtons">
+            <!-- 액션 버튼들이 여기에 동적으로 생성됩니다 -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JavaScript -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <script>
+    let currentPage = 1;
+    let currentFilters = {};
+    let dutyOrders = [];
+    let employees = [];
+    let editingDutyOrderId = null;
+
+    // 페이지 로드 시 초기화
+    document.addEventListener('DOMContentLoaded', function() {
+      loadDutyOrders();
+      loadEmployees();
+      
+      // 오늘 날짜를 시행일 기본값으로 설정
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('effectiveDate').value = today;
+    });
+
+    // 인사명령 목록 로드
+    async function loadDutyOrders(page = 1) {
+      try {
+        const params = new URLSearchParams({
+          page: page,
+          limit: 10,
+          ...currentFilters
+        });
+        
+        const response = await fetch(`/api/duty-orders?${params}`);
+        const result = await response.json();
+        
+        if (result.success) {
+          dutyOrders = result.data;
+          currentPage = result.pagination.current;
+          renderDutyOrdersList();
+          renderPagination(result.pagination);
+        } else {
+          showMessage('인사명령 목록을 불러오는데 실패했습니다.', 'danger');
+        }
+      } catch (error) {
+        console.error('인사명령 목록 로드 오류:', error);
+        showMessage('인사명령 목록을 불러오는데 실패했습니다.', 'danger');
+      }
+    }
+
+    // 직원 목록 로드
+    async function loadEmployees() {
+      try {
+        const response = await fetch('/api/duty-orders/employees/list');
+        const result = await response.json();
+        
+        if (result.success) {
+          employees = result.data;
+        }
+      } catch (error) {
+        console.error('직원 목록 로드 오류:', error);
+      }
+    }
+
+    // 인사명령 목록 렌더링
+    function renderDutyOrdersList() {
+      const container = document.getElementById('dutyOrdersList');
+      
+      if (dutyOrders.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-5">
+            <i class="fa-solid fa-file-alt fa-3x text-muted mb-3"></i>
+            <h5 class="text-muted">인사명령이 없습니다</h5>
+            <p class="text-muted">새 인사명령을 생성해보세요.</p>
+          </div>
+        `;
+        return;
+      }
+      
+      container.innerHTML = dutyOrders.map(order => `
+        <div class="card mb-3">
+          <div class="card-body">
+            <div class="row align-items-center">
+              <div class="col-md-8">
+                <div class="d-flex align-items-center mb-2">
+                  <span class="order-number me-3">${order.orderNumber}</span>
+                  <span class="status-badge badge bg-${getStatusColor(order.status)} me-2">${order.status}</span>
+                  <span class="priority-badge badge bg-${getPriorityColor(order.priority)}">${order.priority}</span>
+                </div>
+                <h6 class="mb-1">${order.title}</h6>
+                <p class="text-muted mb-2">${order.content.substring(0, 100)}${order.content.length > 100 ? '...' : ''}</p>
+                <div class="small text-muted">
+                  <span class="me-3">유형: ${order.orderType}</span>
+                  <span class="me-3">부서: ${order.department}</span>
+                  <span class="me-3">시행일: ${formatDate(order.effectiveDate)}</span>
+                  <span>발령자: ${order.issuedBy.name}</span>
+                </div>
+              </div>
+              <div class="col-md-4 text-end">
+                <div class="btn-group" role="group">
+                  <button class="btn btn-outline-primary btn-sm" onclick="viewDutyOrder('${order._id}')">
+                    상세보기
+                  </button>
+                  ${order.status === '대기' ? `
+                    <button class="btn btn-outline-success btn-sm" onclick="editDutyOrder('${order._id}')">
+                      수정
+                    </button>
+                    <button class="btn btn-outline-danger btn-sm" onclick="deleteDutyOrder('${order._id}')">
+                      삭제
+                    </button>
+                  ` : ''}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // 페이지네이션 렌더링
+    function renderPagination(pagination) {
+      const container = document.getElementById('pagination');
+      const { current, pages, total } = pagination;
+      
+      let paginationHTML = '';
+      
+      // 이전 페이지
+      if (current > 1) {
+        paginationHTML += `<li class="page-item"><a class="page-link" href="#" onclick="loadDutyOrders(${current - 1})">이전</a></li>`;
+      }
+      
+      // 페이지 번호들
+      for (let i = Math.max(1, current - 2); i <= Math.min(pages, current + 2); i++) {
+        paginationHTML += `
+          <li class="page-item ${i === current ? 'active' : ''}">
+            <a class="page-link" href="#" onclick="loadDutyOrders(${i})">${i}</a>
+          </li>
+        `;
+      }
+      
+      // 다음 페이지
+      if (current < pages) {
+        paginationHTML += `<li class="page-item"><a class="page-link" href="#" onclick="loadDutyOrders(${current + 1})">다음</a></li>`;
+      }
+      
+      container.innerHTML = paginationHTML;
+    }
+
+    // 상태별 색상
+    function getStatusColor(status) {
+      const colors = {
+        '대기': 'warning',
+        '시행': 'primary',
+        '완료': 'success',
+        '취소': 'danger'
+      };
+      return colors[status] || 'secondary';
+    }
+
+    // 우선순위별 색상
+    function getPriorityColor(priority) {
+      const colors = {
+        '긴급': 'danger',
+        '높음': 'warning',
+        '보통': 'primary',
+        '낮음': 'secondary'
+      };
+      return colors[priority] || 'secondary';
+    }
+
+    // 날짜 포맷팅
+    function formatDate(dateString) {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('ko-KR');
+    }
+
+    // 필터 적용
+    function applyFilters() {
+      currentFilters = {
+        orderType: document.getElementById('orderTypeFilter').value,
+        status: document.getElementById('statusFilter').value,
+        department: document.getElementById('departmentFilter').value,
+        priority: document.getElementById('priorityFilter').value
+      };
+      
+      // 빈 값 제거
+      Object.keys(currentFilters).forEach(key => {
+        if (!currentFilters[key]) {
+          delete currentFilters[key];
+        }
+      });
+      
+      loadDutyOrders(1);
+    }
+
+    // 필터 초기화
+    function resetFilters() {
+      document.getElementById('orderTypeFilter').value = '';
+      document.getElementById('statusFilter').value = '';
+      document.getElementById('departmentFilter').value = '';
+      document.getElementById('priorityFilter').value = '';
+      currentFilters = {};
+      loadDutyOrders(1);
+    }
+
+    // 새 인사명령 모달 표시
+    function showCreateModal() {
+      editingDutyOrderId = null;
+      document.getElementById('modalTitle').textContent = '새 인사명령';
+      document.getElementById('dutyOrderForm').reset();
+      document.getElementById('assignedEmployees').innerHTML = '';
+      
+      // 오늘 날짜를 시행일 기본값으로 설정
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('effectiveDate').value = today;
+      
+      new bootstrap.Modal(document.getElementById('dutyOrderModal')).show();
+    }
+
+    // 직원 추가
+    function addEmployee() {
+      const container = document.getElementById('assignedEmployees');
+      const employeeSelect = document.createElement('div');
+      employeeSelect.className = 'row g-2 mb-2';
+      employeeSelect.innerHTML = `
+        <div class="col-md-4">
+          <select class="form-select employee-select">
+            <option value="">직원 선택</option>
+            ${employees.map(emp => `<option value="${emp._id}">${emp.name} (${emp.department})</option>`).join('')}
+          </select>
+        </div>
+        <div class="col-md-2">
+          <input type="text" class="form-control" placeholder="이전 직급" name="previousPosition">
+        </div>
+        <div class="col-md-2">
+          <input type="text" class="form-control" placeholder="새 직급" name="newPosition">
+        </div>
+        <div class="col-md-2">
+          <input type="text" class="form-control" placeholder="근무형태" name="workType">
+        </div>
+        <div class="col-md-1">
+          <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeEmployee(this)">
+            삭제
+          </button>
+        </div>
+      `;
+      container.appendChild(employeeSelect);
+    }
+
+    // 직원 제거
+    function removeEmployee(button) {
+      button.closest('.row').remove();
+    }
+
+    // 인사명령 저장
+    async function saveDutyOrder() {
+      try {
+        const formData = {
+          title: document.getElementById('title').value,
+          content: document.getElementById('content').value,
+          orderType: document.getElementById('orderType').value,
+          priority: document.getElementById('priority').value,
+          department: document.getElementById('department').value,
+          effectiveDate: document.getElementById('effectiveDate').value,
+          deadline: document.getElementById('deadline').value || null,
+          assignedEmployees: []
+        };
+
+        // 선택된 직원들 수집
+        const employeeRows = document.querySelectorAll('#assignedEmployees .row');
+        employeeRows.forEach(row => {
+          const employeeId = row.querySelector('.employee-select').value;
+          if (employeeId) {
+            formData.assignedEmployees.push({
+              employee: employeeId,
+              previousPosition: row.querySelector('[name="previousPosition"]').value,
+              newPosition: row.querySelector('[name="newPosition"]').value,
+              workType: row.querySelector('[name="workType"]').value,
+              workLocation: '',
+              notes: ''
+            });
+          }
+        });
+
+        const url = editingDutyOrderId ? `/api/duty-orders/${editingDutyOrderId}` : '/api/duty-orders';
+        const method = editingDutyOrderId ? 'PUT' : 'POST';
+
+        const response = await fetch(url, {
+          method: method,
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(formData)
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          showMessage(result.message, 'success');
+          bootstrap.Modal.getInstance(document.getElementById('dutyOrderModal')).hide();
+          loadDutyOrders(currentPage);
+        } else {
+          showMessage(result.message, 'danger');
+        }
+      } catch (error) {
+        console.error('인사명령 저장 오류:', error);
+        showMessage('인사명령 저장 중 오류가 발생했습니다.', 'danger');
+      }
+    }
+
+    // 인사명령 상세보기
+    async function viewDutyOrder(id) {
+      try {
+        const response = await fetch(`/api/duty-orders/${id}`);
+        const result = await response.json();
+
+        if (result.success) {
+          const order = result.data;
+          document.getElementById('dutyOrderDetail').innerHTML = `
+            <div class="row">
+              <div class="col-md-8">
+                <h4>${order.title}</h4>
+                <p class="text-muted">${order.orderNumber}</p>
+                <div class="mb-3">
+                  <span class="status-badge badge bg-${getStatusColor(order.status)} me-2">${order.status}</span>
+                  <span class="priority-badge badge bg-${getPriorityColor(order.priority)}">${order.priority}</span>
+                </div>
+                <div class="mb-3">
+                  <strong>명령 내용:</strong>
+                  <p class="mt-2">${order.content}</p>
+                </div>
+                <div class="row mb-3">
+                  <div class="col-md-6">
+                    <strong>명령 유형:</strong> ${order.orderType}<br>
+                    <strong>대상 부서:</strong> ${order.department}<br>
+                    <strong>시행일:</strong> ${formatDate(order.effectiveDate)}
+                  </div>
+                  <div class="col-md-6">
+                    <strong>발령자:</strong> ${order.issuedBy.name}<br>
+                    <strong>발령일:</strong> ${formatDate(order.createdAt)}<br>
+                    ${order.deadline ? `<strong>마감일:</strong> ${formatDate(order.deadline)}` : ''}
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="card">
+                  <div class="card-header">
+                    <h6 class="mb-0">대상 직원</h6>
+                  </div>
+                  <div class="card-body">
+                    ${order.assignedEmployees.map(emp => `
+                      <div class="employee-item">
+                        <strong>${emp.employee.name}</strong><br>
+                        <small class="text-muted">
+                          ${emp.previousPosition ? `이전: ${emp.previousPosition}` : ''}
+                          ${emp.newPosition ? ` → ${emp.newPosition}` : ''}
+                          ${emp.workType ? `<br>근무형태: ${emp.workType}` : ''}
+                        </small>
+                      </div>
+                    `).join('')}
+                  </div>
+                </div>
+              </div>
+            </div>
+          `;
+
+          // 액션 버튼들
+          let actionButtons = '';
+          if (order.status === '대기') {
+            actionButtons = `
+              <button class="btn btn-success me-2" onclick="approveDutyOrder('${order._id}')">승인</button>
+              <button class="btn btn-warning me-2" onclick="editDutyOrder('${order._id}')">수정</button>
+              <button class="btn btn-danger" onclick="cancelDutyOrder('${order._id}')">취소</button>
+            `;
+          } else if (order.status === '시행') {
+            actionButtons = `
+              <button class="btn btn-primary" onclick="completeDutyOrder('${order._id}')">완료</button>
+            `;
+          }
+          document.getElementById('actionButtons').innerHTML = actionButtons;
+
+          new bootstrap.Modal(document.getElementById('dutyOrderDetailModal')).show();
+        } else {
+          showMessage(result.message, 'danger');
+        }
+      } catch (error) {
+        console.error('인사명령 상세 조회 오류:', error);
+        showMessage('인사명령 상세 조회 중 오류가 발생했습니다.', 'danger');
+      }
+    }
+
+    // 인사명령 승인
+    async function approveDutyOrder(id) {
+      if (confirm('이 인사명령을 승인하시겠습니까?')) {
+        try {
+          const response = await fetch(`/api/duty-orders/${id}/approve`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({})
+          });
+
+          const result = await response.json();
+
+          if (result.success) {
+            showMessage(result.message, 'success');
+            bootstrap.Modal.getInstance(document.getElementById('dutyOrderDetailModal')).hide();
+            loadDutyOrders(currentPage);
+          } else {
+            showMessage(result.message, 'danger');
+          }
+        } catch (error) {
+          console.error('인사명령 승인 오류:', error);
+          showMessage('인사명령 승인 중 오류가 발생했습니다.', 'danger');
+        }
+      }
+    }
+
+    // 인사명령 완료
+    async function completeDutyOrder(id) {
+      if (confirm('이 인사명령을 완료 처리하시겠습니까?')) {
+        try {
+          const response = await fetch(`/api/duty-orders/${id}/complete`, {
+            method: 'POST'
+          });
+
+          const result = await response.json();
+
+          if (result.success) {
+            showMessage(result.message, 'success');
+            bootstrap.Modal.getInstance(document.getElementById('dutyOrderDetailModal')).hide();
+            loadDutyOrders(currentPage);
+          } else {
+            showMessage(result.message, 'danger');
+          }
+        } catch (error) {
+          console.error('인사명령 완료 오류:', error);
+          showMessage('인사명령 완료 중 오류가 발생했습니다.', 'danger');
+        }
+      }
+    }
+
+    // 인사명령 취소
+    async function cancelDutyOrder(id) {
+      const reason = prompt('취소 사유를 입력해주세요:');
+      if (reason !== null) {
+        try {
+          const response = await fetch(`/api/duty-orders/${id}/cancel`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ cancelReason: reason })
+          });
+
+          const result = await response.json();
+
+          if (result.success) {
+            showMessage(result.message, 'success');
+            bootstrap.Modal.getInstance(document.getElementById('dutyOrderDetailModal')).hide();
+            loadDutyOrders(currentPage);
+          } else {
+            showMessage(result.message, 'danger');
+          }
+        } catch (error) {
+          console.error('인사명령 취소 오류:', error);
+          showMessage('인사명령 취소 중 오류가 발생했습니다.', 'danger');
+        }
+      }
+    }
+
+    // 인사명령 수정
+    function editDutyOrder(id) {
+      const order = dutyOrders.find(o => o._id === id);
+      if (order) {
+        editingDutyOrderId = id;
+        document.getElementById('modalTitle').textContent = '인사명령 수정';
+        
+        // 폼 데이터 채우기
+        document.getElementById('title').value = order.title;
+        document.getElementById('content').value = order.content;
+        document.getElementById('orderType').value = order.orderType;
+        document.getElementById('priority').value = order.priority;
+        document.getElementById('department').value = order.department;
+        document.getElementById('effectiveDate').value = order.effectiveDate.split('T')[0];
+        document.getElementById('deadline').value = order.deadline ? order.deadline.split('T')[0] : '';
+        
+        // 직원 목록 채우기
+        const container = document.getElementById('assignedEmployees');
+        container.innerHTML = '';
+        order.assignedEmployees.forEach(emp => {
+          addEmployee();
+          const lastRow = container.lastElementChild;
+          lastRow.querySelector('.employee-select').value = emp.employee._id;
+          lastRow.querySelector('[name="previousPosition"]').value = emp.previousPosition || '';
+          lastRow.querySelector('[name="newPosition"]').value = emp.newPosition || '';
+          lastRow.querySelector('[name="workType"]').value = emp.workType || '';
+        });
+        
+        new bootstrap.Modal(document.getElementById('dutyOrderModal')).show();
+      }
+    }
+
+    // 인사명령 삭제
+    async function deleteDutyOrder(id) {
+      if (confirm('이 인사명령을 삭제하시겠습니까?')) {
+        try {
+          const response = await fetch(`/api/duty-orders/${id}`, {
+            method: 'DELETE'
+          });
+
+          const result = await response.json();
+
+          if (result.success) {
+            showMessage(result.message, 'success');
+            loadDutyOrders(currentPage);
+          } else {
+            showMessage(result.message, 'danger');
+          }
+        } catch (error) {
+          console.error('인사명령 삭제 오류:', error);
+          showMessage('인사명령 삭제 중 오류가 발생했습니다.', 'danger');
+        }
+      }
+    }
+
+    // 메시지 표시
+    function showMessage(message, type) {
+      const alertDiv = document.createElement('div');
+      alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+      alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+      alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      `;
+      document.body.appendChild(alertDiv);
+      
+      setTimeout(() => {
+        if (alertDiv.parentNode) {
+          alertDiv.parentNode.removeChild(alertDiv);
+        }
+      }, 5000);
+    }
+  </script>
+</body>
+</html>

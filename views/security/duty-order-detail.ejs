@@ -336,16 +336,33 @@
 
     // 인사명령 수정
     function editDutyOrder() {
-      // 수정 페이지로 이동하는 로직 구현
-      alert('수정 기능은 추후 구현 예정입니다.');
+      window.location.href = `/security/duty-orders/<%= dutyOrder._id %>/edit`;
     }
 
     // 인사명령 삭제
-    function deleteDutyOrder() {
+    async function deleteDutyOrder() {
       if (!confirm('인사명령을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) return;
       
-      // 삭제 로직 구현
-      alert('삭제 기능은 추후 구현 예정입니다.');
+      try {
+        const response = await fetch(`/security/duty-orders/<%= dutyOrder._id %>`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          alert(result.message);
+          window.location.href = '/security/duty-orders';
+        } else {
+          alert('삭제 실패: ' + result.message);
+        }
+      } catch (error) {
+        console.error('삭제 오류:', error);
+        alert('삭제 중 오류가 발생했습니다.');
+      }
     }
     
     // 파일 삭제 함수

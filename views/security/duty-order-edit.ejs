@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>인사명령 수정 - 인사관리 시스템</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    body {
+      background: linear-gradient(135deg, #f8fafc 0%, #e2eafc 100%);
+      min-height: 100vh;
+    }
+    .edit-card {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      border: 1px solid rgba(0,0,0,0.05);
+    }
+    .form-control, .form-select {
+      border-radius: 8px;
+      border: 1px solid #e1e5e9;
+      transition: all 0.2s ease;
+    }
+    .form-control:focus, .form-select:focus {
+      border-color: #667eea;
+      box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    .btn {
+      border-radius: 8px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    .priority-high { border-left: 4px solid #dc3545; }
+    .priority-medium { border-left: 4px solid #ffc107; }
+    .priority-low { border-left: 4px solid #28a745; }
+    .attachment-item {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 0.75rem;
+      margin-bottom: 0.5rem;
+      border: 1px solid #e9ecef;
+    }
+    .employee-checkbox {
+      border: 1px solid #e9ecef;
+      border-radius: 8px;
+      padding: 0.5rem;
+      margin-bottom: 0.25rem;
+      transition: all 0.2s ease;
+    }
+    .employee-checkbox:hover {
+      background-color: #f8f9fa;
+    }
+    .employee-checkbox input[type="checkbox"]:checked + label {
+      color: #0d6efd;
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+  <%- include('../header') %>
+  
+  <div class="container mt-4">
+    <div class="row justify-content-center">
+      <div class="col-12 col-lg-10">
+        <!-- 헤더 -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <div>
+            <a href="/security/duty-orders/<%= dutyOrder._id %>" class="btn btn-outline-secondary btn-sm mb-2">
+              <i class="fas fa-arrow-left me-1"></i>상세보기로
+            </a>
+            <h2 class="mb-0">
+              <i class="fas fa-edit text-primary me-2"></i>인사명령 수정
+            </h2>
+          </div>
+        </div>
+
+        <% if (session.message) { %>
+          <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle me-2"></i>
+            <%= session.message %>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+          <% delete session.message; %>
+        <% } %>
+
+        <% if (session.error) { %>
+          <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <%= session.error %>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+          <% delete session.error; %>
+        <% } %>
+
+        <!-- 수정 폼 -->
+        <div class="edit-card">
+          <div class="card-header priority-<%= dutyOrder.priority %>">
+            <h4 class="mb-0">인사명령 정보 수정</h4>
+          </div>
+          <div class="card-body">
+            <form id="editForm" method="POST" action="/security/duty-orders/<%= dutyOrder._id %>" enctype="multipart/form-data">
+              <input type="hidden" name="_method" value="PUT">
+              
+              <!-- 기본 정보 -->
+              <div class="row mb-4">
+                <div class="col-md-8">
+                  <label class="form-label fw-bold">제목 <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" name="title" value="<%= dutyOrder.title %>" required>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label fw-bold">우선순위 <span class="text-danger">*</span></label>
+                  <select class="form-select" name="priority" required>
+                    <option value="high" <%= dutyOrder.priority === 'high' ? 'selected' : '' %>>긴급</option>
+                    <option value="medium" <%= dutyOrder.priority === 'medium' ? 'selected' : '' %>>보통</option>
+                    <option value="low" <%= dutyOrder.priority === 'low' ? 'selected' : '' %>>낮음</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="row mb-4">
+                <div class="col-md-4">
+                  <label class="form-label fw-bold">담당 부서 <span class="text-danger">*</span></label>
+                  <select class="form-select" name="department" required>
+                    <option value="보안1팀" <%= dutyOrder.department === '보안1팀' ? 'selected' : '' %>>보안1팀</option>
+                    <option value="보안2팀" <%= dutyOrder.department === '보안2팀' ? 'selected' : '' %>>보안2팀</option>
+                    <option value="보안3팀" <%= dutyOrder.department === '보안3팀' ? 'selected' : '' %>>보안3팀</option>
+                    <option value="전체" <%= dutyOrder.department === '전체' ? 'selected' : '' %>>전체</option>
+                  </select>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label fw-bold">상태</label>
+                  <select class="form-select" name="status">
+                    <option value="pending" <%= dutyOrder.status === 'pending' ? 'selected' : '' %>>대기중</option>
+                    <option value="active" <%= dutyOrder.status === 'active' ? 'selected' : '' %>>진행중</option>
+                    <option value="completed" <%= dutyOrder.status === 'completed' ? 'selected' : '' %>>완료</option>
+                    <option value="cancelled" <%= dutyOrder.status === 'cancelled' ? 'selected' : '' %>>취소</option>
+                  </select>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label fw-bold">마감일</label>
+                  <input type="date" class="form-control" name="deadline" 
+                         value="<%= dutyOrder.deadline ? dutyOrder.deadline.toISOString().split('T')[0] : '' %>">
+                </div>
+              </div>
+
+              <div class="row mb-4">
+                <div class="col-md-6">
+                  <label class="form-label fw-bold">진행률 (%)</label>
+                  <input type="range" class="form-range" name="progress" min="0" max="100" 
+                         value="<%= dutyOrder.progress || 0 %>" id="progressRange">
+                  <div class="text-center mt-2">
+                    <span id="progressValue" class="h5"><%= dutyOrder.progress || 0 %>%</span>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label fw-bold">추가 첨부파일</label>
+                  <input type="file" class="form-control" name="attachments" multiple 
+                         accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.jpg,.jpeg,.png,.gif">
+                  <small class="text-muted">최대 5개 파일, 각 파일 5MB 이하</small>
+                </div>
+              </div>
+
+              <!-- 내용 -->
+              <div class="mb-4">
+                <label class="form-label fw-bold">명령 내용 <span class="text-danger">*</span></label>
+                <textarea class="form-control" name="content" rows="6" required><%= dutyOrder.content %></textarea>
+              </div>
+
+              <!-- 담당자 선택 -->
+              <div class="mb-4">
+                <label class="form-label fw-bold">담당자 선택</label>
+                <div class="row">
+                  <% 
+                    const assignedIds = dutyOrder.assignedTo ? dutyOrder.assignedTo.map(emp => emp._id.toString()) : [];
+                  %>
+                  <% employees.forEach(employee => { %>
+                    <div class="col-md-4 mb-2">
+                      <div class="employee-checkbox">
+                        <input type="checkbox" class="form-check-input me-2" 
+                               name="assignedTo" value="<%= employee._id %>" 
+                               id="emp_<%= employee._id %>"
+                               <%= assignedIds.includes(employee._id.toString()) ? 'checked' : '' %>>
+                        <label class="form-check-label" for="emp_<%= employee._id %>">
+                          <strong><%= employee.name %></strong>
+                          <br><small class="text-muted"><%= employee.department %> / <%= employee.position %></small>
+                        </label>
+                      </div>
+                    </div>
+                  <% }); %>
+                </div>
+              </div>
+
+              <!-- 기존 첨부파일 -->
+              <% if (dutyOrder.attachments && dutyOrder.attachments.length > 0) { %>
+                <div class="mb-4">
+                  <label class="form-label fw-bold">기존 첨부파일</label>
+                  <div id="existingAttachments">
+                    <% dutyOrder.attachments.forEach(file => { %>
+                      <div class="attachment-item d-flex justify-content-between align-items-center" data-filename="<%= file.filename %>">
+                        <div>
+                          <i class="fas fa-file me-2"></i>
+                          <%= file.filename %>
+                          <small class="text-muted ms-2">
+                            (<%= new Date(file.uploadedAt).toLocaleDateString('ko-KR') %>)
+                          </small>
+                        </div>
+                        <div>
+                          <a href="/security/download/<%= file.filename %>" class="btn btn-sm btn-outline-primary me-2">
+                            <i class="fas fa-download"></i>
+                          </a>
+                          <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeAttachment('<%= file.filename %>')">
+                            <i class="fas fa-trash"></i>
+                          </button>
+                        </div>
+                      </div>
+                    <% }); %>
+                  </div>
+                </div>
+              <% } %>
+
+              <!-- 버튼 -->
+              <div class="d-flex justify-content-end gap-2">
+                <a href="/security/duty-orders/<%= dutyOrder._id %>" class="btn btn-secondary">
+                  <i class="fas fa-times me-1"></i>취소
+                </a>
+                <button type="submit" class="btn btn-primary">
+                  <i class="fas fa-save me-1"></i>수정 저장
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // 진행률 슬라이더 업데이트
+    document.getElementById('progressRange').addEventListener('input', function() {
+      document.getElementById('progressValue').textContent = this.value + '%';
+    });
+
+    // 담당자 체크박스 처리
+    document.querySelectorAll('input[name="assignedTo"]').forEach(checkbox => {
+      checkbox.addEventListener('change', function() {
+        const selectedIds = Array.from(document.querySelectorAll('input[name="assignedTo"]:checked'))
+          .map(cb => cb.value);
+        
+        // 히든 필드 업데이트 (서버에서 처리하기 위해)
+        let hiddenInput = document.querySelector('input[name="assignedToIds"]');
+        if (!hiddenInput) {
+          hiddenInput = document.createElement('input');
+          hiddenInput.type = 'hidden';
+          hiddenInput.name = 'assignedToIds';
+          document.getElementById('editForm').appendChild(hiddenInput);
+        }
+        hiddenInput.value = selectedIds.join(',');
+      });
+    });
+
+    // 첨부파일 삭제
+    async function removeAttachment(filename) {
+      if (!confirm('이 파일을 삭제하시겠습니까?')) return;
+      
+      try {
+        const response = await fetch(`/security/files/${filename}`, {
+          method: 'DELETE'
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          // DOM에서 해당 첨부파일 항목 제거
+          const attachmentItem = document.querySelector(`[data-filename="${filename}"]`);
+          if (attachmentItem) {
+            attachmentItem.remove();
+          }
+          
+          // 성공 메시지 표시
+          showAlert('파일이 삭제되었습니다.', 'success');
+        } else {
+          showAlert('파일 삭제에 실패했습니다: ' + result.message, 'danger');
+        }
+      } catch (error) {
+        console.error('파일 삭제 오류:', error);
+        showAlert('파일 삭제 중 오류가 발생했습니다.', 'danger');
+      }
+    }
+
+    // 알림 메시지 표시 함수
+    function showAlert(message, type) {
+      const alertDiv = document.createElement('div');
+      alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+      alertDiv.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      `;
+      
+      const container = document.querySelector('.container .row .col-12');
+      const firstCard = container.querySelector('.edit-card');
+      container.insertBefore(alertDiv, firstCard);
+      
+      // 5초 후 자동 삭제
+      setTimeout(() => {
+        if (alertDiv.parentNode) {
+          alertDiv.remove();
+        }
+      }, 5000);
+    }
+
+    // 폼 제출 처리
+    document.getElementById('editForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      // 담당자 ID 수집
+      const selectedIds = Array.from(document.querySelectorAll('input[name="assignedTo"]:checked'))
+        .map(cb => cb.value);
+      
+      // FormData 생성
+      const formData = new FormData(this);
+      formData.delete('assignedTo'); // 기존 체크박스 값들 제거
+      formData.set('assignedTo', selectedIds.join(',')); // 쉼표로 구분된 문자열로 설정
+      
+      // 비동기 요청으로 수정 처리
+      fetch(this.action, {
+        method: 'PUT',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: formData
+        // Content-Type을 명시적으로 설정하지 않음 (FormData 사용 시 브라우저가 자동 설정)
+      })
+      .then(response => {
+        // 응답이 JSON인지 확인
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          return response.json();
+        } else {
+          // HTML 응답인 경우 (리다이렉트)
+          if (response.redirected) {
+            window.location.href = response.url;
+            return;
+          }
+          throw new Error('서버에서 예상치 못한 응답을 받았습니다.');
+        }
+      })
+      .then(data => {
+        if (data && data.success) {
+          showAlert(data.message, 'success');
+          setTimeout(() => {
+            window.location.href = `/security/duty-orders/<%= dutyOrder._id %>`;
+          }, 1500);
+        } else if (data && data.message) {
+          showAlert(data.message, 'danger');
+        }
+      })
+      .catch(error => {
+        console.error('수정 오류:', error);
+        showAlert('수정 중 오류가 발생했습니다.', 'danger');
+      });
+    });
+
+    // 헤더 드롭다운 메뉴 초기화
+    document.addEventListener('DOMContentLoaded', function() {
+      // Bootstrap 드롭다운 초기화
+      const dropdownElementList = [].slice.call(document.querySelectorAll('.dropdown-toggle'));
+      const dropdownList = dropdownElementList.map(function (dropdownToggleEl) {
+        return new bootstrap.Dropdown(dropdownToggleEl);
+      });
+    });
+  </script>
+</body>
+</html>

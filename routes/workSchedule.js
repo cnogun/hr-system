@@ -270,7 +270,7 @@ router.get('/weekend-attendance-status', async (req, res) => {
 
     for (const employee of securityEmployees) {
       // 토요일 근태 상태
-      const satAttendance = employee.attendance.get(saturdayStr);
+      const satAttendance = employee.attendance[saturdayStr];
       attendanceStatus.saturday.employees.push({
         name: employee.name,
         department: employee.department,
@@ -279,7 +279,7 @@ router.get('/weekend-attendance-status', async (req, res) => {
       });
 
       // 일요일 근태 상태
-      const sunAttendance = employee.attendance.get(sundayStr);
+      const sunAttendance = employee.attendance[sundayStr];
       attendanceStatus.sunday.employees.push({
         name: employee.name,
         department: employee.department,
@@ -470,6 +470,9 @@ router.get('/assignment-counts', async (req, res) => {
 // 편성 인원 현황 업데이트 및 근태 자동입력 (내부 함수)
 async function updateAssignmentCounts(weekendData) {
   try {
+    console.log('=== updateAssignmentCounts 시작 ===');
+    console.log('weekendData:', weekendData);
+    
     // 각 팀별로 편성 명단을 기반으로 weekendAssignment 업데이트
     const teams = ['team1', 'team2', 'team3'];
     
@@ -480,10 +483,10 @@ async function updateAssignmentCounts(weekendData) {
     
     // 토요일과 일요일 날짜 찾기
     const saturday = new Date(weekStart);
-    saturday.setDate(weekStart.getDate() + (5 - weekStart.getDay() + 7) % 7); // 다음 토요일
+    saturday.setDate(weekStart.getDate() + 5); // 월요일 + 5일 = 토요일
     
     const sunday = new Date(saturday);
-    sunday.setDate(saturday.getDate() + 1); // 일요일
+    sunday.setDate(saturday.getDate() + 1); // 토요일 + 1일 = 일요일
     
     // 날짜 형식 변환 (YYYY-MM-DD)
     const saturdayStr = saturday.toISOString().split('T')[0];
@@ -492,111 +495,179 @@ async function updateAssignmentCounts(weekendData) {
     console.log('주말 날짜 계산:', { saturday: saturdayStr, sunday: sundayStr });
     
     for (const team of teams) {
-      const teamData = weekendData[team];
-      if (!teamData) continue;
-      
-      // A조, B조 명단 파싱
-      const aGroupMembers = teamData.aGroup ? teamData.aGroup.split('\n').filter(line => line.trim()) : [];
-      const bGroupMembers = teamData.bGroup ? teamData.bGroup.split('\n').filter(line => line.trim()) : [];
-      
-      // 1조, 2조, 3조, 4조 명단 파싱
-      const group1Members = teamData.group1 ? teamData.group1.split('\n').filter(line => line.trim()) : [];
-      const group2Members = teamData.group2 ? teamData.group2.split('\n').filter(line => line.trim()) : [];
-      const group3Members = teamData.group3 ? teamData.group3.split('\n').filter(line => line.trim()) : [];
-      const group4Members = teamData.group4 ? teamData.group4.split('\n').filter(line => line.trim()) : [];
-      
-      // 각 직원의 weekendAssignment 업데이트 및 근태 자동입력
-      for (const member of aGroupMembers) {
-        await Employee.updateOne(
-          { name: member.trim() },
-          { 
-            'weekendAssignment.group': 'none',
-            'weekendAssignment.weekendGroup': 'A조',
-            'weekendAssignment.sundayGroup': 'none'
-          }
-        );
+      try {
+        console.log(`=== ${team} 처리 시작 ===`);
+        const teamData = weekendData[team];
+        if (!teamData) {
+          console.log(`${team} 데이터가 없습니다.`);
+          continue;
+        }
         
-        // 일요일 주간근무 근태 자동입력
-        await updateAttendanceStatus(member.trim(), sundayStr, '일요일특근');
-      }
-      
-      for (const member of bGroupMembers) {
-        await Employee.updateOne(
-          { name: member.trim() },
-          { 
-            'weekendAssignment.group': 'none',
-            'weekendAssignment.weekendGroup': 'B조',
-            'weekendAssignment.sundayGroup': 'none'
-          }
-        );
+        console.log(`${team} 데이터:`, teamData);
         
-        // 일요일 야간근무 근태 자동입력
-        await updateAttendanceStatus(member.trim(), sundayStr, '일요일야간특근');
-      }
-      
-      for (const member of group1Members) {
-        await Employee.updateOne(
-          { name: member.trim() },
-          { 
-            'weekendAssignment.group': '1/4',
-            'weekendAssignment.weekendGroup': 'none',
-            'weekendAssignment.sundayGroup': '1조'
-          }
-        );
+        // A조, B조 명단 파싱
+        const aGroupMembers = teamData.aGroup ? teamData.aGroup.split('\n').filter(line => line.trim()) : [];
+        const bGroupMembers = teamData.bGroup ? teamData.bGroup.split('\n').filter(line => line.trim()) : [];
         
-        // 1조는 토요일과 일요일 모두 근무
-        await updateAttendanceStatus(member.trim(), saturdayStr, '토요일특근');
-        await updateAttendanceStatus(member.trim(), sundayStr, '일요일특근');
-      }
-      
-      for (const member of group2Members) {
-        await Employee.updateOne(
-          { name: member.trim() },
-          { 
-            'weekendAssignment.group': '1/4',
-            'weekendAssignment.weekendGroup': 'none',
-            'weekendAssignment.sundayGroup': '2조'
-          }
-        );
+        // 1조, 2조, 3조, 4조 명단 파싱
+        const group1Members = teamData.group1 ? teamData.group1.split('\n').filter(line => line.trim()) : [];
+        const group2Members = teamData.group2 ? teamData.group2.split('\n').filter(line => line.trim()) : [];
+        const group3Members = teamData.group3 ? teamData.group3.split('\n').filter(line => line.trim()) : [];
+        const group4Members = teamData.group4 ? teamData.group4.split('\n').filter(line => line.trim()) : [];
         
-        // 2조는 토요일과 일요일 모두 근무
-        await updateAttendanceStatus(member.trim(), saturdayStr, '토요일특근');
-        await updateAttendanceStatus(member.trim(), sundayStr, '일요일특근');
-      }
+        console.log(`${team} 파싱된 명단:`, {
+          aGroup: aGroupMembers.length,
+          bGroup: bGroupMembers.length,
+          group1: group1Members.length,
+          group2: group2Members.length,
+          group3: group3Members.length,
+          group4: group4Members.length
+        });
       
-      for (const member of group3Members) {
-        await Employee.updateOne(
-          { name: member.trim() },
-          { 
-            'weekendAssignment.group': '3/4',
-            'weekendAssignment.weekendGroup': 'none',
-            'weekendAssignment.sundayGroup': '3조'
+        // 각 직원의 weekendAssignment 업데이트 및 근태 자동입력
+        for (const member of aGroupMembers) {
+          try {
+            await Employee.updateOne(
+              { name: member.trim() },
+              { 
+                $set: {
+                  'weekendAssignment.group': 'none',
+                  'weekendAssignment.weekendGroup': 'A조',
+                  'weekendAssignment.sundayGroup': 'none'
+                }
+              }
+            );
+            
+            // 일요일 주간근무 근태 자동입력
+            await updateAttendanceStatus(member.trim(), sundayStr, '일요일특근');
+            console.log(`A조 ${member.trim()} 처리 완료`);
+          } catch (error) {
+            console.error(`A조 ${member.trim()} 처리 오류:`, error);
           }
-        );
-        
-        // 3조는 토요일과 일요일 모두 근무
-        await updateAttendanceStatus(member.trim(), saturdayStr, '토요일특근');
-        await updateAttendanceStatus(member.trim(), sundayStr, '일요일특근');
-      }
+        }
       
-      for (const member of group4Members) {
-        await Employee.updateOne(
-          { name: member.trim() },
-          { 
-            'weekendAssignment.group': '3/4',
-            'weekendAssignment.weekendGroup': 'none',
-            'weekendAssignment.sundayGroup': '4조'
+        for (const member of bGroupMembers) {
+          try {
+            await Employee.updateOne(
+              { name: member.trim() },
+              { 
+                $set: {
+                  'weekendAssignment.group': 'none',
+                  'weekendAssignment.weekendGroup': 'B조',
+                  'weekendAssignment.sundayGroup': 'none'
+                }
+              }
+            );
+            
+            // 일요일 야간근무 근태 자동입력
+            await updateAttendanceStatus(member.trim(), sundayStr, '일요일야간특근');
+            console.log(`B조 ${member.trim()} 처리 완료`);
+          } catch (error) {
+            console.error(`B조 ${member.trim()} 처리 오류:`, error);
           }
-        );
+        }
         
-        // 4조는 토요일과 일요일 모두 근무
-        await updateAttendanceStatus(member.trim(), saturdayStr, '토요일특근');
-        await updateAttendanceStatus(member.trim(), sundayStr, '일요일특근');
+        for (const member of group1Members) {
+          try {
+            await Employee.updateOne(
+              { name: member.trim() },
+              { 
+                $set: {
+                  'weekendAssignment.group': '1/4',
+                  'weekendAssignment.weekendGroup': 'none',
+                  'weekendAssignment.sundayGroup': '1조'
+                }
+              }
+            );
+            
+            // 1조는 토요일과 일요일 모두 근무
+            await updateAttendanceStatus(member.trim(), saturdayStr, '토요일특근');
+            await updateAttendanceStatus(member.trim(), sundayStr, '일요일특근');
+            console.log(`1조 ${member.trim()} 처리 완료`);
+          } catch (error) {
+            console.error(`1조 ${member.trim()} 처리 오류:`, error);
+          }
+        }
+        
+        for (const member of group2Members) {
+          try {
+            await Employee.updateOne(
+              { name: member.trim() },
+              { 
+                $set: {
+                  'weekendAssignment.group': '1/4',
+                  'weekendAssignment.weekendGroup': 'none',
+                  'weekendAssignment.sundayGroup': '2조'
+                }
+              }
+            );
+            
+            // 2조는 토요일과 일요일 모두 근무
+            await updateAttendanceStatus(member.trim(), saturdayStr, '토요일특근');
+            await updateAttendanceStatus(member.trim(), sundayStr, '일요일특근');
+            console.log(`2조 ${member.trim()} 처리 완료`);
+          } catch (error) {
+            console.error(`2조 ${member.trim()} 처리 오류:`, error);
+          }
+        }
+        
+        for (const member of group3Members) {
+          try {
+            await Employee.updateOne(
+              { name: member.trim() },
+              { 
+                $set: {
+                  'weekendAssignment.group': '3/4',
+                  'weekendAssignment.weekendGroup': 'none',
+                  'weekendAssignment.sundayGroup': '3조'
+                }
+              }
+            );
+            
+            // 3조는 토요일과 일요일 모두 근무
+            await updateAttendanceStatus(member.trim(), saturdayStr, '토요일특근');
+            await updateAttendanceStatus(member.trim(), sundayStr, '일요일특근');
+            console.log(`3조 ${member.trim()} 처리 완료`);
+          } catch (error) {
+            console.error(`3조 ${member.trim()} 처리 오류:`, error);
+          }
+        }
+        
+        for (const member of group4Members) {
+          try {
+            await Employee.updateOne(
+              { name: member.trim() },
+              { 
+                $set: {
+                  'weekendAssignment.group': '3/4',
+                  'weekendAssignment.weekendGroup': 'none',
+                  'weekendAssignment.sundayGroup': '4조'
+                }
+              }
+            );
+            
+            // 4조는 토요일과 일요일 모두 근무
+            await updateAttendanceStatus(member.trim(), saturdayStr, '토요일특근');
+            await updateAttendanceStatus(member.trim(), sundayStr, '일요일특근');
+            console.log(`4조 ${member.trim()} 처리 완료`);
+          } catch (error) {
+            console.error(`4조 ${member.trim()} 처리 오류:`, error);
+          }
+        }
+        
+        console.log(`=== ${team} 처리 완료 ===`);
+      } catch (error) {
+        console.error(`${team} 처리 중 오류:`, error);
       }
     }
     
     // 주말에 근무하지 않는 직원들의 근태를 정기휴무로 설정
-    await updateNonWorkingEmployees(saturdayStr, sundayStr);
+    try {
+      await updateNonWorkingEmployees(saturdayStr, sundayStr);
+      console.log('=== updateAssignmentCounts 완료 ===');
+    } catch (error) {
+      console.error('비근무 직원 처리 오류:', error);
+    }
     
   } catch (error) {
     console.error('편성 인원 현황 업데이트 오류:', error);
@@ -615,11 +686,11 @@ async function updateAttendanceStatus(employeeName, date, status) {
     
     // attendance 필드가 없으면 초기화
     if (!employee.attendance) {
-      employee.attendance = new Map();
+      employee.attendance = {};
     }
     
     // 해당 날짜의 근태 상태 업데이트
-    employee.attendance.set(date, {
+    employee.attendance[date] = {
       status: status,
       checkIn: status.includes('야간') ? '18:00' : '06:00',
       checkOut: status.includes('야간') ? '06:00' : '18:00',
@@ -627,7 +698,7 @@ async function updateAttendanceStatus(employeeName, date, status) {
       overtime: '0',
       nightTime: status.includes('야간') ? '8' : '0',
       updatedAt: new Date()
-    });
+    };
     
     await employee.save();
     console.log(`${employeeName}의 ${date} 근태 상태가 ${status}로 업데이트되었습니다.`);
@@ -989,6 +1060,208 @@ router.get('/stats/excel', async (req, res) => {
   } catch (error) {
     console.error('근무 통계 보고서 다운로드 오류:', error);
     res.status(500).json({ success: false, message: '보고서 다운로드 중 오류가 발생했습니다.' });
+  }
+});
+
+// 주차별 스케줄 관리 라우트
+
+// 주차 목록 조회
+router.get('/week-list', async (req, res) => {
+  try {
+    const schedules = await WorkSchedule.find({ status: 'active' })
+      .sort({ weekStartDate: -1 })
+      .select('_id weekNumber weekStartDate weekEndDate status')
+      .limit(20);
+    
+    res.json({
+      success: true,
+      data: schedules
+    });
+  } catch (error) {
+    console.error('주차 목록 조회 오류:', error);
+    res.status(500).json({
+      success: false,
+      message: '주차 목록 조회 중 오류가 발생했습니다.'
+    });
+  }
+});
+
+// 특정 주차 스케줄 조회
+router.get('/week/:id', async (req, res) => {
+  try {
+    const schedule = await WorkSchedule.findById(req.params.id);
+    
+    if (!schedule) {
+      return res.status(404).json({
+        success: false,
+        message: '해당 주차 스케줄을 찾을 수 없습니다.'
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: schedule
+    });
+  } catch (error) {
+    console.error('주차 스케줄 조회 오류:', error);
+    res.status(500).json({
+      success: false,
+      message: '주차 스케줄 조회 중 오류가 발생했습니다.'
+    });
+  }
+});
+
+// 주차 스케줄 생성
+router.post('/create-week', async (req, res) => {
+  try {
+    const { weekNumber, weekStartDate, weekEndDate, status, createdBy } = req.body;
+    
+    // 중복 주차 번호 확인
+    const existingSchedule = await WorkSchedule.findOne({
+      weekNumber: weekNumber,
+      status: 'active'
+    });
+    
+    if (existingSchedule) {
+      return res.status(400).json({
+        success: false,
+        message: '해당 주차 번호의 스케줄이 이미 존재합니다.'
+      });
+    }
+    
+    // 중복 날짜 범위 확인
+    const overlappingSchedule = await WorkSchedule.findOne({
+      status: 'active',
+      $or: [
+        {
+          weekStartDate: { $lte: new Date(weekStartDate) },
+          weekEndDate: { $gte: new Date(weekStartDate) }
+        },
+        {
+          weekStartDate: { $lte: new Date(weekEndDate) },
+          weekEndDate: { $gte: new Date(weekEndDate) }
+        }
+      ]
+    });
+    
+    if (overlappingSchedule) {
+      return res.status(400).json({
+        success: false,
+        message: '해당 기간과 겹치는 스케줄이 이미 존재합니다.'
+      });
+    }
+    
+    const newSchedule = new WorkSchedule({
+      weekNumber,
+      weekStartDate: new Date(weekStartDate),
+      weekEndDate: new Date(weekEndDate),
+      status: status || 'active',
+      createdBy: createdBy || 'admin',
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
+    
+    await newSchedule.save();
+    
+    res.json({
+      success: true,
+      message: '주차 스케줄이 생성되었습니다.',
+      data: newSchedule
+    });
+  } catch (error) {
+    console.error('주차 스케줄 생성 오류:', error);
+    res.status(500).json({
+      success: false,
+      message: '주차 스케줄 생성 중 오류가 발생했습니다.'
+    });
+  }
+});
+
+// 다음 주차 생성
+router.post('/create-next-week', async (req, res) => {
+  try {
+    const { currentWeekId } = req.body;
+    
+    if (!currentWeekId) {
+      return res.status(400).json({
+        success: false,
+        message: '현재 주차 ID가 필요합니다.'
+      });
+    }
+    
+    // 현재 주차 정보 조회
+    const currentWeek = await WorkSchedule.findById(currentWeekId);
+    if (!currentWeek) {
+      return res.status(404).json({
+        success: false,
+        message: '현재 주차를 찾을 수 없습니다.'
+      });
+    }
+    
+    // 다음 주차 시작일 계산 (현재 주차 종료일 다음날)
+    const nextWeekStartDate = new Date(currentWeek.weekEndDate);
+    nextWeekStartDate.setDate(nextWeekStartDate.getDate() + 1);
+    nextWeekStartDate.setHours(6, 0, 0, 0); // 월요일 06:00
+    
+    // 다음 주차 종료일 계산 (7일 후)
+    const nextWeekEndDate = new Date(nextWeekStartDate);
+    nextWeekEndDate.setDate(nextWeekStartDate.getDate() + 6);
+    nextWeekEndDate.setHours(23, 59, 59, 999); // 일요일 23:59:59
+    
+    // 주차 번호 계산
+    const yearStart = new Date(2025, 0, 1, 6, 0, 0); // 2025년 1월 1일 06:00
+    const dayOfWeek = nextWeekStartDate.getDay();
+    const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    
+    const monday6am = new Date(nextWeekStartDate);
+    monday6am.setDate(nextWeekStartDate.getDate() - mondayOffset);
+    monday6am.setHours(6, 0, 0, 0);
+    
+    const weekDiff = Math.floor((monday6am - yearStart) / (7 * 24 * 60 * 60 * 1000));
+    const weekNumber = weekDiff + 2;
+    
+    // 다음 주차 스케줄 생성
+    const nextWeekSchedule = new WorkSchedule({
+      weekStartDate: nextWeekStartDate,
+      weekEndDate: nextWeekEndDate,
+      weekNumber: weekNumber,
+      currentWeekSchedule: {
+        team1: '출근(초)',
+        team2: '출근(심)',
+        team3: '출근(주)'
+      },
+      weekendSchedule: {
+        saturday: {
+          dayShift: { team1Count: 0, team2Count: 0, team3Count: 0 },
+          nightShift: { team1Count: 0, team2Count: 0, team3Count: 0 }
+        },
+        sunday: {
+          dayShift: { team1Count: 0, team2Count: 0, team3Count: 0 },
+          nightShift: { team1Count: 0, team2Count: 0, team3Count: 0 }
+        },
+        team1: { aGroup: '', bGroup: '', group1: '', group2: '', group3: '', group4: '' },
+        team2: { aGroup: '', bGroup: '', group1: '', group2: '', group3: '', group4: '' },
+        team3: { aGroup: '', bGroup: '', group1: '', group2: '', group3: '', group4: '' }
+      },
+      holidays: [],
+      status: 'active',
+      createdBy: req.session.userId
+    });
+    
+    await nextWeekSchedule.save();
+    
+    res.json({
+      success: true,
+      message: '다음 주차 스케줄이 생성되었습니다.',
+      data: nextWeekSchedule
+    });
+    
+  } catch (error) {
+    console.error('다음 주차 생성 오류:', error);
+    res.status(500).json({
+      success: false,
+      message: '다음 주차 생성 중 오류가 발생했습니다.'
+    });
   }
 });
 

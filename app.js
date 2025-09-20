@@ -231,6 +231,8 @@ const attendanceRoutes = require('./routes/attendance');
 const monthlyAttendanceRoutes = require('./routes/monthlyAttendance');
 const workOrderRoutes = require('./routes/workOrders');
 const handoverRoutes = require('./routes/handovers');
+const workScheduleRoutes = require('./routes/workSchedule');
+const dutyOrderRoutes = require('./routes/dutyOrders');
 
 
 app.use('/employees', employeeRoutes);
@@ -243,6 +245,35 @@ app.use('/attendance', attendanceRoutes);
 app.use('/monthlyAttendance', monthlyAttendanceRoutes);
 app.use('/work-orders', workOrderRoutes);
 app.use('/handovers', handoverRoutes);
+app.use('/workSchedule', workScheduleRoutes);
+
+// 인사명령 페이지 라우트
+app.get('/duty-orders', async (req, res) => {
+  try {
+    if (!req.session || !req.session.userId) {
+      return res.redirect('/auth/login');
+    }
+    
+    res.render('dutyOrders', { 
+      session: req.session,
+      name: req.session.name || '사용자',
+      position: req.session.position || '직급미정'
+    });
+    
+  } catch (error) {
+    console.error('인사명령 페이지 로드 오류:', error);
+    res.status(500).send(`
+      <script>
+        alert('인사명령 페이지 로드 중 오류가 발생했습니다.\\n\\n오류: ${error.message}');
+        history.back();
+      </script>
+    `);
+  }
+});
+
+// 인사명령 API 라우트 (별도 경로)
+app.use('/api/duty-orders', dutyOrderRoutes);
+
 // WorkSchedule 라우트 (EJS 템플릿 사용)
 app.get('/workSchedule', async (req, res) => {
   try {

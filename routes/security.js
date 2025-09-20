@@ -409,6 +409,201 @@ router.get('/duty-orders/:id', isLoggedIn, async (req, res) => {
   }
 });
 
+// 인사명령 수정 페이지
+router.get('/duty-orders/:id/edit', isLoggedIn, async (req, res) => {
+  try {
+    const dutyOrder = await DutyOrder.findById(req.params.id)
+      .populate('issuedBy', 'name username')
+      .populate('assignedTo', 'name department position');
+    
+    if (!dutyOrder) {
+      return res.status(404).send('인사명령을 찾을 수 없습니다.');
+    }
+    
+    // 권한 확인: 관리자이거나 작성자만 수정 가능
+    const User = require('../models/User');
+    const user = await User.findById(req.session.userId);
+    
+    if (user.role !== 'admin' && dutyOrder.issuedBy._id.toString() !== req.session.userId) {
+      req.session.error = '수정 권한이 없습니다.';
+      return res.redirect('/security/duty-orders/' + req.params.id);
+    }
+    
+    // 직원 목록 조회 (담당자 선택용)
+    const Employee = require('../models/Employee');
+    const employees = await Employee.find({ status: '재직' })
+      .select('name department position')
+      .sort({ department: 1, name: 1 });
+    
+    // 헤더에 필요한 변수들 설정
+    if (req.session && req.session.userId) {
+      if (user) {
+        if (user.role === 'admin') {
+          res.locals.position = '관리자';
+          res.locals.name = user.username;
+          res.locals.department = '시스템 관리';
+          res.locals.employeePosition = '관리자';
+          res.locals.userRole = 'admin';
+        } else {
+          const employee = await Employee.findOne({ userId: req.session.userId });
+          if (employee) {
+            res.locals.position = `${employee.department || '부서미정'} / ${employee.position || '직급미정'}`;
+            res.locals.name = employee.name;
+            res.locals.department = employee.department || '부서미정';
+            res.locals.employeePosition = employee.position || '직급미정';
+            res.locals.userRole = 'user';
+          } else {
+            res.locals.position = '일반 사용자';
+            res.locals.name = user.username;
+            res.locals.department = '부서미정';
+            res.locals.employeePosition = '직급미정';
+            res.locals.userRole = 'user';
+          }
+        }
+      }
+    }
+    
+    res.render('security/duty-order-edit', {
+      session: req.session,
+      dutyOrder,
+      employees
+    });
+  } catch (error) {
+    console.error('인사명령 수정 페이지 오류:', error);
+    res.status(500).send('서버 오류가 발생했습니다.');
+  }
+});
+
+// 인사명령 수정 처리
+router.put('/duty-orders/:id', isLoggedIn, upload.array('attachments', 5), async (req, res) => {
+  try {
+    // 디버깅: 요청 정보 로그
+    console.log('=== 인사명령 수정 요청 ===');
+    console.log('Content-Type:', req.headers['content-type']);
+    console.log('X-Requested-With:', req.headers['x-requested-with']);
+    console.log('Method:', req.method);
+    console.log('Body:', req.body);
+    
+    const dutyOrder = await DutyOrder.findById(req.params.id);
+    
+    if (!dutyOrder) {
+      return res.status(404).json({ success: false, message: '인사명령을 찾을 수 없습니다.' });
+    }
+    
+    // 권한 확인: 관리자이거나 작성자만 수정 가능
+    const User = require('../models/User');
+    const user = await User.findById(req.session.userId);
+    
+    if (user.role !== 'admin' && dutyOrder.issuedBy.toString() !== req.session.userId) {
+      return res.status(403).json({ success: false, message: '수정 권한이 없습니다.' });
+    }
+    
+    const { title, content, priority, department, deadline, assignedTo, status, progress } = req.body;
+    
+    // 기본 정보 업데이트
+    dutyOrder.title = title || dutyOrder.title;
+    dutyOrder.content = content || dutyOrder.content;
+    dutyOrder.priority = priority || dutyOrder.priority;
+    dutyOrder.department = department || dutyOrder.department;
+    dutyOrder.deadline = deadline ? new Date(deadline) : dutyOrder.deadline;
+    dutyOrder.status = status || dutyOrder.status;
+    dutyOrder.progress = progress !== undefined ? parseInt(progress) : dutyOrder.progress;
+    
+    // 담당자 업데이트
+    if (assignedTo) {
+      dutyOrder.assignedTo = assignedTo.split(',').map(id => id.trim()).filter(id => id);
+    }
+    
+    // 새 첨부파일 추가
+    if (req.files && req.files.length > 0) {
+      const newAttachments = req.files.map(file => ({
+        filename: file.originalname,
+        path: file.path,
+        uploadedAt: new Date()
+      }));
+      dutyOrder.attachments = [...dutyOrder.attachments, ...newAttachments];
+    }
+    
+    await dutyOrder.save();
+    
+    // 알림 생성
+    try {
+      await NotificationService.createDutyOrderNotification(dutyOrder, 'updated');
+    } catch (error) {
+      console.error('알림 생성 실패:', error);
+    }
+    
+    // AJAX 요청인지 확인 (FormData는 multipart/form-data로 전송됨)
+    if (req.headers['x-requested-with'] === 'XMLHttpRequest' || 
+        (req.headers['content-type'] && req.headers['content-type'].includes('multipart/form-data'))) {
+      res.json({ success: true, message: '인사명령이 성공적으로 수정되었습니다.' });
+    } else {
+      req.session.message = '인사명령이 성공적으로 수정되었습니다.';
+      res.redirect('/security/duty-orders/' + req.params.id);
+    }
+  } catch (error) {
+    console.error('인사명령 수정 오류:', error);
+    
+    // 업로드된 파일이 있다면 삭제
+    if (req.files) {
+      req.files.forEach(file => {
+        if (fs.existsSync(file.path)) {
+          fs.unlinkSync(file.path);
+        }
+      });
+    }
+    
+    // AJAX 요청인지 확인
+    if (req.headers['x-requested-with'] === 'XMLHttpRequest' || 
+        (req.headers['content-type'] && req.headers['content-type'].includes('multipart/form-data'))) {
+      res.status(500).json({ success: false, message: '인사명령 수정에 실패했습니다.' });
+    } else {
+      req.session.error = '인사명령 수정에 실패했습니다.';
+      res.redirect('/security/duty-orders/' + req.params.id);
+    }
+  }
+});
+
+// 인사명령 삭제
+router.delete('/duty-orders/:id', isLoggedIn, async (req, res) => {
+  try {
+    const dutyOrder = await DutyOrder.findById(req.params.id);
+    
+    if (!dutyOrder) {
+      return res.status(404).json({ success: false, message: '인사명령을 찾을 수 없습니다.' });
+    }
+    
+    // 권한 확인: 관리자이거나 작성자만 삭제 가능
+    const User = require('../models/User');
+    const user = await User.findById(req.session.userId);
+    
+    if (user.role !== 'admin' && dutyOrder.issuedBy.toString() !== req.session.userId) {
+      return res.status(403).json({ success: false, message: '삭제 권한이 없습니다.' });
+    }
+    
+    // 첨부파일 삭제
+    if (dutyOrder.attachments && dutyOrder.attachments.length > 0) {
+      dutyOrder.attachments.forEach(file => {
+        try {
+          if (fs.existsSync(file.path)) {
+            fs.unlinkSync(file.path);
+          }
+        } catch (error) {
+          console.error('첨부파일 삭제 오류:', error);
+        }
+      });
+    }
+    
+    // 데이터베이스에서 삭제
+    await DutyOrder.findByIdAndDelete(req.params.id);
+    
+    res.json({ success: true, message: '인사명령이 성공적으로 삭제되었습니다.' });
+  } catch (error) {
+    console.error('인사명령 삭제 오류:', error);
+    res.status(500).json({ success: false, message: '인사명령 삭제에 실패했습니다.' });
+  }
+});
+
 // ===== 인계사항 라우트 =====
 
 // 인계사항 목록 페이지
@@ -1108,6 +1303,205 @@ router.put('/api/templates/:id/default', isLoggedIn, async (req, res) => {
   } catch (error) {
     console.error('기본 양식 설정 오류:', error);
     res.status(500).json({ success: false, message: '기본 양식 설정에 실패했습니다.' });
+  }
+});
+
+// ===== API 라우트 =====
+
+// 인사명령 진행률 업데이트 API
+router.put('/api/duty-orders/:id/progress', isLoggedIn, async (req, res) => {
+  try {
+    const { progress } = req.body;
+    
+    if (progress === undefined || progress < 0 || progress > 100) {
+      return res.status(400).json({ success: false, message: '유효하지 않은 진행률입니다.' });
+    }
+    
+    const dutyOrder = await DutyOrder.findById(req.params.id);
+    if (!dutyOrder) {
+      return res.status(404).json({ success: false, message: '인사명령을 찾을 수 없습니다.' });
+    }
+    
+    dutyOrder.progress = parseInt(progress);
+    
+    // 진행률이 100%가 되면 상태를 완료로 변경
+    if (dutyOrder.progress >= 100) {
+      dutyOrder.status = 'completed';
+    } else if (dutyOrder.progress > 0 && dutyOrder.status === 'pending') {
+      dutyOrder.status = 'active';
+    }
+    
+    await dutyOrder.save();
+    
+    res.json({ success: true, message: '진행률이 업데이트되었습니다.' });
+  } catch (error) {
+    console.error('진행률 업데이트 오류:', error);
+    res.status(500).json({ success: false, message: '진행률 업데이트에 실패했습니다.' });
+  }
+});
+
+// 인사명령 상태 업데이트 API
+router.put('/api/duty-orders/:id/status', isLoggedIn, async (req, res) => {
+  try {
+    const { status, progress } = req.body;
+    
+    if (!['pending', 'active', 'completed', 'cancelled'].includes(status)) {
+      return res.status(400).json({ success: false, message: '유효하지 않은 상태입니다.' });
+    }
+    
+    const dutyOrder = await DutyOrder.findById(req.params.id);
+    if (!dutyOrder) {
+      return res.status(404).json({ success: false, message: '인사명령을 찾을 수 없습니다.' });
+    }
+    
+    dutyOrder.status = status;
+    
+    // 진행률이 제공된 경우 업데이트
+    if (progress !== undefined) {
+      dutyOrder.progress = parseInt(progress);
+    }
+    
+    // 상태가 완료로 변경되면 진행률을 100%로 설정
+    if (status === 'completed') {
+      dutyOrder.progress = 100;
+    }
+    
+    await dutyOrder.save();
+    
+    res.json({ success: true, message: '상태가 업데이트되었습니다.' });
+  } catch (error) {
+    console.error('상태 업데이트 오류:', error);
+    res.status(500).json({ success: false, message: '상태 업데이트에 실패했습니다.' });
+  }
+});
+
+// 인사명령 댓글 추가 API
+router.post('/api/duty-orders/:id/comments', isLoggedIn, async (req, res) => {
+  try {
+    const { content } = req.body;
+    
+    if (!content || !content.trim()) {
+      return res.status(400).json({ success: false, message: '댓글 내용을 입력해주세요.' });
+    }
+    
+    const dutyOrder = await DutyOrder.findById(req.params.id);
+    if (!dutyOrder) {
+      return res.status(404).json({ success: false, message: '인사명령을 찾을 수 없습니다.' });
+    }
+    
+    const newComment = {
+      user: req.session.userId,
+      content: content.trim(),
+      createdAt: new Date()
+    };
+    
+    dutyOrder.comments.push(newComment);
+    await dutyOrder.save();
+    
+    res.json({ success: true, message: '댓글이 추가되었습니다.' });
+  } catch (error) {
+    console.error('댓글 추가 오류:', error);
+    res.status(500).json({ success: false, message: '댓글 추가에 실패했습니다.' });
+  }
+});
+
+// 인사명령 댓글 삭제 API
+router.delete('/api/duty-orders/:id/comments/:commentId', isLoggedIn, async (req, res) => {
+  try {
+    const dutyOrder = await DutyOrder.findById(req.params.id);
+    if (!dutyOrder) {
+      return res.status(404).json({ success: false, message: '인사명령을 찾을 수 없습니다.' });
+    }
+    
+    const comment = dutyOrder.comments.id(req.params.commentId);
+    if (!comment) {
+      return res.status(404).json({ success: false, message: '댓글을 찾을 수 없습니다.' });
+    }
+    
+    // 권한 확인: 관리자이거나 댓글 작성자만 삭제 가능
+    const User = require('../models/User');
+    const user = await User.findById(req.session.userId);
+    
+    if (user.role !== 'admin' && comment.user.toString() !== req.session.userId) {
+      return res.status(403).json({ success: false, message: '댓글 삭제 권한이 없습니다.' });
+    }
+    
+    comment.remove();
+    await dutyOrder.save();
+    
+    res.json({ success: true, message: '댓글이 삭제되었습니다.' });
+  } catch (error) {
+    console.error('댓글 삭제 오류:', error);
+    res.status(500).json({ success: false, message: '댓글 삭제에 실패했습니다.' });
+  }
+});
+
+// 파일 삭제 API
+router.delete('/files/:filename', isLoggedIn, async (req, res) => {
+  try {
+    const filename = req.params.filename;
+    
+    // 인사명령에서 해당 파일을 사용하는 문서 찾기
+    const dutyOrder = await DutyOrder.findOne({
+      'attachments.filename': filename
+    });
+    
+    if (dutyOrder) {
+      // 권한 확인: 관리자이거나 작성자만 파일 삭제 가능
+      const User = require('../models/User');
+      const user = await User.findById(req.session.userId);
+      
+      if (user.role !== 'admin' && dutyOrder.issuedBy.toString() !== req.session.userId) {
+        return res.status(403).json({ success: false, message: '파일 삭제 권한이 없습니다.' });
+      }
+      
+      // 데이터베이스에서 파일 정보 제거
+      dutyOrder.attachments = dutyOrder.attachments.filter(
+        attachment => attachment.filename !== filename
+      );
+      await dutyOrder.save();
+    }
+    
+    // 물리적 파일 삭제
+    const filePath = path.join(__dirname, '../uploads', filename);
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+    
+    res.json({ success: true, message: '파일이 삭제되었습니다.' });
+  } catch (error) {
+    console.error('파일 삭제 오류:', error);
+    res.status(500).json({ success: false, message: '파일 삭제에 실패했습니다.' });
+  }
+});
+
+// 파일 다운로드
+router.get('/download/:filename', isLoggedIn, async (req, res) => {
+  try {
+    const filename = req.params.filename;
+    const filePath = path.join(__dirname, '../uploads', filename);
+    
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).send('파일을 찾을 수 없습니다.');
+    }
+    
+    // 파일 다운로드 카운트 증가 (필요한 경우)
+    const dutyOrder = await DutyOrder.findOne({
+      'attachments.filename': filename
+    });
+    
+    if (dutyOrder) {
+      const attachment = dutyOrder.attachments.find(att => att.filename === filename);
+      if (attachment) {
+        attachment.downloadCount = (attachment.downloadCount || 0) + 1;
+        await dutyOrder.save();
+      }
+    }
+    
+    res.download(filePath);
+  } catch (error) {
+    console.error('파일 다운로드 오류:', error);
+    res.status(500).send('파일 다운로드에 실패했습니다.');
   }
 });
 
