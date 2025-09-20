@@ -125,7 +125,7 @@ const dutyOrderSchema = new mongoose.Schema({
 });
 
 // 인사명령 검색을 위한 인덱스
-dutyOrderSchema.index({ orderNumber: 1 });
+// orderNumber는 unique: true로 자동 인덱스 생성되므로 제외
 dutyOrderSchema.index({ orderType: 1, status: 1 });
 dutyOrderSchema.index({ priority: 1, effectiveDate: -1 });
 dutyOrderSchema.index({ department: 1, status: 1 });
