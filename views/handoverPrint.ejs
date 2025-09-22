@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>일일업무 인계장 인쇄</title>
+    <link rel="stylesheet" href="/handover-print-styles.css">
+</head>
+<body class="<%= isPreview ? 'print-preview-mode' : '' %>">
+    <div class="container">
+        <!-- 인계장 제목 -->
+        <div class="print-title">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="font-size: 16px; font-weight: normal; color: #666; margin-right: 20px;">
+                    <%= handover.formattedHandoverDate %>
+                </div>
+                <div style="flex: 1; text-align: center;">일일업무 인계장</div>
+                <div style="width: 120px;"></div> <!-- 우측 균형을 위한 빈 공간 -->
+            </div>
+        </div>
+        
+        <!-- 인계장 테이블 -->
+        <table class="print-handover-table">
+            <thead>
+                <tr>
+                    <th class="print-no-col">No</th>
+                    <th class="print-date-col">날짜</th>
+                    <th class="print-content-col">내용</th>
+                    <th class="print-report-col">보고유무</th>
+                    <th class="print-assignee-col">지시자</th>
+                    <th class="print-team-col">작성반</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% if (handover.handoverItems && handover.handoverItems.length > 0) { %>
+                    <% handover.handoverItems.forEach(function(item, index) { %>
+                    <tr>
+                        <!-- 번호 컬럼 -->
+                        <td class="print-no-col">
+                            <div style="font-weight: bold; font-size: 12px; text-align: center;">
+                                <%= index + 1 %>
+                            </div>
+                        </td>
+                        
+                        <!-- 날짜 컬럼 -->
+                        <td class="print-date-col">
+                            <% if (item.taskDetails && item.taskDetails.dateTime) { %>
+                                <div style="font-weight: bold;"><%= item.taskDetails.dateTime.date || '' %></div>
+                                <div style="font-size: 10px; color: #666; margin-top: 2px;">
+                                    <%= item.taskDetails.dateTime.startTime || '' %>~<%= item.taskDetails.dateTime.endTime || '' %>
+                                </div>
+                            <% } else { %>
+                                <div style="font-weight: bold;"><%= handover.formattedHandoverDate %></div>
+                            <% } %>
+                        </td>
+                        
+                        <!-- 내용 컬럼 -->
+                        <td class="print-content-col">
+                            <div class="print-task-type">
+                                <% if (handover.handoverType === 'security') { %>
+                                    🔒 <%= item.taskType %>
+                                <% } else { %>
+                                    ⚙️ <%= item.taskType %>
+                                <% } %>
+                            </div>
+                            
+                            <% if (item.taskDetails) { %>
+                                <div class="print-task-details">
+                                    <div style="margin-top: 3px;">
+                                        <% if (item.taskDetails.personnel && item.taskDetails.personnel.name) { %>
+                                        <div class="print-personnel" style="margin-bottom: 2px;">
+                                            <strong>담당자:</strong> <%= item.taskDetails.personnel.name %>
+                                            <% if (item.taskDetails.personnel.phone) { %>
+                                            (<%= item.taskDetails.personnel.phone %>)
+                                            <% } %>
+                                        </div>
+                                        <% } %>
+                                        
+                                        <% if (item.taskDetails.location) { %>
+                                        <div class="print-location" style="margin-bottom: 2px;">
+                                            <strong>장소:</strong> <%= item.taskDetails.location %>
+                                        </div>
+                                        <% } %>
+                                        
+                                        <% if (item.taskDetails.content) { %>
+                                        <div class="print-content" style="margin-bottom: 2px;">
+                                            <strong>내용:</strong> <%= item.taskDetails.content %>
+                                        </div>
+                                        <% } %>
+                                        
+                                        <% if (item.taskDetails.additionalInfo) { %>
+                                        <div class="print-additional-info">
+                                            <strong>특이사항:</strong> <%= item.taskDetails.additionalInfo %>
+                                        </div>
+                                        <% } %>
+                                    </div>
+                                </div>
+                            <% } %>
+                        </td>
+                        
+                        <!-- 보고유무 컬럼 -->
+                        <td class="print-report-col">
+                            <div class="print-report-completed <%= item.reportCompleted ? 'yes' : 'no' %>">
+                                <%= item.reportCompleted ? '완료' : '미완료' %>
+                            </div>
+                        </td>
+                        
+                        <!-- 지시자 컬럼 -->
+                        <td class="print-assignee-col">
+                            <%= handover.handoverFrom ? handover.handoverFrom.name : '미지정' %>
+                        </td>
+                        
+                        <!-- 작성반 컬럼 -->
+                        <td class="print-team-col">
+                            <div style="text-align: center;">
+                                <div class="print-team-badge print-team-<%= item.assignedTeam.charAt(0) %>" style="margin-bottom: 3px;">
+                                    <%= item.assignedTeam %>
+                                </div>
+                                <div>
+                                    <span class="print-time-badge print-time-<%= item.timeCategory === '주간' ? 'day' : (item.timeCategory === '야간' ? 'night' : 'late') %>">
+                                        <%= item.timeCategory %>
+                                    </span>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    <% }); %>
+                <% } else { %>
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 20px; color: #666;">
+                            등록된 인계사항이 없습니다.
+                        </td>
+                    </tr>
+                <% } %>
+                
+                <!-- 빈 행 추가 (인쇄 시 여백 확보) -->
+                <% for (let i = 0; i < 5; i++) { %>
+                <tr class="print-empty-row">
+                    <td>&nbsp;</td>
+                    <td>&nbsp;</td>
+                    <td>&nbsp;</td>
+                    <td>&nbsp;</td>
+                    <td>&nbsp;</td>
+                    <td>&nbsp;</td>
+                </tr>
+                <% } %>
+            </tbody>
+        </table>
+        
+    </div>
+    
+    <script>
+        // 페이지 로드 시 처리
+        window.onload = function() {
+            <% if (!isPreview) { %>
+            // 미리보기가 아닌 경우에만 자동 인쇄
+            window.print();
+            
+            // 인쇄 완료 후 원래 페이지로 돌아가기
+            window.onafterprint = function() {
+                window.close();
+            };
+            <% } else { %>
+            // 미리보기 모드인 경우 인쇄 버튼 추가
+            addPrintButton();
+            <% } %>
+        };
+        
+        <% if (isPreview) { %>
+        function addPrintButton() {
+            const printButton = document.createElement('div');
+            printButton.innerHTML = `
+                <div style="position: fixed; top: 20px; right: 20px; z-index: 1000; background: white; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                    <button onclick="window.print()" style="background: #007bff; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin-right: 10px;">인쇄</button>
+                    <button onclick="window.close()" style="background: #6c757d; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">닫기</button>
+                </div>
+            `;
+            document.body.appendChild(printButton);
+        }
+        <% } %>
+    </script>
+</body>
+</html>

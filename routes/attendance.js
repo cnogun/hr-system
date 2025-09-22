@@ -261,16 +261,16 @@ router.post('/auto-attendance', async (req, res) => {
     // 올바른 주차 계산 사용
     const weekNumber = getWeekNumber(targetDate);
     
-    // 3주 주기 계산 (3주차일 때 1팀 심야, 2팀 주간, 3팀 초야)
-    let cycleWeek = weekNumber % 3; // 0: 3주차, 1: 1주차, 2: 2주차
+    // 3주 주기 계산 (1주차: 0, 2주차: 1, 3주차: 2)
+    let cycleWeek = (weekNumber - 1) % 3; // 0: 1주차, 1: 2주차, 2: 3주차
     
     console.log(`=== 주차 계산 디버깅 ===`);
     console.log(`대상 날짜: ${date}, 요일: ${dayOfWeek} (0:일, 1:월, ..., 6:토)`);
     console.log(`weekNumber: ${weekNumber}, cycleWeek: ${cycleWeek}`);
     console.log(`=== 이번주 팀 근무형태 (${weekNumber}주차) ===`);
-    console.log(`1팀: ${cycleWeek === 0 ? '초야' : cycleWeek === 1 ? '주간' : '심야'}`);
-    console.log(`2팀: ${cycleWeek === 0 ? '심야' : cycleWeek === 1 ? '초야' : '주간'}`);
-    console.log(`3팀: ${cycleWeek === 0 ? '주간' : cycleWeek === 1 ? '심야' : '초야'}`);
+    console.log(`1팀: ${cycleWeek === 0 ? '주간' : cycleWeek === 1 ? '초야' : '심야'}`);
+    console.log(`2팀: ${cycleWeek === 0 ? '초야' : cycleWeek === 1 ? '심야' : '주간'}`);
+    console.log(`3팀: ${cycleWeek === 0 ? '심야' : cycleWeek === 1 ? '주간' : '초야'}`);
 
     // 직원 조회 (부서별 필터링 적용)
     let employeeQuery = { status: '재직' };
@@ -382,8 +382,8 @@ router.post('/auto-attendance', async (req, res) => {
                        checkOut = '18:00';
                        basic = '8';
                        overtime = '0';
-                       special = '12';
-                       specialOvertime = '8';
+                       special = '8';
+                       specialOvertime = '4';
                        night = '0';
                        note = getNoteByStatus(status);
                        console.log(`1팀 초야 ${emp.name} 토요일 주간특근 설정`);
@@ -407,9 +407,9 @@ router.post('/auto-attendance', async (req, res) => {
                         checkOut = '06:00';
                         basic = '8';
                         overtime = '0';
-                        special = '12';
-                        specialOvertime = '8';
-                        night = '4';
+                        special = '8';
+                        specialOvertime = '4';
+                        night = '8';
                        note = getNoteByStatus(status);
                        console.log(`1팀 심야 ${emp.name} 토요일 야간특근 설정`);
                      } else {
@@ -446,8 +446,8 @@ router.post('/auto-attendance', async (req, res) => {
                        checkOut = '18:00';
                        basic = '8';
                        overtime = '0';
-                       special = '12';
-                       specialOvertime = '8';
+                       special = '8';
+                       specialOvertime = '4';
                        night = '0';
                        note = getNoteByStatus(status);
                        console.log(`2팀 초야 ${emp.name} 토요일 주간특근 설정`);
@@ -471,9 +471,9 @@ router.post('/auto-attendance', async (req, res) => {
                         checkOut = '06:00';
                         basic = '8';
                         overtime = '0';
-                        special = '12';
-                        specialOvertime = '8';
-                        night = '4';
+                        special = '8';
+                        specialOvertime = '4';
+                        night = '8';
                        note = getNoteByStatus(status);
                        console.log(`2팀 심야 ${emp.name} 토요일 야간특근 설정`);
                      } else {
@@ -510,8 +510,8 @@ router.post('/auto-attendance', async (req, res) => {
                        checkOut = '18:00';
                        basic = '8';
                        overtime = '0';
-                       special = '12';
-                       specialOvertime = '8';
+                       special = '8';
+                       specialOvertime = '4';
                        night = '0';
                        note = getNoteByStatus(status);
                        console.log(`3팀 초야 ${emp.name} 토요일 주간특근 설정`);
@@ -535,9 +535,9 @@ router.post('/auto-attendance', async (req, res) => {
                         checkOut = '06:00';
                         basic = '8';
                         overtime = '0';
-                        special = '12';
-                        specialOvertime = '8';
-                        night = '4';
+                        special = '8';
+                        specialOvertime = '4';
+                        night = '8';
                        note = getNoteByStatus(status);
                        console.log(`3팀 심야 ${emp.name} 토요일 야간특근 설정`);
                      } else {
@@ -601,8 +601,8 @@ router.post('/auto-attendance', async (req, res) => {
                    checkIn = '06:00';
                    checkOut = '18:00';
                    basic = '8';
-                   special = '12';
-                   specialOvertime = '8';
+                   special = '8';
+                   specialOvertime = '4';
                    night = '0';
                    note = getNoteByStatus(status);
                    console.log(`2팀 ${emp.name} 토요일 주간특근 설정 (기본 로직)`);
@@ -631,9 +631,9 @@ router.post('/auto-attendance', async (req, res) => {
                         checkOut = '06:00';
                         basic = '8';
                         overtime = '0';
-                        special = '12';
-                        specialOvertime = '8';
-                        night = '4';
+                        special = '8';
+                        specialOvertime = '4';
+                        night = '8';
                    note = getNoteByStatus(status);
                    console.log(`3팀 ${emp.name} 토요일 야간특근 설정 (기본 로직)`);
                  } else {
@@ -713,8 +713,8 @@ router.post('/auto-attendance', async (req, res) => {
                       checkIn = '06:00';
                       checkOut = '18:00';
                       basic = '8';
-                      special = '12';
-                      specialOvertime = '8';
+                      special = '8';
+                      specialOvertime = '4';
                       night = '0';
                       note = getNoteByStatus(status);
                       console.log(`1팀 A조 ${emp.name} 일요일 주간특근 설정`);
@@ -724,9 +724,9 @@ router.post('/auto-attendance', async (req, res) => {
                         checkOut = '06:00';
                         basic = '8';
                         overtime = '0';
-                        special = '12';
-                        specialOvertime = '8';
-                        night = '4';
+                        special = '8';
+                        specialOvertime = '4';
+                        night = '8';
                       note = getNoteByStatus(status);
                       console.log(`1팀 B조 ${emp.name} 일요일 야간특근 설정`);
                     } else {
@@ -749,9 +749,9 @@ router.post('/auto-attendance', async (req, res) => {
                         checkOut = '06:00';
                         basic = '8';
                         overtime = '0';
-                        special = '12';
-                        specialOvertime = '8';
-                        night = '4';
+                        special = '8';
+                        specialOvertime = '4';
+                        night = '8';
                       note = getNoteByStatus(status);
                       console.log(`1팀 2조 ${emp.name} 일요일 야간특근 설정`);
                     } else {
@@ -773,8 +773,8 @@ router.post('/auto-attendance', async (req, res) => {
                       checkIn = '06:00';
                       checkOut = '18:00';
                       basic = '8';
-                      special = '12';
-                      specialOvertime = '8';
+                      special = '8';
+                      specialOvertime = '4';
                       night = '0';
                       note = getNoteByStatus(status);
                       console.log(`1팀 2조 ${emp.name} 일요일 주간특근 설정`);
@@ -799,8 +799,8 @@ router.post('/auto-attendance', async (req, res) => {
                       checkIn = '06:00';
                       checkOut = '18:00';
                       basic = '8';
-                      special = '12';
-                      specialOvertime = '8';
+                      special = '8';
+                      specialOvertime = '4';
                       night = '0';
                       note = getNoteByStatus(status);
                       console.log(`2팀 1조 ${emp.name} 일요일 주간특근 설정`);
@@ -823,8 +823,8 @@ router.post('/auto-attendance', async (req, res) => {
                       checkIn = '06:00';
                       checkOut = '18:00';
                       basic = '8';
-                      special = '12';
-                      specialOvertime = '8';
+                      special = '8';
+                      specialOvertime = '4';
                       night = '0';
                       note = getNoteByStatus(status);
                       console.log(`2팀 1조 ${emp.name} 일요일 주간특근 설정`);
@@ -848,9 +848,9 @@ router.post('/auto-attendance', async (req, res) => {
                         checkOut = '06:00';
                         basic = '8';
                         overtime = '0';
-                        special = '12';
-                        specialOvertime = '8';
-                        night = '4';
+                        special = '8';
+                        specialOvertime = '4';
+                        night = '8';
                       note = getNoteByStatus(status);
                       console.log(`2팀 1조 ${emp.name} 일요일 야간특근 설정`);
                     } else {
@@ -874,8 +874,8 @@ router.post('/auto-attendance', async (req, res) => {
                       checkIn = '06:00';
                       checkOut = '18:00';
                       basic = '8';
-                      special = '12';
-                      specialOvertime = '8';
+                      special = '8';
+                      specialOvertime = '4';
                       night = '0';
                       note = getNoteByStatus(status);
                       console.log(`3팀 1조 ${emp.name} 일요일 주간특근 설정`);
@@ -899,9 +899,9 @@ router.post('/auto-attendance', async (req, res) => {
                         checkOut = '06:00';
                         basic = '8';
                         overtime = '0';
-                        special = '12';
-                        specialOvertime = '8';
-                        night = '4';
+                        special = '8';
+                        specialOvertime = '4';
+                        night = '8';
                       note = getNoteByStatus(status);
                       console.log(`3팀 1조 ${emp.name} 일요일 야간특근 설정`);
                     } else {
@@ -923,8 +923,8 @@ router.post('/auto-attendance', async (req, res) => {
                       checkIn = '06:00';
                       checkOut = '18:00';
                       basic = '8';
-                      special = '12';
-                      specialOvertime = '8';
+                      special = '8';
+                      specialOvertime = '4';
                       night = '0';
                       note = getNoteByStatus(status);
                       console.log(`3팀 1조 ${emp.name} 일요일 주간특근 설정`);
@@ -977,9 +977,9 @@ router.post('/auto-attendance', async (req, res) => {
                         checkOut = '06:00';
                         basic = '8';
                         overtime = '0';
-                        special = '12';
-                        specialOvertime = '8';
-                        night = '4';
+                        special = '8';
+                        specialOvertime = '4';
+                        night = '8';
                   note = getNoteByStatus(status);
                   console.log(`1팀 B조 ${emp.name} 일요일 야간특근 설정 (기본 로직)`);
                 }
@@ -1024,9 +1024,9 @@ router.post('/auto-attendance', async (req, res) => {
                         checkOut = '06:00';
                         basic = '8';
                         overtime = '0';
-                        special = '12';
-                        specialOvertime = '8';
-                        night = '4';
+                        special = '8';
+                        specialOvertime = '4';
+                        night = '8';
                   note = getNoteByStatus(status);
                   console.log(`3팀 1조 ${emp.name} 일요일 야간특근 설정 (기본 로직)`);
                 } else {
@@ -1051,39 +1051,7 @@ router.post('/auto-attendance', async (req, res) => {
           }
                  } else {
            // 평일 근무 로직 - 수정된 순환규칙 적용
-           if (cycleWeek === 0) { // 37주차: 1팀 초야, 2팀 심야, 3팀 주간
-             if (teamNumber === '1') {
-               status = '출근(초)';
-               checkIn = '14:00';
-               checkOut = '22:00';
-               basic = '8';
-               overtime = '0';
-               special = '0';
-               specialOvertime = '0';
-               night = '0';
-               note = getNoteByStatus(status);
-             } else if (teamNumber === '2') {
-               status = '출근(심)';
-               checkIn = '22:00';
-               checkOut = '06:00';
-               basic = '8';
-               overtime = '0';
-               special = '0';
-               specialOvertime = '0';
-               night = '4';        // 야간 4시간 (가중치 적용된 시간)
-               note = getNoteByStatus(status);
-             } else if (teamNumber === '3') {
-               status = '출근(주)';
-               checkIn = '06:00';
-               checkOut = '14:00';
-               basic = '8';
-               overtime = '0';
-               special = '0';
-               specialOvertime = '0';
-               night = '0';
-               note = getNoteByStatus(status);
-             }
-           } else if (cycleWeek === 1) { // 38주차: 1팀 주간, 2팀 초야, 3팀 심야
+           if (cycleWeek === 0) { // 1주차: 1팀 주간, 2팀 초야, 3팀 심야
              if (teamNumber === '1') {
                status = '출근(주)';
                checkIn = '06:00';
@@ -1112,10 +1080,42 @@ router.post('/auto-attendance', async (req, res) => {
                overtime = '0';
                special = '0';
                specialOvertime = '0';
-               night = '4';        // 야간 4시간 (가중치 적용된 시간)
+               night = '8';        // 야간 8시간 (원본 시간)
                note = getNoteByStatus(status);
              }
-           } else if (cycleWeek === 2) { // 39주차: 1팀 심야, 2팀 주간, 3팀 초야
+           } else if (cycleWeek === 1) { // 2주차: 1팀 초야, 2팀 심야, 3팀 주간
+             if (teamNumber === '1') {
+               status = '출근(초)';
+               checkIn = '14:00';
+               checkOut = '22:00';
+               basic = '8';
+               overtime = '0';
+               special = '0';
+               specialOvertime = '0';
+               night = '0';
+               note = getNoteByStatus(status);
+             } else if (teamNumber === '2') {
+               status = '출근(심)';
+               checkIn = '22:00';
+               checkOut = '06:00';
+               basic = '8';
+               overtime = '0';
+               special = '0';
+               specialOvertime = '0';
+               night = '8';        // 야간 8시간 (원본 시간)
+               note = getNoteByStatus(status);
+             } else if (teamNumber === '3') {
+               status = '출근(주)';
+               checkIn = '06:00';
+               checkOut = '14:00';
+               basic = '8';
+               overtime = '0';
+               special = '0';
+               specialOvertime = '0';
+               night = '0';
+               note = getNoteByStatus(status);
+             }
+           } else if (cycleWeek === 2) { // 3주차: 1팀 심야, 2팀 주간, 3팀 초야
              if (teamNumber === '1') {
                status = '출근(심)';
                checkIn = '22:00';
@@ -1124,7 +1124,7 @@ router.post('/auto-attendance', async (req, res) => {
                overtime = '0';
                special = '0';
                specialOvertime = '0';
-               night = '4';        // 야간 4시간 (가중치 적용된 시간)
+               night = '8';        // 야간 8시간 (원본 시간)
                note = getNoteByStatus(status);
              } else if (teamNumber === '2') {
                status = '출근(주)';

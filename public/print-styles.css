@@ -10,6 +10,15 @@
     * {
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
+        color-adjust: exact !important;
+    }
+    
+    /* 인쇄 시 테두리 강화 - 결재란 전용 */
+    .print-only .approval-table,
+    .print-only.approval-position .approval-table {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
     }
     
     /* 기본 인쇄 스타일 설정 */
@@ -63,15 +72,16 @@
         display: block !important;
         position: absolute !important;
         right: 0px !important;
-        top: 60px !important;
+        top: 65px !important;
         width: 234px !important;
         height: 93px !important;
         visibility: visible !important;
         opacity: 1 !important;
         z-index: 1000 !important;
-        background: white !important;
-        margin-bottom: 0 !important;
-        padding-bottom: 0px !important;
+        background: transparent !important;
+        margin: 0 !important; /* 모든 마진 제거 */
+        padding: 0 !important; /* 모든 패딩 제거 */
+        overflow: visible !important; /* 하단선이 잘리지 않도록 */
     }
     
     /* 결재표 통합 스타일 - 10% 크기 감소 */
@@ -81,7 +91,7 @@
         border-collapse: collapse !important;
         border: 1px solid #000 !important;
         margin: 0 !important;
-        padding: 1px !important;
+        padding: 0 !important; /* 패딩 제거로 하단선 가림 방지 */
         table-layout: fixed !important;
         background: white !important;
         display: table !important;
@@ -98,6 +108,58 @@
         line-height: 1.2 !important;
         background: white !important;
     }
+    
+    /* 마지막 행의 셀들에 하단 테두리 강제 적용 */
+    .print-only .approval-table tr:last-child td {
+        border-bottom: 1px solid #000 !important;
+    }
+    
+    /* 결재란 완전 덮어쓰기 - workOrder.ejs CSS 무시 */
+    .print-only.approval-position .approval-table,
+    .print-only.approval-position table.approval-table,
+    .print-only .approval-table {
+        border: 1px solid #000 !important;
+        border-collapse: collapse !important;
+        /* 인쇄 시 테두리 강화 */
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+    }
+    
+    /* 결재란 모든 셀 완전 덮어쓰기 */
+    .print-only.approval-position .approval-table th,
+    .print-only.approval-position .approval-table td,
+    .print-only.approval-position table.approval-table th,
+    .print-only.approval-position table.approval-table td,
+    .print-only .approval-table th,
+    .print-only .approval-table td {
+        border: 1px solid #000 !important;
+        border-bottom: 1px solid #000 !important;
+    }
+    
+    /* 마지막 행 셀들 하단선 강제 적용 */
+    .print-only.approval-position .approval-table tr:last-child td,
+    .print-only.approval-position table.approval-table tr:last-child td,
+    .print-only .approval-table tr:last-child td {
+        border-bottom: 1px solid #000 !important;
+        /* 인쇄 시 테두리 강화 */
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+    }
+    
+    /* 첫 번째와 마지막 셀 하단선 강제 적용 */
+    .print-only.approval-position .approval-table tr:last-child td:first-child,
+    .print-only.approval-position .approval-table tr:last-child td:last-child,
+    .print-only.approval-position table.approval-table tr:last-child td:first-child,
+    .print-only.approval-position table.approval-table tr:last-child td:last-child {
+        border-bottom: 1px solid #000 !important;
+        /* 인쇄 시 테두리 강화 */
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+    }
+    
     
     /* 결재 라벨 셀 - 1열 너비 20% 감소 */
     .print-only .approval-table th:first-child {
@@ -122,13 +184,14 @@
         width: 65px !important;
         height: 63px !important;
         background-color: white !important;
+        border: 1px solid #000 !important;
     }
     
     
     
     /* 근무정보 섹션 상단 간격 조정 - 결재표 아래로 배치 (공간 최적화) */
     .form-section:first-of-type {
-        margin-top: 130px !important;
+        margin-top: 140px !important;
         border-top: none !important;
         padding-top: 0px !important;
         margin-bottom: 0px !important;

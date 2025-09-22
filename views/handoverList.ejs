@@ -1,5 +1,20 @@
 <%- include('header') %>
 
+<!-- 플래시 메시지 표시 -->
+<% if (typeof message !== 'undefined' && message) { %>
+<div class="alert alert-success alert-dismissible fade show" role="alert" style="margin-bottom: 20px;">
+    <strong>✅ 성공!</strong> <%= message %>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+<% } %>
+
+<% if (typeof error !== 'undefined' && error) { %>
+<div class="alert alert-danger alert-dismissible fade show" role="alert" style="margin-bottom: 20px;">
+    <strong>❌ 오류!</strong> <%= error %>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+<% } %>
+
 <style>
         
     .container {
@@ -304,12 +319,27 @@
     </style>
 
 <div class="container mt-4">
+        <!-- 성공/오류 메시지 표시 -->
+        <% if (typeof messages !== 'undefined' && messages.success) { %>
+        <div class="alert alert-success" style="background-color: #d4edda; color: #155724; padding: 12px 16px; border: 1px solid #c3e6cb; border-radius: 4px; margin-bottom: 20px;">
+            <i class="fa-solid fa-check-circle me-2"></i><%= messages.success %>
+        </div>
+        <% } %>
+        
+        <% if (typeof messages !== 'undefined' && messages.error) { %>
+        <div class="alert alert-danger" style="background-color: #f8d7da; color: #721c24; padding: 12px 16px; border: 1px solid #f5c6cb; border-radius: 4px; margin-bottom: 20px;">
+            <i class="fa-solid fa-exclamation-circle me-2"></i><%= messages.error %>
+        </div>
+        <% } %>
+
         <!-- 헤더 -->
         <div class="header">
             <div class="title">일일업무 인계장 목록</div>
-            <% if (userRole === 'admin') { %>
-            <a href="/handovers/new" class="btn btn-primary">새 인계장 작성</a>
-            <% } %>
+        <% if (userRole === 'admin') { %>
+        <div>
+            <a href="/handovers/new" class="btn btn-primary">인계장 작성</a>
+        </div>
+        <% } %>
         </div>
 
         <!-- 통계 요약 -->
@@ -392,6 +422,11 @@
                     <td>
                         <div style="font-weight: bold; margin-bottom: 5px;">
                             <%= handover.formattedHandoverDate %>
+                            <% if (handover.handoverType === 'security') { %>
+                            <span style="background-color: #1976d2; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; margin-left: 5px;">보안업무</span>
+                            <% } else { %>
+                            <span style="background-color: #28a745; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; margin-left: 5px;">작업</span>
+                            <% } %>
                         </div>
                         <div style="font-size: 12px; color: #666;">
                             <%= handover.department %>
@@ -519,7 +554,7 @@
         
         // 인계장 삭제
         function deleteHandover(id) {
-            if (confirm('정말로 이 인계장을 삭제하시겠습니까?')) {
+            if (confirm('정말로 이 인계장을 삭제하시겠습니까?\n삭제된 데이터는 복구할 수 없습니다.')) {
                 fetch(`/handovers/${id}`, {
                     method: 'DELETE',
                     headers: {
@@ -529,14 +564,14 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        alert('인계장이 삭제되었습니다.');
+                        alert('인계장이 성공적으로 삭제되었습니다.');
                         location.reload();
                     } else {
                         alert('삭제 중 오류가 발생했습니다: ' + data.message);
                     }
                 })
                 .catch(error => {
-                    console.error('Error:', error);
+                    console.error('삭제 오류:', error);
                     alert('삭제 중 오류가 발생했습니다.');
                 });
             }

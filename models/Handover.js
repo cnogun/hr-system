@@ -25,6 +25,13 @@ const handoverSchema = new mongoose.Schema({
     default: Date.now
   },
   
+  // 인계장 유형 (work: 작업인계, security: 보안업무인계)
+  handoverType: {
+    type: String,
+    enum: ['work', 'security'],
+    default: 'work'
+  },
+  
   // 인계사항 목록
   handoverItems: [{
     // 작업 구분 (LED 옥외 전광판, 근무지 식수통 교체 등)

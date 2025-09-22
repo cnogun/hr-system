@@ -342,13 +342,12 @@
                    <% for (let i = 0; i < daysInMonth; i++) { %>
                      <th class="date-header text-center" colspan="10">
                       <div class="d-flex flex-column align-items-center">
-                        <span class="fw-bold fs-6"><%= i + 1 %>일</span>
                         <% 
                           const dateStr = `${year}-${month.toString().padStart(2, '0')}-${(i + 1).toString().padStart(2, '0')}`;
                           const date = new Date(dateStr);
                           const dayOfWeek = ['일', '월', '화', '수', '목', '금', '토'][date.getDay()];
                         %>
-                        <small class="text-light opacity-75"><%= dayOfWeek %></small>
+                        <span class="fw-bold fs-6"><%= i + 1 %>일(<%= dayOfWeek %>)</span>
                       </div>
                     </th>
                   <% } %>

@@ -1,0 +1,415 @@
+/* 인계장 인쇄 전용 CSS - 작업인계와 보안업무인계 통합 */
+
+/* 미리보기 모드에서도 인쇄 스타일 적용 */
+body.print-preview-mode,
+@media print {
+    @page {
+        margin: 15mm 10mm 15mm 10mm; /* 상하좌우 여백 */
+        size: A4;
+    }
+    
+    /* 브라우저 호환성을 위한 강제 스타일 */
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+    }
+    
+    /* 기본 인쇄 스타일 */
+    body {
+        margin: 0 !important;
+        padding: 0 !important;
+        font-family: "맑은 고딕", "Malgun Gothic", Arial, sans-serif !important;
+        font-size: 12px !important;
+        line-height: 1.4 !important;
+        color: black !important;
+        background: white !important;
+    }
+    
+    /* 인쇄 시 숨김 요소들 */
+    .print-btn, .print-preview-btn, [onclick*="window.print()"], 
+    .btn, .btn-primary, .btn-secondary, .btn-sm, .btn-lg,
+    a[href*="list"], a[href*="edit"], a[href*="modify"],
+    button[onclick*="list"], button[onclick*="edit"], button[onclick*="modify"],
+    .btn-group, .alert, .handover-info {
+        display: none !important;
+    }
+    
+    /* 헤더와 푸터 제거 */
+    header, .header, nav, .navbar, footer, .footer {
+        display: none !important;
+    }
+    
+    /* 컨테이너 스타일 */
+    .container {
+        max-width: none !important;
+        width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        background: white !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+    }
+    
+    /* 인계장 제목 */
+    .print-title {
+        text-align: center !important;
+        font-size: 32px !important;
+        font-weight: bold !important;
+        margin: 0 0 25px 0 !important;
+        padding: 0 !important;
+        border-bottom: 3px solid #000 !important;
+        padding-bottom: 15px !important;
+    }
+    
+    /* 기본 정보 섹션 */
+    .print-basic-info {
+        margin-bottom: 20px !important;
+        padding: 10px !important;
+        border: 1px solid #000 !important;
+        background-color: #f8f9fa !important;
+    }
+    
+    .print-basic-info table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        margin: 0 !important;
+    }
+    
+    .print-basic-info td {
+        padding: 5px 10px !important;
+        border: 1px solid #ddd !important;
+        font-size: 12px !important;
+    }
+    
+    .print-basic-info .label {
+        font-weight: bold !important;
+        background-color: #e9ecef !important;
+        width: 20% !important;
+    }
+    
+    /* 인계장 테이블 */
+    .print-handover-table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        margin: 0 !important;
+        border: 2px solid #000 !important;
+    }
+    
+    .print-handover-table th {
+        background-color: #333 !important;
+        color: white !important;
+        font-weight: bold !important;
+        text-align: center !important;
+        padding: 8px 4px !important;
+        border: 1px solid #000 !important;
+        font-size: 11px !important;
+    }
+    
+    .print-handover-table td {
+        border: 1px solid #000 !important;
+        padding: 8px 6px !important;
+        vertical-align: top !important;
+        font-size: 11px !important;
+        line-height: 1.4 !important;
+    }
+    
+    /* 건별 구분선 강화 */
+    .print-handover-table tbody tr {
+        border-bottom: 2px solid #000 !important;
+        min-height: 40px !important;
+    }
+    
+    .print-handover-table tbody tr:last-child {
+        border-bottom: 1px solid #000 !important;
+    }
+    
+    /* 각 건별 구분을 위한 배경색 제거 (인쇄 시 깔끔하게) */
+    .print-handover-table tbody tr {
+        background-color: white !important;
+    }
+    
+    /* 각 건별 내부 구분선 */
+    .print-handover-table tbody tr td {
+        border-right: 1px solid #000 !important;
+    }
+    
+    .print-handover-table tbody tr td:last-child {
+        border-right: none !important;
+    }
+    
+    /* 번호 컬럼 */
+    .print-no-col {
+        width: 5% !important;
+        text-align: center !important;
+    }
+    
+    /* 날짜 컬럼 */
+    .print-date-col {
+        width: 12% !important;
+        text-align: center !important;
+    }
+    
+    /* 내용 컬럼 */
+    .print-content-col {
+        width: 45% !important;
+        text-align: left !important;
+    }
+    
+    /* 보고유무 컬럼 */
+    .print-report-col {
+        width: 12% !important;
+        text-align: center !important;
+    }
+    
+    /* 지시자 컬럼 */
+    .print-assignee-col {
+        width: 13% !important;
+        text-align: center !important;
+    }
+    
+    /* 작성반 컬럼 */
+    .print-team-col {
+        width: 13% !important;
+        text-align: center !important;
+    }
+    
+    /* 인계사항 내용 스타일 */
+    .print-task-type {
+        font-weight: bold !important;
+        margin-bottom: 3px !important;
+        color: #1976d2 !important;
+    }
+    
+    .print-task-details {
+        margin-bottom: 5px !important;
+    }
+    
+    .print-task-details div {
+        margin-bottom: 2px !important;
+        font-size: 10px !important;
+    }
+    
+    .print-datetime {
+        color: #007bff !important;
+        font-weight: bold !important;
+    }
+    
+    .print-personnel {
+        color: #28a745 !important;
+    }
+    
+    .print-location {
+        color: #6c757d !important;
+    }
+    
+    .print-content {
+        color: #333 !important;
+    }
+    
+    .print-additional-info {
+        color: #dc3545 !important;
+        font-style: italic !important;
+    }
+    
+    /* 보고 완료 상태 */
+    .print-report-completed {
+        font-weight: bold !important;
+    }
+    
+    .print-report-completed.yes {
+        color: #28a745 !important;
+    }
+    
+    .print-report-completed.no {
+        color: #dc3545 !important;
+    }
+    
+    /* 팀 배지 */
+    .print-team-badge {
+        display: inline-block !important;
+        padding: 2px 6px !important;
+        border-radius: 3px !important;
+        font-size: 10px !important;
+        font-weight: bold !important;
+        text-align: center !important;
+        min-width: 30px !important;
+    }
+    
+    .print-team-1 {
+        background-color: #007bff !important;
+        color: white !important;
+    }
+    
+    .print-team-2 {
+        background-color: #28a745 !important;
+        color: white !important;
+    }
+    
+    .print-team-3 {
+        background-color: #dc3545 !important;
+        color: white !important;
+    }
+    
+    /* 시간대 배지 */
+    .print-time-badge {
+        display: inline-block !important;
+        padding: 2px 4px !important;
+        border-radius: 2px !important;
+        font-size: 9px !important;
+        font-weight: bold !important;
+    }
+    
+    .print-time-day {
+        background-color: #ffc107 !important;
+        color: #212529 !important;
+    }
+    
+    .print-time-night {
+        background-color: #6c757d !important;
+        color: white !important;
+    }
+    
+    .print-time-late {
+        background-color: #343a40 !important;
+        color: white !important;
+    }
+    
+    /* 인계장 유형 구분 */
+    .print-handover-type {
+        display: inline-block !important;
+        padding: 2px 6px !important;
+        border-radius: 3px !important;
+        font-size: 9px !important;
+        font-weight: bold !important;
+        margin-left: 5px !important;
+    }
+    
+    .print-type-work {
+        background-color: #28a745 !important;
+        color: white !important;
+    }
+    
+    .print-type-security {
+        background-color: #1976d2 !important;
+        color: white !important;
+    }
+    
+    /* 페이지 분할 방지 */
+    .print-handover-table tbody tr {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+    }
+    
+    /* 빈 행 처리 */
+    .print-empty-row td {
+        height: 25px !important;
+        border: 1px solid #ddd !important;
+        background-color: white !important;
+    }
+}
+
+/* 미리보기 모드 전용 스타일 (인쇄 스타일과 동일하게) */
+body.print-preview-mode {
+    font-family: "맑은 고딕", "Malgun Gothic", Arial, sans-serif !important;
+    font-size: 12px !important;
+    line-height: 1.4 !important;
+    color: black !important;
+    background: white !important;
+    margin: 0 !important;
+    padding: 20px !important;
+}
+
+body.print-preview-mode .container {
+    max-width: none !important;
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: white !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+}
+
+body.print-preview-mode .print-title {
+    text-align: center !important;
+    font-size: 32px !important;
+    font-weight: bold !important;
+    margin: 0 0 25px 0 !important;
+    padding: 0 !important;
+    border-bottom: 3px solid #000 !important;
+    padding-bottom: 15px !important;
+}
+
+body.print-preview-mode .print-basic-info {
+    margin-bottom: 20px !important;
+    padding: 10px !important;
+    border: 1px solid #000 !important;
+    background-color: #f8f9fa !important;
+}
+
+body.print-preview-mode .print-basic-info table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    margin: 0 !important;
+}
+
+body.print-preview-mode .print-basic-info td {
+    padding: 5px 10px !important;
+    border: 1px solid #ddd !important;
+    font-size: 12px !important;
+}
+
+body.print-preview-mode .print-basic-info .label {
+    font-weight: bold !important;
+    background-color: #e9ecef !important;
+    width: 20% !important;
+}
+
+body.print-preview-mode .print-handover-table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    margin: 0 !important;
+    border: 2px solid #000 !important;
+}
+
+body.print-preview-mode .print-handover-table th {
+    background-color: #333 !important;
+    color: white !important;
+    font-weight: bold !important;
+    text-align: center !important;
+    padding: 8px 4px !important;
+    border: 1px solid #000 !important;
+    font-size: 11px !important;
+}
+
+body.print-preview-mode .print-handover-table td {
+    border: 1px solid #000 !important;
+    padding: 8px 6px !important;
+    vertical-align: top !important;
+    font-size: 11px !important;
+    line-height: 1.4 !important;
+}
+
+body.print-preview-mode .print-handover-table tbody tr {
+    border-bottom: 2px solid #000 !important;
+    min-height: 40px !important;
+    background-color: white !important;
+}
+
+body.print-preview-mode .print-handover-table tbody tr:last-child {
+    border-bottom: 1px solid #000 !important;
+}
+
+body.print-preview-mode .print-handover-table tbody tr td {
+    border-right: 1px solid #000 !important;
+}
+
+body.print-preview-mode .print-handover-table tbody tr td:last-child {
+    border-right: none !important;
+}
+
+body.print-preview-mode .print-empty-row td {
+    height: 25px !important;
+    border: 1px solid #ddd !important;
+    background-color: white !important;
+}

@@ -170,7 +170,13 @@
             border-radius: 3px;
             cursor: pointer;
             font-size: 14px;
-            margin-bottom: 15px;
+            margin-top: 25px;
+            margin-bottom: 25px;
+            transition: background-color 0.3s ease;
+        }
+        
+        .add-btn:hover {
+            background-color: #138496;
         }
         
         .remove-btn {
@@ -213,7 +219,7 @@
             <div class="title"><%= handover ? '일일업무 인계장 수정' : '일일업무 인계장 작성' %></div>
         </div>
 
-        <form method="POST" action="<%= handover ? `/handovers/${handover._id}` : '/handovers' %>">
+        <form method="POST" action="<%= handover ? `/handovers/${handover._id}` : '/handovers' %>" id="handoverForm">
             <% if (handover) { %>
                 <input type="hidden" name="_method" value="PUT">
             <% } %>
@@ -226,7 +232,7 @@
                         <div class="form-group">
                             <label class="form-label">인계장 날짜</label>
                             <input type="date" name="handoverDate" class="form-control medium" 
-                                   value="<%= handover ? handover.handoverDate.toISOString().split('T')[0] : '' %>" required>
+                                   value="<%= handover ? handover.handoverDate.toISOString().split('T')[0] : new Date().toISOString().split('T')[0] %>" required>
                         </div>
                         <div class="form-group">
                             <label class="form-label">부서</label>
@@ -235,7 +241,7 @@
                                 <option value="보안1팀" <%= handover && handover.department === '보안1팀' ? 'selected' : '' %>>보안1팀</option>
                                 <option value="보안2팀" <%= handover && handover.department === '보안2팀' ? 'selected' : '' %>>보안2팀</option>
                                 <option value="보안3팀" <%= handover && handover.department === '보안3팀' ? 'selected' : '' %>>보안3팀</option>
-                                <option value="전체" <%= handover && handover.department === '전체' ? 'selected' : '' %>>전체</option>
+                                <option value="전체" <%= handover && handover.department === '전체' ? 'selected' : (!handover ? 'selected' : '') %>>전체</option>
                             </select>
                         </div>
                     </div>
@@ -246,247 +252,624 @@
             <div class="form-section">
                 <div class="section-header">□ 인계사항</div>
                 <div class="section-content">
-                    <div class="handover-items" id="handoverItems">
-                        <% if (handover && handover.handoverItems) { %>
-                            <% handover.handoverItems.forEach(function(item, index) { %>
-                            <div class="handover-item">
-                                <div class="item-header">
-                                    <div class="item-title">인계사항 #<%= index + 1 %></div>
-                                    <button type="button" class="remove-btn" onclick="removeHandoverItem(this)">삭제</button>
-                                </div>
-                                
-                                <div class="form-row">
-                                    <div class="form-group">
-                                        <label class="form-label">작업 구분</label>
-                                        <input type="text" name="handoverItems[<%= index %>].taskType" class="form-control" 
-                                               value="<%= item.taskType || '' %>" placeholder="예: LED 옥외 전광판, 가드레일 작업" required>
-                                    </div>
-                                    <div class="form-group">
-                                        <label class="form-label">담당 팀</label>
-                                        <select name="handoverItems[<%= index %>].assignedTeam" class="form-control" required>
-                                            <option value="">선택하세요</option>
-                                            <option value="1반" <%= item.assignedTeam === '1반' ? 'selected' : '' %>>1반</option>
-                                            <option value="2반" <%= item.assignedTeam === '2반' ? 'selected' : '' %>>2반</option>
-                                            <option value="3반" <%= item.assignedTeam === '3반' ? 'selected' : '' %>>3반</option>
-                                        </select>
-                                    </div>
-                                    <div class="form-group">
-                                        <label class="form-label">시간대</label>
-                                        <select name="handoverItems[<%= index %>].timeCategory" class="form-control" required>
-                                            <option value="">선택하세요</option>
-                                            <option value="주간" <%= item.timeCategory === '주간' ? 'selected' : '' %>>주간</option>
-                                            <option value="야간" <%= item.timeCategory === '야간' ? 'selected' : '' %>>야간</option>
-                                            <option value="심야" <%= item.timeCategory === '심야' ? 'selected' : '' %>>심야</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                
-                                <div class="form-row">
-                                    <div class="form-group">
-                                        <label class="form-label">작업 날짜</label>
-                                        <input type="text" name="handoverItems[<%= index %>].taskDetails.dateTime.date" class="form-control small" 
-                                               value="<%= item.taskDetails && item.taskDetails.dateTime ? item.taskDetails.dateTime.date : '' %>" 
-                                               placeholder="예: 8/29(금)">
-                                    </div>
-                                    <div class="form-group">
-                                        <label class="form-label">시작 시간</label>
-                                        <input type="time" name="handoverItems[<%= index %>].taskDetails.dateTime.startTime" class="form-control small" 
-                                               value="<%= item.taskDetails && item.taskDetails.dateTime ? item.taskDetails.dateTime.startTime : '' %>">
-                                    </div>
-                                    <div class="form-group">
-                                        <label class="form-label">종료 시간</label>
-                                        <input type="time" name="handoverItems[<%= index %>].taskDetails.dateTime.endTime" class="form-control small" 
-                                               value="<%= item.taskDetails && item.taskDetails.dateTime ? item.taskDetails.dateTime.endTime : '' %>">
-                                    </div>
-                                </div>
-                                
-                                <div class="form-row">
-                                    <div class="form-group">
-                                        <label class="form-label">업체명</label>
-                                        <input type="text" name="handoverItems[<%= index %>].taskDetails.personnel.company" class="form-control" 
-                                               value="<%= item.taskDetails && item.taskDetails.personnel ? item.taskDetails.personnel.company : '' %>" 
-                                               placeholder="예: 엘지씨앤에스">
-                                    </div>
-                                    <div class="form-group">
-                                        <label class="form-label">담당자명</label>
-                                        <input type="text" name="handoverItems[<%= index %>].taskDetails.personnel.name" class="form-control" 
-                                               value="<%= item.taskDetails && item.taskDetails.personnel ? item.taskDetails.personnel.name : '' %>" 
-                                               placeholder="예: 성희준">
-                                    </div>
-                                    <div class="form-group">
-                                        <label class="form-label">추가 인원 수</label>
-                                        <input type="number" name="handoverItems[<%= index %>].taskDetails.personnel.additionalCount" class="form-control small" 
-                                               value="<%= item.taskDetails && item.taskDetails.personnel ? item.taskDetails.personnel.additionalCount : '' %>" 
-                                               placeholder="예: 2">
-                                    </div>
-                                </div>
-                                
-                                <div class="form-row">
-                                    <div class="form-group">
-                                        <label class="form-label">연락처</label>
-                                        <input type="text" name="handoverItems[<%= index %>].taskDetails.personnel.phone" class="form-control" 
-                                               value="<%= item.taskDetails && item.taskDetails.personnel ? item.taskDetails.personnel.phone : '' %>" 
-                                               placeholder="예: 010-3599-9666">
-                                    </div>
-                                    <div class="form-group">
-                                        <label class="form-label">작업 장소</label>
-                                        <input type="text" name="handoverItems[<%= index %>].taskDetails.location" class="form-control" 
-                                               value="<%= item.taskDetails ? item.taskDetails.location : '' %>" 
-                                               placeholder="예: 아산로 소공원 내">
-                                    </div>
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label class="form-label">작업 내용</label>
-                                    <textarea name="handoverItems[<%= index %>].taskDetails.content" class="form-control" rows="3" 
-                                              placeholder="예: 옥외 전광판 LMD패널 및 가드레일 1EA 보수 작업"><%= item.taskDetails ? item.taskDetails.content : '' %></textarea>
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label class="form-label">추가 정보</label>
-                                    <textarea name="handoverItems[<%= index %>].taskDetails.additionalInfo" class="form-control" rows="2" 
-                                              placeholder="예: 상기인은 외부인으로 울산시 건설본부 발주 내용"><%= item.taskDetails ? item.taskDetails.additionalInfo : '' %></textarea>
-                                </div>
-                                
-                                <div class="form-group">
-                                    <div class="checkbox-group">
-                                        <input type="checkbox" name="handoverItems[<%= index %>].reportCompleted" 
-                                               <%= item.reportCompleted ? 'checked' : '' %>>
-                                        <label>보고 완료</label>
-                                    </div>
-                                </div>
-                            </div>
-                            <% }); %>
-                        <% } %>
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label class="form-label">인계 유형</label>
+                        <div style="display: flex; gap: 20px; margin-top: 5px;">
+                            <label style="display: flex; align-items: center; font-weight: normal;">
+                                <input type="radio" name="handoverType" value="work" checked style="margin-right: 5px;">
+                                작업 인계
+                            </label>
+                            <label style="display: flex; align-items: center; font-weight: normal;">
+                                <input type="radio" name="handoverType" value="security" style="margin-right: 5px;">
+                                보안업무 인계
+                            </label>
+                        </div>
                     </div>
-                    <button type="button" class="add-btn" onclick="addHandoverItem()">인계사항 추가</button>
+                    <div class="handover-items" id="handoverItems">
+                        <!-- 기존 인계사항은 JavaScript로 동적 생성 -->
+                    </div>
+                    <button type="button" class="add-btn" onclick="addHandoverItem()">
+                        <i class="fa-solid fa-plus me-1"></i>인계사항 추가
+                    </button>
+                </div>
+            </div>
+
+            <!-- 리다이렉트 옵션 -->
+            <div class="form-group" style="margin-top: 20px;">
+                <div class="checkbox-group">
+                    <input type="checkbox" id="redirectToList" name="redirectToList" value="true">
+                    <label for="redirectToList">저장 후 목록으로 이동</label>
                 </div>
             </div>
 
             <!-- 버튼 그룹 -->
-            <div class="btn-group">
-                <a href="/handovers" class="btn btn-secondary">취소</a>
-                <button type="submit" class="btn btn-primary">
-                    <%= handover ? '수정' : '저장' %>
+            <div class="btn-group" style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; padding-top: 20px; border-top: 1px solid #e9ecef;">
+                <a href="/handovers" class="btn btn-secondary" style="padding: 10px 20px; text-decoration: none;">
+                    <i class="fa-solid fa-list me-1"></i>목록
+                </a>
+                <a href="/handovers" class="btn btn-outline-secondary" style="padding: 10px 20px; text-decoration: none; border: 1px solid #6c757d; color: #6c757d; background: white;">
+                    <i class="fa-solid fa-times me-1"></i>취소
+                </a>
+                <button type="submit" class="btn btn-primary" style="padding: 10px 20px;">
+                    <i class="fa-solid fa-save me-1"></i><%= handover ? '수정' : '저장' %>
                 </button>
             </div>
         </form>
     </div>
 
     <script>
+        // 서버에서 전달된 기존 인계사항 데이터
+        const existingHandoverItems = <%- JSON.stringify(handover && handover.handoverItems ? handover.handoverItems : []) %>;
+        console.log('기존 인계사항 데이터:', existingHandoverItems);
+        
         let itemIndex = <%= handover && handover.handoverItems ? handover.handoverItems.length : 0 %>;
         
-        // 인계사항 추가
-        function addHandoverItem() {
+        // 페이지 로드 시 기본 인계사항 추가 (새 인계장 작성 시에만)
+        document.addEventListener('DOMContentLoaded', function() {
             const container = document.getElementById('handoverItems');
+            const isNewHandover = <%= handover ? 'false' : 'true' %>;
+            
+            console.log('페이지 로드 - 새 인계장:', isNewHandover);
+            console.log('컨테이너 자식 개수:', container.children.length);
+            
+            // 기존 인계사항이 있으면 동적으로 생성
+            if (existingHandoverItems && existingHandoverItems.length > 0) {
+                console.log('기존 인계사항 동적 생성 중...');
+                existingHandoverItems.forEach((item, index) => {
+                    addHandoverItem(item, index);
+                });
+            } else if (isNewHandover && container.children.length === 0) {
+                console.log('기본 인계사항 추가 중...');
+                addHandoverItem();
+            }
+            
+            // 인계 유형 변경 시 섹션 동적 변경 처리
+            const handoverTypeRadios = document.querySelectorAll('input[name="handoverType"]');
+            handoverTypeRadios.forEach(radio => {
+                radio.addEventListener('change', function() {
+                    updateHandoverSection(this.value);
+                });
+            });
+            
+            // 페이지 로드 시 현재 선택된 인계 유형에 따라 섹션 업데이트
+            const checkedRadio = document.querySelector('input[name="handoverType"]:checked');
+            if (checkedRadio) {
+                updateHandoverSection(checkedRadio.value);
+            }
+        });
+        
+        // 인계 유형에 따라 섹션 동적 변경
+        function updateHandoverSection(handoverType) {
+            console.log('섹션 변경 시작:', handoverType);
+            const sectionHeader = document.querySelector('.section-header');
+            const addButton = document.querySelector('.add-btn');
+            const container = document.getElementById('handoverItems');
+            
+            if (handoverType === 'security') {
+                console.log('보안업무 인계사항으로 변경');
+                // 보안업무 인계사항으로 변경
+                sectionHeader.textContent = '□ 보안업무 인계사항';
+                addButton.innerHTML = '<i class="fa-solid fa-plus me-1"></i>인계사항 추가';
+                
+                // 기존 인계사항들을 모두 제거하고 새로 생성
+                container.innerHTML = '';
+                if (existingHandoverItems && existingHandoverItems.length > 0) {
+                    console.log('기존 인계사항을 보안업무 형식으로 새로 생성');
+                    existingHandoverItems.forEach((item, index) => {
+                        addHandoverItem(item, index);
+                    });
+                } else {
+                    console.log('새 보안업무 인계사항 추가');
+                    addHandoverItem();
+                }
+            } else {
+                console.log('작업 인계사항으로 변경');
+                // 작업 인계사항으로 변경
+                sectionHeader.textContent = '□ 작업 인계사항';
+                addButton.innerHTML = '<i class="fa-solid fa-plus me-1"></i>인계사항 추가';
+                
+                // 기존 인계사항들을 모두 제거하고 새로 생성
+                container.innerHTML = '';
+                if (existingHandoverItems && existingHandoverItems.length > 0) {
+                    console.log('기존 인계사항을 작업 형식으로 새로 생성');
+                    existingHandoverItems.forEach((item, index) => {
+                        addHandoverItem(item, index);
+                    });
+                } else {
+                    console.log('새 작업 인계사항 추가');
+                    addHandoverItem();
+                }
+            }
+        }
+        
+        // 보안업무 인계 가이드 추가
+        function addSecurityGuide() {
+            console.log('보안업무 가이드 추가 시도');
+            const sectionContent = document.querySelector('.section-content');
+            const existingGuide = document.querySelector('.security-guide');
+            
+            if (!existingGuide) {
+                console.log('보안업무 가이드 생성 중');
+                const guideDiv = document.createElement('div');
+                guideDiv.className = 'security-guide';
+                guideDiv.style.cssText = 'background-color: #e3f2fd; padding: 10px; border-radius: 5px; margin-bottom: 15px; font-size: 13px; color: #1976d2;';
+                guideDiv.innerHTML = `
+                    <strong>📋 보안업무 인계 가이드:</strong><br>
+                    • 출입통제, 순찰업무, CCTV모니터링 등 보안업무 구분을 선택하세요<br>
+                    • 근무 구역과 담당 보안요원을 명확히 기록하세요<br>
+                    • 보안상 특이사항이나 의심 상황을 상세히 기록하세요
+                `;
+                
+                // 인계 유형 선택 다음에 가이드 삽입
+                const handoverTypeGroup = sectionContent.querySelector('.form-group');
+                handoverTypeGroup.insertAdjacentElement('afterend', guideDiv);
+            } else {
+                console.log('보안업무 가이드가 이미 존재함');
+            }
+        }
+        
+        // 보안업무 인계 가이드 제거
+        function removeSecurityGuide() {
+            console.log('보안업무 가이드 제거 시도');
+            const existingGuide = document.querySelector('.security-guide');
+            if (existingGuide) {
+                console.log('보안업무 가이드 제거됨');
+                existingGuide.remove();
+            } else {
+                console.log('제거할 보안업무 가이드가 없음');
+            }
+        }
+        
+        // 기존 인계사항들을 보안업무 형식으로 변경
+        function updateExistingItemsToSecurity() {
+            console.log('보안업무 형식으로 변경 시작');
+            const items = document.querySelectorAll('.handover-item');
+            console.log('찾은 인계사항 개수:', items.length);
+            items.forEach((item, index) => {
+                console.log(`인계사항 #${index + 1} 보안업무 형식으로 변경 중`);
+                // 작업 구분 라벨 변경
+                const taskTypeLabel = item.querySelector('label[for*="taskType"], .form-group label');
+                if (taskTypeLabel) {
+                    console.log('작업 구분 라벨 변경: 작업 구분 → 보안업무 구분');
+                    taskTypeLabel.textContent = '보안업무 구분';
+                } else {
+                    console.log('작업 구분 라벨을 찾을 수 없음');
+                    // 대안: 첫 번째 라벨을 찾아서 변경
+                    const firstLabel = item.querySelector('.form-group:first-child label');
+                    if (firstLabel) {
+                        console.log('첫 번째 라벨을 보안업무 구분으로 변경');
+                        firstLabel.textContent = '보안업무 구분';
+                    }
+                }
+                
+                // 작업 구분 입력 필드를 드롭다운으로 변경
+                const taskTypeInput = item.querySelector('input[name*="taskType"]');
+                if (taskTypeInput) {
+                    console.log('입력 필드를 드롭다운으로 변경');
+                    const selectElement = document.createElement('select');
+                    selectElement.name = taskTypeInput.name;
+                    selectElement.className = 'form-control';
+                    selectElement.required = true;
+                    selectElement.innerHTML = `
+                        <option value="">선택하세요</option>
+                        <option value="출입통제">출입통제</option>
+                        <option value="순찰업무">순찰업무</option>
+                        <option value="CCTV모니터링">CCTV모니터링</option>
+                        <option value="비상상황대응">비상상황대응</option>
+                        <option value="보안장비점검">보안장비점검</option>
+                        <option value="방문자관리">방문자관리</option>
+                        <option value="차량통제">차량통제</option>
+                        <option value="기타보안업무">기타보안업무</option>
+                    `;
+                    selectElement.value = taskTypeInput.value; // 기존 값 유지
+                    taskTypeInput.parentNode.replaceChild(selectElement, taskTypeInput);
+                } else {
+                    console.log('작업 구분 입력 필드를 찾을 수 없음');
+                }
+                
+                // 담당자 라벨 변경 (두 번째 form-group의 라벨)
+                const personnelLabels = item.querySelectorAll('.form-group label');
+                if (personnelLabels.length > 1) {
+                    console.log('담당자 라벨 변경: 담당자명 → 담당 보안요원');
+                    personnelLabels[1].textContent = '담당 보안요원';
+                    
+                    // 담당자 입력 필드의 placeholder 변경
+                    const personnelInput = personnelLabels[1].nextElementSibling;
+                    if (personnelInput && personnelInput.tagName === 'INPUT') {
+                        personnelInput.placeholder = '예: 김보안';
+                    }
+                }
+                
+                // 장소 라벨 변경 (네 번째 form-group의 라벨)
+                if (personnelLabels.length > 3) {
+                    console.log('장소 라벨 변경: 작업 장소 → 근무 구역');
+                    personnelLabels[3].textContent = '근무 구역';
+                    
+                    // 장소 입력 필드의 placeholder 변경
+                    const locationInput = personnelLabels[3].nextElementSibling;
+                    if (locationInput && locationInput.tagName === 'INPUT') {
+                        locationInput.placeholder = '예: 정문 출입통제실, 주차장 순찰구역, CCTV 모니터링실';
+                    }
+                }
+                
+                // 내용 라벨 변경 (다섯 번째 form-group의 라벨)
+                if (personnelLabels.length > 4) {
+                    console.log('내용 라벨 변경: 작업 내용 → 보안업무 내용');
+                    personnelLabels[4].textContent = '보안업무 내용';
+                    
+                    // 내용 입력 필드의 placeholder 변경
+                    const contentInput = personnelLabels[4].nextElementSibling;
+                    if (contentInput && contentInput.tagName === 'TEXTAREA') {
+                        contentInput.placeholder = '예: 출입자 신분확인, 차량번호 등록, 순찰경로 점검, CCTV 모니터링, 비상상황 대응절차';
+                    }
+                }
+                
+                // 특이사항 라벨 변경 (여섯 번째 form-group의 라벨)
+                if (personnelLabels.length > 5) {
+                    console.log('특이사항 라벨 변경: 추가 정보 → 보안상 특이사항');
+                    personnelLabels[5].textContent = '보안상 특이사항';
+                    
+                    // 특이사항 입력 필드의 placeholder 변경
+                    const additionalInput = personnelLabels[5].nextElementSibling;
+                    if (additionalInput && additionalInput.tagName === 'TEXTAREA') {
+                        additionalInput.placeholder = '예: 의심인물 출현, 보안장비 이상, 특별지시사항, 비상연락처 등';
+                    }
+                }
+                
+                // 날짜 라벨 변경 (세 번째 form-group의 라벨)
+                if (personnelLabels.length > 2) {
+                    console.log('날짜 라벨 변경: 작업 날짜 → 근무 날짜');
+                    personnelLabels[2].textContent = '근무 날짜';
+                    
+                    // 날짜 입력 필드의 placeholder 변경
+                    const dateInput = personnelLabels[2].nextElementSibling;
+                    if (dateInput && dateInput.tagName === 'INPUT') {
+                        dateInput.placeholder = '예: 9월 22일';
+                    }
+                }
+                
+                // 날짜 placeholder 변경
+                const dateInput = item.querySelector('input[name*="dateTime.date"]');
+                if (dateInput) {
+                    console.log('날짜 placeholder 변경: 8/29(금) → 9월 22일');
+                    dateInput.placeholder = '예: 9월 22일';
+                }
+            });
+        }
+        
+        // 기존 인계사항들을 작업 형식으로 변경
+        function updateExistingItemsToWork() {
+            console.log('작업 형식으로 변경 시작');
+            const items = document.querySelectorAll('.handover-item');
+            console.log('찾은 인계사항 개수:', items.length);
+            items.forEach((item, index) => {
+                console.log(`인계사항 #${index + 1} 작업 형식으로 변경 중`);
+                // 작업 구분 라벨 변경
+                const taskTypeLabel = item.querySelector('label[for*="taskType"], .form-group label');
+                if (taskTypeLabel) {
+                    console.log('작업 구분 라벨 변경: 보안업무 구분 → 작업 구분');
+                    taskTypeLabel.textContent = '작업 구분';
+                } else {
+                    // 대안: 첫 번째 라벨을 찾아서 변경
+                    const firstLabel = item.querySelector('.form-group:first-child label');
+                    if (firstLabel) {
+                        console.log('첫 번째 라벨을 작업 구분으로 변경');
+                        firstLabel.textContent = '작업 구분';
+                    }
+                }
+                
+                // 작업 구분 드롭다운을 입력 필드로 변경
+                const taskTypeSelect = item.querySelector('select[name*="taskType"]');
+                if (taskTypeSelect) {
+                    console.log('드롭다운을 입력 필드로 변경');
+                    const inputElement = document.createElement('input');
+                    inputElement.type = 'text';
+                    inputElement.name = taskTypeSelect.name;
+                    inputElement.className = 'form-control';
+                    inputElement.required = true;
+                    inputElement.placeholder = '예: LED 옥외 전광판, 가드레일 작업';
+                    inputElement.value = taskTypeSelect.value; // 기존 값 유지
+                    taskTypeSelect.parentNode.replaceChild(inputElement, taskTypeSelect);
+                } else {
+                    console.log('작업 구분 드롭다운을 찾을 수 없음');
+                }
+                
+                // 담당자 라벨 변경 (두 번째 form-group의 라벨)
+                const personnelLabels = item.querySelectorAll('.form-group label');
+                if (personnelLabels.length > 1) {
+                    console.log('담당자 라벨 변경: 담당 보안요원 → 담당자명');
+                    personnelLabels[1].textContent = '담당자명';
+                    
+                    // 담당자 입력 필드의 placeholder 변경
+                    const personnelInput = personnelLabels[1].nextElementSibling;
+                    if (personnelInput && personnelInput.tagName === 'INPUT') {
+                        personnelInput.placeholder = '예: 성희준';
+                    }
+                }
+                
+                // 장소 라벨 변경 (네 번째 form-group의 라벨)
+                if (personnelLabels.length > 3) {
+                    console.log('장소 라벨 변경: 근무 구역 → 작업 장소');
+                    personnelLabels[3].textContent = '작업 장소';
+                    
+                    // 장소 입력 필드의 placeholder 변경
+                    const locationInput = personnelLabels[3].nextElementSibling;
+                    if (locationInput && locationInput.tagName === 'INPUT') {
+                        locationInput.placeholder = '예: 아산로 소공원 내';
+                    }
+                }
+                
+                // 내용 라벨 변경 (다섯 번째 form-group의 라벨)
+                if (personnelLabels.length > 4) {
+                    console.log('내용 라벨 변경: 보안업무 내용 → 작업 내용');
+                    personnelLabels[4].textContent = '작업 내용';
+                    
+                    // 내용 입력 필드의 placeholder 변경
+                    const contentInput = personnelLabels[4].nextElementSibling;
+                    if (contentInput && contentInput.tagName === 'TEXTAREA') {
+                        contentInput.placeholder = '예: 옥외 전광판 LMD패널 및 가드레일 1EA 보수 작업';
+                    }
+                }
+                
+                // 특이사항 라벨 변경 (여섯 번째 form-group의 라벨)
+                if (personnelLabels.length > 5) {
+                    console.log('특이사항 라벨 변경: 보안상 특이사항 → 추가 정보');
+                    personnelLabels[5].textContent = '추가 정보';
+                    
+                    // 특이사항 입력 필드의 placeholder 변경
+                    const additionalInput = personnelLabels[5].nextElementSibling;
+                    if (additionalInput && additionalInput.tagName === 'TEXTAREA') {
+                        additionalInput.placeholder = '예: 상기인은 외부인으로 울산시 건설본부 발주 내용';
+                    }
+                }
+                
+                // 날짜 라벨 변경 (세 번째 form-group의 라벨)
+                if (personnelLabels.length > 2) {
+                    console.log('날짜 라벨 변경: 근무 날짜 → 작업 날짜');
+                    personnelLabels[2].textContent = '작업 날짜';
+                    
+                    // 날짜 입력 필드의 placeholder 변경
+                    const dateInput = personnelLabels[2].nextElementSibling;
+                    if (dateInput && dateInput.tagName === 'INPUT') {
+                        dateInput.placeholder = '예: 8/29(금)';
+                    }
+                }
+                
+                // 날짜 placeholder 변경
+                const dateInput = item.querySelector('input[name*="dateTime.date"]');
+                if (dateInput) {
+                    console.log('날짜 placeholder 변경: 9월 22일 → 8/29(금)');
+                    dateInput.placeholder = '예: 8/29(금)';
+                }
+            });
+        }
+        
+        // 인계사항 추가
+        function addHandoverItem(existingItem = null, existingIndex = null) {
+            const container = document.getElementById('handoverItems');
+            const selectedType = document.querySelector('input[name="handoverType"]:checked').value;
+            const isSecurity = selectedType === 'security';
+            
+            // 기존 데이터가 있으면 해당 인덱스 사용, 없으면 새 인덱스 사용
+            const currentIndex = existingIndex !== null ? existingIndex : itemIndex;
+            
             const div = document.createElement('div');
             div.className = 'handover-item';
             div.innerHTML = `
                 <div class="item-header">
-                    <div class="item-title">인계사항 #${itemIndex + 1}</div>
+                    <div class="item-title">인계사항 #${currentIndex + 1}</div>
                     <button type="button" class="remove-btn" onclick="removeHandoverItem(this)">삭제</button>
                 </div>
                 
+                ${isSecurity ? `
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">보안업무 구분</label>
+                        <select name="handoverItems[${currentIndex}].taskType" class="form-control" required>
+                            <option value="">선택하세요</option>
+                            <option value="출입통제" ${existingItem && existingItem.taskType === '출입통제' ? 'selected' : ''}>출입통제</option>
+                            <option value="순찰업무" ${existingItem && existingItem.taskType === '순찰업무' ? 'selected' : ''}>순찰업무</option>
+                            <option value="CCTV모니터링" ${existingItem && existingItem.taskType === 'CCTV모니터링' ? 'selected' : ''}>CCTV모니터링</option>
+                            <option value="비상상황대응" ${existingItem && existingItem.taskType === '비상상황대응' ? 'selected' : ''}>비상상황대응</option>
+                            <option value="보안장비점검" ${existingItem && existingItem.taskType === '보안장비점검' ? 'selected' : ''}>보안장비점검</option>
+                            <option value="방문자관리" ${existingItem && existingItem.taskType === '방문자관리' ? 'selected' : ''}>방문자관리</option>
+                            <option value="차량통제" ${existingItem && existingItem.taskType === '차량통제' ? 'selected' : ''}>차량통제</option>
+                            <option value="기타보안업무" ${existingItem && existingItem.taskType === '기타보안업무' ? 'selected' : ''}>기타보안업무</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">근무 날짜</label>
+                        <input type="text" name="handoverItems[${currentIndex}].taskDetails.dateTime.date" class="form-control small" 
+                               value="${existingItem && existingItem.taskDetails && existingItem.taskDetails.dateTime ? (existingItem.taskDetails.dateTime.date || '') : ''}"
+                               placeholder="예: 9월 22일">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">담당 팀</label>
+                        <select name="handoverItems[${currentIndex}].assignedTeam" class="form-control" required>
+                            <option value="">선택하세요</option>
+                            <option value="1반" ${existingItem && existingItem.assignedTeam === '1반' ? 'selected' : ''}>1반</option>
+                            <option value="2반" ${existingItem && existingItem.assignedTeam === '2반' ? 'selected' : ''}>2반</option>
+                            <option value="3반" ${existingItem && existingItem.assignedTeam === '3반' ? 'selected' : ''}>3반</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">담당 보안요원</label>
+                        <input type="text" name="handoverItems[${currentIndex}].taskDetails.personnel.name" class="form-control" 
+                               value="${existingItem && existingItem.taskDetails && existingItem.taskDetails.personnel ? (existingItem.taskDetails.personnel.name || '') : ''}"
+                               placeholder="예: 김보안">
+                    </div>
+                </div>
+                ` : `
                 <div class="form-row">
                     <div class="form-group">
                         <label class="form-label">작업 구분</label>
-                        <input type="text" name="handoverItems[${itemIndex}].taskType" class="form-control" 
+                        <input type="text" name="handoverItems[${currentIndex}].taskType" class="form-control" 
+                               value="${existingItem ? (existingItem.taskType || '') : ''}"
                                placeholder="예: LED 옥외 전광판, 가드레일 작업" required>
                     </div>
                     <div class="form-group">
                         <label class="form-label">담당 팀</label>
-                        <select name="handoverItems[${itemIndex}].assignedTeam" class="form-control" required>
+                        <select name="handoverItems[${currentIndex}].assignedTeam" class="form-control" required>
                             <option value="">선택하세요</option>
-                            <option value="1반">1반</option>
-                            <option value="2반">2반</option>
-                            <option value="3반">3반</option>
+                            <option value="1반" ${existingItem && existingItem.assignedTeam === '1반' ? 'selected' : ''}>1반</option>
+                            <option value="2반" ${existingItem && existingItem.assignedTeam === '2반' ? 'selected' : ''}>2반</option>
+                            <option value="3반" ${existingItem && existingItem.assignedTeam === '3반' ? 'selected' : ''}>3반</option>
                         </select>
                     </div>
                     <div class="form-group">
                         <label class="form-label">시간대</label>
-                        <select name="handoverItems[${itemIndex}].timeCategory" class="form-control" required>
+                        <select name="handoverItems[${currentIndex}].timeCategory" class="form-control" required>
                             <option value="">선택하세요</option>
-                            <option value="주간">주간</option>
-                            <option value="야간">야간</option>
-                            <option value="심야">심야</option>
+                            <option value="주간" ${existingItem && existingItem.timeCategory === '주간' ? 'selected' : ''}>주간</option>
+                            <option value="야간" ${existingItem && existingItem.timeCategory === '야간' ? 'selected' : ''}>야간</option>
+                            <option value="심야" ${existingItem && existingItem.timeCategory === '심야' ? 'selected' : ''}>심야</option>
                         </select>
                     </div>
                 </div>
+                `}
                 
+                ${!isSecurity ? `
                 <div class="form-row">
                     <div class="form-group">
                         <label class="form-label">작업 날짜</label>
-                        <input type="text" name="handoverItems[${itemIndex}].taskDetails.dateTime.date" class="form-control small" 
+                        <input type="text" name="handoverItems[${currentIndex}].taskDetails.dateTime.date" class="form-control small" 
+                               value="${existingItem && existingItem.taskDetails && existingItem.taskDetails.dateTime ? (existingItem.taskDetails.dateTime.date || '') : ''}"
                                placeholder="예: 8/29(금)">
                     </div>
                     <div class="form-group">
                         <label class="form-label">시작 시간</label>
-                        <input type="time" name="handoverItems[${itemIndex}].taskDetails.dateTime.startTime" class="form-control small">
+                        <input type="time" name="handoverItems[${currentIndex}].taskDetails.dateTime.startTime" class="form-control small"
+                               value="${existingItem && existingItem.taskDetails && existingItem.taskDetails.dateTime ? (existingItem.taskDetails.dateTime.startTime || '') : ''}">
                     </div>
                     <div class="form-group">
                         <label class="form-label">종료 시간</label>
-                        <input type="time" name="handoverItems[${itemIndex}].taskDetails.dateTime.endTime" class="form-control small">
+                        <input type="time" name="handoverItems[${currentIndex}].taskDetails.dateTime.endTime" class="form-control small"
+                               value="${existingItem && existingItem.taskDetails && existingItem.taskDetails.dateTime ? (existingItem.taskDetails.dateTime.endTime || '') : ''}">
                     </div>
                 </div>
+                ` : ''}
                 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label">업체명</label>
-                        <input type="text" name="handoverItems[${itemIndex}].taskDetails.personnel.company" class="form-control" 
-                               placeholder="예: 엘지씨앤에스">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">담당자명</label>
-                        <input type="text" name="handoverItems[${itemIndex}].taskDetails.personnel.name" class="form-control" 
-                               placeholder="예: 성희준">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">추가 인원 수</label>
-                        <input type="number" name="handoverItems[${itemIndex}].taskDetails.personnel.additionalCount" class="form-control small" 
-                               placeholder="예: 2">
-                    </div>
+                ${!isSecurity ? `
+                <div class="form-group">
+                    <label class="form-label">담당자명</label>
+                    <input type="text" name="handoverItems[${currentIndex}].taskDetails.personnel.name" class="form-control" 
+                           value="${existingItem && existingItem.taskDetails && existingItem.taskDetails.personnel ? (existingItem.taskDetails.personnel.name || '') : ''}"
+                           placeholder="예: 성희준">
                 </div>
+                ` : ''}
                 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label">연락처</label>
-                        <input type="text" name="handoverItems[${itemIndex}].taskDetails.personnel.phone" class="form-control" 
-                               placeholder="예: 010-3599-9666">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">작업 장소</label>
-                        <input type="text" name="handoverItems[${itemIndex}].taskDetails.location" class="form-control" 
-                               placeholder="예: 아산로 소공원 내">
-                    </div>
+                ${!isSecurity ? `
+                <div class="form-group">
+                    <label class="form-label">연락처</label>
+                    <input type="text" name="handoverItems[${currentIndex}].taskDetails.personnel.phone" class="form-control" 
+                           value="${existingItem && existingItem.taskDetails && existingItem.taskDetails.personnel ? (existingItem.taskDetails.personnel.phone || '') : ''}"
+                           placeholder="예: 010-1234-5678">
+                </div>
+                ` : ''}
+                
+                <div class="form-group">
+                    <label class="form-label">${isSecurity ? '근무 구역' : '작업 장소'}</label>
+                    <input type="text" name="handoverItems[${currentIndex}].taskDetails.location" class="form-control" 
+                           value="${existingItem && existingItem.taskDetails ? (existingItem.taskDetails.location || '') : ''}"
+                           placeholder="${isSecurity ? '예: 정문 출입통제실, 주차장 순찰구역, CCTV 모니터링실' : '예: 아산로 소공원 내'}">
                 </div>
                 
                 <div class="form-group">
-                    <label class="form-label">작업 내용</label>
-                    <textarea name="handoverItems[${itemIndex}].taskDetails.content" class="form-control" rows="3" 
-                              placeholder="예: 옥외 전광판 LMD패널 및 가드레일 1EA 보수 작업"></textarea>
+                    <label class="form-label">${isSecurity ? '보안업무 내용' : '작업 내용'}</label>
+                    <textarea name="handoverItems[${currentIndex}].taskDetails.content" class="form-control" rows="3" 
+                              placeholder="${isSecurity ? '예: 출입자 신분확인, 차량번호 등록, 순찰경로 점검, CCTV 모니터링, 비상상황 대응절차' : '예: 옥외 전광판 LMD패널 및 가드레일 1EA 보수 작업'}">${existingItem && existingItem.taskDetails ? (existingItem.taskDetails.content || '') : ''}</textarea>
                 </div>
                 
                 <div class="form-group">
-                    <label class="form-label">추가 정보</label>
-                    <textarea name="handoverItems[${itemIndex}].taskDetails.additionalInfo" class="form-control" rows="2" 
-                              placeholder="예: 상기인은 외부인으로 울산시 건설본부 발주 내용"></textarea>
+                    <label class="form-label">${isSecurity ? '보안상 특이사항' : '추가 정보'}</label>
+                    <textarea name="handoverItems[${currentIndex}].taskDetails.additionalInfo" class="form-control" rows="2" 
+                              placeholder="${isSecurity ? '예: 의심인물 출현, 보안장비 이상, 특별지시사항, 비상연락처 등' : '예: 상기인은 외부인으로 울산시 건설본부 발주 내용'}">${existingItem && existingItem.taskDetails ? (existingItem.taskDetails.additionalInfo || '') : ''}</textarea>
                 </div>
                 
                 <div class="form-group">
                     <div class="checkbox-group">
-                        <input type="checkbox" name="handoverItems[${itemIndex}].reportCompleted">
+                        <input type="checkbox" name="handoverItems[${currentIndex}].reportCompleted" ${existingItem && existingItem.reportCompleted ? 'checked' : ''}>
                         <label>보고 완료</label>
                     </div>
                 </div>
             `;
             container.appendChild(div);
-            itemIndex++;
+            
+            // 새 인계사항인 경우에만 인덱스 증가
+            if (existingIndex === null) {
+                itemIndex++;
+            }
         }
         
         // 인계사항 삭제
         function removeHandoverItem(button) {
             button.parentElement.parentElement.remove();
         }
+        
+        // 폼 제출 전 검증 및 로딩 상태 표시
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const handoverItems = document.querySelectorAll('.handover-item');
+            let isValid = true;
+            
+            console.log('폼 제출 검증 - 인계사항 개수:', handoverItems.length);
+            
+            // 인계사항이 없는 경우
+            if (handoverItems.length === 0) {
+                alert('최소 하나의 인계사항을 추가해주세요.');
+                e.preventDefault();
+                return false;
+            }
+            
+            handoverItems.forEach((item, index) => {
+                const taskType = item.querySelector('input[name*="taskType"]');
+                const assignedTeam = item.querySelector('select[name*="assignedTeam"]');
+                const timeCategory = item.querySelector('select[name*="timeCategory"]');
+                
+                console.log(`인계사항 #${index + 1} 검증:`, {
+                    taskType: taskType ? taskType.value : '없음',
+                    assignedTeam: assignedTeam ? assignedTeam.value : '없음',
+                    timeCategory: timeCategory ? timeCategory.value : '없음'
+                });
+                
+                if (taskType && !taskType.value.trim()) {
+                    alert(`인계사항 #${index + 1}의 작업 구분을 입력해주세요.`);
+                    taskType.focus();
+                    isValid = false;
+                    return false;
+                }
+                
+                if (assignedTeam && !assignedTeam.value) {
+                    alert(`인계사항 #${index + 1}의 담당 팀을 선택해주세요.`);
+                    assignedTeam.focus();
+                    isValid = false;
+                    return false;
+                }
+                
+                if (timeCategory && !timeCategory.value) {
+                    alert(`인계사항 #${index + 1}의 시간대를 선택해주세요.`);
+                    timeCategory.focus();
+                    isValid = false;
+                    return false;
+                }
+            });
+            
+            if (!isValid) {
+                e.preventDefault();
+            } else {
+                console.log('폼 검증 통과 - 제출 진행');
+                // 로딩 상태 표시
+                const submitBtn = document.querySelector('button[type="submit"]');
+                const originalText = submitBtn.innerHTML;
+                submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i>저장 중...';
+                submitBtn.disabled = true;
+                
+                // 5초 후 원래 상태로 복원 (서버 응답이 늦을 경우를 대비)
+                setTimeout(() => {
+                    submitBtn.innerHTML = originalText;
+                    submitBtn.disabled = false;
+                }, 5000);
+            }
+        });
     </script>
 
 <%- include('footer') %>

@@ -67,17 +67,12 @@
             background-color: #f0f0f0;
             font-weight: bold;
             text-align: center;
-            font-size: 13px;
-        }
-        
-        .handover-table td {
-            font-size: 12px;
-            line-height: 1.4;
         }
         
         .task-type {
             font-weight: bold;
             margin-bottom: 5px;
+            color: #1976d2;
         }
         
         .task-details {
@@ -86,6 +81,7 @@
         
         .task-details div {
             margin-bottom: 3px;
+            font-size: 13px;
         }
         
         .datetime {
@@ -147,12 +143,11 @@
             border-radius: 3px;
             font-size: 10px;
             font-weight: bold;
-            text-align: center;
         }
         
         .time-day {
-            background-color: #17a2b8;
-            color: white;
+            background-color: #ffc107;
+            color: #212529;
         }
         
         .time-night {
@@ -167,49 +162,47 @@
         
         .summary-section {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
         }
         
         .summary-card {
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            padding: 15px;
-            text-align: center;
             background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+            border: 1px solid #dee2e6;
         }
         
         .summary-title {
-            font-weight: bold;
-            margin-bottom: 10px;
-            color: #333;
+            font-size: 12px;
+            color: #6c757d;
+            margin-bottom: 5px;
         }
         
         .summary-value {
             font-size: 24px;
             font-weight: bold;
-            color: #007bff;
+            color: #333;
         }
         
         .btn-group {
             display: flex;
             gap: 10px;
-            margin-top: 20px;
             justify-content: center;
+            margin-top: 30px;
         }
         
         .btn {
-            padding: 6px 12px;
+            padding: 8px 16px;
             border: none;
-            border-radius: 3px;
+            border-radius: 4px;
             cursor: pointer;
-            font-size: 12px;
+            font-size: 14px;
             text-decoration: none;
             display: inline-block;
             text-align: center;
-            min-width: auto;
-            width: auto;
         }
         
         .btn-primary {
@@ -227,227 +220,39 @@
             color: white;
         }
         
+        .btn-danger {
+            background-color: #dc3545;
+            color: white;
+        }
+        
         .btn:hover {
             opacity: 0.9;
         }
         
-        @media print {
-            /* A4 용지 최적화 설정 */
-            @page {
-                size: A4;
-                margin: 15mm 12mm 15mm 12mm; /* 상하좌우 균등한 여백 */
-            }
-            
-            /* 인쇄 시 A4 한 장에 적절한 여백으로 보기 좋게 */
-            body {
-                background: white;
-                padding: 0;
-                font-size: 12px; /* 10px에서 12px로 변경하여 근무지시서와 통일 */
-                line-height: 1.3;
-                margin: 0;
-                min-height: auto !important;
-                display: block !important;
-            }
-            
-            .container {
-                box-shadow: none;
-                border-radius: 0;
-                padding: 1px 2px 1px 2px;
-                max-width: none;
-                margin: 0;
-            }
-            
-            .footer {
-                display: none !important;
-            }
-            
-            /* 푸터 관련 모든 요소 숨김 */
-            footer,
-            .footer,
-            .mt-auto,
-            .py-2 {
-                display: none !important;
-                visibility: hidden !important;
-                height: 0 !important;
-                margin: 0 !important;
-                padding: 0 !important;
-            }
-            
-            /* 헤더 영역 숨김 */
-            header {
-                display: none !important;
-            }
-            
-            /* 버튼 그룹 숨김 */
-            .btn-group {
-                display: none !important;
-            }
-            
-            /* Bootstrap 스크립트 및 스타일 관련 요소 숨김 */
-            .navbar,
-            .navbar-nav,
-            .nav-link,
-            .brand-logo,
-            .brand-text,
-            .navbar-toggler,
-            .dropdown-menu,
-            .toast,
-            .modal {
-                display: none !important;
-            }
-            
-            /* 컨테이너 상단 여백 제거 */
-            .container {
-                margin-top: 0 !important;
-                padding-top: 0 !important;
-                margin-bottom: 0 !important;
-            }
-            
-            /* 인계장 제목을 페이지 최상단으로 */
-            .header {
-                margin-top: 0 !important;
-                padding-top: 0 !important;
-                margin-bottom: 15px;
-                padding-bottom: 10px;
-            }
-            
-            .title {
-                font-size: 20px;
-                font-weight: bold;
-                margin-bottom: 5px;
-                margin-top: 0 !important;
-                padding-top: 0 !important;
-            }
-            
-            .date-info {
-                font-size: 10px;
-                color: #666;
-            }
-            
-            /* 요약 정보 섹션 인쇄 스타일 */
-            .summary-section {
-                display: flex !important;
-                flex-direction: row !important;
-                gap: 10px !important;
-                margin-bottom: 15px !important;
-            }
-            
-            .summary-card {
-                flex: 1 !important;
-                padding: 8px !important;
-                border: 1px solid #ddd !important;
-                border-radius: 3px !important;
-            }
-            
-            .summary-title {
-                font-size: 8px !important;
-                margin-bottom: 3px !important;
-            }
-            
-            .summary-value {
-                font-size: 14px !important;
-            }
-            
-            /* 인계장 테이블 인쇄 스타일 */
-            .handover-table {
-                width: 100% !important;
-                border-collapse: collapse !important;
-                margin-bottom: 0 !important;
-                border: 1px solid #333 !important;
-                font-size: 8px !important;
-                page-break-inside: avoid !important;
-                break-inside: avoid !important; /* 최신 브라우저 지원 */
-            }
-            
-            .handover-table th,
-            .handover-table td {
-                border: 1px solid #333 !important;
-                padding: 3px 4px !important;
-                text-align: left !important;
-                vertical-align: top !important;
-                font-size: 8px !important;
-                line-height: 1.1 !important;
-            }
-            
-            .handover-table th {
-                background-color: #f0f0f0 !important;
-                font-weight: bold !important;
-                text-align: center !important;
-                font-size: 9px !important;
-            }
-            
-            .task-type {
-                font-weight: bold !important;
-                margin-bottom: 2px !important;
-                font-size: 9px !important;
-            }
-            
-            .task-details {
-                margin-bottom: 4px !important;
-            }
-            
-            .task-details div {
-                margin-bottom: 1px !important;
-                font-size: 8px !important;
-                line-height: 1.1 !important;
-            }
-            
-            .datetime {
-                color: #007bff !important;
-                font-weight: bold !important;
-            }
-            
-            .personnel {
-                color: #28a745 !important;
-            }
-            
-            .location {
-                color: #6c757d !important;
-            }
-            
-            .content {
-                color: #333 !important;
-            }
-            
-            .additional-info {
-                color: #dc3545 !important;
-                font-style: italic !important;
-            }
-            
-            .report-completed {
-                text-align: center !important;
-                font-weight: bold !important;
-                color: #28a745 !important;
-                font-size: 8px !important;
-            }
-            
-            .team-badge {
-                padding: 1px 4px !important;
-                border-radius: 8px !important;
-                font-size: 7px !important;
-                font-weight: bold !important;
-                text-align: center !important;
-                min-width: 20px !important;
-            }
-            
-            .time-category {
-                padding: 1px 3px !important;
-                border-radius: 2px !important;
-                font-size: 7px !important;
-                font-weight: bold !important;
-                text-align: center !important;
-            }
-            
-            /* 페이지 설정 - 공간 최적화 */
-            @page {
-                size: A4;
-                margin: 0.8cm 2cm 0.8cm 2cm;
-            }
+        .handover-info {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .security-badge {
+            display: inline-block;
+            background-color: #1976d2;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 10px;
         }
         
         @media (max-width: 768px) {
+            .summary-section {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
             .handover-table {
-                font-size: 10px;
+                font-size: 12px;
             }
             
             .handover-table th,
@@ -464,7 +269,7 @@
 <div class="container mt-4">
         <!-- 헤더 -->
         <div class="header">
-            <div class="title">일일업무 인계장</div>
+            <div class="title">보안업무 인계장<span class="security-badge">보안업무</span></div>
             <div class="date-info"><%= handover.formattedHandoverDate %></div>
             <% if (handover.handoverFrom) { %>
             <div class="handover-info" style="margin-top: 10px; font-size: 14px; color: #666;">
@@ -476,7 +281,7 @@
         <!-- 요약 정보 -->
         <div class="summary-section">
             <div class="summary-card">
-                <div class="summary-title">전체 인계사항</div>
+                <div class="summary-title">전체 보안업무</div>
                 <div class="summary-value"><%= handover.totalItemsCount %></div>
             </div>
             <div class="summary-card">
@@ -497,11 +302,11 @@
             </div>
         </div>
 
-        <!-- 인계장 테이블 -->
+        <!-- 보안업무 인계장 테이블 -->
         <table class="handover-table">
             <thead>
                 <tr>
-                    <th style="width: 60%;">업무 내용</th>
+                    <th style="width: 60%;">보안업무 내용</th>
                     <th style="width: 15%;">보고완료</th>
                     <th style="width: 10%;">담당팀</th>
                     <th style="width: 15%;">시간대</th>
@@ -512,19 +317,16 @@
                     <% handover.handoverItems.forEach(function(item, index) { %>
                     <tr>
                         <td>
-                            <div class="task-type">□<%= item.taskType %></div>
+                            <div class="task-type">🔒 <%= item.taskType %></div>
                             <% if (item.taskDetails) { %>
                                 <% if (item.taskDetails.dateTime) { %>
                                 <div class="task-details">
                                     <div class="datetime">
-                                        일시: <%= item.taskDetails.dateTime.date %> <%= item.taskDetails.dateTime.startTime %>~<%= item.taskDetails.dateTime.endTime %>
+                                        근무시간: <%= item.taskDetails.dateTime.date %> <%= item.taskDetails.dateTime.startTime %>~<%= item.taskDetails.dateTime.endTime %>
                                     </div>
                                     <% if (item.taskDetails.personnel) { %>
                                     <div class="personnel">
-                                        인원: <%= item.taskDetails.personnel.company %> <%= item.taskDetails.personnel.name %>
-                                        <% if (item.taskDetails.personnel.additionalCount) { %>
-                                        외 <%= item.taskDetails.personnel.additionalCount %>명
-                                        <% } %>
+                                        담당요원: <%= item.taskDetails.personnel.name %>
                                         <% if (item.taskDetails.personnel.phone) { %>
                                         (<%= item.taskDetails.personnel.phone %>)
                                         <% } %>
@@ -532,17 +334,17 @@
                                     <% } %>
                                     <% if (item.taskDetails.location) { %>
                                     <div class="location">
-                                        장소: <%= item.taskDetails.location %>
+                                        근무구역: <%= item.taskDetails.location %>
                                     </div>
                                     <% } %>
                                     <% if (item.taskDetails.content) { %>
                                     <div class="content">
-                                        내용: <%= item.taskDetails.content %>
+                                        업무내용: <%= item.taskDetails.content %>
                                     </div>
                                     <% } %>
                                     <% if (item.taskDetails.additionalInfo) { %>
                                     <div class="additional-info">
-                                        <%= item.taskDetails.additionalInfo %>
+                                        ⚠️ 특이사항: <%= item.taskDetails.additionalInfo %>
                                     </div>
                                     <% } %>
                                 </div>
@@ -550,7 +352,7 @@
                             <% } %>
                         </td>
                         <td class="report-completed">
-                            <%= item.reportCompleted ? '보고완료' : '미완료' %>
+                            <%= item.reportCompleted ? '✅ 완료' : '⏳ 미완료' %>
                         </td>
                         <td style="text-align: center;">
                             <span class="team-badge team-<%= item.assignedTeam.charAt(0) %>">
@@ -567,7 +369,7 @@
                 <% } else { %>
                     <tr>
                         <td colspan="4" style="text-align: center; padding: 20px; color: #666;">
-                            등록된 인계사항이 없습니다.
+                            등록된 보안업무 인계사항이 없습니다.
                         </td>
                     </tr>
                 <% } %>
@@ -591,7 +393,7 @@
 <script>
     // 인계장 삭제 기능
     function deleteHandover(handoverId) {
-        if (confirm('정말로 이 인계장을 삭제하시겠습니까?\n삭제된 데이터는 복구할 수 없습니다.')) {
+        if (confirm('정말로 이 보안업무 인계장을 삭제하시겠습니까?\n삭제된 데이터는 복구할 수 없습니다.')) {
             fetch(`/handovers/${handoverId}`, {
                 method: 'DELETE',
                 headers: {
@@ -601,7 +403,7 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    alert('인계장이 성공적으로 삭제되었습니다.');
+                    alert('보안업무 인계장이 성공적으로 삭제되었습니다.');
                     window.location.href = '/handovers';
                 } else {
                     alert('삭제 중 오류가 발생했습니다: ' + data.message);
@@ -614,36 +416,10 @@
         }
     }
     
-    // 인계장 인쇄 기능
+    // 인쇄 기능
     function printHandover() {
-        // 인쇄 전 최적화 적용
-        if (typeof optimizeForPrint === 'function') {
-            optimizeForPrint();
-        }
-        
-        // 약간의 지연 후 인쇄 실행
-        setTimeout(() => {
-            window.print();
-        }, 100);
+        window.print();
     }
-    
-    // Ctrl+클릭으로 미리보기 기능
-    document.addEventListener('DOMContentLoaded', function() {
-        const printBtn = document.querySelector('.print-btn');
-        if (printBtn) {
-            printBtn.addEventListener('click', function(e) {
-                if (e.ctrlKey || e.metaKey) {
-                    e.preventDefault();
-                    if (typeof showPrintPreview === 'function') {
-                        showPrintPreview();
-                    } else {
-                        alert('미리보기 기능을 사용하려면 Ctrl+클릭을 사용하세요.');
-                    }
-                }
-            });
-        }
-    });
 </script>
-
 </body>
 </html>
