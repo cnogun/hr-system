@@ -288,29 +288,34 @@ router.post('/security', isLoggedIn, adminOnly, async (req, res) => {
       // 배열 형태로 받은 경우 객체로 변환
       if (Array.isArray(req.body.handoverItems) && typeof req.body.handoverItems[0] === 'string') {
         console.log('배열 형태 데이터를 객체로 변환 중...');
-        // 배열을 객체로 변환하는 로직
+        // 배열을 객체로 변환하는 로직 - 보안업무 인계장용 필드 순서
         const items = [];
-        for (let i = 0; i < req.body.handoverItems.length; i += 13) {
+        for (let i = 0; i < req.body.handoverItems.length; i += 14) {
           if (req.body.handoverItems[i] && req.body.handoverItems[i + 1]) {
             items.push({
-              taskType: req.body.handoverItems[i],
-              assignedTeam: req.body.handoverItems[i + 1],
-              timeCategory: req.body.handoverItems[i + 2] || '주간',
+              taskType: req.body.handoverItems[i],           // 보안업무 구분
+              assignedTeam: req.body.handoverItems[i + 1],    // 담당 팀
+              timeCategory: req.body.handoverItems[i + 2] || '주간', // 시간대
               taskDetails: {
                 dateTime: {
-                  date: req.body.handoverItems[i + 3] || '',
-                  startTime: req.body.handoverItems[i + 4] || '',
-                  endTime: req.body.handoverItems[i + 5] || ''
+                  date: req.body.handoverItems[i + 3] || '',      // 근무 시간
+                  startTime: req.body.handoverItems[i + 4] || '', // 시작 시간
+                  endTime: req.body.handoverItems[i + 5] || ''     // 종료 시간
                 },
                 personnel: {
                   company: '',
-                  name: req.body.handoverItems[i + 6] || '',
+                  name: req.body.handoverItems[i + 6] || '',      // 담당 보안요원
                   additionalCount: 0,
-                  phone: req.body.handoverItems[i + 7] || ''
+                  phone: req.body.handoverItems[i + 7] || ''       // 연락처
                 },
-                location: req.body.handoverItems[i + 8] || '',
-                content: req.body.handoverItems[i + 9] || '',
-                additionalInfo: req.body.handoverItems[i + 10] || ''
+                location: req.body.handoverItems[i + 8] || '',    // 근무 구역
+                content: {
+                  time: req.body.handoverItems[i + 9] || '',       // 보안업무 시간
+                  location: req.body.handoverItems[i + 10] || '', // 보안업무 장소
+                  personnel: req.body.handoverItems[i + 11] || '', // 보안업무 인원
+                  details: req.body.handoverItems[i + 12] || ''    // 보안업무 내용
+                },
+                additionalInfo: req.body.handoverItems[i + 13] || '' // 보안상 특이사항
               },
               reportCompleted: false
             });
@@ -350,7 +355,12 @@ router.post('/security', isLoggedIn, adminOnly, async (req, res) => {
               phone: item.taskDetails?.personnel?.phone || ''
             },
             location: item.taskDetails?.location || '',
-            content: item.taskDetails?.content || '',
+            content: {
+              time: item.taskDetails?.content?.time || '',
+              location: item.taskDetails?.content?.location || '',
+              personnel: item.taskDetails?.content?.personnel || '',
+              details: item.taskDetails?.content?.details || ''
+            },
             additionalInfo: item.taskDetails?.additionalInfo || ''
           }
         };

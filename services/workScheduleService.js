@@ -11,6 +11,9 @@ class WorkScheduleService {
       const weekStart = this.getWeekStart(today);
       const weekEnd = this.getWeekEnd(today);
       
+      // 주차 번호 계산
+      const weekNumber = this.getWeekNumber(today);
+      
       // 기존 스케줄이 있는지 확인
       const existingSchedule = await WorkSchedule.findOne({
         weekStartDate: weekStart,
@@ -24,6 +27,7 @@ class WorkScheduleService {
       
       // 새로운 스케줄 생성
       const schedule = new WorkSchedule({
+        weekNumber: weekNumber,
         weekStartDate: weekStart,
         weekEndDate: weekEnd,
         currentWeekSchedule: {
@@ -42,6 +46,25 @@ class WorkScheduleService {
       console.error('근무 스케줄 생성 오류:', error);
       throw error;
     }
+  }
+  
+  /**
+   * 주차 번호 계산 (2025년 1월 1일 기준)
+   */
+  static getWeekNumber(date) {
+    const yearStart = new Date(2025, 0, 1, 6, 0, 0); // 2025년 1월 1일 06:00
+    const targetDate = new Date(date);
+    
+    // 월요일 06:00으로 조정
+    const dayOfWeek = targetDate.getDay();
+    const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    
+    const monday6am = new Date(targetDate);
+    monday6am.setDate(targetDate.getDate() - mondayOffset);
+    monday6am.setHours(6, 0, 0, 0);
+    
+    const weekDiff = Math.floor((monday6am - yearStart) / (7 * 24 * 60 * 60 * 1000));
+    return weekDiff + 2; // 1월 1일 수요일이 1주차, 1월 6일 월요일이 2주차
   }
   
   /**

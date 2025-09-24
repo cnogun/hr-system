@@ -28,7 +28,11 @@ router.get('/', async (req, res) => {
     if (priority) query.priority = priority;
     
     const dutyOrders = await DutyOrder.find(query)
-      .populate('issuedBy', 'name position')
+      .populate({
+        path: 'issuedBy',
+        select: 'name position',
+        options: { strictPopulate: false }
+      })
       .populate('assignedEmployees.employee', 'name department position')
       .populate('approval.approvedBy', 'name position')
       .sort({ effectiveDate: -1, createdAt: -1 })
@@ -369,13 +373,8 @@ router.delete('/:id', async (req, res) => {
       });
     }
     
-    // 시행 중이거나 완료된 명령은 삭제 제한
-    if (['시행', '완료'].includes(dutyOrder.status)) {
-      return res.status(400).json({
-        success: false,
-        message: '시행 중이거나 완료된 인사명령은 삭제할 수 없습니다.'
-      });
-    }
+    // 삭제 제한 해제 - 모든 상태의 인사명령서 삭제 가능
+    // 필요시 관리자 권한 확인 로직 추가 가능
     
     await DutyOrder.findByIdAndDelete(req.params.id);
     
@@ -390,13 +389,13 @@ router.delete('/:id', async (req, res) => {
     
     res.json({
       success: true,
-      message: '인사명령이 삭제되었습니다.'
+      message: '인사명령서가 삭제되었습니다.'
     });
   } catch (error) {
     console.error('인사명령 삭제 오류:', error);
     res.status(500).json({
       success: false,
-      message: '인사명령 삭제 중 오류가 발생했습니다.'
+      message: '인사명령서 삭제 중 오류가 발생했습니다.'
     });
   }
 });

@@ -68,40 +68,11 @@
           <h1 class="display-4 text-primary mb-3">
             <i class="fa-solid fa-calendar-alt me-3"></i>근무 스케줄 관리
           </h1>
-          <p class="lead text-muted">주차별 근무 스케줄을 설정하고 관리합니다.</p>
+          <p class="lead text-muted">팀별 근무 스케줄과 주말 인원 배정을 관리합니다.</p>
         </div>
 
         
         
-        <!-- 주차별 스케줄 관리 -->
-        <div class="card shadow-sm mb-4">
-          <div class="card-header bg-secondary text-white">
-            <h5 class="mb-0">
-              <i class="fa-solid fa-calendar-alt me-2"></i>주차별 스케줄 관리
-            </h5>
-          </div>
-          <div class="card-body">
-            <div class="row g-3 align-items-end">
-              <div class="col-md-6">
-                <label for="weekSelect" class="form-label">
-                  주차 선택
-                </label>
-                <select class="form-select" id="weekSelect" onchange="loadWeekSchedule()" style="font-size: 14px;">
-                  <option value="">주차를 선택하세요</option>
-                </select>
-                <div class="form-text">
-                  <span id="currentWeekInfo">이번주 주차가 자동으로 선택됩니다</span>
-                </div>
-              </div>
-              <div class="col-md-6">
-                <button class="btn btn-primary w-100" onclick="createNextWeekSchedule()">
-                  다음 주차 생성
-                </button>
-              </div>
-            </div>
-            
-          </div>
-        </div>
 
         <!-- 이번주 팀 근무 형태 -->
         <div class="card shadow-sm mb-4">
@@ -140,13 +111,23 @@
         <!-- 주말 근무 인원 배정 -->
         <div class="card shadow-sm mb-4">
           <div class="card-header bg-warning text-dark">
-            <h5 class="mb-0">
-              <i class="fa-solid fa-calendar-week me-2"></i>주말 근무 인원 배정
-            </h5>
+            <div class="d-flex justify-content-between align-items-center">
+              <h5 class="mb-0">
+                <i class="fa-solid fa-calendar-week me-2"></i>주말 근무 인원 배정
+              </h5>
+              <div class="btn-group" role="group">
+                <button class="btn btn-light btn-sm" onclick="toggleWorkLogicInfo()">
+                  <i class="fa-solid fa-info-circle me-1"></i>안내
+                </button>
+                <button class="btn btn-light btn-sm" onclick="generateAllTeamsPersonnel()">
+                  <i class="fa-solid fa-magic me-1"></i>전체 팀 자동생성
+                </button>
+              </div>
+            </div>
           </div>
           <div class="card-body">
-            <!-- 근무 순환 로직 설명 -->
-            <div class="alert alert-info mb-4">
+            <!-- 근무 순환 로직 설명 (숨김 상태) -->
+            <div class="alert alert-info mb-4" id="workLogicInfo" style="display: none;">
               <div class="d-flex justify-content-between align-items-start">
                 <div>
                   <h6 class="alert-heading"><i class="fa-solid fa-info-circle me-2"></i>근무 순환 로직</h6>
@@ -159,8 +140,8 @@
                     <li><strong>주말 인원 배정:</strong> 각 근무 시간대별로 정확히 30명씩 배정</li>
                   </ul>
                 </div>
-                <button class="btn btn-info" onclick="generateAllTeamsPersonnel()">
-                  <i class="fa-solid fa-magic me-1"></i>전체 팀 자동 생성
+                <button class="btn btn-outline-info btn-sm" onclick="toggleWorkLogicInfo()">
+                  <i class="fa-solid fa-times me-1"></i>닫기
                 </button>
               </div>
             </div>
@@ -176,32 +157,30 @@
                     <i class="fa-solid fa-magic me-1"></i>자동 생성
                   </button>
                 </div>
-                <div class="row g-3">
-                  <div class="col-md-4">
-                    <label class="form-label small">A조 (일요일 주간근무)</label>
-                    <textarea class="form-control" id="team1AGroup" rows="4" placeholder="A조 편성 명단을 입력하세요 (20명)" oninput="calculateWeekendPersonnel()"></textarea>
+                <div class="row g-2">
+                  <div class="col-md-2">
+                    <label class="form-label small fw-bold text-primary">A조</label>
+                    <textarea class="form-control" id="team1AGroup" rows="3" placeholder="20명" oninput="calculateWeekendPersonnel()"></textarea>
                   </div>
-                  <div class="col-md-4">
-                    <label class="form-label small">B조 (일요일 야간근무)</label>
-                    <textarea class="form-control" id="team1BGroup" rows="4" placeholder="B조 편성 명단을 입력하세요 (20명)" oninput="calculateWeekendPersonnel()"></textarea>
+                  <div class="col-md-2">
+                    <label class="form-label small fw-bold text-warning">B조</label>
+                    <textarea class="form-control" id="team1BGroup" rows="3" placeholder="20명" oninput="calculateWeekendPersonnel()"></textarea>
                   </div>
-                  <div class="col-md-4">
-                    <label class="form-label small">1조</label>
-                    <textarea class="form-control" id="team1Group1" rows="4" placeholder="1조 편성 명단을 입력하세요 (10명)" oninput="calculateWeekendPersonnel()"></textarea>
+                  <div class="col-md-2">
+                    <label class="form-label small fw-bold text-success">1조</label>
+                    <textarea class="form-control" id="team1Group1" rows="3" placeholder="10명" oninput="calculateWeekendPersonnel()"></textarea>
                   </div>
-                </div>
-                <div class="row g-3 mt-2">
-                  <div class="col-md-4">
-                    <label class="form-label small">2조</label>
-                    <textarea class="form-control" id="team1Group2" rows="4" placeholder="2조 편성 명단을 입력하세요 (10명)" oninput="calculateWeekendPersonnel()"></textarea>
+                  <div class="col-md-2">
+                    <label class="form-label small fw-bold text-success">2조</label>
+                    <textarea class="form-control" id="team1Group2" rows="3" placeholder="10명" oninput="calculateWeekendPersonnel()"></textarea>
                   </div>
-                  <div class="col-md-4">
-                    <label class="form-label small">3조</label>
-                    <textarea class="form-control" id="team1Group3" rows="4" placeholder="3조 편성 명단을 입력하세요 (10명)" oninput="calculateWeekendPersonnel()"></textarea>
+                  <div class="col-md-2">
+                    <label class="form-label small fw-bold text-success">3조</label>
+                    <textarea class="form-control" id="team1Group3" rows="3" placeholder="10명" oninput="calculateWeekendPersonnel()"></textarea>
                   </div>
-                  <div class="col-md-4">
-                    <label class="form-label small">4조</label>
-                    <textarea class="form-control" id="team1Group4" rows="4" placeholder="4조 편성 명단을 입력하세요 (10명)" oninput="calculateWeekendPersonnel()"></textarea>
+                  <div class="col-md-2">
+                    <label class="form-label small fw-bold text-success">4조</label>
+                    <textarea class="form-control" id="team1Group4" rows="3" placeholder="10명" oninput="calculateWeekendPersonnel()"></textarea>
                   </div>
                 </div>
               </div>
@@ -218,32 +197,30 @@
                     <i class="fa-solid fa-magic me-1"></i>자동 생성
                   </button>
                 </div>
-                <div class="row g-3">
-                  <div class="col-md-4">
-                    <label class="form-label small">A조 (일요일 주간근무)</label>
-                    <textarea class="form-control" id="team2AGroup" rows="4" placeholder="A조 편성 명단을 입력하세요 (20명)" oninput="calculateWeekendPersonnel()"></textarea>
+                <div class="row g-2">
+                  <div class="col-md-2">
+                    <label class="form-label small fw-bold text-primary">A조</label>
+                    <textarea class="form-control" id="team2AGroup" rows="3" placeholder="20명" oninput="calculateWeekendPersonnel()"></textarea>
                   </div>
-                  <div class="col-md-4">
-                    <label class="form-label small">B조 (일요일 야간근무)</label>
-                    <textarea class="form-control" id="team2BGroup" rows="4" placeholder="B조 편성 명단을 입력하세요 (20명)" oninput="calculateWeekendPersonnel()"></textarea>
+                  <div class="col-md-2">
+                    <label class="form-label small fw-bold text-warning">B조</label>
+                    <textarea class="form-control" id="team2BGroup" rows="3" placeholder="20명" oninput="calculateWeekendPersonnel()"></textarea>
                   </div>
-                  <div class="col-md-4">
-                    <label class="form-label small">1조</label>
-                    <textarea class="form-control" id="team2Group1" rows="4" placeholder="1조 편성 명단을 입력하세요 (10명)" oninput="calculateWeekendPersonnel()"></textarea>
+                  <div class="col-md-2">
+                    <label class="form-label small fw-bold text-success">1조</label>
+                    <textarea class="form-control" id="team2Group1" rows="3" placeholder="10명" oninput="calculateWeekendPersonnel()"></textarea>
                   </div>
-                </div>
-                <div class="row g-3 mt-2">
-                  <div class="col-md-4">
-                    <label class="form-label small">2조</label>
-                    <textarea class="form-control" id="team2Group2" rows="4" placeholder="2조 편성 명단을 입력하세요 (10명)" oninput="calculateWeekendPersonnel()"></textarea>
+                  <div class="col-md-2">
+                    <label class="form-label small fw-bold text-success">2조</label>
+                    <textarea class="form-control" id="team2Group2" rows="3" placeholder="10명" oninput="calculateWeekendPersonnel()"></textarea>
                   </div>
-                  <div class="col-md-4">
-                    <label class="form-label small">3조</label>
-                    <textarea class="form-control" id="team2Group3" rows="4" placeholder="3조 편성 명단을 입력하세요 (10명)" oninput="calculateWeekendPersonnel()"></textarea>
+                  <div class="col-md-2">
+                    <label class="form-label small fw-bold text-success">3조</label>
+                    <textarea class="form-control" id="team2Group3" rows="3" placeholder="10명" oninput="calculateWeekendPersonnel()"></textarea>
                   </div>
-                  <div class="col-md-4">
-                    <label class="form-label small">4조</label>
-                    <textarea class="form-control" id="team2Group4" rows="4" placeholder="4조 편성 명단을 입력하세요 (10명)" oninput="calculateWeekendPersonnel()"></textarea>
+                  <div class="col-md-2">
+                    <label class="form-label small fw-bold text-success">4조</label>
+                    <textarea class="form-control" id="team2Group4" rows="3" placeholder="10명" oninput="calculateWeekendPersonnel()"></textarea>
                   </div>
                 </div>
               </div>
@@ -260,32 +237,30 @@
                     <i class="fa-solid fa-magic me-1"></i>자동 생성
                   </button>
                 </div>
-                <div class="row g-3">
-                  <div class="col-md-4">
-                    <label class="form-label small">A조 (일요일 주간근무)</label>
-                    <textarea class="form-control" id="team3AGroup" rows="4" placeholder="A조 편성 명단을 입력하세요 (20명)" oninput="calculateWeekendPersonnel()"></textarea>
+                <div class="row g-2">
+                  <div class="col-md-2">
+                    <label class="form-label small fw-bold text-primary">A조</label>
+                    <textarea class="form-control" id="team3AGroup" rows="3" placeholder="20명" oninput="calculateWeekendPersonnel()"></textarea>
                   </div>
-                  <div class="col-md-4">
-                    <label class="form-label small">B조 (일요일 야간근무)</label>
-                    <textarea class="form-control" id="team3BGroup" rows="4" placeholder="B조 편성 명단을 입력하세요 (20명)" oninput="calculateWeekendPersonnel()"></textarea>
+                  <div class="col-md-2">
+                    <label class="form-label small fw-bold text-warning">B조</label>
+                    <textarea class="form-control" id="team3BGroup" rows="3" placeholder="20명" oninput="calculateWeekendPersonnel()"></textarea>
                   </div>
-                  <div class="col-md-4">
-                    <label class="form-label small">1조</label>
-                    <textarea class="form-control" id="team3Group1" rows="4" placeholder="1조 편성 명단을 입력하세요 (10명)" oninput="calculateWeekendPersonnel()"></textarea>
+                  <div class="col-md-2">
+                    <label class="form-label small fw-bold text-success">1조</label>
+                    <textarea class="form-control" id="team3Group1" rows="3" placeholder="10명" oninput="calculateWeekendPersonnel()"></textarea>
                   </div>
-                </div>
-                <div class="row g-3 mt-2">
-                  <div class="col-md-4">
-                    <label class="form-label small">2조</label>
-                    <textarea class="form-control" id="team3Group2" rows="4" placeholder="2조 편성 명단을 입력하세요 (10명)" oninput="calculateWeekendPersonnel()"></textarea>
+                  <div class="col-md-2">
+                    <label class="form-label small fw-bold text-success">2조</label>
+                    <textarea class="form-control" id="team3Group2" rows="3" placeholder="10명" oninput="calculateWeekendPersonnel()"></textarea>
                   </div>
-                  <div class="col-md-4">
-                    <label class="form-label small">3조</label>
-                    <textarea class="form-control" id="team3Group3" rows="4" placeholder="3조 편성 명단을 입력하세요 (10명)" oninput="calculateWeekendPersonnel()"></textarea>
+                  <div class="col-md-2">
+                    <label class="form-label small fw-bold text-success">3조</label>
+                    <textarea class="form-control" id="team3Group3" rows="3" placeholder="10명" oninput="calculateWeekendPersonnel()"></textarea>
                   </div>
-                  <div class="col-md-4">
-                    <label class="form-label small">4조</label>
-                    <textarea class="form-control" id="team3Group4" rows="4" placeholder="4조 편성 명단을 입력하세요 (10명)" oninput="calculateWeekendPersonnel()"></textarea>
+                  <div class="col-md-2">
+                    <label class="form-label small fw-bold text-success">4조</label>
+                    <textarea class="form-control" id="team3Group4" rows="3" placeholder="10명" oninput="calculateWeekendPersonnel()"></textarea>
                   </div>
                 </div>
               </div>
@@ -421,7 +396,6 @@
        loadCurrentWeekInfo();
        loadHolidayList(); // 공휴일 목록 자동 로드
        loadSavedWeekendSchedule(); // 저장된 주말 스케줄 불러오기
-       loadWeekList(); // 주차 목록 불러오기
        
        console.log('WorkSchedule 페이지 로드 완료');
      });
@@ -716,7 +690,16 @@
       document.getElementById('satDayTeams').textContent = satDayTeams.join(', ') || '-';
       document.getElementById('satNightTeams').textContent = satNightTeams.join(', ') || '-';
       document.getElementById('sunDayTeams').textContent = sunDayTeams.join(', ') || '-';
-      document.getElementById('sunNightTeams').textContent = sunNightTeams.join(', ') || '-';
+      
+      // 일요일 야간근무 인원 순서 조정: 2팀 주간 B조를 먼저, 1팀 심야 2조를 나중에
+      const sortedSunNightTeams = sunNightTeams.sort((a, b) => {
+        if (a.includes('2팀 주간 B조')) return -1;
+        if (b.includes('2팀 주간 B조')) return 1;
+        if (a.includes('1팀 심야 2조')) return 1;
+        if (b.includes('1팀 심야 2조')) return -1;
+        return 0;
+      });
+      document.getElementById('sunNightTeams').textContent = sortedSunNightTeams.join(', ') || '-';
 
       // 목표 인원과 비교
       const targetWeekend = 30;
@@ -1294,150 +1277,6 @@
        }, 3000);
      }
 
-     // 주차별 스케줄 관리 함수들
-     
-     // 페이지 로드 시 주차 목록 불러오기
-     async function loadWeekList() {
-       try {
-         const response = await fetch('/workSchedule/week-list', {
-           method: 'GET',
-           headers: {
-             'Content-Type': 'application/json'
-           }
-         });
-         
-         if (response.ok) {
-           const result = await response.json();
-           const weekSelect = document.getElementById('weekSelect');
-           weekSelect.innerHTML = '<option value="">주차를 선택하세요</option>';
-           
-           if (result.success && result.data) {
-             // 이번주 주차 먼저 찾기
-             const currentWeek = findCurrentWeek(result.data);
-             
-             result.data.forEach(week => {
-               const option = document.createElement('option');
-               option.value = week._id;
-               
-               // 이번주 주차인지 확인
-               const isCurrentWeek = currentWeek && week._id === currentWeek._id;
-               
-               if (isCurrentWeek) {
-                 option.textContent = `📅 ${week.weekNumber}주차 (${formatDate(week.weekStartDate)} ~ ${formatDate(week.weekEndDate)}) - 이번주`;
-                 option.style.fontWeight = 'bold';
-                 option.style.backgroundColor = '#e3f2fd';
-               } else {
-                 option.textContent = `${week.weekNumber}주차 (${formatDate(week.weekStartDate)} ~ ${formatDate(week.weekEndDate)})`;
-               }
-               
-               weekSelect.appendChild(option);
-             });
-             
-             // 이번주 주차 자동 선택
-             selectCurrentWeek(result.data);
-           }
-         }
-       } catch (error) {
-         console.error('주차 목록 불러오기 오류:', error);
-       }
-     }
-     
-     // 이번주 주차 찾기
-     function findCurrentWeek(weekList) {
-       const today = new Date();
-       const currentWeekStart = getWeekStart(today);
-       
-       // 현재 주차와 일치하는 주차 찾기
-       return weekList.find(week => {
-         const weekStart = new Date(week.weekStartDate);
-         return weekStart.getTime() === currentWeekStart.getTime();
-       });
-     }
-     
-     // 이번주 주차 자동 선택
-     function selectCurrentWeek(weekList) {
-       const currentWeek = findCurrentWeek(weekList);
-       const currentWeekInfo = document.getElementById('currentWeekInfo');
-       
-       if (currentWeek) {
-         // 이번주 주차가 있으면 자동 선택
-         document.getElementById('weekSelect').value = currentWeek._id;
-         currentWeekInfo.innerHTML = `이번주 주차 (${currentWeek.weekNumber}주차)가 선택되었습니다`;
-         currentWeekInfo.className = 'form-text text-success';
-         loadWeekSchedule();
-       } else {
-         // 이번주 주차가 없으면 첫 번째 주차 선택
-         if (weekList.length > 0) {
-           document.getElementById('weekSelect').value = weekList[0]._id;
-           currentWeekInfo.innerHTML = `이번주 주차가 없어 첫 번째 주차를 선택했습니다`;
-           currentWeekInfo.className = 'form-text text-warning';
-           loadWeekSchedule();
-         } else {
-           currentWeekInfo.innerHTML = `생성된 주차가 없습니다. 다음 주차를 생성해주세요`;
-           currentWeekInfo.className = 'form-text text-info';
-         }
-       }
-     }
-     
-     // 주차 시작일 계산 (월요일 06:00)
-     function getWeekStart(date) {
-       const weekStart = new Date(date);
-       const dayOfWeek = weekStart.getDay();
-       const daysToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-       weekStart.setDate(weekStart.getDate() + daysToMonday);
-       weekStart.setHours(6, 0, 0, 0);
-       return weekStart;
-     }
-     
-     
-     // 주차 스케줄 불러오기
-     async function loadWeekSchedule() {
-       const weekSelect = document.getElementById('weekSelect');
-       const weekId = weekSelect.value;
-       const currentWeekInfo = document.getElementById('currentWeekInfo');
-       
-       if (!weekId) {
-         currentWeekInfo.innerHTML = `주차를 선택해주세요`;
-         currentWeekInfo.className = 'form-text text-info';
-         return;
-       }
-       
-       // 선택된 주차가 이번주 주차인지 확인
-       const selectedOption = weekSelect.options[weekSelect.selectedIndex];
-       const isCurrentWeek = selectedOption.textContent.includes('- 이번주');
-       
-       if (isCurrentWeek) {
-         currentWeekInfo.innerHTML = `이번주 주차가 선택되었습니다`;
-         currentWeekInfo.className = 'form-text text-success';
-       } else {
-         currentWeekInfo.style.display = 'none';
-       }
-       
-       try {
-         const response = await fetch(`/workSchedule/week/${weekId}`, {
-           method: 'GET',
-           headers: {
-             'Content-Type': 'application/json'
-           }
-         });
-         
-         if (response.ok) {
-           const result = await response.json();
-           if (result.success && result.data) {
-             // 주말 스케줄 복원
-             if (result.data.weekendSchedule) {
-               restoreWeekendScheduleData(result.data.weekendSchedule);
-               calculateWeekendPersonnel();
-             }
-             
-             showMessage('주차 스케줄을 불러왔습니다.', 'success');
-           }
-         }
-       } catch (error) {
-         console.error('주차 스케줄 불러오기 오류:', error);
-         showMessage('주차 스케줄 불러오기에 실패했습니다.', 'danger');
-       }
-     }
      
      
      // 요일 반환 함수
@@ -1447,108 +1286,6 @@
        return days[date.getDay()];
      }
      
-     // 주차 번호 자동 계산 함수
-     function calculateWeekNumber(dateString) {
-       const targetDate = new Date(dateString);
-       const yearStart = new Date('2025-01-01'); // 2025년 1월 1일
-       
-       // 2025년 1월 1일이 수요일이므로, 첫 번째 월요일을 찾기
-       const firstMonday = new Date('2025-01-06'); // 2025년 1월 6일 (월요일)
-       
-       // 주차 계산
-       const timeDiff = targetDate.getTime() - firstMonday.getTime();
-       const daysDiff = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
-       const weekNumber = Math.floor(daysDiff / 7) + 1;
-       
-       return weekNumber;
-     }
-     
-     // 다음 주차 생성
-     async function createNextWeekSchedule() {
-       // 현재 선택된 주차의 다음 주차 시작일 계산
-       const weekSelect = document.getElementById('weekSelect');
-       const currentWeekId = weekSelect.value;
-       
-       if (!currentWeekId) {
-         showMessage('먼저 현재 주차를 선택해주세요.', 'warning');
-         return;
-       }
-       
-       try {
-         // 현재 주차 정보 가져오기
-         const response = await fetch(`/workSchedule/week/${currentWeekId}`, {
-           method: 'GET',
-           headers: {
-             'Content-Type': 'application/json'
-           }
-         });
-         
-         if (!response.ok) {
-           showMessage('현재 주차 정보를 가져올 수 없습니다.', 'danger');
-           return;
-         }
-         
-         const result = await response.json();
-         if (!result.success || !result.data) {
-           showMessage('현재 주차 정보를 가져올 수 없습니다.', 'danger');
-           return;
-         }
-         
-         // 다음 주차 시작일 계산
-         const currentWeekEnd = new Date(result.data.weekEndDate);
-         const nextWeekStart = new Date(currentWeekEnd);
-         nextWeekStart.setDate(currentWeekEnd.getDate() + 1);
-         nextWeekStart.setHours(6, 0, 0, 0);
-         
-         // 주차 번호 자동 계산
-         const weekNumber = calculateWeekNumber(nextWeekStart.toISOString().split('T')[0]);
-         
-         // 다음 주차 종료일 계산
-         const nextWeekEnd = new Date(nextWeekStart);
-         nextWeekEnd.setDate(nextWeekStart.getDate() + 6);
-         nextWeekEnd.setHours(6, 0, 0, 0);
-         
-         const scheduleData = {
-           weekNumber: parseInt(weekNumber),
-           weekStartDate: nextWeekStart,
-           weekEndDate: nextWeekEnd,
-           status: 'active',
-           createdBy: 'admin' // 실제로는 세션에서 가져와야 함
-         };
-         
-         const createResponse = await fetch('/workSchedule/create-week', {
-           method: 'POST',
-           headers: {
-             'Content-Type': 'application/json'
-           },
-           body: JSON.stringify(scheduleData)
-         });
-         
-         const createResult = await createResponse.json();
-         
-         if (createResult.success) {
-           showMessage('다음 주차 스케줄이 생성되었습니다.', 'success');
-           loadWeekList(); // 주차 목록 새로고침
-           
-           // 생성된 스케줄 선택
-           setTimeout(() => {
-             const weekSelect = document.getElementById('weekSelect');
-             const newOption = Array.from(weekSelect.options).find(option => 
-               option.textContent.includes(`${weekNumber}주차`)
-             );
-             if (newOption) {
-               weekSelect.value = newOption.value;
-               loadWeekSchedule();
-             }
-           }, 500);
-         } else {
-           showMessage('다음 주차 스케줄 생성에 실패했습니다: ' + createResult.message, 'danger');
-         }
-       } catch (error) {
-         console.error('다음 주차 스케줄 생성 오류:', error);
-         showMessage('다음 주차 스케줄 생성 중 오류가 발생했습니다.', 'danger');
-       }
-     }
      
      // 날짜 포맷팅 함수
      function formatDate(dateString) {
@@ -1567,6 +1304,17 @@
        const day = String(date.getDate()).padStart(2, '0');
        return `${year}-${month}-${day}`;
      }
+     
+     // 근무 순환 로직 안내 토글 함수
+     function toggleWorkLogicInfo() {
+       const infoDiv = document.getElementById('workLogicInfo');
+       if (infoDiv.style.display === 'none') {
+         infoDiv.style.display = 'block';
+       } else {
+         infoDiv.style.display = 'none';
+       }
+     }
+     
 
   </script>
   

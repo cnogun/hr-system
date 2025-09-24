@@ -258,20 +258,18 @@
                 <i class="fa-solid fa-cog me-2"></i> 관리자
               </a>
               <ul class="dropdown-menu dropdown-menu-end">
-                <li><h6 class="dropdown-header">시스템 관리</h6></li>
                 <li><a class="dropdown-item" href="/boards/admin/reports">
                   <i class="fa-solid fa-flag me-2"></i> 게시판 신고 관리
                 </a></li>
-                  <li><hr class="dropdown-divider"></li>
-                  <li><h6 class="dropdown-header">데이터 관리</h6></li>
-                  <li><a class="dropdown-item" href="/uniform/stats">
-                    <i class="fa-solid fa-tshirt me-2"></i> 유니폼 현황
-                  </a></li>
-                  <li><a class="dropdown-item" href="/auth/logs">
-                    <i class="fa-solid fa-history me-2"></i> 활동 로그 관리
-                  </a></li>
-                </ul>
-              </li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="/uniform/stats">
+                  <i class="fa-solid fa-tshirt me-2"></i> 유니폼 현황
+                </a></li>
+                <li><a class="dropdown-item" href="/auth/logs">
+                  <i class="fa-solid fa-history me-2"></i> 활동 로그 관리
+                </a></li>
+              </ul>
+            </li>
              
              <!-- 엑셀관리 메뉴 -->
              <li class="nav-item dropdown">
@@ -279,7 +277,6 @@
                  <i class="fa-solid fa-file-excel me-2"></i> 엑셀관리
                </a>
                <ul class="dropdown-menu dropdown-menu-end">
-                 <li><h6 class="dropdown-header">통합 엑셀 관리</h6></li>
                  <li><a class="dropdown-item" href="/excelManager">
                    <i class="fa-solid fa-table me-2"></i> 통합 엑셀 관리
                  </a></li>
@@ -291,7 +288,6 @@
                 <i class="fa-solid fa-user-plus me-2"></i> 정보 입력
               </a>
               <ul class="dropdown-menu dropdown-menu-end">
-                <li><h6 class="dropdown-header">직원 등록</h6></li>
                 <li><a class="dropdown-item" href="/employees/new">
                   <i class="fa-solid fa-user-plus me-2"></i>신입사원등록
                 </a></li>
@@ -299,7 +295,6 @@
                   <i class="fa-solid fa-user-edit me-2"></i>등록사원수정
                 </a></li>
                 <li><hr class="dropdown-divider"></li>
-                <li><h6 class="dropdown-header">근태 관리</h6></li>
                 <li><a class="dropdown-item" href="/attendance">
                   <i class="fa-solid fa-clock me-2"></i>근태 입력
                 </a></li>
@@ -317,9 +312,8 @@
                 <i class="fa-solid fa-shield-alt me-2"></i> 보안업무
               </a>
               <ul class="dropdown-menu dropdown-menu-end">
-                <li><h6 class="dropdown-header">보안 관리</h6></li>
                 <li><a class="dropdown-item" href="/duty-orders">
-                  <i class="fa-solid fa-clipboard-list me-2"></i> 인사명령
+                  <i class="fa-solid fa-clipboard-list me-2"></i> 인사명령서
                 </a></li>
                 <li><a class="dropdown-item" href="/work-orders">
                   <i class="fa-solid fa-file-alt me-2"></i> 근무명령서
@@ -490,6 +484,22 @@ function initializeDropdowns() {
 
 // 이벤트 리스너 등록 함수
 function attachEventListeners() {
+  // 메뉴 호버 시 다른 메뉴의 active 상태 제거 및 드롭다운 닫기
+  document.addEventListener('mouseenter', function(e) {
+    const menuItem = e.target.closest('.nav-link, .dropdown-toggle');
+    if (menuItem) {
+      // 모든 드롭다운 메뉴 닫기
+      closeAllDropdowns();
+      
+      // 모든 메뉴의 active 상태 초기화
+      document.querySelectorAll('.navbar-nav .nav-link.active, .navbar-nav .dropdown-toggle.active, .dropdown-item.active').forEach(link => {
+        if (link !== menuItem) {
+          link.classList.remove('active');
+        }
+      });
+    }
+  }, true);
+  
   // 드롭다운 토글 클릭 이벤트
   document.addEventListener('click', function(e) {
     const dropdownToggle = e.target.closest('.dropdown-toggle');
@@ -499,8 +509,8 @@ function attachEventListeners() {
       
       console.log('드롭다운 토글 클릭됨:', dropdownToggle.textContent.trim());
       
-      // 모든 메뉴의 active 상태 초기화 (드롭다운 토글과 하위 메뉴 모두)
-      document.querySelectorAll('.navbar-nav .nav-link.active, .dropdown-item.active').forEach(link => {
+      // 모든 메뉴의 active 상태 초기화 (일반 링크, 드롭다운 토글, 하위 메뉴 모두)
+      document.querySelectorAll('.navbar-nav .nav-link.active, .navbar-nav .dropdown-toggle.active, .dropdown-item.active').forEach(link => {
         link.classList.remove('active');
       });
       
@@ -529,8 +539,8 @@ function attachEventListeners() {
     // 드롭다운 메뉴 외부 클릭 시 모든 드롭다운 닫기 및 active 상태 초기화
     if (!e.target.closest('.dropdown')) {
       closeAllDropdowns();
-      // 외부 클릭 시 모든 active 상태 제거
-      document.querySelectorAll('.navbar-nav .nav-link.active, .dropdown-item.active').forEach(link => {
+      // 외부 클릭 시 모든 active 상태 제거 (일반 링크, 드롭다운 토글, 하위 메뉴 모두)
+      document.querySelectorAll('.navbar-nav .nav-link.active, .navbar-nav .dropdown-toggle.active, .dropdown-item.active').forEach(link => {
         link.classList.remove('active');
       });
     }
@@ -545,8 +555,8 @@ function attachEventListeners() {
       // 모든 드롭다운 닫기
       closeAllDropdowns();
       
-      // 모든 메뉴의 active 상태 완전 초기화
-      document.querySelectorAll('.navbar-nav .nav-link.active, .dropdown-item.active').forEach(link => {
+      // 모든 메뉴의 active 상태 완전 초기화 (일반 링크, 드롭다운 토글, 하위 메뉴 모두)
+      document.querySelectorAll('.navbar-nav .nav-link.active, .navbar-nav .dropdown-toggle.active, .dropdown-item.active').forEach(link => {
         link.classList.remove('active');
       });
       
@@ -849,7 +859,11 @@ body {
   overflow: hidden;
 }
 
-.navbar-nav .nav-link::before {
+/* 드롭다운 토글 특별 스타일 제거 - 기본 nav-link 스타일 상속 */
+
+/* 모든 메뉴에 동일한 배경 슬라이드 효과 */
+.navbar-nav .nav-link::before,
+.navbar-nav .dropdown-toggle::before {
   content: '';
   position: absolute;
   top: 0;
@@ -861,20 +875,23 @@ body {
   z-index: -1;
 }
 
+/* 호버 시 배경 슬라이드 */
 .navbar-nav .nav-link:hover::before,
-.navbar-nav .nav-link.active::before {
+.navbar-nav .dropdown-toggle:hover::before {
   left: 0;
 }
 
-.navbar-nav .nav-link:hover {
-  color: white;
-  background-color: transparent;
-  transform: translateY(-3px);
-  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
-  border-color: transparent;
+/* 모든 메뉴에 동일한 호버 효과 - 호버 시에는 active 상태 무시 */
+.navbar-nav .nav-link:hover,
+.navbar-nav .dropdown-toggle:hover {
+  color: white !important;
+  background-color: transparent !important;
+  transform: translateY(-3px) !important;
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3) !important;
+  border-color: transparent !important;
 }
 
-/* 모든 메뉴 active 상태 통일 */
+/* 모든 메뉴에 동일한 active 상태 효과 */
 .navbar-nav .nav-link.active,
 .navbar-nav .dropdown-toggle.active {
   color: white !important;
@@ -882,6 +899,11 @@ body {
   box-shadow: 0 6px 20px rgba(102, 126, 234, 0.25) !important;
   transform: translateY(-2px) !important;
   border-color: transparent !important;
+}
+
+.navbar-nav .nav-link.active::before,
+.navbar-nav .dropdown-toggle.active::before {
+  left: 0;
 }
 
  /* 하위 메뉴 active 상태 스타일 통일 */
@@ -920,7 +942,7 @@ body {
   transform: translateY(0) scale(1) !important;
 }
 
-/* 드롭다운 토글 버튼 스타일 */
+/* 드롭다운 토글 버튼 스타일 - Bootstrap 기본 화살표 */
 .dropdown-toggle::after {
   display: inline-block;
   margin-left: 0.255em;
@@ -931,6 +953,8 @@ body {
   border-bottom: 0;
   border-left: 0.3em solid transparent;
   transition: transform 0.15s ease-in-out;
+  position: relative;
+  z-index: 10; /* 배경 위에 표시 */
 }
 
 /* 드롭다운이 열렸을 때 화살표 회전 */
@@ -1247,7 +1271,9 @@ body {
     overflow: hidden;
   }
   
-  .navbar-nav .nav-link::before {
+  /* 모바일에서 모든 메뉴에 동일한 배경 슬라이드 효과 */
+  .navbar-nav .nav-link::before,
+  .navbar-nav .dropdown-toggle::before {
     content: '';
     position: absolute;
     top: 0;
@@ -1259,19 +1285,34 @@ body {
     z-index: -1;
   }
   
+  /* 모바일에서 호버 시 배경 슬라이드 */
   .navbar-nav .nav-link:hover::before,
-  .navbar-nav .nav-link.active::before {
+  .navbar-nav .dropdown-toggle:hover::before {
     left: 0;
   }
   
-  /* 모바일에서 모든 메뉴 active 상태 통일 */
+  /* 모바일에서 모든 메뉴에 동일한 호버 효과 - 호버 시에는 active 상태 무시 */
   .navbar-nav .nav-link:hover,
+  .navbar-nav .dropdown-toggle:hover {
+    color: white !important;
+    background-color: transparent !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3) !important;
+    border-color: transparent !important;
+  }
+  
+  /* 모바일에서 모든 메뉴에 동일한 active 상태 효과 */
   .navbar-nav .nav-link.active,
   .navbar-nav .dropdown-toggle.active {
     color: white !important;
     transform: translateY(-2px) !important;
     box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3) !important;
     border-color: transparent !important;
+  }
+  
+  .navbar-nav .nav-link.active::before,
+  .navbar-nav .dropdown-toggle.active::before {
+    left: 0;
   }
   
   /* 모바일에서 드롭다운 메뉴 스타일 - 화면 중앙에 모달 형태 */
@@ -1592,7 +1633,8 @@ body {
     position: relative;
   }
   
-  .dropdown-toggle::before {
+  /* 모바일에서 커스텀 화살표 */
+  .dropdown-toggle::after {
     content: '';
     position: absolute;
     right: 1rem;
@@ -1604,9 +1646,12 @@ body {
     border-right: 5px solid transparent;
     border-top: 5px solid #9ca3af;
     transition: transform 0.3s ease;
+    z-index: 10; /* 배경 위에 표시 */
+    margin-left: 0;
+    vertical-align: 0;
   }
   
-  .dropdown.show .dropdown-toggle::before {
+  .dropdown.show .dropdown-toggle::after {
     transform: translateY(-50%) rotate(180deg);
   }
   

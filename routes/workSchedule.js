@@ -1156,7 +1156,7 @@ router.post('/create-week', async (req, res) => {
       weekStartDate: new Date(weekStartDate),
       weekEndDate: new Date(weekEndDate),
       status: status || 'active',
-      createdBy: createdBy || 'admin',
+      createdBy: createdBy || req.session.userId,
       createdAt: new Date(),
       updatedAt: new Date()
     });

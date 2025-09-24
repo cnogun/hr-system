@@ -84,7 +84,18 @@
                                         
                                         <% if (item.taskDetails.content) { %>
                                         <div class="print-content" style="margin-bottom: 2px;">
-                                            <strong>내용:</strong> <%= item.taskDetails.content %>
+                                            <% if (item.taskDetails.content.time) { %>
+                                            <div><strong>시간:</strong> <%= item.taskDetails.content.time %></div>
+                                            <% } %>
+                                            <% if (item.taskDetails.content.location) { %>
+                                            <div><strong>장소:</strong> <%= item.taskDetails.content.location %></div>
+                                            <% } %>
+                                            <% if (item.taskDetails.content.personnel) { %>
+                                            <div><strong>인원:</strong> <%= item.taskDetails.content.personnel %></div>
+                                            <% } %>
+                                            <% if (item.taskDetails.content.details) { %>
+                                            <div><strong>내용:</strong> <%= item.taskDetails.content.details %></div>
+                                            <% } %>
                                         </div>
                                         <% } %>
                                         

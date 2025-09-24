@@ -339,7 +339,18 @@
                                     <% } %>
                                     <% if (item.taskDetails.content) { %>
                                     <div class="content">
-                                        업무내용: <%= item.taskDetails.content %>
+                                        <% if (item.taskDetails.content.time) { %>
+                                        <div><strong>시간:</strong> <%= item.taskDetails.content.time %></div>
+                                        <% } %>
+                                        <% if (item.taskDetails.content.location) { %>
+                                        <div><strong>장소:</strong> <%= item.taskDetails.content.location %></div>
+                                        <% } %>
+                                        <% if (item.taskDetails.content.personnel) { %>
+                                        <div><strong>인원:</strong> <%= item.taskDetails.content.personnel %></div>
+                                        <% } %>
+                                        <% if (item.taskDetails.content.details) { %>
+                                        <div><strong>내용:</strong> <%= item.taskDetails.content.details %></div>
+                                        <% } %>
                                     </div>
                                     <% } %>
                                     <% if (item.taskDetails.additionalInfo) { %>

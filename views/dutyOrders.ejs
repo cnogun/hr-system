@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>인사명령 관리</title>
+  <title>인사명령서 관리</title>
   
   <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -60,6 +60,122 @@
     .btn-action {
       min-width: 80px;
     }
+    
+    /* 인사명령서 상세보기 타이틀 스타일 */
+    .duty-order-title {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #2c3e50;
+      margin-bottom: 1rem;
+      line-height: 1.4;
+    }
+    
+    .duty-order-title::before {
+      content: "■";
+      color: #3498db;
+      margin-right: 0.5rem;
+      font-size: 1.2rem;
+    }
+    
+    .duty-order-number {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #2c3e50;
+      margin-bottom: 1.5rem;
+      line-height: 1.4;
+    }
+    
+    .duty-order-number::before {
+      content: "■";
+      color: #3498db;
+      margin-right: 0.5rem;
+      font-size: 1.2rem;
+    }
+    
+    .duty-order-section-title {
+      font-size: 1.3rem;
+      font-weight: bold;
+      color: #34495e;
+      margin-bottom: 1rem;
+      margin-top: 1.5rem;
+      line-height: 1.4;
+    }
+    
+    .duty-order-section-title::before {
+      content: "■";
+      color: #3498db;
+      margin-right: 0.5rem;
+      font-size: 1.1rem;
+    }
+    
+    .duty-order-section-title:first-of-type {
+      margin-top: 0;
+    }
+    
+    /* 카드 헤더 내 타이틀 스타일 */
+    .card-header .duty-order-section-title::before {
+      color: white;
+    }
+    
+    .card-header .duty-order-section-title {
+      color: white !important;
+      margin: 0 !important;
+    }
+    
+    /* 명령 내용 가독성 개선 */
+    .duty-order-content {
+      font-family: 'Malgun Gothic', '맑은 고딕', sans-serif;
+      font-size: 1rem;
+      line-height: 1.8;
+      color: #2c3e50;
+      margin: 1rem 0;
+      padding: 1rem;
+      background-color: #f8f9fa;
+      border-radius: 8px;
+      border-left: 4px solid #3498db;
+    }
+    
+    .duty-order-content-item {
+      margin-bottom: 0.8rem;
+      padding-left: 0.5rem;
+    }
+    
+    .duty-order-content-item:last-child {
+      margin-bottom: 0;
+    }
+    
+    /* 명령 정보 섹션 스타일 */
+    .duty-order-info {
+      font-family: 'Malgun Gothic', '맑은 고딕', sans-serif;
+      font-size: 0.95rem;
+      line-height: 1.6;
+      color: #34495e;
+      margin: 0.5rem 0;
+    }
+    
+    .duty-order-info strong {
+      color: #2c3e50;
+      font-weight: 600;
+      margin-right: 0.5rem;
+    }
+    
+    /* 직원 정보 스타일 */
+    .employee-item {
+      font-family: 'Malgun Gothic', '맑은 고딕', sans-serif;
+      font-size: 0.9rem;
+      line-height: 1.5;
+      margin-bottom: 0.8rem;
+    }
+    
+    .employee-item strong {
+      color: #2c3e50;
+      font-weight: 600;
+    }
+    
+    .employee-item small {
+      color: #6c757d;
+      font-size: 0.85rem;
+    }
   </style>
 </head>
 <body>
@@ -74,9 +190,9 @@
         <!-- 페이지 헤더 -->
         <div class="text-center mb-5">
           <h1 class="display-4 text-primary mb-3">
-            인사명령 관리
+            인사명령서 관리
           </h1>
-          <p class="lead text-muted">보안요원 인사명령을 생성하고 관리합니다.</p>
+          <p class="lead text-muted">보안요원 인사명령서를 생성하고 관리합니다.</p>
         </div>
 
         <!-- 필터 및 검색 -->
@@ -143,9 +259,9 @@
         <!-- 인사명령 목록 -->
         <div class="card shadow-sm">
           <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">인사명령 목록</h5>
+            <h5 class="mb-0">인사명령서 목록</h5>
             <button class="btn btn-light" onclick="showCreateModal()">
-              새 인사명령
+              새 인사명령서
             </button>
           </div>
           <div class="card-body">
@@ -154,7 +270,7 @@
             </div>
             
             <!-- 페이지네이션 -->
-            <nav aria-label="인사명령 페이지네이션" class="mt-4">
+            <nav aria-label="인사명령서 페이지네이션" class="mt-4">
               <ul class="pagination justify-content-center" id="pagination">
                 <!-- 페이지네이션이 여기에 동적으로 생성됩니다 -->
               </ul>
@@ -170,7 +286,7 @@
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title" id="modalTitle">새 인사명령</h5>
+          <h5 class="modal-title" id="modalTitle">새 인사명령서</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
@@ -247,13 +363,16 @@
     <div class="modal-dialog modal-xl">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title">인사명령 상세</h5>
+          <h5 class="modal-title">인사명령서 상세</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body" id="dutyOrderDetail">
           <!-- 상세 내용이 여기에 로드됩니다 -->
         </div>
         <div class="modal-footer">
+          <button type="button" class="btn btn-outline-primary" onclick="printDutyOrder()">
+            <i class="fa-solid fa-print me-1"></i>인쇄
+          </button>
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
           <div id="actionButtons">
             <!-- 액션 버튼들이 여기에 동적으로 생성됩니다 -->
@@ -272,6 +391,7 @@
     let dutyOrders = [];
     let employees = [];
     let editingDutyOrderId = null;
+    const itemsPerPage = 10;
 
     // 페이지 로드 시 초기화
     document.addEventListener('DOMContentLoaded', function() {
@@ -288,7 +408,7 @@
       try {
         const params = new URLSearchParams({
           page: page,
-          limit: 10,
+          limit: itemsPerPage,
           ...currentFilters
         });
         
@@ -354,7 +474,7 @@
                   <span class="me-3">유형: ${order.orderType}</span>
                   <span class="me-3">부서: ${order.department}</span>
                   <span class="me-3">시행일: ${formatDate(order.effectiveDate)}</span>
-                  <span>발령자: ${order.issuedBy.name}</span>
+                  <span>발령자: ${order.issuedBy?.name || '미지정'}</span>
                 </div>
               </div>
               <div class="col-md-4 text-end">
@@ -362,12 +482,12 @@
                   <button class="btn btn-outline-primary btn-sm" onclick="viewDutyOrder('${order._id}')">
                     상세보기
                   </button>
+                  <button class="btn btn-outline-danger btn-sm" onclick="deleteDutyOrder('${order._id}')">
+                    삭제
+                  </button>
                   ${order.status === '대기' ? `
                     <button class="btn btn-outline-success btn-sm" onclick="editDutyOrder('${order._id}')">
                       수정
-                    </button>
-                    <button class="btn btn-outline-danger btn-sm" onclick="deleteDutyOrder('${order._id}')">
-                      삭제
                     </button>
                   ` : ''}
                 </div>
@@ -467,7 +587,7 @@
     // 새 인사명령 모달 표시
     function showCreateModal() {
       editingDutyOrderId = null;
-      document.getElementById('modalTitle').textContent = '새 인사명령';
+        document.getElementById('modalTitle').textContent = '새 인사명령서';
       document.getElementById('dutyOrderForm').reset();
       document.getElementById('assignedEmployees').innerHTML = '';
       
@@ -579,38 +699,38 @@
           const order = result.data;
           document.getElementById('dutyOrderDetail').innerHTML = `
             <div class="row">
-              <div class="col-md-8">
-                <h4>${order.title}</h4>
-                <p class="text-muted">${order.orderNumber}</p>
+              <div class="col-md-6">
+                <h4 class="duty-order-title">제목 : ${order.title}</h4>
+                <p class="duty-order-number">인사명령 NO. : ${order.orderNumber}</p>
                 <div class="mb-3">
-                  <span class="status-badge badge bg-${getStatusColor(order.status)} me-2">${order.status}</span>
-                  <span class="priority-badge badge bg-${getPriorityColor(order.priority)}">${order.priority}</span>
-                </div>
-                <div class="mb-3">
-                  <strong>명령 내용:</strong>
-                  <p class="mt-2">${order.content}</p>
+                  <div class="duty-order-section-title">명령 내용</div>
+                  <div class="duty-order-content">${formatContentWithNumbers(order.content)}</div>
                 </div>
                 <div class="row mb-3">
                   <div class="col-md-6">
-                    <strong>명령 유형:</strong> ${order.orderType}<br>
-                    <strong>대상 부서:</strong> ${order.department}<br>
-                    <strong>시행일:</strong> ${formatDate(order.effectiveDate)}
+                    <div class="duty-order-info">
+                      <strong>명령 유형:</strong> ${order.orderType}<br>
+                      <strong>대상 부서:</strong> ${order.department}<br>
+                      <strong>시행일:</strong> ${formatDate(order.effectiveDate)}
+                    </div>
                   </div>
                   <div class="col-md-6">
-                    <strong>발령자:</strong> ${order.issuedBy.name}<br>
-                    <strong>발령일:</strong> ${formatDate(order.createdAt)}<br>
-                    ${order.deadline ? `<strong>마감일:</strong> ${formatDate(order.deadline)}` : ''}
+                    <div class="duty-order-info">
+                      <strong>발령자:</strong> ${order.issuedBy?.name || '미지정'}<br>
+                      <strong>발령일:</strong> ${formatDate(order.createdAt)}<br>
+                      ${order.deadline ? `<strong>마감일:</strong> ${formatDate(order.deadline)}` : ''}
+                    </div>
                   </div>
                 </div>
               </div>
-              <div class="col-md-4">
+              <div class="col-md-6">
                 <div class="card">
                   <div class="card-header">
-                    <h6 class="mb-0">대상 직원</h6>
+                    <h6 class="mb-0 duty-order-section-title">대상 직원</h6>
                   </div>
                   <div class="card-body">
                     ${order.assignedEmployees.map(emp => `
-                      <div class="employee-item">
+                      <div class="employee-item mb-3 p-2 border rounded">
                         <strong>${emp.employee.name}</strong><br>
                         <small class="text-muted">
                           ${emp.previousPosition ? `이전: ${emp.previousPosition}` : ''}
@@ -736,7 +856,7 @@
       const order = dutyOrders.find(o => o._id === id);
       if (order) {
         editingDutyOrderId = id;
-        document.getElementById('modalTitle').textContent = '인사명령 수정';
+        document.getElementById('modalTitle').textContent = '인사명령서 수정';
         
         // 폼 데이터 채우기
         document.getElementById('title').value = order.title;
@@ -763,9 +883,9 @@
       }
     }
 
-    // 인사명령 삭제
+    // 인사명령서 삭제
     async function deleteDutyOrder(id) {
-      if (confirm('이 인사명령을 삭제하시겠습니까?')) {
+      if (confirm('이 인사명령서를 삭제하시겠습니까?\n\n※ 주의: 삭제된 인사명령서는 복구할 수 없습니다.')) {
         try {
           const response = await fetch(`/api/duty-orders/${id}`, {
             method: 'DELETE'
@@ -775,14 +895,318 @@
 
           if (result.success) {
             showMessage(result.message, 'success');
-            loadDutyOrders(currentPage);
+            
+            // 목록에서 즉시 제거
+            dutyOrders = dutyOrders.filter(order => order._id !== id);
+            
+            // 현재 페이지의 항목 수가 0이 되면 이전 페이지로 이동
+            const currentPageItems = dutyOrders.filter((_, index) => 
+              index >= (currentPage - 1) * itemsPerPage && 
+              index < currentPage * itemsPerPage
+            );
+            
+            if (currentPageItems.length === 0 && currentPage > 1) {
+              currentPage--;
+            }
+            
+            // 목록 다시 렌더링
+            renderDutyOrdersList();
+            
+            // 페이지네이션 정보 계산
+            const totalItems = dutyOrders.length;
+            const totalPages = Math.ceil(totalItems / itemsPerPage);
+            const pagination = {
+              current: currentPage,
+              pages: totalPages,
+              total: totalItems
+            };
+            renderPagination(pagination);
+            
           } else {
             showMessage(result.message, 'danger');
           }
         } catch (error) {
-          console.error('인사명령 삭제 오류:', error);
-          showMessage('인사명령 삭제 중 오류가 발생했습니다.', 'danger');
+          console.error('인사명령서 삭제 오류:', error);
+          showMessage('인사명령서 삭제 중 오류가 발생했습니다.', 'danger');
         }
+      }
+    }
+
+    // 명령 내용을 번호가 붙은 리스트로 변환
+    function formatContentWithNumbers(content) {
+      if (!content) return '';
+      
+      // 숫자로 시작하는 항목들을 찾아서 리스트로 변환
+      const items = content.split(/(?=\d+\.)/).filter(item => item.trim());
+      
+      if (items.length <= 1) {
+        // 항목이 하나이거나 숫자로 시작하지 않으면 그대로 반환
+        return content.replace(/\./g, '.<br>').replace(/<br><br>/g, '<br>');
+      }
+      
+      let formattedContent = '';
+      items.forEach((item, index) => {
+        const trimmedItem = item.trim();
+        if (trimmedItem) {
+          // 숫자로 시작하는 경우 번호를 제거하고 새 번호 붙이기
+          const cleanItem = trimmedItem.replace(/^\d+\.\s*/, '');
+          formattedContent += `<div class="duty-order-content-item">${index + 1}. ${cleanItem}</div>`;
+        }
+      });
+      
+      return formattedContent;
+    }
+
+    // 인사명령서 인쇄
+    function printDutyOrder() {
+      try {
+        const detailContent = document.getElementById('dutyOrderDetail').innerHTML;
+        
+        if (!detailContent) {
+          alert('인쇄할 내용이 없습니다. 상세보기를 먼저 열어주세요.');
+          return;
+        }
+        
+        // 인쇄용 창 생성
+        const printWindow = window.open('', '_blank', 'width=800,height=600');
+        
+        if (!printWindow) {
+          alert('팝업이 차단되었습니다. 팝업을 허용하고 다시 시도해주세요.');
+          return;
+        }
+        
+        // 대상직원 섹션 제거 (없는 경우)
+        let modifiedContent = detailContent;
+        
+        // 대상직원이 없는 경우 해당 섹션 제거
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = detailContent;
+        
+        // 대상직원 카드 찾기
+        const cards = tempDiv.querySelectorAll('.card');
+        let employeeCard = null;
+        
+        for (let card of cards) {
+          const header = card.querySelector('.card-header h6');
+          if (header && header.textContent.includes('대상 직원')) {
+            employeeCard = card;
+            break;
+          }
+        }
+        
+        if (employeeCard) {
+          const employeeItems = employeeCard.querySelectorAll('.employee-item');
+          if (employeeItems.length === 0) {
+            // 대상직원이 없으면 전체 카드 제거
+            modifiedContent = detailContent.replace(employeeCard.outerHTML, '');
+          }
+        }
+        
+        // 인쇄용 HTML 생성
+        const printHTML = `
+          <!DOCTYPE html>
+          <html lang="ko">
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>인사명령서</title>
+            <style>
+              body {
+                font-family: 'Malgun Gothic', sans-serif;
+                margin: 20px;
+                line-height: 1.6;
+                font-size: 14px;
+              }
+              .print-header {
+                text-align: center;
+                margin-bottom: 30px;
+                border-bottom: 2px solid #333;
+                padding-bottom: 20px;
+              }
+              .print-title {
+                font-size: 24px;
+                font-weight: bold;
+                margin-bottom: 10px;
+              }
+              .print-subtitle {
+                font-size: 16px;
+                color: #666;
+              }
+              .print-content {
+                margin: 20px 0;
+              }
+              
+              /* 인쇄용 타이틀 스타일 */
+              .duty-order-title {
+                font-size: 1.5rem;
+                font-weight: bold;
+                color: #2c3e50;
+                margin-bottom: 1rem;
+                line-height: 1.4;
+              }
+              
+              .duty-order-title::before {
+                content: "■";
+                color: #3498db;
+                margin-right: 0.5rem;
+                font-size: 1.2rem;
+              }
+              
+              .duty-order-number {
+                font-size: 1.5rem;
+                font-weight: bold;
+                color: #2c3e50;
+                margin-bottom: 1.5rem;
+                line-height: 1.4;
+              }
+              
+              .duty-order-number::before {
+                content: "■";
+                color: #3498db;
+                margin-right: 0.5rem;
+                font-size: 1.2rem;
+              }
+              
+              .duty-order-section-title {
+                font-size: 1.3rem;
+                font-weight: bold;
+                color: #34495e;
+                margin-bottom: 1rem;
+                margin-top: 1.5rem;
+                line-height: 1.4;
+              }
+              
+              .duty-order-section-title::before {
+                content: "■";
+                color: #3498db;
+                margin-right: 0.5rem;
+                font-size: 1.1rem;
+              }
+              
+              .duty-order-section-title:first-of-type {
+                margin-top: 0;
+              }
+              
+              /* 카드 헤더 내 타이틀 스타일 */
+              .card-header .duty-order-section-title::before {
+                color: #3498db;
+              }
+              
+              .card-header .duty-order-section-title {
+                color: #34495e !important;
+                margin: 0 !important;
+              }
+              
+              /* 인쇄용 명령 내용 가독성 개선 */
+              .duty-order-content {
+                font-family: 'Malgun Gothic', '맑은 고딕', sans-serif;
+                font-size: 1rem;
+                line-height: 1.8;
+                color: #2c3e50;
+                margin: 1rem 0;
+                padding: 1rem;
+                background-color: #f8f9fa;
+                border-radius: 8px;
+                border-left: 4px solid #3498db;
+              }
+              
+              .duty-order-content-item {
+                margin-bottom: 0.8rem;
+                padding-left: 0.5rem;
+              }
+              
+              .duty-order-content-item:last-child {
+                margin-bottom: 0;
+              }
+              
+              /* 인쇄용 명령 정보 섹션 스타일 */
+              .duty-order-info {
+                font-family: 'Malgun Gothic', '맑은 고딕', sans-serif;
+                font-size: 0.95rem;
+                line-height: 1.6;
+                color: #34495e;
+                margin: 0.5rem 0;
+              }
+              
+              .duty-order-info strong {
+                color: #2c3e50;
+                font-weight: 600;
+                margin-right: 0.5rem;
+              }
+              
+              /* 인쇄용 직원 정보 스타일 */
+              .employee-item {
+                font-family: 'Malgun Gothic', '맑은 고딕', sans-serif;
+                font-size: 0.9rem;
+                line-height: 1.5;
+                margin-bottom: 0.8rem;
+              }
+              
+              .employee-item strong {
+                color: #2c3e50;
+                font-weight: 600;
+              }
+              
+              .employee-item small {
+                color: #6c757d;
+                font-size: 0.85rem;
+              }
+              
+              .print-signature {
+                margin-top: 40px;
+                text-align: right;
+              }
+              .print-signature div {
+                margin: 10px 0;
+              }
+              .print-date {
+                margin-top: 30px;
+                text-align: center;
+                font-size: 14px;
+              }
+              @media print {
+                body { margin: 0; }
+                .print-header { page-break-after: avoid; }
+              }
+            </style>
+          </head>
+          <body>
+            <div class="print-header">
+              <div class="print-title">인사명령서</div>
+              <div class="print-subtitle">PERSONNEL ORDER</div>
+            </div>
+            
+            <div class="print-content">
+              ${modifiedContent}
+            </div>
+            
+            <div class="print-signature">
+              <div>발령자: _________________</div>
+              <div>승인자: _________________</div>
+            </div>
+            
+            <div class="print-date">
+              발령일: ${new Date().toLocaleDateString('ko-KR')}
+            </div>
+          </body>
+          </html>
+        `;
+        
+        printWindow.document.write(printHTML);
+        printWindow.document.close();
+        
+        // 인쇄 대화상자 표시
+        printWindow.focus();
+        printWindow.print();
+        
+        // 인쇄 후 창 닫기
+        printWindow.onafterprint = function() {
+          printWindow.close();
+        };
+        
+      } catch (error) {
+        console.error('인쇄 오류:', error);
+        alert('인쇄 중 오류가 발생했습니다: ' + error.message);
       }
     }
 

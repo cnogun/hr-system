@@ -295,9 +295,36 @@
         document.addEventListener('DOMContentLoaded', function() {
             const container = document.getElementById('handoverItems');
             
+            // 기본적으로 보안업무 인계가 선택된 상태로 시작
+            const securityRadio = document.querySelector('input[name="handoverType"][value="security"]');
+            const workRadio = document.querySelector('input[name="handoverType"][value="work"]');
+            
+            // 보안업무 인계를 강제로 선택
+            if (securityRadio) {
+                securityRadio.checked = true;
+            }
+            if (workRadio) {
+                workRadio.checked = false;
+            }
+            
             if (container.children.length === 0) {
                 addHandoverItem();
             }
+            
+            // 초기 상태에서 보안업무 형식으로 설정
+            updateHandoverSection('security');
+            
+            // 기존 인계사항이 있다면 강제로 보안업무 형식으로 변경
+            setTimeout(() => {
+                const existingItems = container.querySelectorAll('.handover-item');
+                if (existingItems.length > 0) {
+                    // 기존 인계사항들을 모두 제거하고 보안업무 형식으로 다시 생성
+                    existingItems.forEach(item => item.remove());
+                    for (let i = 0; i < existingItems.length; i++) {
+                        addHandoverItem();
+                    }
+                }
+            }, 100);
             
             // 인계 유형 변경 시 섹션 동적 변경 처리
             const handoverTypeRadios = document.querySelectorAll('input[name="handoverType"]');
@@ -312,6 +339,19 @@
         function updateHandoverSection(handoverType) {
             const sectionHeader = document.querySelector('.section-header');
             const addButton = document.querySelector('.add-btn');
+            
+            // 보안업무 인계가 선택되지 않은 경우 강제로 선택
+            if (handoverType !== 'work') {
+                const securityRadio = document.querySelector('input[name="handoverType"][value="security"]');
+                const workRadio = document.querySelector('input[name="handoverType"][value="work"]');
+                if (securityRadio) {
+                    securityRadio.checked = true;
+                }
+                if (workRadio) {
+                    workRadio.checked = false;
+                }
+                handoverType = 'security';
+            }
             
             if (handoverType === 'work') {
                 // 인계사항으로 변경
@@ -332,92 +372,39 @@
         
         // 기존 인계사항들을 작업 형식으로 변경
         function updateExistingItemsToWork() {
-            const items = document.querySelectorAll('.handover-item');
-            items.forEach(item => {
-                // 작업 구분 라벨 변경
-                const taskTypeLabel = item.querySelector('label[for*="taskType"]');
-                if (taskTypeLabel) {
-                    taskTypeLabel.textContent = '작업 구분';
-                }
-                
-                // 작업 구분 입력 필드 placeholder 변경
-                const taskTypeInput = item.querySelector('input[name*="taskType"]');
-                if (taskTypeInput) {
-                    taskTypeInput.placeholder = '예: LED 옥외 전광판, 가드레일 작업';
-                }
-                
-                // 담당자 라벨 변경
-                const personnelLabel = item.querySelector('label[for*="personnel.name"]');
-                if (personnelLabel) {
-                    personnelLabel.textContent = '담당자명';
-                }
-                
-                // 장소 라벨 변경
-                const locationLabel = item.querySelector('label[for*="location"]');
-                if (locationLabel) {
-                    locationLabel.textContent = '작업 장소';
-                }
-                
-                // 내용 라벨 변경
-                const contentLabel = item.querySelector('label[for*="content"]');
-                if (contentLabel) {
-                    contentLabel.textContent = '작업 내용';
-                }
-                
-                // 특이사항 라벨 변경
-                const additionalInfoLabel = item.querySelector('label[for*="additionalInfo"]');
-                if (additionalInfoLabel) {
-                    additionalInfoLabel.textContent = '추가 정보';
-                }
-            });
+            const container = document.getElementById('handoverItems');
+            const existingItems = container.querySelectorAll('.handover-item');
+            
+            // 기존 인계사항들을 모두 제거
+            existingItems.forEach(item => item.remove());
+            
+            // 새로운 작업 형식으로 인계사항들을 다시 생성
+            const itemCount = existingItems.length;
+            for (let i = 0; i < itemCount; i++) {
+                addHandoverItem();
+            }
         }
         
         // 기존 인계사항들을 보안업무 형식으로 변경
         function updateExistingItemsToSecurity() {
-            const items = document.querySelectorAll('.handover-item');
-            items.forEach(item => {
-                // 작업 구분 라벨 변경
-                const taskTypeLabel = item.querySelector('label[for*="taskType"]');
-                if (taskTypeLabel) {
-                    taskTypeLabel.textContent = '보안업무 구분';
-                }
-                
-                // 작업 구분 입력 필드 placeholder 변경
-                const taskTypeInput = item.querySelector('input[name*="taskType"]');
-                if (taskTypeInput) {
-                    taskTypeInput.placeholder = '예: 출입통제, 순찰업무, CCTV모니터링';
-                }
-                
-                // 담당자 라벨 변경
-                const personnelLabel = item.querySelector('label[for*="personnel.name"]');
-                if (personnelLabel) {
-                    personnelLabel.textContent = '담당 보안요원';
-                }
-                
-                // 장소 라벨 변경
-                const locationLabel = item.querySelector('label[for*="location"]');
-                if (locationLabel) {
-                    locationLabel.textContent = '근무 구역';
-                }
-                
-                // 내용 라벨 변경
-                const contentLabel = item.querySelector('label[for*="content"]');
-                if (contentLabel) {
-                    contentLabel.textContent = '보안업무 내용';
-                }
-                
-                // 특이사항 라벨 변경
-                const additionalInfoLabel = item.querySelector('label[for*="additionalInfo"]');
-                if (additionalInfoLabel) {
-                    additionalInfoLabel.textContent = '보안상 특이사항';
-                }
-            });
+            const container = document.getElementById('handoverItems');
+            const existingItems = container.querySelectorAll('.handover-item');
+            
+            // 기존 인계사항들을 모두 제거
+            existingItems.forEach(item => item.remove());
+            
+            // 새로운 보안업무 형식으로 인계사항들을 다시 생성
+            const itemCount = existingItems.length;
+            for (let i = 0; i < itemCount; i++) {
+                addHandoverItem();
+            }
         }
         
         // 보안업무 인계사항 추가
         function addHandoverItem() {
             const container = document.getElementById('handoverItems');
-            const selectedType = document.querySelector('input[name="handoverType"]:checked').value;
+            const selectedTypeRadio = document.querySelector('input[name="handoverType"]:checked');
+            const selectedType = selectedTypeRadio ? selectedTypeRadio.value : 'security'; // 기본값을 security로 설정
             const isSecurity = selectedType === 'security';
             
             const div = document.createElement('div');
@@ -486,9 +473,9 @@
                 
                 <div class="form-row">
                     <div class="form-group">
-                        <label class="form-label">담당 보안요원</label>
+                        <label class="form-label">${isSecurity ? '담당 보안요원' : '담당자명'}</label>
                         <input type="text" name="handoverItems[${itemIndex}].taskDetails.personnel.name" class="form-control" 
-                               placeholder="예: 김보안">
+                               placeholder="${isSecurity ? '예: 김보안' : '예: 성희준'}">
                     </div>
                     <div class="form-group">
                         <label class="form-label">연락처</label>
@@ -498,21 +485,50 @@
                 </div>
                 
                 <div class="form-group">
-                    <label class="form-label">근무 구역</label>
+                    <label class="form-label">${isSecurity ? '근무 구역' : '작업 장소'}</label>
                     <input type="text" name="handoverItems[${itemIndex}].taskDetails.location" class="form-control" 
-                           placeholder="예: 정문 출입통제실, 주차장 순찰구역, CCTV 모니터링실">
+                           placeholder="${isSecurity ? '예: 정문 출입통제실, 주차장 순찰구역, CCTV 모니터링실' : '예: 아산로 소공원 내, 건물 외벽, 전기실 등'}">
                 </div>
                 
                 <div class="form-group">
-                    <label class="form-label">보안업무 내용</label>
+                    <label class="form-label">${isSecurity ? '보안업무 내용' : '작업 내용'}</label>
+                    ${isSecurity ? `
+                    <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; border: 1px solid #e9ecef;">
+                        <div class="form-row" style="margin-bottom: 10px;">
+                            <div class="form-group">
+                                <label class="form-label" style="font-size: 12px; color: #666;">시간</label>
+                                <input type="text" name="handoverItems[${itemIndex}].taskDetails.content.time" class="form-control small" 
+                                       placeholder="예: 01:00~01:30">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" style="font-size: 12px; color: #666;">장소</label>
+                                <input type="text" name="handoverItems[${itemIndex}].taskDetails.content.location" class="form-control" 
+                                       placeholder="예: 바코드 리더기 일반 점검">
+                            </div>
+                        </div>
+                        <div class="form-row" style="margin-bottom: 10px;">
+                            <div class="form-group">
+                                <label class="form-label" style="font-size: 12px; color: #666;">인원</label>
+                                <input type="text" name="handoverItems[${itemIndex}].taskDetails.content.personnel" class="form-control" 
+                                       placeholder="예: 리더기(주) 김리더 외 1명">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" style="font-size: 12px; color: #666;">내용</label>
+                                <input type="text" name="handoverItems[${itemIndex}].taskDetails.content.details" class="form-control" 
+                                       placeholder="예: 출입자 신분확인, 차량번호 등록">
+                            </div>
+                        </div>
+                    </div>
+                    ` : `
                     <textarea name="handoverItems[${itemIndex}].taskDetails.content" class="form-control" rows="3" 
-                              placeholder="예: 출입자 신분확인, 차량번호 등록, 순찰경로 점검, CCTV 모니터링, 비상상황 대응절차"></textarea>
+                              placeholder="예: LED 옥외 전광판, 가드레일 작업, 전기설비 점검 등"></textarea>
+                    `}
                 </div>
                 
                 <div class="form-group">
-                    <label class="form-label">보안상 특이사항</label>
+                    <label class="form-label">${isSecurity ? '보안상 특이사항' : '추가 정보'}</label>
                     <textarea name="handoverItems[${itemIndex}].taskDetails.additionalInfo" class="form-control" rows="2" 
-                              placeholder="예: 의심인물 출현, 보안장비 이상, 특별지시사항, 비상연락처 등"></textarea>
+                              placeholder="${isSecurity ? '예: 의심인물 출현, 보안장비 이상, 특별지시사항, 비상연락처 등' : '예: 추가 작업 내용, 특이사항, 주의사항 등'}"></textarea>
                 </div>
                 
                 <div class="form-group">
@@ -531,7 +547,7 @@
             button.parentElement.parentElement.remove();
         }
         
-        // 폼 제출 전 검증 및 로딩 상태 표시
+        // 폼 제출 전 검증 및 데이터 변환
         document.querySelector('form').addEventListener('submit', function(e) {
             const handoverItems = document.querySelectorAll('.handover-item');
             let isValid = true;
@@ -545,10 +561,26 @@
                 return false;
             }
             
+            // 기존 handoverItems 필드들 제거
+            const existingInputs = document.querySelectorAll('input[name^="handoverItems"]');
+            existingInputs.forEach(input => input.remove());
+            
             handoverItems.forEach((item, index) => {
                 const taskType = item.querySelector('select[name*="taskType"]');
                 const assignedTeam = item.querySelector('select[name*="assignedTeam"]');
                 const timeCategory = item.querySelector('select[name*="timeCategory"]');
+                const workDate = item.querySelector('input[name*="dateTime.date"]');
+                const startTime = item.querySelector('input[name*="dateTime.startTime"]');
+                const endTime = item.querySelector('input[name*="dateTime.endTime"]');
+                const personnelName = item.querySelector('input[name*="personnel.name"]');
+                const personnelPhone = item.querySelector('input[name*="personnel.phone"]');
+                const location = item.querySelector('input[name*="location"]');
+                const contentTime = item.querySelector('input[name*="content.time"]');
+                const contentLocation = item.querySelector('input[name*="content.location"]');
+                const contentPersonnel = item.querySelector('input[name*="content.personnel"]');
+                const contentDetails = item.querySelector('input[name*="content.details"]');
+                const contentTextarea = item.querySelector('textarea[name*="content"]');
+                const additionalInfo = item.querySelector('textarea[name*="additionalInfo"]');
                 
                 console.log(`보안업무 인계사항 #${index + 1} 검증:`, {
                     taskType: taskType ? taskType.value : '없음',
@@ -575,6 +607,58 @@
                     timeCategory.focus();
                     isValid = false;
                     return false;
+                }
+                
+                // 데이터를 배열 형태로 추가 (서버에서 기대하는 형태)
+                if (isValid) {
+                    const form = document.querySelector('form');
+                    const selectedType = document.querySelector('input[name="handoverType"]:checked').value;
+                    const isSecurity = selectedType === 'security';
+                    
+                    let fields;
+                    if (isSecurity) {
+                        // 보안업무 인계: 14개 필드
+                        fields = [
+                            taskType ? taskType.value : '',
+                            assignedTeam ? assignedTeam.value : '',
+                            timeCategory ? timeCategory.value : '',
+                            workDate ? workDate.value : '',
+                            startTime ? startTime.value : '',
+                            endTime ? endTime.value : '',
+                            personnelName ? personnelName.value : '',
+                            personnelPhone ? personnelPhone.value : '',
+                            location ? location.value : '',
+                            contentTime ? contentTime.value : '',
+                            contentLocation ? contentLocation.value : '',
+                            contentPersonnel ? contentPersonnel.value : '',
+                            contentDetails ? contentDetails.value : '',
+                            additionalInfo ? additionalInfo.value : ''
+                        ];
+                    } else {
+                        // 작업 인계: 11개 필드
+                        fields = [
+                            taskType ? taskType.value : '',
+                            assignedTeam ? assignedTeam.value : '',
+                            timeCategory ? timeCategory.value : '',
+                            workDate ? workDate.value : '',
+                            startTime ? startTime.value : '',
+                            endTime ? endTime.value : '',
+                            personnelName ? personnelName.value : '',
+                            personnelPhone ? personnelPhone.value : '',
+                            location ? location.value : '',
+                            contentTextarea ? contentTextarea.value : '',
+                            additionalInfo ? additionalInfo.value : ''
+                        ];
+                    }
+                    
+                    fields.forEach((value, fieldIndex) => {
+                        const input = document.createElement('input');
+                        input.type = 'hidden';
+                        const fieldCount = isSecurity ? 14 : 11;
+                        input.name = `handoverItems[${index * fieldCount + fieldIndex}]`;
+                        input.value = value;
+                        form.appendChild(input);
+                    });
                 }
             });
             

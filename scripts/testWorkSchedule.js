@@ -14,7 +14,7 @@ const WorkScheduleService = require('../services/workScheduleService');
 async function testWorkSchedule() {
   try {
     // MongoDB 연결
-    await mongoose.connect('mongodb://localhost:27017/hr_system');
+    await mongoose.connect('mongodb://localhost:27017/security_management');
     console.log('MongoDB 연결 성공');
     
     // 실제 admin 사용자 ID 가져오기
