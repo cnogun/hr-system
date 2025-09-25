@@ -68,8 +68,6 @@
     }
   </style>
 
-<%- include('../header') %>
-
 <div class="container mt-4">
     <div class="row">
       <div class="col-12">
@@ -339,7 +337,11 @@
             <div class="row mb-3">
               <div class="col-md-6">
                 <label class="form-label">참석자</label>
-                <input type="text" class="form-control" name="attendees" placeholder="참석자명 (쉼표로 구분)">
+                <select class="form-select" name="attendees" multiple>
+                  <option value="">참석자 선택 (Ctrl+클릭으로 다중 선택)</option>
+                  <!-- TODO: 부서별 직원 목록을 AJAX로 로드하여 표시 -->
+                </select>
+                <small class="text-muted">참석자는 나중에 추가할 수 있습니다.</small>
               </div>
               <div class="col-md-6">
                 <label class="form-label">첨부파일</label>
@@ -364,14 +366,163 @@
   </div>
 
   <script>
-
-
     // 오늘 날짜를 기본값으로 설정
     document.addEventListener('DOMContentLoaded', function() {
       const today = new Date().toISOString().split('T')[0];
-      document.querySelector('input[name="startDate"]').value = today;
-      document.querySelector('input[name="endDate"]').value = today;
+      const startDateInput = document.querySelector('input[name="startDate"]');
+      const endDateInput = document.querySelector('input[name="endDate"]');
+      
+      if (startDateInput) startDateInput.value = today;
+      if (endDateInput) endDateInput.value = today;
+      
+      // 폼 유효성 검증 설정
+      setupFormValidation();
+      
+      // 부서 변경 시 참석자 목록 업데이트
+      setupDepartmentChangeHandler();
     });
+    
+    // 폼 유효성 검증 설정
+    function setupFormValidation() {
+      const form = document.querySelector('form[action="/security/schedule"]');
+      if (!form) return;
+      
+      form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // 필수 필드 검증
+        const requiredFields = [
+          { name: 'title', label: '일정 제목' },
+          { name: 'type', label: '일정 유형' },
+          { name: 'department', label: '담당 부서' },
+          { name: 'startDate', label: '시작 날짜' },
+          { name: 'startTime', label: '시작 시간' },
+          { name: 'content', label: '일정 내용' }
+        ];
+        
+        let isValid = true;
+        let errorMessages = [];
+        
+        requiredFields.forEach(field => {
+          const element = form.querySelector(`[name="${field.name}"]`);
+          if (!element || !element.value.trim()) {
+            isValid = false;
+            errorMessages.push(`${field.label}을(를) 입력해주세요.`);
+            if (element) {
+              element.classList.add('is-invalid');
+            }
+          } else {
+            if (element) {
+              element.classList.remove('is-invalid');
+            }
+          }
+        });
+        
+        // 날짜 유효성 검증
+        const startDate = form.querySelector('[name="startDate"]').value;
+        const endDate = form.querySelector('[name="endDate"]').value;
+        
+        if (endDate && endDate < startDate) {
+          isValid = false;
+          errorMessages.push('종료 날짜는 시작 날짜보다 이후여야 합니다.');
+          form.querySelector('[name="endDate"]').classList.add('is-invalid');
+        }
+        
+        // 시간 유효성 검증
+        const timeRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
+        const startTime = form.querySelector('[name="startTime"]').value;
+        const endTime = form.querySelector('[name="endTime"]').value;
+        
+        if (startTime && !timeRegex.test(startTime)) {
+          isValid = false;
+          errorMessages.push('올바른 시작 시간을 입력해주세요. (HH:MM 형식)');
+          form.querySelector('[name="startTime"]').classList.add('is-invalid');
+        }
+        
+        if (endTime && !timeRegex.test(endTime)) {
+          isValid = false;
+          errorMessages.push('올바른 종료 시간을 입력해주세요. (HH:MM 형식)');
+          form.querySelector('[name="endTime"]').classList.add('is-invalid');
+        }
+        
+        if (!isValid) {
+          showErrorToast('입력 오류: ' + errorMessages.join(', '));
+          return;
+        }
+        
+        // 유효성 검증 통과 시 폼 제출
+        form.submit();
+      });
+    }
+    
+    // 부서 변경 시 참석자 목록 업데이트
+    function setupDepartmentChangeHandler() {
+      const departmentSelect = document.querySelector('[name="department"]');
+      const attendeesSelect = document.querySelector('[name="attendees"]');
+      
+      if (departmentSelect && attendeesSelect) {
+        departmentSelect.addEventListener('change', function() {
+          const department = this.value;
+          if (department) {
+            loadEmployeesByDepartment(department, attendeesSelect);
+          } else {
+            // 부서가 선택되지 않았을 때 참석자 목록 초기화
+            attendeesSelect.innerHTML = '<option value="">참석자 선택 (Ctrl+클릭으로 다중 선택)</option>';
+          }
+        });
+      }
+    }
+    
+    // 부서별 직원 목록 로드
+    function loadEmployeesByDepartment(department, attendeesSelect) {
+      fetch(`/security/api/employees/${encodeURIComponent(department)}`)
+        .then(response => response.json())
+        .then(employees => {
+          attendeesSelect.innerHTML = '<option value="">참석자 선택 (Ctrl+클릭으로 다중 선택)</option>';
+          
+          employees.forEach(employee => {
+            const option = document.createElement('option');
+            option.value = employee._id;
+            option.textContent = `${employee.name} (${employee.position})`;
+            attendeesSelect.appendChild(option);
+          });
+        })
+        .catch(error => {
+          console.error('직원 목록 로드 오류:', error);
+          attendeesSelect.innerHTML = '<option value="">참석자 선택 (Ctrl+클릭으로 다중 선택)</option>';
+        });
+    }
+    
+    // 에러 토스트 표시 함수
+    function showErrorToast(message) {
+      // 기존 토스트 컨테이너 찾기 또는 생성
+      let toastContainer = document.getElementById('toast-container');
+      if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.id = 'toast-container';
+        toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+        toastContainer.style.zIndex = '9999';
+        document.body.appendChild(toastContainer);
+      }
+      
+      const toast = document.createElement('div');
+      toast.className = 'toast show bg-danger text-white';
+      toast.innerHTML = `
+        <div class="toast-body">
+          <i class="fa-solid fa-exclamation-triangle me-2"></i>
+          ${message}
+        </div>
+      `;
+      
+      toastContainer.appendChild(toast);
+      
+      // 5초 후 자동으로 숨기기
+      setTimeout(() => {
+        if (toast.parentNode) {
+          toast.parentNode.removeChild(toast);
+        }
+      }, 5000);
+    }
   </script>
 
 <%- include('../footer') %>

@@ -6,6 +6,7 @@ const DutyOrder = require('../models/DutyOrder');
 const WorkOrder = require('../models/WorkOrder');
 const Handover = require('../models/Handover');
 const Schedule = require('../models/Schedule');
+const SummaryReport = require('../models/SummaryReport');
 const Employee = require('../models/Employee');
 const Template = require('../models/Template');
 const NotificationService = require('../services/notificationService');
@@ -756,7 +757,7 @@ router.get('/schedule', isLoggedIn, async (req, res) => {
     // 데이터 조회
     const schedules = await Schedule.find(filter)
       .populate('createdBy', 'name username')
-      .populate('attendees', 'name department')
+      .populate('attendees', 'name department position')
       .sort({ startDate: 1, startTime: 1 })
       .skip(skip)
       .limit(parseInt(limit));
@@ -774,7 +775,7 @@ router.get('/schedule', isLoggedIn, async (req, res) => {
       startDate: { $gte: today, $lt: tomorrow }
     })
     .populate('createdBy', 'name username')
-    .populate('attendees', 'name department')
+    .populate('attendees', 'name department position')
     .sort({ startTime: 1 });
     
     // 이번 주 일정 (월요일부터 일요일까지)
@@ -789,7 +790,7 @@ router.get('/schedule', isLoggedIn, async (req, res) => {
       startDate: { $gte: weekStart, $lte: weekEnd }
     })
     .populate('createdBy', 'name username')
-    .populate('attendees', 'name department')
+    .populate('attendees', 'name department position')
     .sort({ startDate: 1, startTime: 1 });
     
     // 헤더에 필요한 변수들 설정
@@ -847,16 +848,50 @@ router.get('/schedule', isLoggedIn, async (req, res) => {
 // 새 일정 등록
 router.post('/schedule', isLoggedIn, upload.array('attachments', 5), async (req, res) => {
   try {
-    // 디버깅: 세션 정보 확인
-    console.log('=== 일정 등록 디버깅 ===');
-    console.log('req.session:', req.session);
-    console.log('req.session.userId:', req.session.userId);
-    console.log('req.body:', req.body);
-    
     const { 
       title, content, type, department, startDate, startTime, 
       endDate, endTime, location, attendees 
     } = req.body;
+    
+    // 필수 필드 검증
+    if (!title || !content || !type || !department || !startDate || !startTime) {
+      req.session.error = '모든 필수 필드를 입력해주세요.';
+      return res.redirect('/security/schedule');
+    }
+    
+    // 날짜 유효성 검증
+    const startDateTime = new Date(startDate);
+    if (isNaN(startDateTime.getTime())) {
+      req.session.error = '올바른 시작 날짜를 입력해주세요.';
+      return res.redirect('/security/schedule');
+    }
+    
+    let endDateTime = null;
+    if (endDate) {
+      endDateTime = new Date(endDate);
+      if (isNaN(endDateTime.getTime())) {
+        req.session.error = '올바른 종료 날짜를 입력해주세요.';
+        return res.redirect('/security/schedule');
+      }
+      
+      // 종료 날짜가 시작 날짜보다 이전인지 확인
+      if (endDateTime < startDateTime) {
+        req.session.error = '종료 날짜는 시작 날짜보다 이후여야 합니다.';
+        return res.redirect('/security/schedule');
+      }
+    }
+    
+    // 시간 유효성 검증 (HH:MM 형식)
+    const timeRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
+    if (!timeRegex.test(startTime)) {
+      req.session.error = '올바른 시작 시간을 입력해주세요. (HH:MM 형식)';
+      return res.redirect('/security/schedule');
+    }
+    
+    if (endTime && !timeRegex.test(endTime)) {
+      req.session.error = '올바른 종료 시간을 입력해주세요. (HH:MM 형식)';
+      return res.redirect('/security/schedule');
+    }
     
     // 파일 정보 처리
     const attachments = req.files ? req.files.map(file => ({
@@ -865,17 +900,25 @@ router.post('/schedule', isLoggedIn, upload.array('attachments', 5), async (req,
       uploadedAt: new Date()
     })) : [];
     
+    // 참석자 처리 - ObjectId 배열로 변환
+    let attendeeIds = [];
+    if (attendees && Array.isArray(attendees)) {
+      attendeeIds = attendees.filter(id => id && id.trim() !== '');
+    } else if (attendees && typeof attendees === 'string') {
+      attendeeIds = attendees.split(',').map(id => id.trim()).filter(id => id !== '');
+    }
+    
     const schedule = new Schedule({
-      title,
-      content,
+      title: title.trim(),
+      content: content.trim(),
       type,
       department,
-      startDate: new Date(startDate),
+      startDate: startDateTime,
       startTime,
-      endDate: endDate ? new Date(endDate) : null,
+      endDate: endDateTime,
       endTime: endTime || null,
-      location,
-      attendees: attendees ? attendees.split(',').map(id => id.trim()) : [],
+      location: location ? location.trim() : null,
+      attendees: attendeeIds,
       createdBy: req.session.userId,
       attachments
     });
@@ -893,8 +936,545 @@ router.post('/schedule', isLoggedIn, upload.array('attachments', 5), async (req,
     res.redirect('/security/schedule');
   } catch (error) {
     console.error('일정 등록 오류:', error);
-    req.session.error = '일정 등록에 실패했습니다.';
+    
+    // 업로드된 파일이 있다면 삭제
+    if (req.files) {
+      req.files.forEach(file => {
+        try {
+          if (fs.existsSync(file.path)) {
+            fs.unlinkSync(file.path);
+          }
+        } catch (fileError) {
+          console.error('파일 삭제 오류:', fileError);
+        }
+      });
+    }
+    
+    let errorMessage = '일정 등록에 실패했습니다.';
+    
+    // Mongoose 검증 오류 처리
+    if (error.name === 'ValidationError') {
+      const validationErrors = Object.values(error.errors).map(err => err.message);
+      errorMessage = `입력 데이터 오류: ${validationErrors.join(', ')}`;
+    } else if (error.code === 11000) {
+      errorMessage = '이미 존재하는 일정입니다.';
+    }
+    
+    req.session.error = errorMessage;
     res.redirect('/security/schedule');
+  }
+});
+
+// ===== 요약보고서 라우트 =====
+
+// 요약보고서 목록 페이지
+router.get('/summary-reports', isLoggedIn, async (req, res) => {
+  try {
+    const { department, reportType, status, page = 1, limit = 10 } = req.query;
+    
+    // 필터 조건 구성
+    const filter = {};
+    if (department && department !== '전체') filter.department = department;
+    if (reportType) filter.reportType = reportType;
+    if (status) filter.status = status;
+    
+    // 페이지네이션
+    const skip = (page - 1) * limit;
+    
+    // 데이터 조회
+    const summaryReports = await SummaryReport.find(filter)
+      .populate('createdBy', 'name username')
+      .populate('approvedBy', 'name username')
+      .populate('issues.assignedTo', 'name department position')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit));
+    
+    const total = await SummaryReport.countDocuments(filter);
+    const totalPages = Math.ceil(total / limit);
+    
+    // 통계 데이터
+    const stats = await SummaryReport.aggregate([
+      { $group: { 
+        _id: '$status', 
+        count: { $sum: 1 },
+        avgResolutionRate: { $avg: '$statistics.resolvedIncidents' }
+      }}
+    ]);
+    
+    const statusStats = {
+      draft: 0,
+      submitted: 0,
+      approved: 0,
+      rejected: 0
+    };
+    
+    stats.forEach(stat => {
+      statusStats[stat._id] = stat.count;
+    });
+    
+    // 헤더에 필요한 변수들 설정
+    if (req.session && req.session.userId) {
+      const User = require('../models/User');
+      const Employee = require('../models/Employee');
+      
+      const user = await User.findById(req.session.userId);
+      if (user) {
+        if (user.role === 'admin') {
+          res.locals.position = '관리자';
+          res.locals.name = user.username;
+          res.locals.department = '시스템 관리';
+          res.locals.employeePosition = '관리자';
+          res.locals.userRole = 'admin';
+        } else {
+          const employee = await Employee.findOne({ userId: req.session.userId });
+          if (employee) {
+            res.locals.position = `${employee.department || '부서미정'} / ${employee.position || '직급미정'}`;
+            res.locals.name = employee.name;
+            res.locals.department = employee.department || '부서미정';
+            res.locals.employeePosition = employee.position || '직급미정';
+            res.locals.userRole = 'user';
+          } else {
+            res.locals.position = '일반 사용자';
+            res.locals.name = user.username;
+            res.locals.department = '부서미정';
+            res.locals.employeePosition = '직급미정';
+            res.locals.userRole = 'user';
+          }
+        }
+      }
+    }
+    
+    res.render('security/summary-reports', { 
+      session: req.session,
+      title: '요약보고서',
+      summaryReports,
+      pagination: {
+        current: parseInt(page),
+        total: totalPages,
+        hasNext: page < totalPages,
+        hasPrev: page > 1
+      },
+      filters: { department, reportType, status },
+      stats: statusStats
+    });
+  } catch (error) {
+    console.error('요약보고서 페이지 오류:', error);
+    res.status(500).send('서버 오류가 발생했습니다.');
+  }
+});
+
+// 새 요약보고서 등록
+router.post('/summary-reports', isLoggedIn, upload.array('attachments', 5), async (req, res) => {
+  try {
+    const { 
+      title, reportType, department, startDate, endDate, 
+      summary, keyPoints, recommendations, priority,
+      totalIncidents, resolvedIncidents, securityBreaches, 
+      maintenanceCompleted, trainingCompleted,
+      issueDescriptions, issueSeverities, issueAssignments
+    } = req.body;
+    
+    // 필수 필드 검증
+    if (!title || !reportType || !department || !startDate || !endDate || !summary) {
+      req.session.error = '모든 필수 필드를 입력해주세요.';
+      return res.redirect('/security/summary-reports');
+    }
+    
+    // 날짜 유효성 검증
+    const startDateTime = new Date(startDate);
+    const endDateTime = new Date(endDate);
+    
+    if (isNaN(startDateTime.getTime()) || isNaN(endDateTime.getTime())) {
+      req.session.error = '올바른 날짜를 입력해주세요.';
+      return res.redirect('/security/summary-reports');
+    }
+    
+    if (endDateTime <= startDateTime) {
+      req.session.error = '종료 날짜는 시작 날짜보다 이후여야 합니다.';
+      return res.redirect('/security/summary-reports');
+    }
+    
+    // 파일 정보 처리
+    const attachments = req.files ? req.files.map(file => ({
+      filename: file.filename,
+      originalName: file.originalname,
+      path: file.path,
+      uploadedAt: new Date()
+    })) : [];
+    
+    // 핵심 포인트 처리
+    const keyPointsArray = keyPoints ? 
+      keyPoints.split('\n').map(point => point.trim()).filter(point => point) : [];
+    
+    // 권장사항 처리
+    const recommendationsArray = recommendations ? 
+      recommendations.split('\n').map(rec => rec.trim()).filter(rec => rec) : [];
+    
+    // 이슈 처리
+    const issues = [];
+    if (issueDescriptions && Array.isArray(issueDescriptions)) {
+      issueDescriptions.forEach((description, index) => {
+        if (description && description.trim()) {
+          issues.push({
+            description: description.trim(),
+            severity: issueSeverities && issueSeverities[index] ? issueSeverities[index] : 'medium',
+            assignedTo: issueAssignments && issueAssignments[index] ? issueAssignments[index] : null,
+            status: 'open'
+          });
+        }
+      });
+    }
+    
+    const summaryReport = new SummaryReport({
+      title: title.trim(),
+      reportType,
+      department,
+      period: {
+        startDate: startDateTime,
+        endDate: endDateTime
+      },
+      summary: summary.trim(),
+      keyPoints: keyPointsArray,
+      statistics: {
+        totalIncidents: parseInt(totalIncidents) || 0,
+        resolvedIncidents: parseInt(resolvedIncidents) || 0,
+        securityBreaches: parseInt(securityBreaches) || 0,
+        maintenanceCompleted: parseInt(maintenanceCompleted) || 0,
+        trainingCompleted: parseInt(trainingCompleted) || 0
+      },
+      issues,
+      recommendations: recommendationsArray,
+      attachments,
+      priority: priority || 'normal',
+      createdBy: req.session.userId
+    });
+    
+    await summaryReport.save();
+    
+    // 알림 생성
+    try {
+      await NotificationService.createNotification({
+        title: '새 요약보고서가 등록되었습니다',
+        message: `[${department}] ${title}`,
+        type: 'summary_report',
+        targetUsers: [], // 관리자에게 알림
+        relatedId: summaryReport._id
+      });
+    } catch (error) {
+      console.error('알림 생성 실패:', error);
+    }
+    
+    req.session.message = '요약보고서가 성공적으로 등록되었습니다.';
+    res.redirect('/security/summary-reports');
+  } catch (error) {
+    console.error('요약보고서 등록 오류:', error);
+    
+    // 업로드된 파일이 있다면 삭제
+    if (req.files) {
+      req.files.forEach(file => {
+        try {
+          if (fs.existsSync(file.path)) {
+            fs.unlinkSync(file.path);
+          }
+        } catch (fileError) {
+          console.error('파일 삭제 오류:', fileError);
+        }
+      });
+    }
+    
+    let errorMessage = '요약보고서 등록에 실패했습니다.';
+    
+    if (error.name === 'ValidationError') {
+      const validationErrors = Object.values(error.errors).map(err => err.message);
+      errorMessage = `입력 데이터 오류: ${validationErrors.join(', ')}`;
+    }
+    
+    req.session.error = errorMessage;
+    res.redirect('/security/summary-reports');
+  }
+});
+
+// 요약보고서 상세 조회
+router.get('/summary-reports/:id', isLoggedIn, async (req, res) => {
+  try {
+    const summaryReport = await SummaryReport.findById(req.params.id)
+      .populate('createdBy', 'name username')
+      .populate('approvedBy', 'name username')
+      .populate('issues.assignedTo', 'name department position')
+      .populate('comments.user', 'name username');
+    
+    if (!summaryReport) {
+      req.session.error = '요약보고서를 찾을 수 없습니다.';
+      return res.redirect('/security/summary-reports');
+    }
+    
+    // 헤더에 필요한 변수들 설정
+    if (req.session && req.session.userId) {
+      const User = require('../models/User');
+      const Employee = require('../models/Employee');
+      
+      const user = await User.findById(req.session.userId);
+      if (user) {
+        if (user.role === 'admin') {
+          res.locals.position = '관리자';
+          res.locals.name = user.username;
+          res.locals.department = '시스템 관리';
+          res.locals.employeePosition = '관리자';
+          res.locals.userRole = 'admin';
+        } else {
+          const employee = await Employee.findOne({ userId: req.session.userId });
+          if (employee) {
+            res.locals.position = `${employee.department || '부서미정'} / ${employee.position || '직급미정'}`;
+            res.locals.name = employee.name;
+            res.locals.department = employee.department || '부서미정';
+            res.locals.employeePosition = employee.position || '직급미정';
+            res.locals.userRole = 'user';
+          } else {
+            res.locals.position = '일반 사용자';
+            res.locals.name = user.username;
+            res.locals.department = '부서미정';
+            res.locals.employeePosition = '직급미정';
+            res.locals.userRole = 'user';
+          }
+        }
+      }
+    }
+    
+    res.render('security/summary-report-detail', {
+      title: '요약보고서 상세',
+      summaryReport,
+      session: req.session
+    });
+  } catch (error) {
+    console.error('요약보고서 상세 조회 오류:', error);
+    req.session.error = '요약보고서를 불러오는데 실패했습니다.';
+    res.redirect('/security/summary-reports');
+  }
+});
+
+// 요약보고서 상태 업데이트 (승인/반려)
+router.put('/summary-reports/:id/status', isLoggedIn, async (req, res) => {
+  try {
+    const { status, comment } = req.body;
+    
+    if (!['approved', 'rejected', 'submitted'].includes(status)) {
+      return res.status(400).json({ success: false, message: '유효하지 않은 상태입니다.' });
+    }
+    
+    const summaryReport = await SummaryReport.findById(req.params.id);
+    if (!summaryReport) {
+      return res.status(404).json({ success: false, message: '요약보고서를 찾을 수 없습니다.' });
+    }
+    
+    // 권한 확인: 관리자만 승인/반려 가능
+    const User = require('../models/User');
+    const user = await User.findById(req.session.userId);
+    
+    if (user.role !== 'admin' && status === 'approved') {
+      return res.status(403).json({ success: false, message: '승인 권한이 없습니다.' });
+    }
+    
+    summaryReport.status = status;
+    
+    if (status === 'approved') {
+      summaryReport.approvedBy = req.session.userId;
+      summaryReport.approvedAt = new Date();
+    }
+    
+    // 댓글 추가
+    if (comment && comment.trim()) {
+      summaryReport.comments.push({
+        user: req.session.userId,
+        content: comment.trim(),
+        createdAt: new Date()
+      });
+    }
+    
+    await summaryReport.save();
+    
+    res.json({ 
+      success: true, 
+      message: status === 'approved' ? '요약보고서가 승인되었습니다.' : 
+               status === 'rejected' ? '요약보고서가 반려되었습니다.' : '상태가 업데이트되었습니다.'
+    });
+  } catch (error) {
+    console.error('요약보고서 상태 업데이트 오류:', error);
+    res.status(500).json({ success: false, message: '상태 업데이트에 실패했습니다.' });
+  }
+});
+
+// ===== 요약보고서 양식 관리 =====
+
+// 요약보고서 양식 업로드
+router.post('/summary-reports/templates/upload', isLoggedIn, upload.single('templateFile'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: '양식 파일을 선택해주세요.' });
+    }
+
+    const { templateName, reportType, department, priority, description, isDefault } = req.body;
+
+    // 필수 필드 검증
+    if (!templateName || !reportType || !department) {
+      return res.status(400).json({ success: false, message: '양식명, 보고서 유형, 적용 부서는 필수입니다.' });
+    }
+
+    // 파일 크기 검증 (10MB)
+    if (req.file.size > 10 * 1024 * 1024) {
+      fs.unlinkSync(req.file.path); // 파일 삭제
+      return res.status(400).json({ success: false, message: '파일 크기는 10MB를 초과할 수 없습니다.' });
+    }
+
+    // 기본 양식 설정 시 기존 기본 양식 해제
+    if (isDefault === 'on') {
+      await Template.updateMany(
+        { department, templateType: `summary_${reportType}`, isDefault: true },
+        { isDefault: false }
+      );
+    }
+
+    // 양식 저장
+    const template = new Template({
+      templateName,
+      description,
+      department,
+      templateType: `summary_${reportType}`, // summary_daily, summary_weekly 등
+      priority: priority || 'medium',
+      fileName: req.file.filename,
+      originalName: req.file.originalname,
+      filePath: req.file.path,
+      fileSize: req.file.size,
+      mimeType: req.file.mimetype,
+      isDefault: isDefault === 'on',
+      uploadedBy: req.session.userId
+    });
+
+    await template.save();
+
+    res.json({ 
+      success: true, 
+      message: '요약보고서 양식이 성공적으로 업로드되었습니다.',
+      template: template
+    });
+
+  } catch (error) {
+    console.error('요약보고서 양식 업로드 오류:', error);
+    
+    // 업로드된 파일이 있다면 삭제
+    if (req.file && fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+    }
+    
+    res.status(500).json({ success: false, message: '양식 업로드에 실패했습니다.' });
+  }
+});
+
+// 요약보고서 양식 목록 조회
+router.get('/api/summary-templates', isLoggedIn, async (req, res) => {
+  try {
+    const { department, reportType } = req.query;
+    
+    let query = { 
+      isActive: true,
+      templateType: { $regex: /^summary_/ } // summary_로 시작하는 템플릿만
+    };
+    
+    if (department && department !== '전체') {
+      query.$or = [
+        { department: department },
+        { department: '전체' }
+      ];
+    }
+    
+    if (reportType) {
+      query.templateType = `summary_${reportType}`;
+    }
+
+    const templates = await Template.find(query)
+      .populate('uploadedBy', 'name username')
+      .sort({ isDefault: -1, createdAt: -1 });
+
+    res.json({ 
+      success: true, 
+      templates: templates
+    });
+
+  } catch (error) {
+    console.error('요약보고서 양식 목록 조회 오류:', error);
+    res.status(500).json({ success: false, message: '양식 목록을 불러오는데 실패했습니다.' });
+  }
+});
+
+// 요약보고서 양식 다운로드
+router.get('/api/summary-templates/:id/download', isLoggedIn, async (req, res) => {
+  try {
+    const template = await Template.findById(req.params.id);
+
+    if (!template) {
+      return res.status(404).json({ success: false, message: '양식을 찾을 수 없습니다.' });
+    }
+
+    // 파일 존재 확인
+    if (!fs.existsSync(template.filePath)) {
+      return res.status(404).json({ success: false, message: '파일을 찾을 수 없습니다.' });
+    }
+
+    // 다운로드 카운트 증가
+    await Template.findByIdAndUpdate(req.params.id, { $inc: { downloadCount: 1 } });
+
+    // 파일 다운로드
+    res.download(template.filePath, template.originalName);
+
+  } catch (error) {
+    console.error('요약보고서 양식 다운로드 오류:', error);
+    res.status(500).json({ success: false, message: '양식 다운로드에 실패했습니다.' });
+  }
+});
+
+// 요약보고서 양식 적용 (템플릿 내용을 폼에 채우기)
+router.get('/api/summary-templates/:id/apply', isLoggedIn, async (req, res) => {
+  try {
+    const template = await Template.findById(req.params.id)
+      .populate('uploadedBy', 'name username');
+
+    if (!template) {
+      return res.status(404).json({ success: false, message: '양식을 찾을 수 없습니다.' });
+    }
+
+    // 파일이 Excel 파일인 경우 내용을 파싱하여 반환
+    if (template.mimeType.includes('excel') || template.mimeType.includes('spreadsheet')) {
+      // Excel 파일 파싱 로직 (추후 구현)
+      res.json({
+        success: true,
+        template: {
+          name: template.templateName,
+          type: template.templateType.replace('summary_', ''),
+          department: template.department,
+          description: template.description,
+          fileName: template.originalName,
+          // Excel 내용 파싱 결과는 추후 추가
+          defaultValues: {}
+        }
+      });
+    } else {
+      // 일반 파일인 경우 다운로드 링크 제공
+      res.json({
+        success: true,
+        template: {
+          name: template.templateName,
+          type: template.templateType.replace('summary_', ''),
+          department: template.department,
+          description: template.description,
+          fileName: template.originalName,
+          downloadUrl: `/security/api/summary-templates/${template._id}/download`
+        }
+      });
+    }
+
+  } catch (error) {
+    console.error('요약보고서 양식 적용 오류:', error);
+    res.status(500).json({ success: false, message: '양식 적용에 실패했습니다.' });
   }
 });
 

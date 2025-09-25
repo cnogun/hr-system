@@ -1,0 +1,744 @@
+<%- include('../header') %>
+
+<style>
+  .report-card {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  }
+  .report-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
+  }
+  .report-type-daily { border-left: 4px solid #007bff; }
+  .report-type-weekly { border-left: 4px solid #28a745; }
+  .report-type-monthly { border-left: 4px solid #ffc107; }
+  .report-type-quarterly { border-left: 4px solid #17a2b8; }
+  .report-type-annual { border-left: 4px solid #6f42c1; }
+  .report-type-incident { border-left: 4px solid #dc3545; }
+  .report-type-security { border-left: 4px solid #fd7e14; }
+  .report-type-maintenance { border-left: 4px solid #20c997; }
+  
+  .stats-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 15px;
+  }
+  
+  .priority-badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+  }
+  
+  .resolution-rate {
+    font-size: 1.2rem;
+    font-weight: bold;
+  }
+</style>
+
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-12">
+      <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4">
+        <h2 class="mb-3 mb-md-0">
+          <i class="fas fa-chart-bar text-primary me-2"></i><%= title %>
+        </h2>
+        <div class="d-flex gap-2">
+          <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#newReportModal">
+            <i class="fas fa-plus me-1"></i>새 보고서
+          </button>
+          <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#templateUploadModal">
+            <i class="fas fa-upload me-1"></i>양식 업로드
+          </button>
+          <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="collapse" data-bs-target="#filterCollapse">
+            <i class="fas fa-filter me-1"></i>필터
+          </button>
+        </div>
+      </div>
+      
+      <!-- 통계 카드 -->
+      <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+          <div class="card stats-card">
+            <div class="card-body text-center">
+              <h5 class="card-title">초안</h5>
+              <h2 class="mb-0"><%= stats.draft || 0 %></h2>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3 mb-3">
+          <div class="card stats-card">
+            <div class="card-body text-center">
+              <h5 class="card-title">제출됨</h5>
+              <h2 class="mb-0"><%= stats.submitted || 0 %></h2>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3 mb-3">
+          <div class="card stats-card">
+            <div class="card-body text-center">
+              <h5 class="card-title">승인됨</h5>
+              <h2 class="mb-0"><%= stats.approved || 0 %></h2>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3 mb-3">
+          <div class="card stats-card">
+            <div class="card-body text-center">
+              <h5 class="card-title">반려됨</h5>
+              <h2 class="mb-0"><%= stats.rejected || 0 %></h2>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 필터 섹션 -->
+      <div class="collapse mb-4" id="filterCollapse">
+        <div class="card">
+          <div class="card-body">
+            <form method="GET" class="row g-3">
+              <div class="col-md-3">
+                <label class="form-label">부서</label>
+                <select name="department" class="form-select">
+                  <option value="">전체</option>
+                  <option value="보안1팀" <%= filters.department === '보안1팀' ? 'selected' : '' %>>보안1팀</option>
+                  <option value="보안2팀" <%= filters.department === '보안2팀' ? 'selected' : '' %>>보안2팀</option>
+                  <option value="보안3팀" <%= filters.department === '보안3팀' ? 'selected' : '' %>>보안3팀</option>
+                  <option value="전체" <%= filters.department === '전체' ? 'selected' : '' %>>전체</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">보고서 유형</label>
+                <select name="reportType" class="form-select">
+                  <option value="">전체</option>
+                  <option value="daily" <%= filters.reportType === 'daily' ? 'selected' : '' %>>일일</option>
+                  <option value="weekly" <%= filters.reportType === 'weekly' ? 'selected' : '' %>>주간</option>
+                  <option value="monthly" <%= filters.reportType === 'monthly' ? 'selected' : '' %>>월간</option>
+                  <option value="quarterly" <%= filters.reportType === 'quarterly' ? 'selected' : '' %>>분기</option>
+                  <option value="annual" <%= filters.reportType === 'annual' ? 'selected' : '' %>>연간</option>
+                  <option value="incident" <%= filters.reportType === 'incident' ? 'selected' : '' %>>사고</option>
+                  <option value="security" <%= filters.reportType === 'security' ? 'selected' : '' %>>보안</option>
+                  <option value="maintenance" <%= filters.reportType === 'maintenance' ? 'selected' : '' %>>점검</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">상태</label>
+                <select name="status" class="form-select">
+                  <option value="">전체</option>
+                  <option value="draft" <%= filters.status === 'draft' ? 'selected' : '' %>>초안</option>
+                  <option value="submitted" <%= filters.status === 'submitted' ? 'selected' : '' %>>제출됨</option>
+                  <option value="approved" <%= filters.status === 'approved' ? 'selected' : '' %>>승인됨</option>
+                  <option value="rejected" <%= filters.status === 'rejected' ? 'selected' : '' %>>반려됨</option>
+                </select>
+              </div>
+              <div class="col-md-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary me-2">적용</button>
+                <a href="/security/summary-reports" class="btn btn-outline-secondary">초기화</a>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+      
+      <% if (session.message) { %>
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+          <%= session.message %>
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        <% delete session.message; %>
+      <% } %>
+
+      <% if (session.error) { %>
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+          <%= session.error %>
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        <% delete session.error; %>
+      <% } %>
+
+      <!-- 보고서 목록 -->
+      <div class="row">
+        <% if (summaryReports && summaryReports.length > 0) { %>
+          <% summaryReports.forEach(report => { %>
+            <div class="col-12 col-md-6 col-lg-4 mb-3">
+              <div class="card report-card report-type-<%= report.reportType %>">
+                <div class="card-body">
+                  <div class="d-flex justify-content-between align-items-start mb-2">
+                    <span class="badge bg-<%= report.reportType === 'daily' ? 'primary' : report.reportType === 'weekly' ? 'success' : report.reportType === 'monthly' ? 'warning' : report.reportType === 'quarterly' ? 'info' : report.reportType === 'annual' ? 'dark' : report.reportType === 'incident' ? 'danger' : report.reportType === 'security' ? 'warning' : 'secondary' %>">
+                      <%= report.reportType === 'daily' ? '일일' : report.reportType === 'weekly' ? '주간' : report.reportType === 'monthly' ? '월간' : report.reportType === 'quarterly' ? '분기' : report.reportType === 'annual' ? '연간' : report.reportType === 'incident' ? '사고' : report.reportType === 'security' ? '보안' : '점검' %>
+                    </span>
+                    <span class="badge priority-badge bg-<%= report.priority === 'urgent' ? 'danger' : report.priority === 'high' ? 'warning' : report.priority === 'normal' ? 'info' : 'secondary' %>">
+                      <%= report.priority === 'urgent' ? '긴급' : report.priority === 'high' ? '높음' : report.priority === 'normal' ? '보통' : '낮음' %>
+                    </span>
+                  </div>
+                  <h6 class="card-title">
+                    <a href="/security/summary-reports/<%= report._id %>" class="text-decoration-none">
+                      <%= report.title %>
+                    </a>
+                  </h6>
+                  <p class="card-text small text-muted mb-2">
+                    <i class="fas fa-building me-1"></i><%= report.department %>
+                    <br>
+                    <i class="fas fa-calendar me-1"></i>
+                    <%= new Date(report.period.startDate).toLocaleDateString('ko-KR') %> ~ 
+                    <%= new Date(report.period.endDate).toLocaleDateString('ko-KR') %>
+                  </p>
+                  <div class="row text-center small">
+                    <div class="col-6">
+                      <div class="text-muted">총 사건</div>
+                      <div class="fw-bold"><%= report.statistics.totalIncidents || 0 %></div>
+                    </div>
+                    <div class="col-6">
+                      <div class="text-muted">해결률</div>
+                      <div class="fw-bold text-success"><%= report.resolutionRate || 0 %>%</div>
+                    </div>
+                  </div>
+                  <div class="d-flex justify-content-between align-items-center mt-3">
+                    <span class="badge bg-<%= report.status === 'draft' ? 'secondary' : report.status === 'submitted' ? 'warning' : report.status === 'approved' ? 'success' : 'danger' %>">
+                      <%= report.status === 'draft' ? '초안' : report.status === 'submitted' ? '제출됨' : report.status === 'approved' ? '승인됨' : '반려됨' %>
+                    </span>
+                    <small class="text-muted">
+                      <i class="fas fa-user me-1"></i><%= report.createdBy ? report.createdBy.name || report.createdBy.username : '알 수 없음' %>
+                    </small>
+                  </div>
+                </div>
+              </div>
+            </div>
+          <% }); %>
+        <% } else { %>
+          <div class="col-12">
+            <div class="text-center text-muted mt-5">
+              <i class="fas fa-chart-bar fa-3x mb-3"></i>
+              <h5>등록된 요약보고서가 없습니다</h5>
+              <p>새로운 요약보고서를 등록해보세요.</p>
+            </div>
+          </div>
+        <% } %>
+      </div>
+
+      <!-- 페이지네이션 -->
+      <% if (pagination.total > 1) { %>
+        <nav aria-label="요약보고서 페이지네이션" class="mt-4">
+          <ul class="pagination justify-content-center">
+            <% if (pagination.hasPrev) { %>
+              <li class="page-item">
+                <a class="page-link" href="?page=<%= pagination.current - 1 %>&department=<%= filters.department || '' %>&reportType=<%= filters.reportType || '' %>&status=<%= filters.status || '' %>">
+                  이전
+                </a>
+              </li>
+            <% } %>
+            
+            <% for (let i = 1; i <= pagination.total; i++) { %>
+              <li class="page-item <%= i === pagination.current ? 'active' : '' %>">
+                <a class="page-link" href="?page=<%= i %>&department=<%= filters.department || '' %>&reportType=<%= filters.reportType || '' %>&status=<%= filters.status || '' %>">
+                  <%= i %>
+                </a>
+              </li>
+            <% } %>
+            
+            <% if (pagination.hasNext) { %>
+              <li class="page-item">
+                <a class="page-link" href="?page=<%= pagination.current + 1 %>&department=<%= filters.department || '' %>&reportType=<%= filters.reportType || '' %>&status=<%= filters.status || '' %>">
+                  다음
+                </a>
+              </li>
+            <% } %>
+          </ul>
+        </nav>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<!-- 새 요약보고서 모달 -->
+<div class="modal fade" id="newReportModal" tabindex="-1">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">새 요약보고서</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="POST" action="/security/summary-reports" enctype="multipart/form-data">
+        <div class="modal-body">
+          <!-- 양식 선택 섹션 -->
+          <div class="row mb-3">
+            <div class="col-12">
+              <label class="form-label">양식 선택</label>
+              <div class="d-flex gap-2">
+                <select class="form-select" id="templateSelect" onchange="loadTemplates()">
+                  <option value="">양식을 선택하세요</option>
+                </select>
+                <button type="button" class="btn btn-outline-primary btn-sm" onclick="applyTemplate()">
+                  <i class="fas fa-download me-1"></i>양식 적용
+                </button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="downloadTemplate()">
+                  <i class="fas fa-file-download me-1"></i>양식 다운로드
+                </button>
+              </div>
+              <small class="text-muted">양식을 선택하면 보고서 작성에 도움이 되는 템플릿을 제공합니다.</small>
+            </div>
+          </div>
+          
+          <div class="row mb-3">
+            <div class="col-md-8">
+              <label class="form-label">보고서 제목 <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" name="title" required placeholder="예: 2024년 1월 보안업무 요약보고서">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">보고서 유형 <span class="text-danger">*</span></label>
+              <select class="form-select" name="reportType" required onchange="loadTemplates()">
+                <option value="">선택</option>
+                <option value="daily">일일</option>
+                <option value="weekly">주간</option>
+                <option value="monthly">월간</option>
+                <option value="quarterly">분기</option>
+                <option value="annual">연간</option>
+                <option value="incident">사고</option>
+                <option value="security">보안</option>
+                <option value="maintenance">점검</option>
+              </select>
+            </div>
+          </div>
+          
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label">담당 부서 <span class="text-danger">*</span></label>
+              <select class="form-select" name="department" required>
+                <option value="">선택</option>
+                <option value="보안1팀">보안1팀</option>
+                <option value="보안2팀">보안2팀</option>
+                <option value="보안3팀">보안3팀</option>
+                <option value="전체">전체</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">우선순위</label>
+              <select class="form-select" name="priority">
+                <option value="normal">보통</option>
+                <option value="high">높음</option>
+                <option value="urgent">긴급</option>
+                <option value="low">낮음</option>
+              </select>
+            </div>
+          </div>
+          
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label">시작 날짜 <span class="text-danger">*</span></label>
+              <input type="date" class="form-control" name="startDate" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">종료 날짜 <span class="text-danger">*</span></label>
+              <input type="date" class="form-control" name="endDate" required>
+            </div>
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label">요약 내용 <span class="text-danger">*</span></label>
+            <textarea class="form-control" name="summary" rows="4" required placeholder="보고서의 주요 내용을 요약하여 입력하세요"></textarea>
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label">핵심 포인트</label>
+            <textarea class="form-control" name="keyPoints" rows="3" placeholder="핵심 포인트를 한 줄씩 입력하세요 (엔터로 구분)"></textarea>
+            <small class="text-muted">각 포인트를 새 줄에 입력하세요</small>
+          </div>
+          
+          <!-- 통계 섹션 -->
+          <div class="card mb-3">
+            <div class="card-header">
+              <h6 class="mb-0">통계 정보</h6>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-4">
+                  <label class="form-label">총 사건 수</label>
+                  <input type="number" class="form-control" name="totalIncidents" min="0" value="0">
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">해결된 사건 수</label>
+                  <input type="number" class="form-control" name="resolvedIncidents" min="0" value="0">
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">보안 침해 건수</label>
+                  <input type="number" class="form-control" name="securityBreaches" min="0" value="0">
+                </div>
+              </div>
+              <div class="row mt-2">
+                <div class="col-md-6">
+                  <label class="form-label">완료된 점검 건수</label>
+                  <input type="number" class="form-control" name="maintenanceCompleted" min="0" value="0">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">완료된 교육 건수</label>
+                  <input type="number" class="form-control" name="trainingCompleted" min="0" value="0">
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label">권장사항</label>
+            <textarea class="form-control" name="recommendations" rows="3" placeholder="권장사항을 한 줄씩 입력하세요 (엔터로 구분)"></textarea>
+            <small class="text-muted">각 권장사항을 새 줄에 입력하세요</small>
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label">첨부파일</label>
+            <input type="file" class="form-control" name="attachments" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.jpg,.jpeg,.png,.gif">
+            <small class="text-muted">최대 5개 파일, 각 파일 5MB 이하</small>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+          <button type="submit" class="btn btn-primary">등록</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- 양식 업로드 모달 -->
+<div class="modal fade" id="templateUploadModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">요약보고서 양식 업로드</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form id="templateUploadForm" enctype="multipart/form-data">
+        <div class="modal-body">
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label">양식명 <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" name="templateName" required placeholder="예: 월간 보안업무 양식">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">보고서 유형 <span class="text-danger">*</span></label>
+              <select class="form-select" name="reportType" required>
+                <option value="">선택</option>
+                <option value="daily">일일</option>
+                <option value="weekly">주간</option>
+                <option value="monthly">월간</option>
+                <option value="quarterly">분기</option>
+                <option value="annual">연간</option>
+                <option value="incident">사고</option>
+                <option value="security">보안</option>
+                <option value="maintenance">점검</option>
+              </select>
+            </div>
+          </div>
+          
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label">적용 부서 <span class="text-danger">*</span></label>
+              <select class="form-select" name="department" required>
+                <option value="">선택</option>
+                <option value="보안1팀">보안1팀</option>
+                <option value="보안2팀">보안2팀</option>
+                <option value="보안3팀">보안3팀</option>
+                <option value="전체">전체</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">우선순위</label>
+              <select class="form-select" name="priority">
+                <option value="medium">보통</option>
+                <option value="high">높음</option>
+                <option value="low">낮음</option>
+              </select>
+            </div>
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label">양식 설명</label>
+            <textarea class="form-control" name="description" rows="3" placeholder="양식에 대한 설명을 입력하세요"></textarea>
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label">양식 파일 <span class="text-danger">*</span></label>
+            <input type="file" class="form-control" name="templateFile" required accept=".xlsx,.xls,.docx,.doc,.pdf,.txt">
+            <small class="text-muted">지원 형식: Excel, Word, PDF, 텍스트 파일 (최대 10MB)</small>
+          </div>
+          
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="isDefault" id="isDefault">
+            <label class="form-check-label" for="isDefault">
+              기본 양식으로 설정
+            </label>
+            <small class="form-text text-muted d-block">같은 유형의 다른 기본 양식은 해제됩니다.</small>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+          <button type="submit" class="btn btn-primary">업로드</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  // 오늘 날짜를 기본값으로 설정
+  document.addEventListener('DOMContentLoaded', function() {
+    const today = new Date().toISOString().split('T')[0];
+    const startDateInput = document.querySelector('input[name="startDate"]');
+    const endDateInput = document.querySelector('input[name="endDate"]');
+    
+    if (startDateInput) startDateInput.value = today;
+    if (endDateInput) endDateInput.value = today;
+    
+    // 폼 유효성 검증 설정
+    setupFormValidation();
+    
+    // 양식 업로드 폼 설정
+    setupTemplateUploadForm();
+  });
+  
+  // 폼 유효성 검증 설정
+  function setupFormValidation() {
+    const form = document.querySelector('form[action="/security/summary-reports"]');
+    if (!form) return;
+    
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      // 필수 필드 검증
+      const requiredFields = [
+        { name: 'title', label: '보고서 제목' },
+        { name: 'reportType', label: '보고서 유형' },
+        { name: 'department', label: '담당 부서' },
+        { name: 'startDate', label: '시작 날짜' },
+        { name: 'endDate', label: '종료 날짜' },
+        { name: 'summary', label: '요약 내용' }
+      ];
+      
+      let isValid = true;
+      let errorMessages = [];
+      
+      requiredFields.forEach(field => {
+        const element = form.querySelector(`[name="${field.name}"]`);
+        if (!element || !element.value.trim()) {
+          isValid = false;
+          errorMessages.push(`${field.label}을(를) 입력해주세요.`);
+          if (element) {
+            element.classList.add('is-invalid');
+          }
+        } else {
+          if (element) {
+            element.classList.remove('is-invalid');
+          }
+        }
+      });
+      
+      // 날짜 유효성 검증
+      const startDate = form.querySelector('[name="startDate"]').value;
+      const endDate = form.querySelector('[name="endDate"]').value;
+      
+      if (endDate && endDate <= startDate) {
+        isValid = false;
+        errorMessages.push('종료 날짜는 시작 날짜보다 이후여야 합니다.');
+        form.querySelector('[name="endDate"]').classList.add('is-invalid');
+      }
+      
+      if (!isValid) {
+        showErrorToast('입력 오류: ' + errorMessages.join(', '));
+        return;
+      }
+      
+      // 유효성 검증 통과 시 폼 제출
+      form.submit();
+    });
+  }
+  
+  // 에러 토스트 표시 함수
+  function showErrorToast(message) {
+    let toastContainer = document.getElementById('toast-container');
+    if (!toastContainer) {
+      toastContainer = document.createElement('div');
+      toastContainer.id = 'toast-container';
+      toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+      toastContainer.style.zIndex = '9999';
+      document.body.appendChild(toastContainer);
+    }
+    
+    const toast = document.createElement('div');
+    toast.className = 'toast show bg-danger text-white';
+    toast.innerHTML = `
+      <div class="toast-body">
+        <i class="fa-solid fa-exclamation-triangle me-2"></i>
+        ${message}
+      </div>
+    `;
+    
+    toastContainer.appendChild(toast);
+    
+    setTimeout(() => {
+      if (toast.parentNode) {
+        toast.parentNode.removeChild(toast);
+      }
+    }, 5000);
+  }
+  
+  // 양식 업로드 폼 설정
+  function setupTemplateUploadForm() {
+    const form = document.getElementById('templateUploadForm');
+    if (!form) return;
+    
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const formData = new FormData(form);
+      
+      // 업로드 진행 표시
+      const submitBtn = form.querySelector('button[type="submit"]');
+      const originalText = submitBtn.innerHTML;
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>업로드 중...';
+      submitBtn.disabled = true;
+      
+      fetch('/security/summary-reports/templates/upload', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          showSuccessToast(data.message);
+          form.reset();
+          bootstrap.Modal.getInstance(document.getElementById('templateUploadModal')).hide();
+          // 양식 목록 새로고침
+          loadTemplates();
+        } else {
+          showErrorToast(data.message || '양식 업로드에 실패했습니다.');
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        showErrorToast('양식 업로드 중 오류가 발생했습니다.');
+      })
+      .finally(() => {
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+      });
+    });
+  }
+  
+  // 양식 목록 로드
+  function loadTemplates() {
+    const reportType = document.querySelector('[name="reportType"]').value;
+    const department = document.querySelector('[name="department"]').value;
+    const templateSelect = document.getElementById('templateSelect');
+    
+    if (!reportType) {
+      templateSelect.innerHTML = '<option value="">보고서 유형을 먼저 선택하세요</option>';
+      return;
+    }
+    
+    const params = new URLSearchParams({
+      reportType: reportType,
+      department: department || ''
+    });
+    
+    fetch(`/security/api/summary-templates?${params}`)
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          templateSelect.innerHTML = '<option value="">양식을 선택하세요</option>';
+          
+          data.templates.forEach(template => {
+            const option = document.createElement('option');
+            option.value = template._id;
+            option.textContent = `${template.templateName}${template.isDefault ? ' (기본)' : ''}`;
+            templateSelect.appendChild(option);
+          });
+          
+          if (data.templates.length === 0) {
+            templateSelect.innerHTML = '<option value="">사용 가능한 양식이 없습니다</option>';
+          }
+        } else {
+          showErrorToast('양식 목록을 불러오는데 실패했습니다.');
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        showErrorToast('양식 목록을 불러오는 중 오류가 발생했습니다.');
+      });
+  }
+  
+  // 양식 적용
+  function applyTemplate() {
+    const templateId = document.getElementById('templateSelect').value;
+    if (!templateId) {
+      showErrorToast('양식을 먼저 선택해주세요.');
+      return;
+    }
+    
+    fetch(`/security/api/summary-templates/${templateId}/apply`)
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          // 양식 정보를 폼에 적용
+          const template = data.template;
+          
+          // 보고서 제목에 양식명 적용
+          const titleInput = document.querySelector('[name="title"]');
+          if (titleInput && !titleInput.value) {
+            titleInput.value = `${template.name} - ${new Date().getFullYear()}년 ${new Date().getMonth() + 1}월`;
+          }
+          
+          // 다운로드 링크가 있는 경우 새 창에서 열기
+          if (template.downloadUrl) {
+            window.open(template.downloadUrl, '_blank');
+          }
+          
+          showSuccessToast(`양식 "${template.name}"이 적용되었습니다.`);
+        } else {
+          showErrorToast(data.message || '양식 적용에 실패했습니다.');
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        showErrorToast('양식 적용 중 오류가 발생했습니다.');
+      });
+  }
+  
+  // 양식 다운로드
+  function downloadTemplate() {
+    const templateId = document.getElementById('templateSelect').value;
+    if (!templateId) {
+      showErrorToast('양식을 먼저 선택해주세요.');
+      return;
+    }
+    
+    window.open(`/security/api/summary-templates/${templateId}/download`, '_blank');
+  }
+  
+  // 성공 토스트 표시
+  function showSuccessToast(message) {
+    let toastContainer = document.getElementById('toast-container');
+    if (!toastContainer) {
+      toastContainer = document.createElement('div');
+      toastContainer.id = 'toast-container';
+      toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+      toastContainer.style.zIndex = '9999';
+      document.body.appendChild(toastContainer);
+    }
+    
+    const toast = document.createElement('div');
+    toast.className = 'toast show bg-success text-white';
+    toast.innerHTML = `
+      <div class="toast-body">
+        <i class="fa-solid fa-check-circle me-2"></i>
+        ${message}
+      </div>
+    `;
+    
+    toastContainer.appendChild(toast);
+    
+    setTimeout(() => {
+      if (toast.parentNode) {
+        toast.parentNode.removeChild(toast);
+      }
+    }, 3000);
+  }
+</script>
+
+<%- include('../footer') %>

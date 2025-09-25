@@ -1,0 +1,446 @@
+<%- include('../header') %>
+
+<style>
+  .report-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 15px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+  }
+  
+  .stat-card {
+    background: white;
+    border-radius: 10px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    text-align: center;
+  }
+  
+  .issue-card {
+    border-left: 4px solid #007bff;
+    margin-bottom: 1rem;
+  }
+  
+  .issue-critical { border-left-color: #dc3545; }
+  .issue-high { border-left-color: #fd7e14; }
+  .issue-medium { border-left-color: #ffc107; }
+  .issue-low { border-left-color: #28a745; }
+  
+  .attachment-item {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .comment-item {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+</style>
+
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-12">
+      <!-- 보고서 헤더 -->
+      <div class="report-header">
+        <div class="d-flex justify-content-between align-items-start">
+          <div>
+            <h2 class="mb-2">
+              <i class="fas fa-chart-bar me-2"></i><%= summaryReport.title %>
+            </h2>
+            <div class="d-flex align-items-center gap-3 mb-2">
+              <span class="badge bg-light text-dark fs-6">
+                <i class="fas fa-building me-1"></i><%= summaryReport.department %>
+              </span>
+              <span class="badge bg-light text-dark fs-6">
+                <i class="fas fa-tag me-1"></i>
+                <%= summaryReport.reportType === 'daily' ? '일일' : summaryReport.reportType === 'weekly' ? '주간' : summaryReport.reportType === 'monthly' ? '월간' : summaryReport.reportType === 'quarterly' ? '분기' : summaryReport.reportType === 'annual' ? '연간' : summaryReport.reportType === 'incident' ? '사고' : summaryReport.reportType === 'security' ? '보안' : '점검' %>
+              </span>
+              <span class="badge bg-light text-dark fs-6">
+                <i class="fas fa-calendar me-1"></i>
+                <%= new Date(summaryReport.period.startDate).toLocaleDateString('ko-KR') %> ~ 
+                <%= new Date(summaryReport.period.endDate).toLocaleDateString('ko-KR') %>
+              </span>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+              <span class="badge bg-<%= summaryReport.status === 'draft' ? 'secondary' : summaryReport.status === 'submitted' ? 'warning' : summaryReport.status === 'approved' ? 'success' : 'danger' %> fs-6">
+                <%= summaryReport.status === 'draft' ? '초안' : summaryReport.status === 'submitted' ? '제출됨' : summaryReport.status === 'approved' ? '승인됨' : '반려됨' %>
+              </span>
+              <span class="badge bg-<%= summaryReport.priority === 'urgent' ? 'danger' : summaryReport.priority === 'high' ? 'warning' : summaryReport.priority === 'normal' ? 'info' : 'secondary' %> fs-6">
+                우선순위: <%= summaryReport.priority === 'urgent' ? '긴급' : summaryReport.priority === 'high' ? '높음' : summaryReport.priority === 'normal' ? '보통' : '낮음' %>
+              </span>
+            </div>
+          </div>
+          <div class="text-end">
+            <div class="small mb-1">
+              <i class="fas fa-user me-1"></i>작성자: <%= summaryReport.createdBy ? summaryReport.createdBy.name || summaryReport.createdBy.username : '알 수 없음' %>
+            </div>
+            <div class="small mb-1">
+              <i class="fas fa-clock me-1"></i>작성일: <%= new Date(summaryReport.createdAt).toLocaleString('ko-KR') %>
+            </div>
+            <% if (summaryReport.approvedBy) { %>
+              <div class="small mb-1">
+                <i class="fas fa-check-circle me-1"></i>승인자: <%= summaryReport.approvedBy.name || summaryReport.approvedBy.username %>
+              </div>
+              <div class="small">
+                <i class="fas fa-calendar-check me-1"></i>승인일: <%= new Date(summaryReport.approvedAt).toLocaleString('ko-KR') %>
+              </div>
+            <% } %>
+          </div>
+        </div>
+      </div>
+
+      <!-- 액션 버튼 -->
+      <div class="d-flex justify-content-end gap-2 mb-4">
+        <a href="/security/summary-reports" class="btn btn-outline-secondary">
+          <i class="fas fa-list me-1"></i>목록으로
+        </a>
+        <% if (session.userRole === 'admin' && summaryReport.status === 'submitted') { %>
+          <button class="btn btn-success" onclick="updateReportStatus('<%= summaryReport._id %>', 'approved')">
+            <i class="fas fa-check me-1"></i>승인
+          </button>
+          <button class="btn btn-danger" onclick="updateReportStatus('<%= summaryReport._id %>', 'rejected')">
+            <i class="fas fa-times me-1"></i>반려
+          </button>
+        <% } %>
+        <% if (summaryReport.status === 'draft') { %>
+          <button class="btn btn-primary" onclick="updateReportStatus('<%= summaryReport._id %>', 'submitted')">
+            <i class="fas fa-paper-plane me-1"></i>제출
+          </button>
+        <% } %>
+      </div>
+
+      <div class="row">
+        <!-- 왼쪽 컬럼 -->
+        <div class="col-lg-8">
+          <!-- 요약 내용 -->
+          <div class="card mb-4">
+            <div class="card-header">
+              <h5 class="mb-0">
+                <i class="fas fa-file-alt me-2"></i>요약 내용
+              </h5>
+            </div>
+            <div class="card-body">
+              <p class="mb-0" style="white-space: pre-wrap;"><%= summaryReport.summary %></p>
+            </div>
+          </div>
+
+          <!-- 핵심 포인트 -->
+          <% if (summaryReport.keyPoints && summaryReport.keyPoints.length > 0) { %>
+            <div class="card mb-4">
+              <div class="card-header">
+                <h5 class="mb-0">
+                  <i class="fas fa-bullseye me-2"></i>핵심 포인트
+                </h5>
+              </div>
+              <div class="card-body">
+                <ul class="list-unstyled">
+                  <% summaryReport.keyPoints.forEach(point => { %>
+                    <li class="mb-2">
+                      <i class="fas fa-check-circle text-success me-2"></i><%= point %>
+                    </li>
+                  <% }); %>
+                </ul>
+              </div>
+            </div>
+          <% } %>
+
+          <!-- 권장사항 -->
+          <% if (summaryReport.recommendations && summaryReport.recommendations.length > 0) { %>
+            <div class="card mb-4">
+              <div class="card-header">
+                <h5 class="mb-0">
+                  <i class="fas fa-lightbulb me-2"></i>권장사항
+                </h5>
+              </div>
+              <div class="card-body">
+                <ul class="list-unstyled">
+                  <% summaryReport.recommendations.forEach(rec => { %>
+                    <li class="mb-2">
+                      <i class="fas fa-arrow-right text-primary me-2"></i><%= rec %>
+                    </li>
+                  <% }); %>
+                </ul>
+              </div>
+            </div>
+          <% } %>
+
+          <!-- 이슈 목록 -->
+          <% if (summaryReport.issues && summaryReport.issues.length > 0) { %>
+            <div class="card mb-4">
+              <div class="card-header">
+                <h5 class="mb-0">
+                  <i class="fas fa-exclamation-triangle me-2"></i>이슈 목록
+                </h5>
+              </div>
+              <div class="card-body">
+                <% summaryReport.issues.forEach(issue => { %>
+                  <div class="card issue-card issue-<%= issue.severity %>">
+                    <div class="card-body">
+                      <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                          <p class="mb-2"><%= issue.description %></p>
+                          <div class="d-flex gap-2">
+                            <span class="badge bg-<%= issue.severity === 'critical' ? 'danger' : issue.severity === 'high' ? 'warning' : issue.severity === 'medium' ? 'info' : 'success' %>">
+                              <%= issue.severity === 'critical' ? '치명적' : issue.severity === 'high' ? '높음' : issue.severity === 'medium' ? '보통' : '낮음' %>
+                            </span>
+                            <span class="badge bg-<%= issue.status === 'open' ? 'secondary' : issue.status === 'in-progress' ? 'warning' : issue.status === 'resolved' ? 'success' : 'dark' %>">
+                              <%= issue.status === 'open' ? '열림' : issue.status === 'in-progress' ? '진행중' : issue.status === 'resolved' ? '해결됨' : '닫힘' %>
+                            </span>
+                          </div>
+                        </div>
+                        <% if (issue.assignedTo) { %>
+                          <div class="text-end">
+                            <small class="text-muted">담당자</small><br>
+                            <strong><%= issue.assignedTo.name %></strong>
+                          </div>
+                        <% } %>
+                      </div>
+                      <% if (issue.resolution) { %>
+                        <div class="mt-2 pt-2 border-top">
+                          <small class="text-muted">해결 방법:</small>
+                          <p class="mb-0 small"><%= issue.resolution %></p>
+                        </div>
+                      <% } %>
+                    </div>
+                  </div>
+                <% }); %>
+              </div>
+            </div>
+          <% } %>
+
+          <!-- 댓글 -->
+          <div class="card mb-4">
+            <div class="card-header">
+              <h5 class="mb-0">
+                <i class="fas fa-comments me-2"></i>댓글
+              </h5>
+            </div>
+            <div class="card-body">
+              <% if (summaryReport.comments && summaryReport.comments.length > 0) { %>
+                <% summaryReport.comments.forEach(comment => { %>
+                  <div class="comment-item">
+                    <div class="d-flex justify-content-between align-items-start">
+                      <div class="flex-grow-1">
+                        <p class="mb-1"><%= comment.content %></p>
+                        <small class="text-muted">
+                          <i class="fas fa-user me-1"></i><%= comment.user ? comment.user.name || comment.user.username : '알 수 없음' %>
+                          <i class="fas fa-clock ms-2 me-1"></i><%= new Date(comment.createdAt).toLocaleString('ko-KR') %>
+                        </small>
+                      </div>
+                    </div>
+                  </div>
+                <% }); %>
+              <% } else { %>
+                <p class="text-muted text-center">등록된 댓글이 없습니다.</p>
+              <% } %>
+            </div>
+          </div>
+        </div>
+
+        <!-- 오른쪽 컬럼 -->
+        <div class="col-lg-4">
+          <!-- 통계 -->
+          <div class="card mb-4">
+            <div class="card-header">
+              <h5 class="mb-0">
+                <i class="fas fa-chart-pie me-2"></i>통계 정보
+              </h5>
+            </div>
+            <div class="card-body">
+              <div class="row g-3">
+                <div class="col-6">
+                  <div class="stat-card">
+                    <h4 class="text-primary mb-1"><%= summaryReport.statistics.totalIncidents || 0 %></h4>
+                    <small class="text-muted">총 사건</small>
+                  </div>
+                </div>
+                <div class="col-6">
+                  <div class="stat-card">
+                    <h4 class="text-success mb-1"><%= summaryReport.statistics.resolvedIncidents || 0 %></h4>
+                    <small class="text-muted">해결됨</small>
+                  </div>
+                </div>
+                <div class="col-6">
+                  <div class="stat-card">
+                    <h4 class="text-danger mb-1"><%= summaryReport.statistics.securityBreaches || 0 %></h4>
+                    <small class="text-muted">보안 침해</small>
+                  </div>
+                </div>
+                <div class="col-6">
+                  <div class="stat-card">
+                    <h4 class="text-info mb-1"><%= summaryReport.statistics.maintenanceCompleted || 0 %></h4>
+                    <small class="text-muted">점검 완료</small>
+                  </div>
+                </div>
+                <div class="col-12">
+                  <div class="stat-card">
+                    <h4 class="text-warning mb-1"><%= summaryReport.resolutionRate || 0 %>%</h4>
+                    <small class="text-muted">해결률</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 첨부파일 -->
+          <% if (summaryReport.attachments && summaryReport.attachments.length > 0) { %>
+            <div class="card mb-4">
+              <div class="card-header">
+                <h5 class="mb-0">
+                  <i class="fas fa-paperclip me-2"></i>첨부파일
+                </h5>
+              </div>
+              <div class="card-body">
+                <% summaryReport.attachments.forEach(attachment => { %>
+                  <div class="attachment-item">
+                    <div class="d-flex justify-content-between align-items-center">
+                      <div>
+                        <i class="fas fa-file me-2"></i>
+                        <a href="/security/download/<%= attachment.filename %>" class="text-decoration-none">
+                          <%= attachment.originalName %>
+                        </a>
+                      </div>
+                      <small class="text-muted">
+                        <%= new Date(attachment.uploadedAt).toLocaleDateString('ko-KR') %>
+                      </small>
+                    </div>
+                  </div>
+                <% }); %>
+              </div>
+            </div>
+          <% } %>
+
+          <!-- 보고서 정보 -->
+          <div class="card">
+            <div class="card-header">
+              <h5 class="mb-0">
+                <i class="fas fa-info-circle me-2"></i>보고서 정보
+              </h5>
+            </div>
+            <div class="card-body">
+              <div class="mb-3">
+                <strong>보고서 기간:</strong><br>
+                <small class="text-muted">
+                  <%= summaryReport.periodDays %>일
+                </small>
+              </div>
+              <div class="mb-3">
+                <strong>미해결 이슈:</strong><br>
+                <small class="text-muted">
+                  <%= summaryReport.openIssuesCount || 0 %>건
+                </small>
+              </div>
+              <div class="mb-3">
+                <strong>높은 우선순위 이슈:</strong><br>
+                <small class="text-muted">
+                  <%= summaryReport.highPriorityIssuesCount || 0 %>건
+                </small>
+              </div>
+              <div class="mb-0">
+                <strong>마지막 수정:</strong><br>
+                <small class="text-muted">
+                  <%= new Date(summaryReport.updatedAt).toLocaleString('ko-KR') %>
+                </small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // 보고서 상태 업데이트
+  function updateReportStatus(reportId, status) {
+    const comment = prompt('상태 변경 사유를 입력하세요 (선택사항):');
+    
+    fetch(`/security/summary-reports/${reportId}/status`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      body: JSON.stringify({
+        status: status,
+        comment: comment || ''
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        showSuccessToast(data.message);
+        setTimeout(() => {
+          location.reload();
+        }, 1500);
+      } else {
+        showErrorToast(data.message || '상태 업데이트에 실패했습니다.');
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      showErrorToast('상태 업데이트 중 오류가 발생했습니다.');
+    });
+  }
+  
+  // 성공 토스트 표시
+  function showSuccessToast(message) {
+    const toastContainer = document.getElementById('toast-container') || createToastContainer();
+    
+    const toast = document.createElement('div');
+    toast.className = 'toast show bg-success text-white';
+    toast.innerHTML = `
+      <div class="toast-body">
+        <i class="fa-solid fa-check-circle me-2"></i>
+        ${message}
+      </div>
+    `;
+    
+    toastContainer.appendChild(toast);
+    
+    setTimeout(() => {
+      if (toast.parentNode) {
+        toast.parentNode.removeChild(toast);
+      }
+    }, 3000);
+  }
+  
+  // 에러 토스트 표시
+  function showErrorToast(message) {
+    const toastContainer = document.getElementById('toast-container') || createToastContainer();
+    
+    const toast = document.createElement('div');
+    toast.className = 'toast show bg-danger text-white';
+    toast.innerHTML = `
+      <div class="toast-body">
+        <i class="fa-solid fa-exclamation-triangle me-2"></i>
+        ${message}
+      </div>
+    `;
+    
+    toastContainer.appendChild(toast);
+    
+    setTimeout(() => {
+      if (toast.parentNode) {
+        toast.parentNode.removeChild(toast);
+      }
+    }, 5000);
+  }
+  
+  // 토스트 컨테이너 생성
+  function createToastContainer() {
+    const container = document.createElement('div');
+    container.id = 'toast-container';
+    container.className = 'toast-container position-fixed top-0 end-0 p-3';
+    container.style.zIndex = '9999';
+    document.body.appendChild(container);
+    return container;
+  }
+</script>
+
+<%- include('../footer') %>
