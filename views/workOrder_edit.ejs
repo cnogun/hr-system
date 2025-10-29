@@ -1013,10 +1013,10 @@
                     const weekdayWorkType = getTeamSchedule(teamNumber, weekNumber);
                     
                     if (weekdayWorkType === '심야') {
-                        // 심야반은 토요일 야간특근근무
+                        // 심야팀은 토요일 1~30번 야간특근, 31~40번 휴무
                         workTime = '야간특근근무(18:00~06:00)';
                     } else if (weekdayWorkType === '초야') {
-                        // 초야반은 토요일 주간특근근무
+                        // 초야팀은 토요일 1~30번 주간특근, 31~40번 휴무
                         workTime = '주간특근근무(06:00~18:00)';
                     } else {
                         // 주간반은 토요일 휴무

@@ -11,6 +11,7 @@ const express = require('express');
 const router = express.Router();
 const Employee = require('../models/Employee');
 const ExcelJS = require('exceljs');
+const WorkScheduleService = require('../services/workScheduleService');
 
 // 월간 근태현황 페이지 렌더링
 router.get('/', async (req, res) => {
@@ -387,6 +388,319 @@ router.get('/export', async (req, res) => {
   } catch (error) {
     console.error('엑셀 내보내기 오류:', error);
     res.status(500).json({ success: false, message: '엑셀 내보내기 중 오류가 발생했습니다.' });
+  }
+});
+
+// 토요일 자동입력 로직 적용 API
+router.post('/apply-saturday-logic', async (req, res) => {
+  try {
+    // 세션 확인
+    if (!req.session || !req.session.userId) {
+      return res.status(401).json({ success: false, message: '로그인이 필요합니다.' });
+    }
+
+    // 관리자 권한 확인
+    if (req.session.userRole !== 'admin') {
+      return res.status(403).json({ success: false, message: '관리자 권한이 필요합니다.' });
+    }
+
+    const { year, month } = req.body;
+    
+    if (!year || !month) {
+      return res.status(400).json({ success: false, message: '년월 정보가 필요합니다.' });
+    }
+
+    console.log(`=== 토요일 자동입력 로직 적용 시작 ===`);
+    console.log(`대상: ${year}년 ${month}월`);
+
+    // 해당 월의 모든 토요일 찾기
+    const saturdays = [];
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0);
+    
+    for (let day = 1; day <= endDate.getDate(); day++) {
+      const date = new Date(year, month - 1, day);
+      if (date.getDay() === 6) { // 토요일
+        saturdays.push(day);
+      }
+    }
+
+    console.log(`해당 월의 토요일: ${saturdays.join(', ')}일`);
+
+    // 보안팀 직원들 조회
+    const securityEmployees = await Employee.find({
+      department: { $regex: /^보안/ },
+      status: '재직'
+    }).sort({ department: 1, name: 1 });
+
+    console.log(`보안팀 직원 수: ${securityEmployees.length}명`);
+
+    let processedEmployees = 0;
+    const appliedDates = [];
+
+    // 각 토요일에 대해 자동입력 로직 적용
+    for (const day of saturdays) {
+      const dateStr = `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+      const date = new Date(year, month - 1, day);
+      
+      // 주차 계산
+      const weekNumber = Math.ceil((date - new Date(year, 0, 1)) / (7 * 24 * 60 * 60 * 1000));
+      const cycle = (weekNumber - 1) % 3;
+      
+      // 해당 주차의 팀 근무 형태 결정
+      let team1Schedule, team2Schedule, team3Schedule;
+      if (cycle === 0) {
+        team1Schedule = '초야'; team2Schedule = '심야'; team3Schedule = '주간';
+      } else if (cycle === 1) {
+        team1Schedule = '주간'; team2Schedule = '초야'; team3Schedule = '심야';
+      } else {
+        team1Schedule = '심야'; team2Schedule = '주간'; team3Schedule = '초야';
+      }
+
+      console.log(`\n--- ${dateStr} (${weekNumber}주차, ${cycle + 1}/3 순환) ---`);
+      console.log(`보안1팀: ${team1Schedule}, 보안2팀: ${team2Schedule}, 보안3팀: ${team3Schedule}`);
+
+      // 각 직원에 대해 토요일 근무 설정
+      for (const emp of securityEmployees) {
+        let status = '';
+        let checkIn = '';
+        let checkOut = '';
+        let basic = '8';
+        let overtime = '0';
+        let special = '0';
+        let specialOvertime = '0';
+        let night = '0';
+        let note = '';
+
+        if (emp.department === '보안1팀') {
+          if (team1Schedule === '심야') {
+            // 1팀이 심야팀일 때: 1~30번 야간특근, 31~40번 정기휴무
+            const memberNumber = parseInt(emp.name.match(/(\d+)$/)?.[1] || '0');
+            if (memberNumber >= 1 && memberNumber <= 30) {
+              status = '출근(야특)';
+              checkIn = '18:00';
+              checkOut = '06:00';
+              special = '8';
+              specialOvertime = '4';
+              night = '8';
+              note = '야간특근';
+            } else {
+              status = '정기휴무';
+              note = '정기 휴무';
+            }
+          } else if (team1Schedule === '초야') {
+            // 1팀이 초야팀일 때: 1~30번 주간특근, 31~40번 정기휴무
+            const memberNumber = parseInt(emp.name.match(/(\d+)$/)?.[1] || '0');
+            if (memberNumber >= 1 && memberNumber <= 30) {
+              status = '출근(주특)';
+              checkIn = '06:00';
+              checkOut = '18:00';
+              special = '8';
+              specialOvertime = '4';
+              note = '주간특근';
+            } else {
+              status = '정기휴무';
+              note = '정기 휴무';
+            }
+          } else {
+            // 1팀이 주간팀일 때: 정기휴무
+            status = '정기휴무';
+            note = '정기 휴무';
+          }
+        } else if (emp.department === '보안2팀') {
+          if (team2Schedule === '심야') {
+            // 2팀이 심야팀일 때: 1~30번 야간특근, 31~40번 정기휴무
+            const memberNumber = parseInt(emp.name.match(/(\d+)$/)?.[1] || '0');
+            if (memberNumber >= 1 && memberNumber <= 30) {
+              status = '출근(야특)';
+              checkIn = '18:00';
+              checkOut = '06:00';
+              special = '8';
+              specialOvertime = '4';
+              night = '8';
+              note = '야간특근';
+            } else {
+              status = '정기휴무';
+              note = '정기 휴무';
+            }
+          } else if (team2Schedule === '초야') {
+            // 2팀이 초야팀일 때: 1~30번 주간특근, 31~40번 정기휴무
+            const memberNumber = parseInt(emp.name.match(/(\d+)$/)?.[1] || '0');
+            if (memberNumber >= 1 && memberNumber <= 30) {
+              status = '출근(주특)';
+              checkIn = '06:00';
+              checkOut = '18:00';
+              special = '8';
+              specialOvertime = '4';
+              note = '주간특근';
+            } else {
+              status = '정기휴무';
+              note = '정기 휴무';
+            }
+          } else {
+            // 2팀이 주간팀일 때: 정기휴무
+            status = '정기휴무';
+            note = '정기 휴무';
+          }
+        } else if (emp.department === '보안3팀') {
+          if (team3Schedule === '심야') {
+            // 3팀이 심야팀일 때: 1~30번 야간특근, 31~40번 정기휴무
+            const memberNumber = parseInt(emp.name.match(/(\d+)$/)?.[1] || '0');
+            if (memberNumber >= 1 && memberNumber <= 30) {
+              status = '출근(야특)';
+              checkIn = '18:00';
+              checkOut = '06:00';
+              special = '8';
+              specialOvertime = '4';
+              night = '8';
+              note = '야간특근';
+            } else {
+              status = '정기휴무';
+              note = '정기 휴무';
+            }
+          } else if (team3Schedule === '초야') {
+            // 3팀이 초야팀일 때: 1~30번 주간특근, 31~40번 정기휴무
+            const memberNumber = parseInt(emp.name.match(/(\d+)$/)?.[1] || '0');
+            if (memberNumber >= 1 && memberNumber <= 30) {
+              status = '출근(주특)';
+              checkIn = '06:00';
+              checkOut = '18:00';
+              special = '8';
+              specialOvertime = '4';
+              note = '주간특근';
+            } else {
+              status = '정기휴무';
+              note = '정기 휴무';
+            }
+          } else {
+            // 3팀이 주간팀일 때: 정기휴무
+            status = '정기휴무';
+            note = '정기 휴무';
+          }
+        }
+
+        // 총시간 계산
+        let totalTime = parseInt(basic) + parseInt(overtime) + parseInt(special) + parseInt(specialOvertime) + parseInt(night);
+
+        // 근태 데이터 업데이트
+        if (!emp.attendance) {
+          emp.attendance = new Map();
+        }
+        
+        emp.attendance.set(dateStr, {
+          status,
+          checkIn,
+          checkOut,
+          basic,
+          overtime,
+          special,
+          specialOvertime,
+          night,
+          totalTime: totalTime.toString(),
+          note
+        });
+
+        processedEmployees++;
+      }
+
+      appliedDates.push(`${month}월 ${day}일`);
+    }
+
+    // 모든 직원의 데이터 저장
+    await Promise.all(securityEmployees.map(emp => emp.save()));
+
+    console.log(`=== 토요일 자동입력 로직 적용 완료 ===`);
+    console.log(`처리된 직원: ${processedEmployees}명`);
+    console.log(`적용된 날짜: ${appliedDates.join(', ')}`);
+
+    res.json({
+      success: true,
+      message: '토요일 자동입력이 완료되었습니다.',
+      appliedDates,
+      processedEmployees,
+      totalEmployees: securityEmployees.length
+    });
+
+  } catch (error) {
+    console.error('토요일 자동입력 오류:', error);
+    res.status(500).json({
+      success: false,
+      message: '토요일 자동입력 중 오류가 발생했습니다: ' + error.message
+    });
+  }
+});
+
+// 일요일 자동입력 API
+router.post('/apply-sunday-logic', async (req, res) => {
+  try {
+    const { year, month } = req.body;
+    
+    if (!year || !month) {
+      return res.status(400).json({
+        success: false,
+        message: '년도와 월 정보가 필요합니다.'
+      });
+    }
+
+    console.log(`일요일 자동입력 시작: ${year}년 ${month}월`);
+
+    // 해당 월의 모든 일요일 찾기
+    const sundays = [];
+    const daysInMonth = new Date(year, month, 0).getDate();
+    
+    for (let day = 1; day <= daysInMonth; day++) {
+      const date = new Date(year, month - 1, day);
+      if (date.getDay() === 0) { // 일요일
+        sundays.push(date);
+      }
+    }
+
+    console.log(`발견된 일요일: ${sundays.length}개`, sundays.map(d => d.toLocaleDateString('ko-KR')));
+
+    let processedEmployees = 0;
+    const appliedDates = [];
+
+    // 각 일요일에 대해 자동입력 적용
+    for (const sunday of sundays) {
+      try {
+        console.log(`${sunday.toLocaleDateString('ko-KR')} 일요일 자동입력 시작`);
+        
+        // workScheduleService를 사용하여 자동입력
+        const result = await WorkScheduleService.setWeekendOrHolidaySchedule(
+          sunday, 
+          true, // isWeekend
+          false, // isHoliday
+          req.session.userId || 'system'
+        );
+
+        if (result.success) {
+          processedEmployees += result.processedEmployees;
+          appliedDates.push(sunday.toLocaleDateString('ko-KR'));
+          console.log(`${sunday.toLocaleDateString('ko-KR')} 일요일 자동입력 완료: ${result.processedEmployees}명`);
+        } else {
+          console.error(`${sunday.toLocaleDateString('ko-KR')} 일요일 자동입력 실패:`, result.message);
+        }
+      } catch (error) {
+        console.error(`${sunday.toLocaleDateString('ko-KR')} 일요일 자동입력 오류:`, error);
+      }
+    }
+
+    console.log(`일요일 자동입력 완료: ${processedEmployees}명 처리, ${appliedDates.length}개 일요일 적용`);
+
+    res.json({
+      success: true,
+      message: `일요일 자동입력이 완료되었습니다.`,
+      processedEmployees,
+      appliedDates,
+      totalSundays: sundays.length
+    });
+
+  } catch (error) {
+    console.error('일요일 자동입력 오류:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: '일요일 자동입력 중 오류가 발생했습니다: ' + error.message
+    });
   }
 });
 

@@ -97,40 +97,37 @@ db.once('open', async () => {
       const team2Group1Members = workSchedule?.weekendSchedule?.team2?.group1?.split('\n').filter(line => line.trim()) || [];
       const team3Group1Members = workSchedule?.weekendSchedule?.team3?.group1?.split('\n').filter(line => line.trim()) || [];
       
-      // 보안1팀
+      // 보안1팀 (8월 23일 34주차 - 초야팀)
       const team1Employees = securityEmployees.filter(emp => emp.department === '보안1팀');
-      console.log('\n--- 보안1팀 (40명) ---');
-      team1Employees.forEach(emp => {
-        const isGroup1Member = team1Group1Members.includes(emp.name);
-        if (isGroup1Member) {
-          console.log(`${emp.name}: 휴무 (1조 - 일요일 지원근무)`);
-        } else {
-          console.log(`${emp.name}: 휴무 (토요일 휴무)`);
-        }
-      });
-      
-      // 보안2팀
-      const team2Employees = securityEmployees.filter(emp => emp.department === '보안2팀');
-      console.log('\n--- 보안2팀 (40명) ---');
-      team2Employees.forEach(emp => {
-        const isGroup1Member = team2Group1Members.includes(emp.name);
-        if (isGroup1Member) {
-          console.log(`${emp.name}: 휴무 (1조 - 일요일 지원근무)`);
-        } else {
+      console.log('\n--- 보안1팀 (40명) - 34주차 초야팀 ---');
+      team1Employees.forEach((emp, index) => {
+        const memberNumber = parseInt(emp.name.match(/(\d+)$/)?.[1] || '0');
+        if (memberNumber >= 1 && memberNumber <= 30) {
           console.log(`${emp.name}: 출근(주특) (토요일 주간특근)`);
+        } else {
+          console.log(`${emp.name}: 정기휴무 (토요일 정기휴무)`);
         }
       });
       
-      // 보안3팀
-      const team3Employees = securityEmployees.filter(emp => emp.department === '보안3팀');
-      console.log('\n--- 보안3팀 (40명) ---');
-      team3Employees.forEach(emp => {
-        const isGroup1Member = team3Group1Members.includes(emp.name);
-        if (isGroup1Member) {
-          console.log(`${emp.name}: 휴무 (1조 - 일요일 지원근무)`);
-        } else {
+      // 보안2팀 (8월 23일 34주차 - 심야팀)
+      const team2Employees = securityEmployees.filter(emp => emp.department === '보안2팀');
+      console.log('\n--- 보안2팀 (40명) - 34주차 심야팀 ---');
+      team2Employees.forEach((emp, index) => {
+        const memberNumber = parseInt(emp.name.match(/(\d+)$/)?.[1] || '0');
+        if (memberNumber >= 1 && memberNumber <= 30) {
           console.log(`${emp.name}: 출근(야특) (토요일 야간특근)`);
+        } else {
+          console.log(`${emp.name}: 정기휴무 (토요일 정기휴무)`);
         }
+      });
+      
+      // 보안3팀 (8월 23일 34주차 - 주간팀)
+      const team3Employees = securityEmployees.filter(emp => emp.department === '보안3팀');
+      console.log('\n--- 보안3팀 (40명) - 34주차 주간팀 ---');
+      team3Employees.forEach((emp, index) => {
+        const memberNumber = parseInt(emp.name.match(/(\d+)$/)?.[1] || '0');
+        // 주간팀일 때는 토요일 정기휴무
+        console.log(`${emp.name}: 정기휴무 (토요일 정기휴무)`);
       });
     }
     

@@ -231,33 +231,190 @@ class WorkScheduleService {
         } else if (isWeekend) {
           // 주말 근무 (새로운 공식 적용)
           if (dayOfWeek === 6) { // 토요일
-            if (emp.department === '보안2팀') {
-              // 2팀: 주간특근 (06:00~18:00)
-              status = '출근(주특)';
-              checkIn = '06:00';
-              checkOut = '18:00';
-              basic = '8';
-              special = '8';        // 특근 8시간
-              specialOvertime = '4'; // 특근연장 4시간
-              night = '0';
-            } else if (emp.department === '보안3팀') {
-              // 3팀: 야간특근 (18:00~06:00)
-              status = '출근(야특)';
-              checkIn = '18:00';
-              checkOut = '06:00';
-              basic = '8';
-              special = '8';        // 특근 8시간
-              specialOvertime = '4'; // 특근연장 4시간
-              night = '8';          // 야간 8시간
+            // 주차별 팀 근무 형태 확인
+            const weekNumber = this.getWeekNumber(date);
+            const cycle = (weekNumber - 1) % 3;
+            
+            let team1Schedule, team2Schedule, team3Schedule;
+            if (cycle === 0) {
+              team1Schedule = '초야'; team2Schedule = '심야'; team3Schedule = '주간';
+            } else if (cycle === 1) {
+              team1Schedule = '주간'; team2Schedule = '초야'; team3Schedule = '심야';
             } else {
-              // 1팀: 정기휴무 (일요일 주간근무 준비)
-              status = '정기휴무';
-              checkIn = '';
-              checkOut = '';
-              basic = '8';
-              special = '0';
-              specialOvertime = '0';
-              night = '0';
+              team1Schedule = '심야'; team2Schedule = '주간'; team3Schedule = '초야';
+            }
+            
+            if (emp.department === '보안1팀') {
+              if (team1Schedule === '심야') {
+                // 1팀이 심야팀일 때: 1~3조 야간특근, 4조 정기휴무
+                const nameMatch = emp.name.match(/보안1팀원(\d+)/);
+                if (nameMatch) {
+                  const memberNumber = parseInt(nameMatch[1]);
+                  if (memberNumber >= 1 && memberNumber <= 30) { // 1~3조
+                    status = '출근(야특)';
+                    checkIn = '18:00';
+                    checkOut = '06:00';
+                    basic = '8';
+                    special = '8';
+                    specialOvertime = '4';
+                    night = '8';
+                  } else {
+                    status = '정기휴무';
+                    checkIn = '';
+                    checkOut = '';
+                    basic = '8';
+                    special = '0';
+                    specialOvertime = '0';
+                    night = '0';
+                  }
+                }
+              } else if (team1Schedule === '초야') {
+                // 1팀이 초야팀일 때: 1~3조 주간특근, 4조 정기휴무
+                const nameMatch = emp.name.match(/보안1팀원(\d+)/);
+                if (nameMatch) {
+                  const memberNumber = parseInt(nameMatch[1]);
+                  if (memberNumber >= 1 && memberNumber <= 30) { // 1~3조
+                    status = '출근(주특)';
+                    checkIn = '06:00';
+                    checkOut = '18:00';
+                    basic = '8';
+                    special = '8';
+                    specialOvertime = '4';
+                    night = '0';
+                  } else {
+                    status = '정기휴무';
+                    checkIn = '';
+                    checkOut = '';
+                    basic = '8';
+                    special = '0';
+                    specialOvertime = '0';
+                    night = '0';
+                  }
+                }
+              } else {
+                // 1팀이 주간팀일 때: 정기휴무 (일요일 주간근무 준비)
+                status = '정기휴무';
+                checkIn = '';
+                checkOut = '';
+                basic = '8';
+                special = '0';
+                specialOvertime = '0';
+                night = '0';
+              }
+            } else if (emp.department === '보안2팀') {
+              if (team2Schedule === '심야') {
+                // 2팀이 심야팀일 때: 1~3조 야간특근, 4조 정기휴무
+                const nameMatch = emp.name.match(/보안2팀원(\d+)/);
+                if (nameMatch) {
+                  const memberNumber = parseInt(nameMatch[1]);
+                  if (memberNumber >= 1 && memberNumber <= 30) { // 1~3조
+                    status = '출근(야특)';
+                    checkIn = '18:00';
+                    checkOut = '06:00';
+                    basic = '8';
+                    special = '8';
+                    specialOvertime = '4';
+                    night = '8';
+                  } else {
+                    status = '정기휴무';
+                    checkIn = '';
+                    checkOut = '';
+                    basic = '8';
+                    special = '0';
+                    specialOvertime = '0';
+                    night = '0';
+                  }
+                }
+              } else if (team2Schedule === '초야') {
+                // 2팀이 초야팀일 때: 1~3조 주간특근, 4조 정기휴무
+                const nameMatch = emp.name.match(/보안2팀원(\d+)/);
+                if (nameMatch) {
+                  const memberNumber = parseInt(nameMatch[1]);
+                  if (memberNumber >= 1 && memberNumber <= 30) { // 1~3조
+                    status = '출근(주특)';
+                    checkIn = '06:00';
+                    checkOut = '18:00';
+                    basic = '8';
+                    special = '8';
+                    specialOvertime = '4';
+                    night = '0';
+                  } else {
+                    status = '정기휴무';
+                    checkIn = '';
+                    checkOut = '';
+                    basic = '8';
+                    special = '0';
+                    specialOvertime = '0';
+                    night = '0';
+                  }
+                }
+              } else {
+                // 2팀이 주간팀일 때: 정기휴무
+                status = '정기휴무';
+                checkIn = '';
+                checkOut = '';
+                basic = '8';
+                special = '0';
+                specialOvertime = '0';
+                night = '0';
+              }
+            } else if (emp.department === '보안3팀') {
+              if (team3Schedule === '심야') {
+                // 3팀이 심야팀일 때: 1~3조 야간특근, 4조 정기휴무
+                const nameMatch = emp.name.match(/보안3팀원(\d+)/);
+                if (nameMatch) {
+                  const memberNumber = parseInt(nameMatch[1]);
+                  if (memberNumber >= 1 && memberNumber <= 30) { // 1~3조
+                    status = '출근(야특)';
+                    checkIn = '18:00';
+                    checkOut = '06:00';
+                    basic = '8';
+                    special = '8';
+                    specialOvertime = '4';
+                    night = '8';
+                  } else {
+                    status = '정기휴무';
+                    checkIn = '';
+                    checkOut = '';
+                    basic = '8';
+                    special = '0';
+                    specialOvertime = '0';
+                    night = '0';
+                  }
+                }
+              } else if (team3Schedule === '초야') {
+                // 3팀이 초야팀일 때: 1~3조 주간특근, 4조 정기휴무
+                const nameMatch = emp.name.match(/보안3팀원(\d+)/);
+                if (nameMatch) {
+                  const memberNumber = parseInt(nameMatch[1]);
+                  if (memberNumber >= 1 && memberNumber <= 30) { // 1~3조
+                    status = '출근(주특)';
+                    checkIn = '06:00';
+                    checkOut = '18:00';
+                    basic = '8';
+                    special = '8';
+                    specialOvertime = '4';
+                    night = '0';
+                  } else {
+                    status = '정기휴무';
+                    checkIn = '';
+                    checkOut = '';
+                    basic = '8';
+                    special = '0';
+                    specialOvertime = '0';
+                    night = '0';
+                  }
+                }
+              } else {
+                // 3팀이 주간팀일 때: 정기휴무
+                status = '정기휴무';
+                checkIn = '';
+                checkOut = '';
+                basic = '8';
+                special = '0';
+                specialOvertime = '0';
+                night = '0';
+              }
             }
           } else { // 일요일
             // 주차별 팀 근무 형태 확인

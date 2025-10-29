@@ -41,16 +41,35 @@ async function testTeam2Attendance() {
         teamWeekendGroup = 'none';
       }
       
-      // 토요일 근무 로직 테스트 (1주차 기준)
+      // 토요일 근무 로직 테스트 (평일 근무형태에 따라)
       let saturdayStatus = '';
       let saturdayNote = '';
       
-      if (teamGroup === '1조') {
+      // 39주차 기준: 보안2팀은 주간팀
+      const team2Schedule = '주간';
+      
+      if (team2Schedule === '주간') {
+        // 주간팀일 때: 정기휴무
         saturdayStatus = '정기휴무';
-        saturdayNote = '토요일 휴무 (1조)';
-      } else {
-        saturdayStatus = '출근(야특)';
-        saturdayNote = '토요일 야간특근';
+        saturdayNote = '토요일 정기휴무';
+      } else if (team2Schedule === '초야') {
+        // 초야팀일 때: 1~30번 주간특근, 31~40번 정기휴무
+        if (index < 30) {
+          saturdayStatus = '출근(주특)';
+          saturdayNote = '토요일 주간특근';
+        } else {
+          saturdayStatus = '정기휴무';
+          saturdayNote = '토요일 정기휴무';
+        }
+      } else if (team2Schedule === '심야') {
+        // 심야팀일 때: 1~30번 야간특근, 31~40번 정기휴무
+        if (index < 30) {
+          saturdayStatus = '출근(야특)';
+          saturdayNote = '토요일 야간특근';
+        } else {
+          saturdayStatus = '정기휴무';
+          saturdayNote = '토요일 정기휴무';
+        }
       }
       
       // 일요일 근무 로직 테스트
@@ -69,12 +88,8 @@ async function testTeam2Attendance() {
     });
     
     console.log('\n=== 주말 근무 요약 ===');
-    const membersPerGroup = Math.ceil(team2Employees.length / 4);
-    const group1Members = team2Employees.slice(0, membersPerGroup);
-    const otherGroupMembers = team2Employees.slice(membersPerGroup);
-    
-    console.log(`1조 (${group1Members.length}명): 토요일 휴무, 일요일 야간특근`);
-    console.log(`2,3,4조 (${otherGroupMembers.length}명): 토요일 야간특근, 일요일 휴무`);
+    console.log('39주차 보안2팀 (주간팀): 토요일 전체 정기휴무');
+    console.log('- 평일 주간근무 후 토요일 정기휴무 규칙 적용');
     
   } catch (error) {
     console.error('테스트 오류:', error);
