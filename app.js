@@ -1699,25 +1699,6 @@ app.get('/dashboard', async (req, res) => {
 });
 
 
-// 직원 찾기 페이지
-app.get('/employees', async (req, res) => {
-  try {
-    if (!req.session || !req.session.userId) {
-      return res.redirect('/auth/login');
-    }
-
-    const employees = await Employee.find().sort({ name: 1 });
-    
-    res.render('employees', {
-      employees,
-      session: req.session
-    });
-
-  } catch (error) {
-    console.error('직원 목록 로드 오류:', error);
-    res.status(500).send('서버 오류가 발생했습니다.');
-  }
-});
 
 // 게시판 페이지
 app.get('/boards', async (req, res) => {
