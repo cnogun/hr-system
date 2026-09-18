@@ -841,51 +841,7 @@
       });
     });
 
-    // 페이지 로드 시 초기화
-    document.addEventListener('DOMContentLoaded', function() {
-      console.log('통합 엑셀 관리 페이지가 로드되었습니다.');
-      
-      // 헤더 드롭다운 메뉴 초기화
-      initializeHeaderDropdowns();
-    });
-    
-    // 헤더 드롭다운 메뉴 초기화 함수
-    function initializeHeaderDropdowns() {
-      try {
-        // Bootstrap 드롭다운 초기화
-        const dropdownElementList = document.querySelectorAll('.dropdown-toggle');
-        const dropdownList = [...dropdownElementList].map(dropdownToggleEl => {
-          return new bootstrap.Dropdown(dropdownToggleEl);
-        });
-        
-        console.log('헤더 드롭다운 메뉴 초기화 완료:', dropdownList.length, '개');
-        
-        // 드롭다운 클릭 이벤트 리스너 추가
-        document.querySelectorAll('.dropdown-toggle').forEach(toggle => {
-          toggle.addEventListener('click', function(e) {
-            e.preventDefault();
-            const dropdownMenu = this.nextElementSibling;
-            if (dropdownMenu && dropdownMenu.classList.contains('dropdown-menu')) {
-              dropdownMenu.classList.toggle('show');
-            }
-          });
-        });
-        
-        // 드롭다운 외부 클릭 시 닫기
-        document.addEventListener('click', function(e) {
-          if (!e.target.closest('.dropdown')) {
-            document.querySelectorAll('.dropdown-menu.show').forEach(menu => {
-              menu.classList.remove('show');
-            });
-          }
-        });
-        
-      } catch (error) {
-        console.error('헤더 드롭다운 초기화 오류:', error);
-      }
-    }
-
     // 중복 함수 제거됨 - 위쪽에 이미 정의된 함수들 사용
   </script>
 </body>
-</html> 
+</html>
