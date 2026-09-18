@@ -159,8 +159,8 @@ router.get('/', isLoggedIn, async (req, res) => {
 
 // 직원 추가 폼
 router.get('/new', isLoggedIn, adminOnly, async (req, res) => {
-  const employees = await Employee.find().sort({ name: 1 });
-  const users = await User.find().sort({ username: 1 });
+  const assignedUserIds = await Employee.distinct('userId');
+  const users = await User.find({ role: 'user', _id: { $nin: assignedUserIds } }).sort({ username: 1 });
   
   // 헤더에 필요한 변수들 설정
   if (req.session && req.session.userId) {
@@ -194,7 +194,7 @@ router.get('/new', isLoggedIn, adminOnly, async (req, res) => {
     }
   }
   
-  res.render('addEmployee', { employees, users, session: req.session });
+  res.render('addEmployee', { users, session: req.session });
 });
 
 // 기존 직원 선택 폼

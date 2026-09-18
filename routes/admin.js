@@ -17,7 +17,6 @@ const ExcelJS = require('exceljs');
 const { 
   generateEmpNo, 
   checkEmailDuplicate, 
-  checkResidentNumberDuplicate, 
   checkUserIdDuplicate 
 } = require('../utils/employee');
 
@@ -25,6 +24,13 @@ const Employee = require('../models/Employee');
 const User = require('../models/User');
 const Log = require('../models/Log');
 const { Board, Post, Comment, Report } = require('../models/Board');
+
+// 직원 등록 화면: 직원 정보와 아직 연결되지 않은 사용자 계정만 표시
+router.get('/employees/new', adminOnly, async (req, res) => {
+  const assignedUserIds = await Employee.distinct('userId');
+  const users = await User.find({ role: 'user', _id: { $nin: assignedUserIds } }).sort({ username: 1 });
+  res.render('addEmployee', { users, session: req.session });
+});
 
 // 관리자용 직원 상세보기
 router.get('/employees/:id', adminOnly, async (req, res) => {
@@ -405,13 +411,6 @@ router.post('/reports/:reportId/process', adminOnly, async (req, res) => {
   }
 });
 
-// 관리자용 신입직원 추가 폼
-router.get('/employees/new', adminOnly, async (req, res) => {
-  const users = await User.find({ role: 'user' }).sort({ username: 1 });
-  const employees = await Employee.find().sort({ name: 1 });
-  res.render('addEmployee', { users, employees, session: req.session });
-});
-
 // 관리자용 직원 전체 정보
 router.get('/employees', adminOnly, async (req, res) => {
   const { search, department, position, sort, order, page = 1, limit = 10 } = req.query;
@@ -467,69 +466,58 @@ router.get('/employees', adminOnly, async (req, res) => {
 
 // 관리자용 신입직원 추가 처리
 router.post('/employees/new', adminOnly, employeeUpload.single('profileImage'), async (req, res) => {
-  const { name, email, userId, orgType, department, position, hireDate } = req.body;
+  const { userId, hireDate } = req.body;
+  const name = typeof req.body.name === 'string' ? req.body.name.trim() : '';
+  const orgType = typeof req.body.orgType === 'string' ? req.body.orgType : '';
+  const department = typeof req.body.department === 'string' ? req.body.department : '';
+  const position = typeof req.body.position === 'string' ? req.body.position : '';
+  const employmentType = typeof req.body.employmentType === 'string' ? req.body.employmentType : '';
   
   try {
+    const validDate = typeof hireDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(hireDate)
+      && !Number.isNaN(Date.parse(hireDate))
+      && new Date(hireDate).toISOString().slice(0, 10) === hireDate;
+    if (!name || !validDate || !['본사', '지사'].includes(orgType)
+      || !['보안1팀', '보안2팀', '보안3팀', '관리팀', '인사팀', '영업팀', '지원팀'].includes(department)
+      || !['', '정규직', '파견직', '계약직'].includes(employmentType)) {
+      return res.status(400).send('직원 등록 정보를 확인해 주세요.');
+    }
+    if (typeof userId !== 'string' || !/^[a-f\d]{24}$/i.test(userId)) {
+      return res.status(400).send('연결할 사용자 계정을 선택해 주세요.');
+    }
+    const user = await User.findById(userId);
+    if (!user || user.role !== 'user' || !user.email) {
+      return res.status(400).send('유효한 직원 사용자 계정을 선택해 주세요.');
+    }
+
     // 이메일 중복 검사
-    const existingEmployee = await checkEmailDuplicate(email);
+    const existingEmployee = await checkEmailDuplicate(user.email);
     if (existingEmployee) {
-      return res.status(400).send(`
-        <script>
-          alert('이미 존재하는 이메일입니다: ${email}');
-          history.back();
-        </script>
-      `);
+      return res.status(400).send('이미 등록된 이메일입니다.');
     }
     
     // userId 중복 검사
     const existingUserEmployee = await checkUserIdDuplicate(userId);
     if (existingUserEmployee) {
-      return res.status(400).send(`
-        <script>
-          alert('이미 등록된 사용자입니다. 다른 사용자를 선택해주세요.');
-          history.back();
-        </script>
-      `);
-    }
-    
-    // 주민등록번호 중복 검사
-    const existingResidentNumber = await checkResidentNumberDuplicate(req.body.residentNumber);
-    if (existingResidentNumber) {
-      return res.status(400).send(`
-        <script>
-          alert('이미 등록된 주민등록번호입니다: ${req.body.residentNumber}');
-          history.back();
-        </script>
-      `);
+      return res.status(400).send('이미 등록된 사용자 계정입니다.');
     }
     
     const empNo = await generateEmpNo(orgType, department);
     
     const employee = new Employee({
       name,
-      email,
+      email: user.email,
       userId,
       empNo,
       orgType,
       department,
-      position,
-      hireDate,
+      position: position.trim(),
+      employmentType,
+      hireDate: new Date(hireDate),
       status: '재직',
-      cap: req.body.cap,
-      uniformSummerTop: req.body.uniformSummerTop,
-      uniformSummerBottom: req.body.uniformSummerBottom,
-      uniformWinterTop: req.body.uniformWinterTop,
-      uniformWinterBottom: req.body.uniformWinterBottom,
-      uniformWinterPants: req.body.uniformWinterPants,
-      springAutumnUniform: req.body.springAutumnUniform,
-      uniformWinterCoat: req.body.uniformWinterCoat,
-      raincoat: req.body.raincoat,
-      safetyShoes: req.body.safetyShoes,
-      rainBoots: req.body.rainBoots,
-      winterJacket: req.body.winterJacket,
-      doubleJacket: req.body.doubleJacket,
-      residentNumber: req.body.residentNumber || null,
-      profileImage: req.file ? req.file.filename : null
+      mobile: typeof req.body.mobile === 'string' ? req.body.mobile.trim() : '',
+      emergencyContact: typeof req.body.emergencyContact === 'string' ? req.body.emergencyContact.trim() : '',
+      profileImage: req.file ? `/uploads/${req.file.filename}` : null
     });
 
     await employee.save();

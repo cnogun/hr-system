@@ -12,7 +12,7 @@ const multer = require('multer');
 const path = require('path');
 
 // 기본 파일 업로드 설정
-function createUploadConfig(destination, filenamePrefix = '') {
+function createUploadConfig(destination, filenamePrefix = '', allowedTypes = /jpeg|jpg|png|gif|pdf|doc|docx|xls|xlsx|txt/) {
   const storage = multer.diskStorage({
     destination: function (req, file, cb) {
       cb(null, destination);
@@ -28,7 +28,6 @@ function createUploadConfig(destination, filenamePrefix = '') {
     storage: storage,
     limits: { fileSize: 10 * 1024 * 1024 }, // 10MB 제한
     fileFilter: function (req, file, cb) {
-      const allowedTypes = /jpeg|jpg|png|gif|pdf|doc|docx|xls|xlsx|txt/;
       const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
       const mimetype = allowedTypes.test(file.mimetype);
       if (mimetype && extname) {
@@ -41,7 +40,7 @@ function createUploadConfig(destination, filenamePrefix = '') {
 }
 
 // 직원 프로필 이미지 업로드
-const employeeUpload = createUploadConfig('uploads/', 'profileImage');
+const employeeUpload = createUploadConfig('uploads/', 'profileImage', /jpeg|jpg|png|gif/);
 
 // 게시판 파일 업로드
 const boardUpload = createUploadConfig('uploads/board/', 'board');
