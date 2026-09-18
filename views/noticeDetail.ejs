@@ -1,0 +1,25 @@
+<% if (session && session.userId) { %>
+  <%- include('header') %>
+<% } else { %>
+  <%- include('noticeHeader') %>
+<% } %>
+
+<main class="container py-4 py-md-5 flex-grow-1">
+  <div class="card border-0 shadow-sm">
+    <div class="card-body p-4 p-md-5">
+      <h1 class="h3 fw-bold mb-3"><%= notice.title %></h1>
+      <div class="d-flex flex-wrap gap-3 text-muted small pb-3 border-bottom">
+        <span>작성자: <%= notice.author?.username || '관리자' %></span>
+        <span>작성일: <%= notice.createdAt.toLocaleDateString('ko-KR') %></span>
+      </div>
+      <div class="notice-body py-4"><%= notice.content %></div>
+      <div class="border-top pt-3">
+        <a href="/notice" class="btn btn-outline-secondary">목록으로</a>
+      </div>
+    </div>
+  </div>
+</main>
+<style>
+  .notice-body { min-height: 180px; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.75; color: #334155; }
+</style>
+<%- include('footer') %>

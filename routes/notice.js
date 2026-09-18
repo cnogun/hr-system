@@ -9,13 +9,14 @@
  */
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const Notice = require('../models/Notice');
 const User = require('../models/User');
 
 // 공지사항 목록(최신순)
 router.get('/', async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1;
+    const page = Math.max(1, Number.parseInt(req.query.page, 10) || 1);
     const limit = 10;
     const skip = (page - 1) * limit;
     
@@ -77,6 +78,22 @@ router.get('/', async (req, res) => {
   }
 });
 
+// 시스템 알림 상세 조회
+router.get('/:id', async (req, res) => {
+  if (!mongoose.isValidObjectId(req.params.id)) {
+    return res.status(404).send('시스템 알림을 찾을 수 없습니다.');
+  }
+
+  try {
+    const notice = await Notice.findById(req.params.id).populate('author', 'username');
+    if (!notice) return res.status(404).send('시스템 알림을 찾을 수 없습니다.');
+    res.render('noticeDetail', { notice, session: req.session });
+  } catch (error) {
+    console.error('시스템 알림 상세 조회 오류:', error);
+    res.status(500).send('시스템 알림을 불러오는 중 오류가 발생했습니다.');
+  }
+});
+
 // 공지사항 관리(관리자)
 router.get('/manage', async (req, res) => {
   if (!req.session.userId) return res.redirect('/auth/login');
@@ -134,4 +151,4 @@ router.post('/:id/delete', async (req, res) => {
   res.redirect('/notice/manage');
 });
 
-module.exports = router; 
+module.exports = router;
