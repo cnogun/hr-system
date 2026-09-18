@@ -893,7 +893,9 @@
             <h1 class="mb-0">근무명령서</h1>
             <div class="btn-group">
                 <a href="/work-orders" class="btn btn-secondary">목록</a>
+                <% if (userRole === 'admin') { %>
                 <a href="/work-orders/<%= workOrder._id %>/edit" class="btn btn-warning">수정</a>
+                <% } %>
                 <button type="button" class="btn btn-info print-btn" onclick="window.print()">인쇄</button>
             </div>
         </div>

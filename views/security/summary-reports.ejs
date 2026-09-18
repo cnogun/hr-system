@@ -42,12 +42,14 @@
           <i class="fas fa-chart-bar text-primary me-2"></i><%= title %>
         </h2>
         <div class="d-flex gap-2">
+          <% if (session.userRole === 'admin') { %>
           <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#newReportModal">
             <i class="fas fa-plus me-1"></i>새 보고서
           </button>
           <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#templateUploadModal">
             <i class="fas fa-upload me-1"></i>양식 업로드
           </button>
+          <% } %>
           <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="collapse" data-bs-target="#filterCollapse">
             <i class="fas fa-filter me-1"></i>필터
           </button>
@@ -248,6 +250,7 @@
   </div>
 </div>
 
+<% if (session.userRole === 'admin') { %>
 <!-- 새 요약보고서 모달 -->
 <div class="modal fade" id="newReportModal" tabindex="-1">
   <div class="modal-dialog modal-xl">
@@ -476,6 +479,7 @@
   </div>
 </div>
 
+<% } %>
 <script>
   // 오늘 날짜를 기본값으로 설정
   document.addEventListener('DOMContentLoaded', function() {

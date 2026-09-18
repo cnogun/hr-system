@@ -221,9 +221,19 @@ const adminPaths = [
   '/excelManager', '/auth/logs', '/api/logs', '/api/duty-orders',
   '/api/uniform/stats', '/uniform/stats', '/notice/manage', '/notice/new'
 ];
+// 업무정보는 일반 직원에게 목록과 상세 조회만 허용한다.
+const staffWorkReadPaths = [
+  /^\/work-orders(?:\/[0-9a-f]{24})?$/i,
+  /^\/handovers(?:\/[0-9a-f]{24}(?:\/print)?)?$/i,
+  /^\/handovers\/stats\/summary$/,
+  /^\/security\/(?:duty-orders|summary-reports)(?:\/[0-9a-f]{24})?$/i
+];
 app.use((req, res, next) => {
   if (req.session && req.session.userId && req.session.userRole !== 'admin'
     && adminPaths.some(p => req.path === p || req.path.startsWith(p + '/'))) {
+    if (req.method === 'GET' && staffWorkReadPaths.some(pattern => pattern.test(req.path))) {
+      return next();
+    }
     return res.status(403).send('관리자만 접근 가능합니다.');
   }
   next();

@@ -107,7 +107,7 @@
             <i class="fas fa-times me-1"></i>반려
           </button>
         <% } %>
-        <% if (summaryReport.status === 'draft') { %>
+        <% if (session.userRole === 'admin' && summaryReport.status === 'draft') { %>
           <button class="btn btn-primary" onclick="updateReportStatus('<%= summaryReport._id %>', 'submitted')">
             <i class="fas fa-paper-plane me-1"></i>제출
           </button>
@@ -301,9 +301,11 @@
                     <div class="d-flex justify-content-between align-items-center">
                       <div>
                         <i class="fas fa-file me-2"></i>
-                        <a href="/security/download/<%= attachment.filename %>" class="text-decoration-none">
+                        <% if (session.userRole === 'admin') { %>
+                          <a href="/security/download/<%= attachment.filename %>" class="text-decoration-none"><%= attachment.originalName %></a>
+                        <% } else { %>
                           <%= attachment.originalName %>
-                        </a>
+                        <% } %>
                       </div>
                       <small class="text-muted">
                         <%= new Date(attachment.uploadedAt).toLocaleDateString('ko-KR') %>
