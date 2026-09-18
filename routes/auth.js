@@ -160,11 +160,11 @@ router.post('/login', async (req, res) => {
       // 로그 기록 실패는 로그인을 막지 않음
     }
     
-    // 관리자인 경우 대시보드로, 일반 사용자는 직원 목록으로
+    // 관리자는 운영 대시보드로, 일반 직원은 본인 화면으로 이동
     if (user.role === 'admin') {
       res.redirect('/dashboard');
     } else {
-      res.redirect('/employees');
+      res.redirect('/my');
     }
     
   } catch (error) {

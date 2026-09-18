@@ -214,6 +214,21 @@ app.get('/.well-known/appspecific/com.chrome.devtools.json', (req, res) => {
   res.status(404).json({ message: 'Not found' });
 });
 
+// 관리자 업무 화면은 직접 주소를 입력해도 일반 직원에게 공개하지 않습니다.
+const adminPaths = [
+  '/admin', '/employees', '/dashboard', '/attendance', '/monthlyAttendance',
+  '/workSchedule', '/work-orders', '/handovers', '/security', '/duty-orders',
+  '/excelManager', '/auth/logs', '/api/logs', '/api/duty-orders',
+  '/api/uniform/stats', '/uniform/stats', '/notice/manage', '/notice/new'
+];
+app.use((req, res, next) => {
+  if (req.session && req.session.userId && req.session.userRole !== 'admin'
+    && adminPaths.some(p => req.path === p || req.path.startsWith(p + '/'))) {
+    return res.status(403).send('관리자만 접근 가능합니다.');
+  }
+  next();
+});
+
 // 라우트 연결
 const employeeRoutes = require('./routes/employees');
 const authRoutes = require('./routes/auth');
@@ -228,9 +243,11 @@ const workOrderRoutes = require('./routes/workOrders');
 const handoverRoutes = require('./routes/handovers');
 const workScheduleRoutes = require('./routes/workSchedule');
 const dutyOrderRoutes = require('./routes/dutyOrders');
+const directoryRoutes = require('./routes/directory');
 
 
 app.use('/employees', employeeRoutes);
+app.use('/directory', directoryRoutes);
 app.use('/auth', authRoutes);
 app.use('/admin', adminRoutes);
 app.use('/notice', noticeRoutes);
@@ -1578,6 +1595,21 @@ app.get('/notice/new', async (req, res) => {
 // 메인 페이지
 app.get('/', (req, res) => {
   res.redirect('/notice');
+});
+
+// 일반 직원의 시작 화면: 본인의 정보만 조회
+app.get('/my', async (req, res) => {
+  if (!req.session || !req.session.userId) return res.redirect('/auth/login');
+  if (req.session.userRole === 'admin') return res.redirect('/dashboard');
+  try {
+    const employee = await Employee.findOne({ userId: req.session.userId })
+      .select('name empNo orgType department position employmentType hireDate status mobile email address profileImage');
+    if (!employee) return res.status(403).send('직원 정보에 연결되지 않은 계정입니다.');
+    res.render('myPage', { employee, session: req.session });
+  } catch (error) {
+    console.error('내 정보 화면 로드 오류:', error);
+    res.status(500).send('내 정보를 불러오는 중 오류가 발생했습니다.');
+  }
 });
 
 app.get('/dashboard', async (req, res) => {

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>내 페이지</title>
+  <style>
+    .my-page { width: min(100% - 32px, 1050px); margin: 32px auto 64px; }
+    .my-page h1 { font-size: 1.7rem; font-weight: 700; color: #14243c; }
+    .my-page .lead { color: #64748b; font-size: .95rem; }
+    .my-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 22px; margin: 18px 0; box-shadow: 0 3px 14px rgba(15, 23, 42, .05); }
+    .my-card h2 { font-size: 1.1rem; font-weight: 700; margin-bottom: 18px; }
+    .my-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 24px; }
+    .my-item dt { font-size: .8rem; color: #64748b; font-weight: 600; margin-bottom: 3px; }
+    .my-item dd { font-size: .97rem; color: #14243c; font-weight: 550; margin: 0; overflow-wrap: anywhere; }
+    .my-shortcuts { display: flex; flex-wrap: wrap; gap: 10px; }
+    .my-shortcuts a { min-width: 130px; }
+    @media (max-width: 600px) { .my-grid { grid-template-columns: 1fr; } .my-card { padding: 18px; } }
+  </style>
+</head>
+<body>
+  <%- include('header') %>
+  <main class="my-page">
+    <h1>내 페이지</h1>
+    <p class="lead">등록된 내 정보와 사용할 수 있는 업무 메뉴를 확인하세요.</p>
+    <section class="my-card" aria-labelledby="myJobTitle">
+      <h2 id="myJobTitle">직원 정보</h2>
+      <dl class="my-grid">
+        <div class="my-item"><dt>이름</dt><dd><%= employee.name || '-' %></dd></div>
+        <div class="my-item"><dt>사번</dt><dd><%= employee.empNo || '-' %></dd></div>
+        <div class="my-item"><dt>소속</dt><dd><%= employee.orgType || '-' %></dd></div>
+        <div class="my-item"><dt>부서</dt><dd><%= employee.department || '-' %></dd></div>
+        <div class="my-item"><dt>직급</dt><dd><%= employee.position || '-' %></dd></div>
+        <div class="my-item"><dt>고용형태</dt><dd><%= employee.employmentType || '-' %></dd></div>
+        <div class="my-item"><dt>입사일</dt><dd><%= employee.hireDate ? new Date(employee.hireDate).toISOString().slice(0, 10) : '-' %></dd></div>
+        <div class="my-item"><dt>재직상태</dt><dd><%= employee.status || '-' %></dd></div>
+      </dl>
+    </section>
+    <section class="my-card" aria-labelledby="myContactTitle">
+      <h2 id="myContactTitle">연락 정보</h2>
+      <dl class="my-grid">
+        <div class="my-item"><dt>이메일</dt><dd><%= employee.email || '-' %></dd></div>
+        <div class="my-item"><dt>휴대폰</dt><dd><%= employee.mobile || '-' %></dd></div>
+        <div class="my-item"><dt>주소</dt><dd><%= employee.address || '-' %></dd></div>
+      </dl>
+    </section>
+    <section class="my-card" aria-labelledby="myLinksTitle">
+      <h2 id="myLinksTitle">바로가기</h2>
+      <div class="my-shortcuts">
+        <a class="btn btn-outline-primary" href="/directory">직원찾기</a>
+        <a class="btn btn-outline-primary" href="/uniform">내 유니폼</a>
+        <a class="btn btn-outline-primary" href="/boards">게시판</a>
+        <a class="btn btn-outline-primary" href="/notice">공지사항</a>
+      </div>
+    </section>
+  </main>
+  <%- include('footer') %>
+</body>
+</html>

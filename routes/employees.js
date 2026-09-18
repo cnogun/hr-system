@@ -31,10 +31,13 @@ const User = require('../models/User');
 async function adminOnly(req, res, next) {
   const user = await User.findById(req.session.userId);
   if (!user || user.role !== 'admin') {
-    return res.send('관리자만 접근 가능합니다.');
+    return res.status(403).send('관리자만 접근 가능합니다.');
   }
   next();
 }
+
+// 직원 명단, 상세정보, 엑셀 파일은 관리자 화면에서만 제공
+router.use(isLoggedIn, adminOnly);
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {

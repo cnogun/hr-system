@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>직원찾기</title>
+  <style>
+    .directory-page { width: min(100% - 32px, 1100px); margin: 32px auto 64px; }
+    .directory-page h1 { font-size: 1.7rem; font-weight: 700; color: #14243c; }
+    .directory-page p { color: #64748b; }
+    .directory-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 22px; margin: 20px 0; box-shadow: 0 3px 14px rgba(15, 23, 42, .05); }
+    .directory-form { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; }
+    .directory-form label { font-size: .85rem; font-weight: 600; margin-bottom: 5px; display: block; }
+    .directory-form .form-control { min-width: 220px; }
+    .directory-form .form-select { min-width: 170px; }
+    .directory-table th { color: #475569; font-size: .85rem; white-space: nowrap; }
+    .directory-table td { vertical-align: middle; }
+    @media (max-width: 600px) { .directory-form > div, .directory-form .btn { width: 100%; } .directory-card { padding: 16px; } }
+  </style>
+</head>
+<body>
+  <%- include('header') %>
+  <main class="directory-page">
+    <h1>직원찾기</h1>
+    <p>재직 중인 직원의 업무용 기본 정보만 표시합니다.</p>
+    <section class="directory-card" aria-label="직원 검색">
+      <form class="directory-form" method="GET" action="/directory">
+        <div><label for="directorySearch">이름</label><input class="form-control" id="directorySearch" type="search" name="search" maxlength="60" value="<%= search %>" placeholder="이름 검색"></div>
+        <div><label for="directoryDepartment">부서</label><select class="form-select" id="directoryDepartment" name="department"><option value="">전체 부서</option><% departments.forEach(function(item) { %><option value="<%= item %>" <%= department === item ? 'selected' : '' %>><%= item %></option><% }); %></select></div>
+        <button class="btn btn-primary" type="submit">검색</button>
+        <a class="btn btn-outline-secondary" href="/directory">초기화</a>
+      </form>
+    </section>
+    <section class="directory-card" aria-label="직원 검색 결과">
+      <div class="table-responsive">
+        <table class="table table-hover directory-table mb-0">
+          <thead><tr><th scope="col">이름</th><th scope="col">사번</th><th scope="col">소속</th><th scope="col">부서</th><th scope="col">직급</th></tr></thead>
+          <tbody>
+            <% if (employees.length) { %>
+              <% employees.forEach(function(employee) { %>
+                <tr><td><%= employee.name || '-' %></td><td><%= employee.empNo || '-' %></td><td><%= employee.orgType || '-' %></td><td><%= employee.department || '-' %></td><td><%= employee.position || '-' %></td></tr>
+              <% }); %>
+            <% } else { %>
+              <tr><td class="text-center text-muted py-4" colspan="5">검색 결과가 없습니다.</td></tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+      <% if (totalPages > 1) { %>
+        <nav class="d-flex justify-content-center align-items-center gap-3 mt-3" aria-label="직원 목록 페이지">
+          <% if (page > 1) { %><a class="btn btn-sm btn-outline-primary" href="/directory?search=<%= encodeURIComponent(search) %>&department=<%= encodeURIComponent(department) %>&page=<%= page - 1 %>">이전</a><% } %>
+          <span><%= page %> / <%= totalPages %></span>
+          <% if (page < totalPages) { %><a class="btn btn-sm btn-outline-primary" href="/directory?search=<%= encodeURIComponent(search) %>&department=<%= encodeURIComponent(department) %>&page=<%= page + 1 %>">다음</a><% } %>
+        </nav>
+      <% } %>
+    </section>
+  </main>
+  <%- include('footer') %>
+</body>
+</html>
