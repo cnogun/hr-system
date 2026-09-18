@@ -136,6 +136,27 @@
             <label for="emergencyContact">비상연락처</label>
             <input class="form-control" id="emergencyContact" name="emergencyContact" type="tel" maxlength="30" placeholder="비상 시 연락 가능한 번호">
           </div>
+          <div class="onboard-field onboard-wide">
+            <label for="address">주소</label>
+            <input class="form-control" id="address" name="address" type="text" autocomplete="street-address" maxlength="200" placeholder="주소를 입력하세요">
+          </div>
+        </div>
+      </details>
+      <details class="onboard-card onboard-details">
+        <summary>병역사항 <span class="visually-hidden">선택 입력</span></summary>
+        <div class="onboard-fields">
+          <div class="onboard-field"><label for="militaryBranch">군별</label><input class="form-control" id="militaryBranch" name="militaryBranch" type="text" maxlength="50" placeholder="예: 육군"></div>
+          <div class="onboard-field"><label for="militaryRank">계급</label><input class="form-control" id="militaryRank" name="militaryRank" type="text" maxlength="50" placeholder="예: 병장"></div>
+          <div class="onboard-field"><label for="militaryNumber">군번</label><input class="form-control" id="militaryNumber" name="militaryNumber" type="text" maxlength="50"></div>
+          <div class="onboard-field"><label for="militaryServicePeriod">복무기간</label><input class="form-control" id="militaryServicePeriod" name="militaryServicePeriod" type="text" maxlength="80" placeholder="예: 2020.01 ~ 2021.12"></div>
+          <div class="onboard-field onboard-wide"><label for="militaryExemptionReason">미필·면제 사유</label><input class="form-control" id="militaryExemptionReason" name="militaryExemptionReason" type="text" maxlength="200"></div>
+        </div>
+      </details>
+      <details class="onboard-card onboard-details">
+        <summary>경력사항 및 특이사항 <span class="visually-hidden">선택 입력</span></summary>
+        <div class="onboard-fields">
+          <div class="onboard-field onboard-wide"><label for="career">경력사항</label><textarea class="form-control" id="career" name="career" rows="4" maxlength="2000" placeholder="업무와 관련된 경력을 입력하세요"></textarea></div>
+          <div class="onboard-field onboard-wide"><label for="specialNotes">특이사항</label><textarea class="form-control" id="specialNotes" name="specialNotes" rows="3" maxlength="1000" placeholder="업무상 필요한 사항만 입력하세요"></textarea></div>
         </div>
       </details>
       <details class="onboard-card onboard-details">

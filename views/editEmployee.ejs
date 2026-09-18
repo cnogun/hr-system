@@ -15,10 +15,16 @@
 <head>
   <meta charset="UTF-8">
   <title>직원 정보 수정</title>
+  <style>
+    .employee-edit-container { width: min(100% - 32px, 1200px); margin: 2rem auto; font-size: .9em; }
+    .edit-detail-fields > [class*="col-md-"] { min-width: 160px; flex: 1 1 190px; }
+    .edit-detail-fields > .col-12, .edit-detail-fields > .col-md-12 { flex: 0 0 100%; }
+    @media (max-width: 768px) { .edit-detail-fields > [class*="col-md-"] { min-width: 100%; } }
+  </style>
 </head>
 <body>
   <%- include('header') %>
-  <div class="container" style="max-width:80%; font-size:0.9em; margin-top:2rem; margin-bottom:2rem;">
+  <div class="employee-edit-container">
     <div class="d-flex justify-content-center">
       <div style="max-width:1200px; width:100%;">
         <h2 class="fw-bold text-center" style="margin-bottom:2rem;">직원 정보 수정</h2>
@@ -28,7 +34,7 @@
             <div class="col-lg-12">
               <div class="card shadow-sm mb-2" style="min-height:1px;">
                 <div class="card-header bg-primary text-white py-1 fw-semibold" style="font-size:0.9rem;">기본 정보</div>
-                <div class="card-body row g-2 py-3" style="flex-wrap: nowrap; overflow-x: auto; width: 100%;">
+                <div class="card-body row g-2 py-3">
                   <div class="col" style="min-width: 100px; max-width: 120px; flex: 1;">
                     <label class="form-label small mb-1">이름 <span class="text-danger">*</span></label>
                     <input type="text" class="form-control form-control-sm py-1" id="name" name="name" required placeholder="홍길동" maxlength="20" value="<%= employee.name %>">
@@ -147,12 +153,7 @@
           <!-- 상세 정보 카드 -->
           <div class="card shadow-sm mb-2" style="min-height:1px;">
             <div class="card-header bg-secondary text-white py-1 fw-semibold" style="font-size:0.8rem;">상세 정보</div>
-            <div class="card-body row g-1 py-0">
-              <div class="col-md-2">
-                <label class="form-label small mb-1" style="font-size:0.75rem;">주민등록번호</label>
-                <input type="text" name="residentNumber" id="residentNumber" class="form-control form-control-sm py-1" style="font-size:0.75rem;" placeholder="000000-0000000" value="<%= employee.residentNumber || '' %>" maxlength="14">
-                <div id="residentNumberError" class="text-danger small" style="display:none;"></div>
-              </div>
+            <div class="card-body row g-2 py-3 edit-detail-fields">
               <div class="col-md-2">
                 <label class="form-label small mb-1">생년월일</label>
                 <input type="date" name="birth" class="form-control form-control-sm py-1" value="<%= employee.birth ? employee.birth.toISOString().slice(0,10) : '' %>">
@@ -179,7 +180,7 @@
               </div>
               <div class="col-md-4">
                 <label class="form-label small mb-0">주소</label>
-                <input type="text" name="address" class="form-control form-control-sm py-1" value="<%= employee.address || '' %>">
+                <input type="text" name="address" class="form-control form-control-sm py-1" autocomplete="street-address" maxlength="200" value="<%= employee.address || '' %>">
               </div>
               <div class="col-md-2">
                 <label class="form-label small mb-1">학력</label>
@@ -219,33 +220,35 @@
                 <input type="text" name="bloodType" class="form-control form-control-sm py-1" value="<%= employee.bloodType || '' %>">
               </div>
 
+              <div class="col-12 mt-3 border-top pt-2 fw-semibold text-primary">병역사항</div>
               <div class="col-md-2">
                 <label class="form-label small mb-1">군별</label>
-                <input type="text" name="militaryBranch" class="form-control form-control-sm py-1" value="<%= employee.militaryBranch || '' %>" placeholder="예: 육군, 해군, 공군">
+                <input type="text" name="militaryBranch" class="form-control form-control-sm py-1" maxlength="50" value="<%= employee.militaryBranch || '' %>" placeholder="예: 육군, 해군, 공군">
               </div>
               <div class="col-md-2">
                 <label class="form-label small mb-1">계급</label>
-                <input type="text" name="militaryRank" class="form-control form-control-sm py-1" value="<%= employee.militaryRank || '' %>" placeholder="예: 병장, 상병, 일병">
+                <input type="text" name="militaryRank" class="form-control form-control-sm py-1" maxlength="50" value="<%= employee.militaryRank || '' %>" placeholder="예: 병장, 상병, 일병">
               </div>
               <div class="col-md-2">
                 <label class="form-label small mb-1">군번</label>
-                <input type="text" name="militaryNumber" class="form-control form-control-sm py-1" value="<%= employee.militaryNumber || '' %>" placeholder="예: 12-345678">
+                <input type="text" name="militaryNumber" class="form-control form-control-sm py-1" maxlength="50" value="<%= employee.militaryNumber || '' %>" placeholder="예: 12-345678">
               </div>
               <div class="col-md-2">
                 <label class="form-label small mb-1">복무기간</label>
-                <input type="text" name="militaryServicePeriod" class="form-control form-control-sm py-1" value="<%= employee.militaryServicePeriod || '' %>" placeholder="예: 2020.01-2021.12">
+                <input type="text" name="militaryServicePeriod" class="form-control form-control-sm py-1" maxlength="80" value="<%= employee.militaryServicePeriod || '' %>" placeholder="예: 2020.01-2021.12">
               </div>
               <div class="col-md-4">
-                <label class="form-label small mb-1">미필사유</label>
-                <input type="text" name="militaryExemptionReason" class="form-control form-control-sm py-1" value="<%= employee.militaryExemptionReason || '' %>" placeholder="예: 면제, 제외, 기타사유">
+                <label class="form-label small mb-1">미필·면제 사유</label>
+                <input type="text" name="militaryExemptionReason" class="form-control form-control-sm py-1" maxlength="200" value="<%= employee.militaryExemptionReason || '' %>">
               </div>
+              <div class="col-12 mt-3 border-top pt-2 fw-semibold text-primary">경력사항 및 특이사항</div>
               <div class="col-md-12">
                 <label class="form-label small mb-1">경력사항</label>
-                <textarea name="career" class="form-control form-control-sm py-1" rows="3" placeholder="경력사항을 입력하세요"><%= employee.career || '' %></textarea>
+                <textarea name="career" class="form-control form-control-sm py-1" rows="3" maxlength="2000" placeholder="경력사항을 입력하세요"><%= employee.career || '' %></textarea>
               </div>
               <div class="col-md-12">
                 <label class="form-label small mb-1">특이사항</label>
-                <input type="text" name="specialNotes" class="form-control form-control-sm py-1" value="<%= employee.specialNotes || '' %>" placeholder="특이사항을 입력하세요">
+                <textarea name="specialNotes" class="form-control form-control-sm py-1" rows="3" maxlength="1000" placeholder="업무상 필요한 사항만 입력하세요"><%= employee.specialNotes || '' %></textarea>
       </div>
       </div>
       </div>
@@ -609,70 +612,6 @@
     name.addEventListener('input', updateDeptName);
     updateDeptName();
 
-    // 주민등록번호 유효성검사
-    const residentNumberInput = document.getElementById('residentNumber');
-    const residentNumberError = document.getElementById('residentNumberError');
-
-    function validateResidentNumber(value) {
-      if (!value || value.trim() === '') {
-        residentNumberError.style.display = 'none';
-        residentNumberInput.classList.remove('is-invalid');
-        return true;
-      }
-
-      // 형식 검사 (000000-0000000)
-      const pattern = /^\d{6}-\d{7}$/;
-      if (!pattern.test(value)) {
-        residentNumberError.textContent = '주민등록번호 형식이 올바르지 않습니다. (예: 123456-1234567)';
-        residentNumberError.style.display = 'block';
-        residentNumberInput.classList.add('is-invalid');
-        return false;
-      }
-
-      // 유효성 검사
-      const numbers = value.replace('-', '').split('').map(Number);
-      const weights = [2, 3, 4, 5, 6, 7, 8, 9, 2, 3, 4, 5];
-      let sum = 0;
-      
-      for (let i = 0; i < 12; i++) {
-        sum += numbers[i] * weights[i];
-      }
-      
-      const remainder = sum % 11;
-      const checkDigit = remainder < 2 ? 0 : 11 - remainder;
-      
-      if (numbers[12] !== checkDigit) {
-        residentNumberError.textContent = '유효하지 않은 주민등록번호입니다.';
-        residentNumberError.style.display = 'block';
-        residentNumberInput.classList.add('is-invalid');
-        return false;
-      }
-
-      residentNumberError.style.display = 'none';
-      residentNumberInput.classList.remove('is-invalid');
-      return true;
-    }
-
-    // 자동 하이픈 추가
-    residentNumberInput.addEventListener('input', function(e) {
-      let value = e.target.value.replace(/[^0-9]/g, '');
-      if (value.length > 6) {
-        value = value.slice(0, 6) + '-' + value.slice(6);
-      }
-      e.target.value = value;
-      validateResidentNumber(value);
-    });
-
-    // 포커스 아웃시 유효성검사
-    residentNumberInput.addEventListener('blur', function() {
-      validateResidentNumber(this.value);
-    });
-
-    // 페이지 로드시 기존 값 유효성검사
-    if (residentNumberInput.value) {
-      validateResidentNumber(residentNumberInput.value);
-    }
-    
     // 프로필 이미지 미리보기 기능
     document.addEventListener('DOMContentLoaded', function() {
       console.log('이미지 미리보기 초기화 시작');

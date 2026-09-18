@@ -518,21 +518,6 @@ router.put('/:id', isLoggedIn, adminOnly, upload.single('profileImage'), async (
       `);
     }
     
-    // 주민등록번호 중복 검사 (자기 자신 제외)
-    if (req.body.residentNumber && req.body.residentNumber.trim() !== '') {
-      const existingResidentNumber = await Employee.findOne({ 
-        residentNumber: req.body.residentNumber, 
-        _id: { $ne: req.params.id } 
-      });
-      if (existingResidentNumber) {
-        return res.status(400).send(`
-          <script>
-            alert('이미 등록된 주민등록번호입니다: ${req.body.residentNumber}');
-            history.back();
-          </script>
-        `);
-      }
-    }
     
   // 동점퍼/겹점퍼 처리 로직
   const jacketType = req.body.jacketType;
@@ -547,21 +532,16 @@ router.put('/:id', isLoggedIn, adminOnly, upload.single('profileImage'), async (
     winterJacket = null;
   }
 
-  // 디버깅: 경력사항 데이터 확인
-  console.log('경력사항 데이터:', req.body.career);
-  console.log('특이사항 데이터:', req.body.specialNotes);
-  
   const update = {
       name, orgType, department, position, email, hireDate,
       status: req.body.status,
       birth: req.body.birth,
-      residentNumber: req.body.residentNumber && req.body.residentNumber.trim() !== '' ? req.body.residentNumber : null,
       gender: req.body.gender,
       nationality: req.body.nationality,
       education: req.body.education,
       phone: req.body.phone,
       mobile: req.body.mobile,
-      address: req.body.address,
+      address: typeof req.body.address === 'string' ? req.body.address.trim().slice(0, 200) : '',
       emergencyContact: req.body.emergencyContact,
       employmentType: req.body.employmentType,
       salaryBank: req.body.salaryBank,
@@ -569,13 +549,13 @@ router.put('/:id', isLoggedIn, adminOnly, upload.single('profileImage'), async (
       height: req.body.height,
       weight: req.body.weight,
       bloodType: req.body.bloodType,
-      militaryBranch: req.body.militaryBranch,
-      militaryRank: req.body.militaryRank,
-      militaryNumber: req.body.militaryNumber,
-      militaryServicePeriod: req.body.militaryServicePeriod,
-      militaryExemptionReason: req.body.militaryExemptionReason,
-      specialNotes: req.body.specialNotes,
-      career: req.body.career,
+      militaryBranch: typeof req.body.militaryBranch === 'string' ? req.body.militaryBranch.trim().slice(0, 50) : '',
+      militaryRank: typeof req.body.militaryRank === 'string' ? req.body.militaryRank.trim().slice(0, 50) : '',
+      militaryNumber: typeof req.body.militaryNumber === 'string' ? req.body.militaryNumber.trim().slice(0, 50) : '',
+      militaryServicePeriod: typeof req.body.militaryServicePeriod === 'string' ? req.body.militaryServicePeriod.trim().slice(0, 80) : '',
+      militaryExemptionReason: typeof req.body.militaryExemptionReason === 'string' ? req.body.militaryExemptionReason.trim().slice(0, 200) : '',
+      specialNotes: typeof req.body.specialNotes === 'string' ? req.body.specialNotes.trim().slice(0, 1000) : '',
+      career: typeof req.body.career === 'string' ? req.body.career.trim().slice(0, 2000) : '',
       // 유니폼/장구류 정보
       cap: req.body.cap,
       capQty: req.body.capQty,
@@ -1249,4 +1229,4 @@ router.get('/:id', isLoggedIn, async (req, res) => {
   res.render('employeeDetail', { employee });
 });
 
-module.exports = router; 
+module.exports = router;

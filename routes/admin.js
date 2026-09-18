@@ -44,7 +44,6 @@ router.get('/employees/:id', adminOnly, async (req, res) => {
       name: 1,
       age: 1,
       birth: 1,
-      residentNumber: 1,
       gender: 1,
       nationality: 1,
       education: 1,
@@ -517,6 +516,14 @@ router.post('/employees/new', adminOnly, employeeUpload.single('profileImage'), 
       status: '재직',
       mobile: typeof req.body.mobile === 'string' ? req.body.mobile.trim() : '',
       emergencyContact: typeof req.body.emergencyContact === 'string' ? req.body.emergencyContact.trim() : '',
+      address: typeof req.body.address === 'string' ? req.body.address.trim().slice(0, 200) : '',
+      militaryBranch: typeof req.body.militaryBranch === 'string' ? req.body.militaryBranch.trim().slice(0, 50) : '',
+      militaryRank: typeof req.body.militaryRank === 'string' ? req.body.militaryRank.trim().slice(0, 50) : '',
+      militaryNumber: typeof req.body.militaryNumber === 'string' ? req.body.militaryNumber.trim().slice(0, 50) : '',
+      militaryServicePeriod: typeof req.body.militaryServicePeriod === 'string' ? req.body.militaryServicePeriod.trim().slice(0, 80) : '',
+      militaryExemptionReason: typeof req.body.militaryExemptionReason === 'string' ? req.body.militaryExemptionReason.trim().slice(0, 200) : '',
+      career: typeof req.body.career === 'string' ? req.body.career.trim().slice(0, 2000) : '',
+      specialNotes: typeof req.body.specialNotes === 'string' ? req.body.specialNotes.trim().slice(0, 1000) : '',
       profileImage: req.file ? `/uploads/${req.file.filename}` : null
     });
 
@@ -714,4 +721,4 @@ router.get('/monthly-report/excel', adminOnly, async (req, res) => {
   }
 });
 
-module.exports = router; 
+module.exports = router;

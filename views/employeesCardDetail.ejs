@@ -43,7 +43,6 @@
                   <div class="col-md-6">
                     <h6 class="fw-bold text-primary mb-2">개인정보</h6>
                     <div class="row g-0 mb-2 border-bottom pb-2">
-                      <div class="col-12 mb-1"><span class="fw-semibold">주민등록번호</span>: <%= employee.residentNumber || '-' %></div>
                       <div class="col-6 mb-1"><span class="fw-semibold">국적</span>: <%= employee.nationality || '-' %></div>
                       <div class="col-6 mb-1"><span class="fw-semibold">성별</span>: <%= employee.gender || '-' %></div>
                       <div class="col-6 mb-1"><span class="fw-semibold">생일</span>: <%= employee.birth && employee.birth.toISOString ? employee.birth.toISOString().slice(0,10) : (employee.birth || '-') %></div>
@@ -76,7 +75,7 @@
                     </div>
                     <h6 class="fw-bold text-secondary mb-2">특이사항</h6>
                     <div class="row g-0 mb-2 border-bottom pb-2">
-                      <div class="col-12 mb-1"><span class="fw-semibold">특이사항</span>: <%= employee.specialNotes || '-' %></div>
+                      <div class="col-12 mb-1" style="white-space: pre-wrap; overflow-wrap: anywhere;"><span class="fw-semibold">특이사항</span>: <%= employee.specialNotes || '-' %></div>
                     </div>
                   </div>
                   <div class="col-md-6">
@@ -86,7 +85,7 @@
                     </div>
                     <h6 class="fw-bold text-primary mb-2">경력사항</h6>
                     <div class="row g-0 mb-2 border-bottom pb-2">
-                      <div class="col-12 mb-1"><span class="fw-semibold">경력</span>: <%= employee.career || '-' %></div>
+                      <div class="col-12 mb-1" style="white-space: pre-wrap; overflow-wrap: anywhere;"><span class="fw-semibold">경력</span>: <%= employee.career || '-' %></div>
                     </div>
                     <h6 class="fw-bold text-info mb-2">유니폼/장구류</h6>
                     <div class="row g-0">
@@ -245,7 +244,6 @@ function deleteField(field) {
 function goFirstEmptyField() {
   const fields = [
     { key: 'nationality', value: '<%= employee.nationality || '' %>', label: '국적' },
-    { key: 'ssn', value: '<%= employee.ssn || '' %>', label: '주민등록번호' },
     { key: 'gender', value: '<%= employee.gender || '' %>', label: '성별' },
     { key: 'age', value: '<%= employee.age || '' %>', label: '나이' },
     { key: 'education', value: '<%= employee.education || '' %>', label: '학력' },
@@ -269,4 +267,4 @@ function goFirstEmptyField() {
   <a href="/employees" class="btn btn-info fab-btn" title="목록으로"><i class="fa-solid fa-list"></i></a>
 </div>
 <div id="toast" class="toast"></div>
-<%- include('footer') %> 
+<%- include('footer') %>

@@ -371,7 +371,7 @@
         border-left: 2px solid #007bff;
         font-size: 12px;
         line-height: 1.4;
-        white-space: normal;
+        white-space: pre-wrap;
         margin-top: 2px;
         word-wrap: break-word;
         overflow-wrap: break-word;
@@ -419,10 +419,6 @@
         기본정보
       </div>
              <div class="basic-info-grid">
-                   <div class="basic-info-item resident-item">
-            <span class="basic-info-label">주민등록번호</span>
-            <span class="basic-info-value"><%= employee.residentNumber || '-' %></span>
-          </div>
                    <div class="basic-info-item email-item">
             <span class="basic-info-label">이메일</span>
             <span class="basic-info-value"><%= employee.email || '-' %></span>
@@ -548,7 +544,8 @@
            </div>
 
             <!-- 병역정보 (맨 아래) -->
-            <div class="detail-grid" style="margin-top: 6px;">
+           <div class="detail-title" style="margin-top: 18px;"><i class="fas fa-shield-alt"></i> 병역사항</div>
+           <div class="detail-grid" style="margin-top: 6px;">
               <div class="detail-item">
                 <span class="detail-label">군별</span>
                 <span class="detail-value"><%= employee.militaryBranch || '-' %></span>
@@ -566,7 +563,7 @@
                 <span class="detail-value"><%= employee.militaryServicePeriod || '-' %></span>
               </div>
               <div class="detail-item">
-                <span class="detail-label">미필사유</span>
+                <span class="detail-label">미필·면제 사유</span>
                 <span class="detail-value"><%= employee.militaryExemptionReason || '-' %></span>
               </div>
             </div>
@@ -674,4 +671,4 @@
   
   <%- include('footer') %>
 </body>
-</html> 
+</html>
