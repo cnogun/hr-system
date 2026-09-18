@@ -20,23 +20,28 @@
   { id: 'payroll', label: '급여관리', icon: 'fa-wallet', items: [], upcoming: true },
   { id: 'duty', label: '직무관리', icon: 'fa-shield-halved', items: [
     { label: '인사명령서', href: '/duty-orders', admin: true },
-    { label: '근무명령서', href: '/work-orders', admin: true },
-    { label: '요약보고서', href: '/security/summary-reports', admin: true },
-    { label: '인계장', href: '/handovers', admin: true },
     { label: '업무 일정', href: '/security/schedule', admin: true }
+  ] },
+  { id: 'work-info', label: '업무정보', icon: 'fa-briefcase', items: [
+    { label: '근무명령서', href: '/work-orders', admin: true },
+    { label: '인계사항', href: '/handovers', admin: true },
+    { label: '지시사항', href: '/security/duty-orders', admin: true },
+    { label: '보고서', href: '/security/summary-reports', admin: true }
   ] },
   { id: 'uniform', label: '유니폼관리', icon: 'fa-shirt', items: [
     { label: '내 유니폼', href: '/uniform' },
     { label: '유니폼 현황', href: '/uniform/stats', admin: true }
   ] },
   { id: 'community', label: '커뮤니티', icon: 'fa-comments', items: [
-    { label: '게시판', href: '/boards' },
-    { label: '공지사항', href: '/notice' },
-    { label: '공지 관리', href: '/notice/manage', admin: true },
-    { label: '공지 작성', href: '/notice/new', admin: true },
+    { label: '자유게시판', href: '/boards' },
     { label: '게시판 신고 관리', href: '/boards/admin/reports', admin: true }
   ] },
+  { id: 'system-info', label: '시스템정보', icon: 'fa-circle-info', items: [
+    { label: '시스템알림', href: '/notice' }
+  ] },
   { id: 'system', label: '시스템운영', icon: 'fa-gear', items: [
+    { label: '공지 관리', href: '/notice/manage', admin: true },
+    { label: '공지 작성', href: '/notice/new', admin: true },
     { label: '통합 엑셀 관리', href: '/excelManager', admin: true },
     { label: '활동 로그 관리', href: '/auth/logs', admin: true }
   ] }
@@ -51,8 +56,10 @@
     { label: '내 유니폼', href: '/uniform' }
   ] },
   { id: 'community', label: '커뮤니티', icon: 'fa-comments', items: [
-    { label: '게시판', href: '/boards' },
-    { label: '공지사항', href: '/notice' }
+    { label: '자유게시판', href: '/boards' }
+  ] },
+  { id: 'system-info', label: '시스템정보', icon: 'fa-circle-info', items: [
+    { label: '시스템알림', href: '/notice' }
   ] }
 ]; %>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">

@@ -229,7 +229,8 @@ router.get('/admin/dashboard', adminOnly, async (req, res) => {
 // 게시판 목록
 router.get('/', isLoggedIn, async (req, res) => {
   try {
-    let boards = await Board.find({ isActive: true }).sort({ order: 1, createdAt: 1 });
+    // 기존 게시글은 보존하고 목록에서는 자유게시판만 제공한다.
+    let boards = await Board.find({ isActive: true, type: 'free' }).sort({ order: 1, createdAt: 1 });
     
     console.log('🔍 데이터베이스에서 조회된 모든 게시판:', boards.length, '개');
     boards.forEach((board, index) => {
@@ -260,26 +261,7 @@ router.get('/', isLoggedIn, async (req, res) => {
       userDepartment: userDepartment
     });
     
-    // 관리자가 아닌 경우 게시판 필터링
-    if (req.session.userRole !== 'admin') {
-      const beforeFilter = boards.length;
-      boards = boards.filter(board => {
-        // 공지사항과 자유게시판은 모든 사용자에게 표시
-        if (board.type === 'notice' || board.type === 'free') {
-          return true;
-        }
-        // 부서별 게시판은 본인 부서만 표시
-        if (board.type === 'department' && board.department === userDepartment) {
-          return true;
-        }
-        return false;
-      });
-      
-      console.log('필터링 결과:', beforeFilter, '개 →', boards.length, '개');
-      console.log('표시될 게시판들:', boards.map(b => b.name));
-    } else {
-      console.log('관리자이므로 모든 게시판 표시');
-    }
+    console.log('표시될 자유게시판:', boards.map(b => b.name));
     
     console.log('📤 템플릿에 전달할 게시판 수:', boards.length);
     
@@ -948,4 +930,4 @@ router.post('/:boardId/:postId/comment/:commentId/report', isLoggedIn, async (re
   }
 });
 
-module.exports = router; 
+module.exports = router;
