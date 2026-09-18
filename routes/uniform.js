@@ -374,6 +374,7 @@ router.get('/', requireLogin, requireSelfOrAdmin, async (req, res) => {
   // 최신 데이터를 다시 불러와서 확실히 최신 정보를 표시
   const userId = req.session.userId;
   const freshEmployee = await Employee.findOne({ userId });
+  if (!freshEmployee) return res.status(404).send('연결된 직원 정보를 찾을 수 없습니다.');
   
   console.log('유니폼 조회 - 방한하의 정보:', {
     name: freshEmployee.name,
@@ -426,123 +427,48 @@ router.get('/edit', requireLogin, requireSelfOrAdmin, async (req, res) => {
 // 유니폼 정보 수정 처리 (본인)
 router.post('/edit', requireLogin, requireSelfOrAdmin, async (req, res) => {
   try {
-    console.log('본인 유니폼 수정 요청 데이터:', req.body);
-  console.log('방한하의 필드 값:', req.body.uniformWinterPants);
-  console.log('동복 하의 필드 값:', req.body.uniformWinterBottom);
-  console.log('전체 요청 데이터 키들:', Object.keys(req.body));
-    
-    const fields = [
-    'uniformSummerTop', 'uniformSummerBottom',
-    'uniformWinterTop', 'uniformWinterBottom', 'uniformWinterPants',
-    'uniformWinterCoat', 'raincoat', 'cap', 'safetyShoes', 'rainBoots',
-    'winterJacket', 'doubleJacket', 'springAutumnUniform' // '춘추복' 추가
-  ];
-  const qtyFields = [
-    'uniformSummerTopQty', 'uniformSummerBottomQty',
-    'uniformWinterTopQty', 'uniformWinterBottomQty', 'uniformWinterPantsQty',
-    'uniformWinterCoatQty', 'raincoatQty', 'capQty', 'safetyShoesQty', 'rainBootsQty',
-    'winterJacketQty', 'doubleJacketQty', 'springAutumnUniformQty' 
-  ];
-  // 관리자라면 id로 employee를 찾아서 수정
-  let employee = req.employee;
-  if (req.session.userRole === 'admin' && req.body.employeeId) {
-    employee = await Employee.findById(req.body.employeeId);
+    const employee = req.session.userRole === 'admin' && req.body.employeeId
+      ? await Employee.findById(req.body.employeeId)
+      : req.employee;
     if (!employee) return res.status(404).send('직원을 찾을 수 없습니다.');
-  }
-  
-  console.log('필드별 수정 데이터:');
-  fields.forEach(field => {
-    const oldValue = employee[field];
-    const newValue = req.body[field];
-    console.log(`${field}: ${oldValue} -> ${newValue}`);
-    employee[field] = newValue;
-  });
-  
 
-  
-  console.log('수량 필드별 수정 데이터:');
-  qtyFields.forEach(field => {
-    const oldValue = employee[field];
-    const newValue = req.body[field];
-    console.log(`${field}: ${oldValue} -> ${newValue}`);
-    // 수량 필드가 요청에 포함된 경우에만 업데이트
-    if (req.body[field] !== undefined) {
-      employee[field] = newValue;
-    }
-  });
-    
-    // 유니폼 관련 필드만 업데이트 (residentNumber 등 다른 필드는 제외)
+    const fields = [
+      'uniformSummerTop', 'uniformSummerBottom', 'uniformWinterTop', 'uniformWinterBottom',
+      'uniformWinterPants', 'uniformWinterCoat', 'raincoat', 'cap', 'safetyShoes',
+      'rainBoots', 'springAutumnUniform'
+    ];
+    const qtyFields = [
+      'uniformSummerTopQty', 'uniformSummerBottomQty', 'uniformWinterTopQty',
+      'uniformWinterBottomQty', 'uniformWinterPantsQty', 'uniformWinterCoatQty',
+      'raincoatQty', 'capQty', 'safetyShoesQty', 'rainBootsQty',
+      'winterJacketQty', 'doubleJacketQty', 'springAutumnUniformQty'
+    ];
     const updateData = {};
     fields.forEach(field => {
-      updateData[field] = req.body[field];
+      if (typeof req.body[field] === 'string') updateData[field] = req.body[field];
     });
     qtyFields.forEach(field => {
-      if (req.body[field] !== undefined) {
-        updateData[field] = req.body[field];
-      }
+      if (req.body[field] !== undefined) updateData[field] = req.body[field];
     });
-    
-    // 동점퍼/겹점퍼 처리
-    const jacketType = req.body.jacketType;
-    if (jacketType === 'winterJacket') {
-      updateData.winterJacket = req.body.winterJacket;
+    if (req.body.jacketType === 'winterJacket') {
+      updateData.winterJacket = req.body.winterJacket || '';
       updateData.doubleJacket = null;
-    } else if (jacketType === 'doubleJacket') {
-      updateData.doubleJacket = req.body.doubleJacket;
+    } else if (req.body.jacketType === 'doubleJacket') {
+      updateData.doubleJacket = req.body.doubleJacket || '';
       updateData.winterJacket = null;
     } else {
       updateData.winterJacket = null;
       updateData.doubleJacket = null;
     }
-    
-    await Employee.findByIdAndUpdate(employee._id, updateData, { new: true });
-    
-    console.log('본인 유니폼 수정 완료:', {
-      name: employee.name,
-      uniformWinterPants: employee.uniformWinterPants,
-      uniformWinterPantsQty: employee.uniformWinterPantsQty,
-      uniformSummerTop: employee.uniformSummerTop,
-      uniformSummerBottom: employee.uniformSummerBottom,
-      uniformWinterTop: employee.uniformWinterTop,
-      uniformWinterBottom: employee.uniformWinterBottom
+
+    const updatedEmployee = await Employee.findByIdAndUpdate(employee._id, updateData, {
+      new: true, runValidators: true
     });
-    
-    // 데이터베이스에서 최신 정보를 다시 불러와서 확인
-    const savedEmployee = await Employee.findById(employee._id);
-    console.log('저장 후 데이터베이스에서 확인:', {
-      name: savedEmployee.name,
-      uniformWinterPants: savedEmployee.uniformWinterPants,
-      uniformWinterPantsQty: savedEmployee.uniformWinterPantsQty,
-      _id: savedEmployee._id
-    });
-    
-    // 전체 유니폼 필드 확인
-    console.log('저장 후 전체 유니폼 필드:', {
-      name: savedEmployee.name,
-      uniformSummerTop: savedEmployee.uniformSummerTop,
-      uniformSummerBottom: savedEmployee.uniformSummerBottom,
-      uniformWinterTop: savedEmployee.uniformWinterTop,
-      uniformWinterBottom: savedEmployee.uniformWinterBottom,
-      uniformWinterPants: savedEmployee.uniformWinterPants,
-      springAutumnUniform: savedEmployee.springAutumnUniform,
-      uniformWinterCoat: savedEmployee.uniformWinterCoat,
-      raincoat: savedEmployee.raincoat,
-      cap: savedEmployee.cap,
-      safetyShoes: savedEmployee.safetyShoes,
-      rainBoots: savedEmployee.rainBoots,
-      winterJacket: savedEmployee.winterJacket,
-      doubleJacket: savedEmployee.doubleJacket
-    });
-    
-    // 성공 메시지와 함께 리다이렉트
-    req.session.message = `유니폼 정보가 수정되었습니다.`;
-    
-    // 유니폼 수정 페이지로 리다이렉트
-    if (req.session.userRole === 'admin' && req.body.employeeId) {
-      res.redirect('/uniform/' + employee._id + '/edit');
-    } else {
-      res.redirect('/uniform/' + req.session.userId + '/edit');
-    }
+    if (!updatedEmployee) return res.status(404).send('직원을 찾을 수 없습니다.');
+
+    req.session.message = '유니폼 정보가 수정되었습니다.';
+    return res.redirect(req.session.userRole === 'admin' && req.body.employeeId
+      ? `/uniform/${employee._id}` : '/uniform');
   } catch (error) {
     console.error('본인 유니폼 수정 오류:', error);
     res.status(500).send('유니폼 정보 수정 중 오류가 발생했습니다.');
@@ -634,7 +560,8 @@ router.post('/:id/edit', requireLogin, requireAdmin, async (req, res) => {
       updateData.doubleJacket = null;
     }
     
-    await Employee.findByIdAndUpdate(employee._id, updateData, { new: true });
+    const updatedEmployee = await Employee.findByIdAndUpdate(employee._id, updateData, { new: true, runValidators: true });
+    if (!updatedEmployee) return res.status(404).send('직원을 찾을 수 없습니다.');
     
     console.log('수정 후 직원 데이터:', {
       name: employee.name,
@@ -647,7 +574,7 @@ router.post('/:id/edit', requireLogin, requireAdmin, async (req, res) => {
     
     // 성공 메시지와 함께 유니폼 수정 페이지로 리다이렉트
     req.session.message = `${employee.name}의 유니폼 정보가 수정되었습니다.`;
-    res.redirect('/uniform/' + employee._id + '/edit');
+    res.redirect('/uniform/' + employee._id);
   } catch (error) {
     console.error('유니폼 수정 오류:', error);
     res.status(500).send('유니폼 정보 수정 중 오류가 발생했습니다.');
@@ -793,4 +720,4 @@ router.get('/excel/export', requireLogin, async (req, res) => {
   }
 });
 
-module.exports = router; 
+module.exports = router;

@@ -77,19 +77,19 @@ const employeeSchema = new mongoose.Schema({
   rewardPunishment: { type: String }, // 상벌사항
 
   // 유니폼/장구류 사이즈
-  uniformSummerTop: { type: String, enum: ['', '2별대', '별대', '특대', '대', '중'] },
+  uniformSummerTop: { type: String, enum: ['', '3별대', '2별대', '별대', '특대', '대', '중'] },
   uniformSummerTopQty: { type: Number, default: 1 },
   uniformSummerBottom: { type: String, enum: ['', '38', '36', '35', '34', '33', '32', '31', '30'] },
   uniformSummerBottomQty: { type: Number, default: 1 },
-  uniformWinterTop: { type: String, enum: ['', '2별대', '별대', '특대', '대', '중'] },
+  uniformWinterTop: { type: String, enum: ['', '3별대', '2별대', '별대', '특대', '대', '중'] },
   uniformWinterTopQty: { type: Number, default: 1 },
   uniformWinterBottom: { type: String, enum: ['', '38', '36', '35', '34', '33', '32', '31', '30'] },
   uniformWinterBottomQty: { type: Number, default: 1 },
   uniformWinterPants: { type: String, enum: ['', '38', '36', '35', '34', '33', '32', '31', '30'] }, // 방한하의
   uniformWinterPantsQty: { type: Number, default: 1 },
-  uniformWinterCoat: { type: String, enum: ['', '2별대', '별대', '특대', '대', '중'] }, // 방한외투
+  uniformWinterCoat: { type: String, enum: ['', '3별대', '2별대', '별대', '특대', '대', '중'] }, // 방한외투
   uniformWinterCoatQty: { type: Number, default: 1 },
-  raincoat: { type: String, enum: ['', '2별대', '별대', '특대', '대', '중'] },
+  raincoat: { type: String, enum: ['', '3별대', '2별대', '별대', '특대', '대', '중'] },
   raincoatQty: { type: Number, default: 1 },
   cap: { type: String, enum: ['', '별대', '특대', '대', '중', '소'] },
   capQty: { type: Number, default: 1 },
@@ -97,11 +97,11 @@ const employeeSchema = new mongoose.Schema({
   safetyShoesQty: { type: Number, default: 1 },
   rainBoots: { type: String, enum: ['', '290', '285', '280', '275', '270', '265', '260', '255', '250'] },
   rainBootsQty: { type: Number, default: 1 },
-  winterJacket: { type: String, enum: ['', '2별대', '별대', '특대', '대', '중'] }, // 동점퍼
+  winterJacket: { type: String, enum: ['', '3별대', '2별대', '별대', '특대', '대', '중'] }, // 동점퍼
   winterJacketQty: { type: Number, default: 1 },
-  doubleJacket: { type: String, enum: ['', '2별대', '별대', '특대', '대', '중'] }, // 겹점퍼
+  doubleJacket: { type: String, enum: ['', '3별대', '2별대', '별대', '특대', '대', '중'] }, // 겹점퍼
   doubleJacketQty: { type: Number, default: 1 },
-  springAutumnUniform: { type: String, enum: ['', '2별대', '별대', '특대', '대', '중'] },
+  springAutumnUniform: { type: String, enum: ['', '3별대', '2별대', '별대', '특대', '대', '중'] },
 
   // 프로필 이미지
   profileImage: { type: String },
