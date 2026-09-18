@@ -183,6 +183,9 @@
       <h2 class="login-title">
         <i class="fa-solid fa-sign-in-alt me-2"></i>로그인
       </h2>
+      <% if (typeof message !== 'undefined' && message) { %>
+        <div class="alert alert-info" role="status"><%= message %></div>
+      <% } %>
       <form action="/auth/login" method="POST">
         <div class="mb-3">
           <label for="username" class="form-label">
@@ -206,7 +209,7 @@
         </button>
       </form>
       <div class="login-links">
-        <a href="/auth/forgot-password">
+        <a href="/auth/forgot">
           <i class="fa-solid fa-key me-1"></i>비밀번호 찾기
         </a>
         <span>|</span>
@@ -238,4 +241,4 @@
     }
   </script>
 </body>
-</html> 
+</html>

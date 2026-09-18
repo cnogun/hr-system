@@ -155,13 +155,8 @@ app.use(async (req, res, next) => {
             res.locals.userRole = 'user'; // userRole 설정 추가
             req.session.userRole = 'user'; // 세션에도 userRole 저장
           } else {
-            // 직원 정보가 없으면 User 정보 사용
-            res.locals.position = '일반 사용자';
-            res.locals.name = user.username;
-            res.locals.department = '부서미정';
-            res.locals.employeePosition = '직급미정';
-            res.locals.userRole = 'user'; // userRole 설정 추가
-            req.session.userRole = 'user'; // 세션에도 userRole 저장
+            // 기존 세션도 직원 정보 연결이 해제되면 업무 화면에 접근할 수 없습니다.
+            return req.session.destroy(() => res.redirect('/auth/login?pending=1'));
           }
         }
       } else {

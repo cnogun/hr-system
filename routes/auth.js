@@ -17,6 +17,7 @@ const bcrypt = require('bcrypt');
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
 const Log = require('../models/Log');
+const Employee = require('../models/Employee');
 
 // 회원가입 폼
 router.get('/register', (req, res) => {
@@ -26,11 +27,11 @@ router.get('/register', (req, res) => {
 // 비밀번호 검증 함수
 function validatePassword(password) {
   const requirements = {
-    length: password.length >= 6,
+    length: password.length >= 8,
     uppercase: /[A-Z]/.test(password),
     lowercase: /[a-z]/.test(password),
     number: /[0-9]/.test(password),
-    special: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)
+    special: /[!@#$%^&*(),.?":{}|<>]/.test(password)
   };
   
   return {
@@ -41,50 +42,48 @@ function validatePassword(password) {
 
 // 회원가입 처리
 router.post('/register', async (req, res) => {
-  const { username, password, email } = req.body;
-  
-  // 비밀번호 검증
-  const passwordValidation = validatePassword(password);
-  if (!passwordValidation.isValid) {
-    return res.status(400).send(`
-      <script>
-        alert('비밀번호가 모든 요구사항을 충족하지 않습니다.\\n\\n' +
-              '• 6자리 이상\\n' +
-              '• 대문자 포함\\n' +
-              '• 소문자 포함\\n' +
-              '• 숫자 포함\\n' +
-              '• 특수문자 포함');
-        history.back();
-      </script>
-    `);
+  const username = typeof req.body.username === 'string' ? req.body.username.trim() : '';
+  const email = typeof req.body.email === 'string' ? req.body.email.trim().toLowerCase() : '';
+  const { password, confirmPassword } = req.body;
+  if (!/^[A-Za-z0-9._-]{3,30}$/.test(username)) {
+    return res.status(400).json({ success: false, message: '아이디는 영문·숫자·점·밑줄·하이픈을 사용해 3~30자로 입력해 주세요.' });
   }
-  
+  if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return res.status(400).json({ success: false, message: '올바른 이메일을 입력해 주세요.' });
+  }
+  if (typeof password !== 'string' || !validatePassword(password).isValid) {
+    return res.status(400).json({ success: false, message: '비밀번호는 8자 이상이며 대문자, 소문자, 숫자, 특수문자를 포함해야 합니다.' });
+  }
+  if (password !== confirmPassword) {
+    return res.status(400).json({ success: false, message: '비밀번호 확인이 일치하지 않습니다.' });
+  }
+
   try {
+    const existing = await User.findOne({ $or: [
+      { username },
+      { email: new RegExp(`^${email.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') }
+    ] });
+    if (existing) {
+      return res.status(409).json({ success: false, message: '이미 사용 중인 아이디 또는 이메일입니다.' });
+    }
     const hash = await bcrypt.hash(password, 10);
-    await User.create({ username, password: hash, email });
-    res.redirect('/auth/login');
+    await User.create({ username, password: hash, email, role: 'user' });
+    res.status(201).json({ success: true, message: '계정이 생성되었습니다. 관리자가 직원 정보에 연결하면 로그인할 수 있습니다.' });
   } catch (error) {
     if (error.code === 11000) {
-      res.status(400).send(`
-        <script>
-          alert('이미 존재하는 사용자명 또는 이메일입니다.');
-          history.back();
-        </script>
-      `);
+      res.status(409).json({ success: false, message: '이미 사용 중인 아이디 또는 이메일입니다.' });
     } else {
-      res.status(500).send(`
-        <script>
-          alert('회원가입 중 오류가 발생했습니다.');
-          history.back();
-        </script>
-      `);
+      console.error('회원가입 처리 오류:', error);
+      res.status(500).json({ success: false, message: '회원가입 중 오류가 발생했습니다.' });
     }
   }
 });
 
 // 로그인 폼
 router.get('/login', (req, res) => {
-  res.render('login');
+  res.render('login', { message: req.query.registered === '1'
+    ? '계정이 생성되었습니다. 관리자가 직원 정보에 연결하면 로그인할 수 있습니다.'
+    : req.query.pending === '1' ? '직원 정보와 연결되지 않은 계정은 관리자의 등록 후 로그인할 수 있습니다.' : null });
 });
 
 // 로그인 처리
@@ -124,6 +123,16 @@ router.post('/login', async (req, res) => {
       `);
     }
     
+    // 직원 정보에 연결되기 전에는 업무 데이터 접근을 허용하지 않습니다.
+    let employee = null;
+    if (user.role !== 'admin') {
+      employee = await Employee.findOne({ userId: user._id });
+      if (!employee) {
+        return res.status(403).render('login', { message: '관리자가 직원 정보에 계정을 연결한 뒤 로그인할 수 있습니다.' });
+      }
+    }
+
+    await new Promise((resolve, reject) => req.session.regenerate(err => err ? reject(err) : resolve()));
     // 사용자 정보를 세션에 저장
     req.session.userId = user._id;
     req.session.username = user.username;
@@ -131,14 +140,10 @@ router.post('/login', async (req, res) => {
     req.session.userRole = user.role;
     
     // 직원 정보에서 부서 정보 가져오기 (관리자가 아닌 경우에만)
-    if (user.role !== 'admin') {
-      const Employee = require('../models/Employee');
-      const employee = await Employee.findOne({ userId: user._id });
-      if (employee) {
-        req.session.userDepartment = employee.department;
-        req.session.userName = employee.name;
-        req.session.userPosition = employee.position;
-      }
+    if (employee) {
+      req.session.userDepartment = employee.department;
+      req.session.userName = employee.name;
+      req.session.userPosition = employee.position;
     }
     
     // 로그인 로그 기록
@@ -164,12 +169,7 @@ router.post('/login', async (req, res) => {
     
   } catch (error) {
     console.error('로그인 처리 오류:', error);
-    res.status(500).send(`
-      <script>
-        alert('로그인 처리 중 오류가 발생했습니다.\\n\\n오류: ${error.message}');
-        history.back();
-      </script>
-    `);
+    res.status(500).render('login', { message: '로그인 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.' });
   }
 });
 
@@ -534,4 +534,4 @@ router.get('/logs/excel', async (req, res) => {
   res.end();
 });
 
-module.exports = router; 
+module.exports = router;
