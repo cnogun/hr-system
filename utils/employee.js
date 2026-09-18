@@ -8,23 +8,34 @@
  * - 데이터 변환 및 포맷팅
  */
 const Employee = require('../models/Employee');
+const EmployeeNumberCounter = require('../models/EmployeeNumberCounter');
 
-// 사번 생성 함수
-async function generateEmpNo(orgType, department) {
-  const orgCode = orgType === '본사' ? '1' : '2';
-  let deptCode = '88';
-  
-  if (department === '보안1팀') deptCode = '01';
-  else if (department === '보안2팀') deptCode = '02';
-  else if (department === '보안3팀') deptCode = '03';
-  else if (department === '관리팀') deptCode = '04';
-  else if (department === '인사팀') deptCode = '05';
-  else if (department === '영업팀') deptCode = '06';
-  
-  // 입사순
-  const count = await Employee.countDocuments({ orgType, department });
-  const seq = (count + 1).toString().padStart(4, '0');
-  return orgCode + deptCode + seq;
+function issuanceYear(date = new Date()) {
+  return new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Seoul', year: 'numeric' }).format(date);
+}
+
+// 발급 연도별 다음 번호를 한 문서에서 증가시켜 동시 등록의 중복을 방지합니다.
+async function generateEmpNo() {
+  const year = issuanceYear();
+  let counter = await EmployeeNumberCounter.findById(year);
+  if (!counter) {
+    // 이전에 YYYY-NNNN 사번이 등록돼 있으면 그 다음 번호부터 시작합니다.
+    const latest = await Employee.findOne({ empNo: { $regex: `^${year}-\\d{4}$` } })
+      .sort({ empNo: -1 }).select('empNo').lean();
+    const initial = latest ? Number(latest.empNo.slice(5)) : 0;
+    try {
+      await EmployeeNumberCounter.create({ _id: year, sequence: initial });
+    } catch (error) {
+      // 동시에 처음 발급한 요청이 카운터를 먼저 생성한 경우입니다.
+      if (error.code !== 11000) throw error;
+    }
+  }
+
+  counter = await EmployeeNumberCounter.findOneAndUpdate(
+    { _id: year }, { $inc: { sequence: 1 } }, { new: true }
+  );
+  if (!counter || counter.sequence > 9999) throw new Error(`${year}년 사번 발급 한도를 초과했습니다.`);
+  return `${year}-${String(counter.sequence).padStart(4, '0')}`;
 }
 
 // 이메일 중복 검사
@@ -88,9 +99,10 @@ function createSortOption(sort, order) {
 
 module.exports = {
   generateEmpNo,
+  issuanceYear,
   checkEmailDuplicate,
   checkResidentNumberDuplicate,
   checkUserIdDuplicate,
   createEmployeeSearchQuery,
   createSortOption
-}; 
+};

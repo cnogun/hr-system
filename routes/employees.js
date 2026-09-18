@@ -18,6 +18,7 @@ const ExcelJS = require('exceljs');
 const fs = require('fs');
 const { parse } = require('csv-parse');
 const Log = require('../models/Log');
+const { generateEmpNo } = require('../utils/employee');
 
 function isLoggedIn(req, res, next) {
   if (!req.session.userId) {
@@ -236,33 +237,6 @@ router.get('/existing', isLoggedIn, adminOnly, async (req, res) => {
   res.render('existingEmployee', { employees, session: req.session });
 });
 
-// 사번 생성 함수
-async function generateEmpNo(orgType, department) {
-  const orgCode = orgType === '본사' ? '1' : '2';
-  let deptCode = '88';
-  if (department === '보안1팀') deptCode = '01';
-  else if (department === '보안2팀') deptCode = '02';
-  else if (department === '보안3팀') deptCode = '03';
-  else if (department === '관리팀') deptCode = '04';
-  else if (department === '인사팀') deptCode = '05';
-  else if (department === '영업팀') deptCode = '06';
-  else if (department === '지원팀') deptCode = '07';
-  
-  // 해당 부서의 최신 사번 찾기
-  const latestEmployee = await Employee.findOne({ 
-    orgType, 
-    department,
-    empNo: { $regex: `^${orgCode}${deptCode}` }
-  }).sort({ empNo: -1 });
-  
-  let seq = 1;
-  if (latestEmployee && latestEmployee.empNo) {
-    const lastSeq = parseInt(latestEmployee.empNo.slice(-4));
-    seq = lastSeq + 1;
-  }
-  
-  return orgCode + deptCode + seq.toString().padStart(4, '0');
-}
 // 직원 추가
 router.post('/', isLoggedIn, adminOnly, upload.single('profileImage'), async (req, res) => {
   const { name, email, userId, orgType, department, position, hireDate } = req.body;
@@ -307,7 +281,7 @@ router.post('/', isLoggedIn, adminOnly, upload.single('profileImage'), async (re
     }
     
     // 사번 자동 생성
-    const empNo = await generateEmpNo(orgType, department);
+    const empNo = await generateEmpNo();
     
     // 디버깅: 전송된 모든 데이터 로깅
     console.log('=== 신입정보 저장 디버깅 ===');
@@ -400,7 +374,6 @@ router.post('/', isLoggedIn, adminOnly, upload.single('profileImage'), async (re
       career: req.body.career
     });
     
-    employee.empNo = await generateEmpNo(orgType, department);
     if (req.file) {
       employee.profileImage = '/uploads/' + req.file.filename;
     }

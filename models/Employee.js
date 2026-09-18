@@ -150,4 +150,11 @@ const employeeSchema = new mongoose.Schema({
   attendance: { type: Map, of: Object, default: {} },
 });
 
-module.exports = mongoose.model('Employee', employeeSchema); 
+// 기존 사번은 보존하고, 값이 있는 사번만 중복을 금지합니다.
+employeeSchema.index({ empNo: 1 }, {
+  name: 'empNo_unique_nonempty',
+  unique: true,
+  partialFilterExpression: { empNo: { $gt: '' } }
+});
+
+module.exports = mongoose.model('Employee', employeeSchema);

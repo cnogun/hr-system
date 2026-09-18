@@ -15,6 +15,7 @@ const User = require('../models/User');
 const Log = require('../models/Log');
 const multer = require('multer');
 const path = require('path');
+const { generateEmpNo } = require('../utils/employee');
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -25,34 +26,6 @@ const storage = multer.diskStorage({
   },
 });
 const upload = multer({ storage });
-
-// 사번 생성 함수
-async function generateEmpNo(orgType, department) {
-  const orgCode = orgType === '본사' ? '1' : '2';
-  let deptCode = '88';
-  if (department === '보안1팀') deptCode = '01';
-  else if (department === '보안2팀') deptCode = '02';
-  else if (department === '보안3팀') deptCode = '03';
-  else if (department === '관리팀') deptCode = '04';
-  else if (department === '인사팀') deptCode = '05';
-  else if (department === '영업팀') deptCode = '06';
-  else if (department === '지원팀') deptCode = '07';
-  
-  // 해당 부서의 최신 사번 찾기
-  const latestEmployee = await Employee.findOne({ 
-    orgType, 
-    department,
-    empNo: { $regex: `^${orgCode}${deptCode}` }
-  }).sort({ empNo: -1 });
-  
-  let seq = 1;
-  if (latestEmployee && latestEmployee.empNo) {
-    const lastSeq = parseInt(latestEmployee.empNo.slice(-4));
-    seq = lastSeq + 1;
-  }
-  
-  return orgCode + deptCode + seq.toString().padStart(4, '0');
-}
 
 function isLoggedIn(req, res, next) {
   if (!req.session.userId) {
@@ -130,7 +103,7 @@ router.post('/new', isLoggedIn, adminOnly, upload.single('profileImage'), async 
     }
     
     // 사번 자동 생성
-    const empNo = await generateEmpNo(orgType, department);
+    const empNo = await generateEmpNo();
     
     // 디버깅: 입력 데이터 확인
     console.log('신입 직원 추가 데이터:', {
@@ -397,4 +370,4 @@ router.patch('/:id/field', isLoggedIn, adminOnly, async (req, res) => {
   }
 });
 
-module.exports = router; 
+module.exports = router;

@@ -501,7 +501,7 @@ router.post('/employees/new', adminOnly, employeeUpload.single('profileImage'), 
       return res.status(400).send('이미 등록된 사용자 계정입니다.');
     }
     
-    const empNo = await generateEmpNo(orgType, department);
+    const empNo = await generateEmpNo();
     
     const employee = new Employee({
       name,
@@ -538,7 +538,7 @@ router.post('/employees/new', adminOnly, employeeUpload.single('profileImage'), 
     });
     await log.save();
 
-    req.session.message = '직원이 성공적으로 추가되었습니다.';
+    req.session.message = `직원이 추가되었습니다. 사번: ${empNo}`;
     res.redirect('/admin/employees');
   } catch (error) {
     console.error('직원 추가 오류:', error);
