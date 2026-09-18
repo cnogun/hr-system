@@ -3,164 +3,225 @@
 <% const hrAdmin = hrLoggedIn && (hrSession.userRole === 'admin' || (typeof userRole !== 'undefined' && userRole === 'admin')); %>
 <% const hrName = typeof name !== 'undefined' && name ? name : (hrSession && hrSession.name ? hrSession.name : (hrAdmin ? '관리자' : '사용자')); %>
 <% const hrPosition = typeof position !== 'undefined' && position ? position : (hrSession && hrSession.position ? hrSession.position : ''); %>
+<% const hrGroups = [
+  { id: 'home', label: '대시보드', icon: 'fa-chart-pie', items: [
+    { label: '전체 현황', href: '/dashboard' }
+  ] },
+  { id: 'people', label: '인사정보', icon: 'fa-users', items: [
+    { label: '직원 찾기', href: '/employees' },
+    { label: '신입사원 등록', href: '/employees/new', admin: true },
+    { label: '등록사원 수정', href: '/employees/existing', admin: true }
+  ] },
+  { id: 'attendance', label: '근태관리', icon: 'fa-calendar-check', items: [
+    { label: '근태 입력', href: '/attendance', admin: true },
+    { label: '월간 근태현황', href: '/monthlyAttendance', admin: true },
+    { label: '근무 스케줄', href: '/workSchedule', admin: true }
+  ] },
+  { id: 'payroll', label: '급여관리', icon: 'fa-wallet', items: [], upcoming: true },
+  { id: 'duty', label: '직무관리', icon: 'fa-shield-halved', items: [
+    { label: '인사명령서', href: '/duty-orders', admin: true },
+    { label: '근무명령서', href: '/work-orders', admin: true },
+    { label: '요약보고서', href: '/security/summary-reports', admin: true },
+    { label: '인계장', href: '/handovers', admin: true },
+    { label: '업무 일정', href: '/security/schedule', admin: true }
+  ] },
+  { id: 'uniform', label: '유니폼관리', icon: 'fa-shirt', items: [
+    { label: '내 유니폼', href: '/uniform' },
+    { label: '유니폼 현황', href: '/uniform/stats', admin: true }
+  ] },
+  { id: 'community', label: '커뮤니티', icon: 'fa-comments', items: [
+    { label: '게시판', href: '/boards' },
+    { label: '공지사항', href: '/notice' },
+    { label: '공지 관리', href: '/notice/manage', admin: true },
+    { label: '공지 작성', href: '/notice/new', admin: true },
+    { label: '게시판 신고 관리', href: '/boards/admin/reports', admin: true }
+  ] },
+  { id: 'system', label: '시스템운영', icon: 'fa-gear', items: [
+    { label: '통합 엑셀 관리', href: '/excelManager', admin: true },
+    { label: '활동 로그 관리', href: '/auth/logs', admin: true }
+  ] }
+]; %>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="stylesheet" href="/mobile-optimization.css">
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <style>
-  :root { --hr-navy: #14243c; --hr-navy-light: #223754; --hr-blue: #2563eb; --hr-surface: #fff; --hr-bg: #f4f6f9; --hr-border: #e2e8f0; --hr-text: #1e293b; }
-  body { background: var(--hr-bg); min-height: 100vh; color: var(--hr-text); }
-  .hr-header { background: var(--hr-navy); color: #fff; box-shadow: 0 2px 12px rgba(15, 23, 42, .12); position: relative; z-index: 1030; }
-  .hr-header .hr-inner { max-width: 1600px; margin: auto; min-height: 68px; padding: 0 24px; display: flex; align-items: center; gap: 24px; }
-  .hr-brand { display: inline-flex; align-items: center; gap: 11px; color: #fff; text-decoration: none; flex: 0 0 auto; }
+  :root { --hr-side: 228px; --hr-navy: #14243c; --hr-blue: #2563eb; --hr-bg: #f4f6f9; --hr-border: #e2e8f0; --hr-text: #1e293b; }
+  body { background: var(--hr-bg); color: var(--hr-text); min-height: 100vh; display: flex; flex-direction: column; }
+  <% if (hrLoggedIn) { %>
+  body { padding-left: var(--hr-side); }
+  <% } %>
+  .hr-header { background: #fff; position: sticky; top: 0; z-index: 1030; border-bottom: 1px solid var(--hr-border); box-shadow: 0 2px 12px rgba(15, 23, 42, .05); flex-shrink: 0; }
+  .hr-topbar { min-height: 66px; padding: 0 26px; display: flex; align-items: center; gap: 16px; }
+  .hr-page-label { min-width: 0; flex: 1; }
+  .hr-page-label strong { display: block; font-size: 1rem; line-height: 1.3; color: var(--hr-text); }
+  .hr-page-label small { color: #64748b; font-size: .75rem; }
+  .hr-actions { display: flex; align-items: center; gap: 12px; }
+  .hr-user { display: flex; flex-direction: column; align-items: flex-end; max-width: 180px; line-height: 1.3; }
+  .hr-user strong, .hr-user small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+  .hr-user strong { font-size: .84rem; }
+  .hr-user small { font-size: .74rem; color: #64748b; }
+  .hr-logout { color: #475569; border: 1px solid var(--hr-border); border-radius: 8px; font-size: .8rem; white-space: nowrap; }
+  .hr-logout:hover { background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
+  .hr-menu-toggle, .hr-menu-close { display: none; background: #fff; color: var(--hr-text); border: 1px solid var(--hr-border); border-radius: 8px; width: 38px; height: 38px; align-items: center; justify-content: center; }
+  .hr-subbar { min-height: 51px; padding: 0 26px; display: flex; align-items: center; border-top: 1px solid #eef2f7; }
+  .hr-submenu { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; padding: 6px 0; }
+  .hr-submenu[hidden] { display: none !important; }
+  .hr-submenu a { display: inline-flex; align-items: center; min-height: 34px; padding: 7px 12px; border-radius: 7px; font-size: .84rem; font-weight: 550; color: #475569; text-decoration: none; white-space: nowrap; }
+  .hr-submenu a:hover, .hr-submenu a:focus-visible { background: #eff6ff; color: #1d4ed8; }
+  .hr-submenu a.active { background: #eaf2ff; color: #1d4ed8; font-weight: 700; }
+  .hr-empty { font-size: .83rem; color: #64748b; margin: 0; padding: 7px 0; }
+  .hr-sidebar { width: var(--hr-side); position: fixed; left: 0; top: 0; bottom: 0; z-index: 1040; background: var(--hr-navy); color: #fff; display: flex; flex-direction: column; box-shadow: 3px 0 14px rgba(15, 23, 42, .12); }
+  .hr-brand { min-height: 82px; padding: 18px 16px; display: flex; align-items: center; gap: 10px; color: #fff; text-decoration: none; }
   .hr-brand:hover, .hr-brand:focus { color: #fff; }
-  .hr-brand-icon { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 9px; background: #315783; color: #fff; }
-  .hr-brand-title { font-size: 1rem; font-weight: 750; line-height: 1.25; white-space: nowrap; }
-  .hr-brand-subtitle { display: block; color: #aebed2; font-size: .7rem; font-weight: 400; letter-spacing: .02em; }
-  .hr-nav { min-width: 0; flex: 1 1 auto; }
-  .hr-nav .navbar-nav { align-items: center; gap: 2px; }
-  .hr-nav .nav-link { display: flex; align-items: center; gap: 7px; padding: 10px 11px; border-radius: 7px; color: #c8d5e5; font-size: .875rem; font-weight: 550; white-space: nowrap; }
-  .hr-nav .nav-link:hover, .hr-nav .nav-link:focus, .hr-nav .nav-link.active, .hr-nav .nav-link.show { background: var(--hr-navy-light); color: #fff; }
-  .hr-nav .nav-link i { width: 16px; text-align: center; }
-  .hr-nav .dropdown-menu { border: 1px solid var(--hr-border); border-radius: 10px; padding: 6px; min-width: 210px; box-shadow: 0 12px 28px rgba(15, 23, 42, .16); }
-  .hr-nav .dropdown-item { border-radius: 6px; padding: 9px 11px; color: var(--hr-text); font-size: .875rem; }
-  .hr-nav .dropdown-item i { width: 20px; color: #64748b; }
-  .hr-nav .dropdown-item:hover, .hr-nav .dropdown-item:focus, .hr-nav .dropdown-item.active { background: #eff5ff; color: #1d4ed8; }
-  .hr-actions { display: flex; align-items: center; gap: 12px; flex: 0 0 auto; }
-  .hr-user { display: flex; flex-direction: column; line-height: 1.3; max-width: 150px; }
-  .hr-user strong { font-size: .82rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .hr-user small { font-size: .72rem; color: #aebed2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .hr-actions .btn { font-size: .8rem; font-weight: 600; white-space: nowrap; border-radius: 7px; }
-  .hr-logout { color: #e1e9f3; border-color: #5b708b; }
-  .hr-logout:hover { background: #fff; border-color: #fff; color: var(--hr-navy); }
-  .hr-toggle { display: none; color: #fff; border: 1px solid #5b708b; border-radius: 7px; padding: 7px 10px; background: transparent; }
-  .hr-toggle:hover, .hr-toggle:focus-visible { background: var(--hr-navy-light); }
-  .hr-header .dropdown-toggle::after { margin-left: 4px; }
-  @media (max-width: 1350px) {
-    .hr-header .hr-inner { flex-wrap: wrap; gap: 0 16px; padding-top: 10px; }
-    .hr-nav { order: 3; flex-basis: 100%; }
-    .hr-actions { margin-left: auto; }
-    .hr-nav .navbar-nav { min-height: 48px; }
-  }
+  .hr-brand-icon { flex: 0 0 36px; height: 36px; display: grid; place-items: center; background: #315783; border-radius: 9px; }
+  .hr-brand strong { display: block; font-size: .87rem; white-space: nowrap; }
+  .hr-brand small { display: block; font-size: .68rem; color: #aebed2; }
+  .hr-main-nav { overflow-y: auto; flex: 1; padding: 10px 10px 18px; }
+  .hr-nav-caption { margin: 5px 11px 10px; font-size: .68rem; letter-spacing: .08em; color: #93a9c4; }
+  .hr-main-link { display: flex; align-items: center; width: 100%; gap: 12px; padding: 11px 12px; margin: 3px 0; border: 0; border-radius: 8px; background: transparent; color: #cbd6e5; text-align: left; font-size: .89rem; font-weight: 550; cursor: pointer; }
+  .hr-main-link:hover, .hr-main-link:focus-visible { background: #223754; color: #fff; }
+  .hr-main-link.active { background: #315783; color: #fff; font-weight: 700; }
+  .hr-main-link i { width: 18px; text-align: center; }
+  .hr-main-link span { flex: 1; }
+  .hr-main-link .hr-soon { font-size: .65rem; color: #b7c7dd; font-weight: 400; }
+  .hr-side-foot { padding: 15px 20px; border-top: 1px solid #324761; color: #93a9c4; font-size: .7rem; }
+  .hr-backdrop { display: none; }
+  .hr-guest-brand { font-size: 1rem; font-weight: 700; text-decoration: none; color: var(--hr-navy); flex: 1; }
   @media (max-width: 991.98px) {
-    .hr-header .hr-inner { min-height: 62px; padding: 10px 16px; }
-    .hr-toggle { display: inline-flex; align-items: center; justify-content: center; }
-    .hr-nav { order: 3; flex-basis: 100%; }
-    .hr-nav .navbar-nav { align-items: stretch; padding: 12px 0 4px; border-top: 1px solid #344b69; margin-top: 10px; }
-    .hr-nav .nav-link { padding: 11px 12px; }
-    .hr-nav .dropdown-menu { position: static !important; transform: none !important; box-shadow: none; border: 0; border-radius: 7px; background: #1c314d; margin: 3px 0 7px 15px; }
-    .hr-nav .dropdown-item { color: #d4e0ee; }
-    .hr-nav .dropdown-item i { color: #9cb2cf; }
-    .hr-nav .dropdown-item:hover, .hr-nav .dropdown-item:focus, .hr-nav .dropdown-item.active { background: #315783; color: #fff; }
-    .hr-nav .dropdown-divider { border-color: #48607b; }
-    .hr-user, .hr-notice { display: none; }
+    body { padding-left: 0; }
+    .hr-menu-toggle, .hr-menu-close { display: inline-flex; }
+    .hr-menu-close { margin-left: auto; flex: 0 0 38px; }
+    .hr-sidebar { transform: translateX(-100%); transition: transform .2s ease; }
+    .hr-sidebar.is-open { transform: translateX(0); }
+    .hr-backdrop.is-open { display: block; position: fixed; inset: 0; z-index: 1035; border: 0; background: rgba(15, 23, 42, .52); }
+    .hr-topbar { padding: 0 16px; }
+    .hr-subbar { padding: 0 16px; overflow-x: auto; }
+    .hr-submenu { flex-wrap: nowrap; min-width: max-content; }
+    body.hr-menu-open { overflow: hidden; }
   }
   @media (max-width: 575.98px) {
-    .hr-header .hr-inner { gap: 8px; }
-    .hr-brand-title { font-size: .88rem; }
-    .hr-brand-subtitle { display: none; }
-    .hr-brand-icon { width: 31px; height: 31px; }
-    .hr-actions { gap: 7px; }
-    .hr-logout { padding: 6px 8px; }
+    .hr-topbar { min-height: 58px; gap: 9px; }
+    .hr-page-label strong { font-size: .91rem; }
+    .hr-page-label small, .hr-user { display: none; }
+    .hr-logout { padding: 7px 9px; }
     .hr-logout span { display: none; }
   }
+  @media print {
+    body { padding-left: 0 !important; }
+    .hr-header, .hr-sidebar, .hr-backdrop { display: none !important; }
+  }
 </style>
+<% if (hrLoggedIn) { %>
+<aside class="hr-sidebar" id="hrSidebar" aria-label="주 메뉴">
+  <div class="hr-brand">
+    <span class="hr-brand-icon"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i></span>
+    <span><strong>보안근무 관리 시스템</strong><small>Security Work Management</small></span>
+    <button class="hr-menu-close" type="button" aria-label="메뉴 닫기"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+  </div>
+  <nav class="hr-main-nav" aria-label="업무 구분">
+    <p class="hr-nav-caption">WORKSPACE</p>
+    <% hrGroups.forEach(function(group) { %>
+      <button class="hr-main-link" type="button" data-hr-group="<%= group.id %>" aria-controls="hrSubmenu-<%= group.id %>" aria-pressed="false">
+        <i class="fa-solid <%= group.icon %>" aria-hidden="true"></i><span><%= group.label %></span>
+        <% if (group.upcoming) { %><small class="hr-soon">준비 중</small><% } %>
+      </button>
+    <% }); %>
+  </nav>
+  <div class="hr-side-foot">© 보안근무 관리 시스템</div>
+</aside>
+<button class="hr-backdrop" type="button" aria-label="메뉴 닫기"></button>
+<% } %>
 <header class="hr-header">
-  <div class="hr-inner">
-    <a class="hr-brand" href="<%= hrLoggedIn ? '/dashboard' : '/auth/login' %>">
-      <span class="hr-brand-icon"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i></span>
-      <span class="hr-brand-title">보안근무 관리 시스템<small class="hr-brand-subtitle">Security Work Management</small></span>
-    </a>
+  <div class="hr-topbar">
     <% if (hrLoggedIn) { %>
-    <nav class="hr-nav navbar navbar-expand-lg p-0" aria-label="주 메뉴">
-      <div class="collapse navbar-collapse" id="hrNavigation">
-        <ul class="navbar-nav">
-          <li class="nav-item"><a class="nav-link" href="/dashboard"><i class="fa-solid fa-chart-line" aria-hidden="true"></i>대시보드</a></li>
-          <li class="nav-item"><a class="nav-link" href="/employees"><i class="fa-solid fa-users" aria-hidden="true"></i>직원 찾기</a></li>
-          <li class="nav-item"><a class="nav-link" href="/boards"><i class="fa-solid fa-comments" aria-hidden="true"></i>게시판</a></li>
-          <% if (hrAdmin) { %>
-          <li class="nav-item dropdown">
-            <button class="nav-link dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="fa-solid fa-gear" aria-hidden="true"></i>관리자</button>
-            <ul class="dropdown-menu">
-              <li><a class="dropdown-item" href="/boards/admin/reports"><i class="fa-solid fa-flag" aria-hidden="true"></i>게시판 신고 관리</a></li>
-              <li><hr class="dropdown-divider"></li>
-              <li><a class="dropdown-item" href="/uniform/stats"><i class="fa-solid fa-shirt" aria-hidden="true"></i>유니폼 현황</a></li>
-              <li><a class="dropdown-item" href="/auth/logs"><i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i>활동 로그 관리</a></li>
-            </ul>
-          </li>
-          <li class="nav-item dropdown">
-            <button class="nav-link dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="fa-solid fa-file-excel" aria-hidden="true"></i>엑셀관리</button>
-            <ul class="dropdown-menu"><li><a class="dropdown-item" href="/excelManager"><i class="fa-solid fa-table" aria-hidden="true"></i>통합 엑셀 관리</a></li></ul>
-          </li>
-          <li class="nav-item dropdown">
-            <button class="nav-link dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>정보 입력</button>
-            <ul class="dropdown-menu">
-              <li><a class="dropdown-item" href="/employees/new"><i class="fa-solid fa-user-plus" aria-hidden="true"></i>신입사원등록</a></li>
-              <li><a class="dropdown-item" href="/employees/existing"><i class="fa-solid fa-user-pen" aria-hidden="true"></i>등록사원수정</a></li>
-              <li><hr class="dropdown-divider"></li>
-              <li><a class="dropdown-item" href="/attendance"><i class="fa-solid fa-clock" aria-hidden="true"></i>근태 입력</a></li>
-              <li><a class="dropdown-item" href="/monthlyAttendance"><i class="fa-solid fa-calendar-days" aria-hidden="true"></i>월간 근태현황</a></li>
-              <li><a class="dropdown-item" href="/workSchedule"><i class="fa-solid fa-calendar-check" aria-hidden="true"></i>근무 스케줄 관리</a></li>
-            </ul>
-          </li>
-          <li class="nav-item dropdown">
-            <button class="nav-link dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="fa-solid fa-shield" aria-hidden="true"></i>보안업무</button>
-            <ul class="dropdown-menu">
-              <li><a class="dropdown-item" href="/duty-orders"><i class="fa-solid fa-clipboard-list" aria-hidden="true"></i>인사명령서</a></li>
-              <li><a class="dropdown-item" href="/work-orders"><i class="fa-solid fa-file-lines" aria-hidden="true"></i>근무명령서</a></li>
-              <li><a class="dropdown-item" href="/security/summary-reports"><i class="fa-solid fa-chart-bar" aria-hidden="true"></i>요약보고서</a></li>
-              <li><a class="dropdown-item" href="/handovers"><i class="fa-solid fa-right-left" aria-hidden="true"></i>인계장</a></li>
-              <li><a class="dropdown-item" href="/security/schedule"><i class="fa-solid fa-calendar" aria-hidden="true"></i>일정</a></li>
-            </ul>
-          </li>
-          <% } %>
-        </ul>
+      <button class="hr-menu-toggle" type="button" aria-controls="hrSidebar" aria-expanded="false" aria-label="주 메뉴 열기"><i class="fa-solid fa-bars" aria-hidden="true"></i></button>
+      <div class="hr-page-label"><strong id="hrCategoryTitle">대시보드</strong><small>업무 메뉴에서 필요한 화면을 선택하세요</small></div>
+      <div class="hr-actions">
+        <div class="hr-user"><strong><%= hrName %></strong><small><%= hrPosition || (hrAdmin ? '관리자' : '사용자') %></small></div>
+        <a class="btn btn-sm hr-logout" href="/auth/logout" aria-label="로그아웃"><i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i><span class="ms-1">로그아웃</span></a>
       </div>
-    </nav>
-    <div class="hr-actions">
-      <% if (hrAdmin) { %><a class="btn btn-primary btn-sm hr-notice" href="/notice/new"><i class="fa-solid fa-bullhorn me-1" aria-hidden="true"></i>시스템 공지</a><% } %>
-      <div class="hr-user"><strong><%= hrName %></strong><small><%= hrPosition || (hrAdmin ? '관리자' : '사용자') %></small></div>
-      <a class="btn btn-sm hr-logout" href="/auth/logout" aria-label="로그아웃"><i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i><span class="ms-1">로그아웃</span></a>
-      <button class="hr-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#hrNavigation" aria-controls="hrNavigation" aria-expanded="false" aria-label="메뉴 열기"><i class="fa-solid fa-bars" aria-hidden="true"></i></button>
-    </div>
     <% } else { %>
-    <div class="hr-actions ms-auto"><a class="btn btn-primary btn-sm" href="/auth/login">로그인</a><a class="btn btn-sm hr-logout" href="/auth/register">회원가입</a></div>
+      <a class="hr-guest-brand" href="/auth/login"><i class="fa-solid fa-shield-halved me-2" aria-hidden="true"></i>보안근무 관리 시스템</a>
+      <a class="btn btn-primary btn-sm" href="/auth/login">로그인</a>
+      <a class="btn btn-outline-secondary btn-sm" href="/auth/register">회원가입</a>
     <% } %>
   </div>
+  <% if (hrLoggedIn) { %>
+  <div class="hr-subbar" aria-label="하위 메뉴">
+    <% hrGroups.forEach(function(group) { %>
+      <nav class="hr-submenu" id="hrSubmenu-<%= group.id %>" data-hr-panel="<%= group.id %>" aria-label="<%= group.label %> 하위 메뉴" hidden>
+        <% const visibleItems = group.items.filter(function(item) { return !item.admin || hrAdmin; }); %>
+        <% if (group.upcoming) { %>
+          <p class="hr-empty">급여관리 기능은 준비 중입니다.</p>
+        <% } else if (visibleItems.length === 0) { %>
+          <p class="hr-empty">관리자 권한이 필요한 메뉴입니다.</p>
+        <% } else { %>
+          <% visibleItems.forEach(function(item) { %><a href="<%= item.href %>"><%= item.label %></a><% }); %>
+        <% } %>
+      </nav>
+    <% }); %>
+  </div>
+  <% } %>
 </header>
+<% if (hrLoggedIn) { %>
 <script>
-  document.addEventListener('DOMContentLoaded', function () {
-    const pathname = window.location.pathname.replace(/\/$/, '') || '/';
-    const links = Array.from(document.querySelectorAll('.hr-nav a[href]'));
-    const exact = links.find(link => link.getAttribute('href') === pathname);
-    const match = exact || links.filter(link => {
-      const href = link.getAttribute('href');
-      return href !== '/dashboard' && pathname.startsWith(href + '/');
-    }).sort((a, b) => b.getAttribute('href').length - a.getAttribute('href').length)[0];
-    if (match) {
-      match.classList.add('active');
-      match.setAttribute('aria-current', 'page');
-      const dropdown = match.closest('.dropdown');
-      if (dropdown) dropdown.querySelector('.dropdown-toggle').classList.add('active');
-    }
-    const menu = document.getElementById('hrNavigation');
-    if (menu) menu.querySelectorAll('a[href]').forEach(link => {
-      link.addEventListener('click', () => {
-        if (window.innerWidth < 992 && window.bootstrap) {
-          window.bootstrap.Collapse.getOrCreateInstance(menu, { toggle: false }).hide();
-        }
+  (function () {
+    function ready() {
+      const sidebar = document.getElementById('hrSidebar');
+      const buttons = Array.from(sidebar.querySelectorAll('[data-hr-group]'));
+      const panels = Array.from(document.querySelectorAll('[data-hr-panel]'));
+      const title = document.getElementById('hrCategoryTitle');
+      const toggle = document.querySelector('.hr-menu-toggle');
+      const backdrop = document.querySelector('.hr-backdrop');
+      const path = window.location.pathname.replace(/\/$/, '') || '/';
+      const links = panels.flatMap(panel => Array.from(panel.querySelectorAll('a[href]')));
+      const exact = links.find(link => link.getAttribute('href') === path);
+      const match = exact || links.filter(link => {
+        const href = link.getAttribute('href');
+        return href !== '/dashboard' && path.startsWith(href + '/');
+      }).sort((a, b) => b.getAttribute('href').length - a.getAttribute('href').length)[0];
+      function closeSidebar() {
+        sidebar.classList.remove('is-open');
+        backdrop.classList.remove('is-open');
+        document.body.classList.remove('hr-menu-open');
+        toggle.setAttribute('aria-expanded', 'false');
+      }
+      function selectGroup(id) {
+        buttons.forEach(button => {
+          const selected = button.dataset.hrGroup === id;
+          button.classList.toggle('active', selected);
+          button.setAttribute('aria-pressed', String(selected));
+          if (selected) title.textContent = button.querySelector('span').textContent;
+        });
+        panels.forEach(panel => { panel.hidden = panel.dataset.hrPanel !== id; });
+        closeSidebar();
+      }
+      if (match) {
+        match.classList.add('active');
+        match.setAttribute('aria-current', 'page');
+      }
+      selectGroup(match ? match.closest('[data-hr-panel]').dataset.hrPanel : 'home');
+      buttons.forEach(button => button.addEventListener('click', () => selectGroup(button.dataset.hrGroup)));
+      toggle.addEventListener('click', () => {
+        const open = !sidebar.classList.contains('is-open');
+        sidebar.classList.toggle('is-open', open);
+        backdrop.classList.toggle('is-open', open);
+        document.body.classList.toggle('hr-menu-open', open);
+        toggle.setAttribute('aria-expanded', String(open));
       });
-    });
-  });
-  function hrToast(message, tone, delay) {
-    let container = document.getElementById('toast-container');
-    if (!container) {
-      container = document.createElement('div');
-      container.id = 'toast-container';
-      container.className = 'toast-container position-fixed top-0 end-0 p-3';
-      container.style.zIndex = '1090';
-      document.body.appendChild(container);
+      backdrop.addEventListener('click', closeSidebar);
+      sidebar.querySelector('.hr-menu-close').addEventListener('click', closeSidebar);
+      document.addEventListener('keydown', event => { if (event.key === 'Escape') closeSidebar(); });
     }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ready);
+    else ready();
+  })();
+</script>
+<% } %>
+<script>
+  function hrToast(message, tone, delay) {
+    const container = createToastContainer();
     const toast = document.createElement('div');
     toast.className = 'toast show text-white bg-' + tone;
     const body = document.createElement('div');
@@ -171,10 +232,6 @@
     if (delay) window.setTimeout(() => toast.remove(), delay);
     return toast;
   }
-  function showLoadingToast(message) { return hrToast(message, 'info', 0); }
-  function hideLoadingToast(toast) { if (toast) toast.remove(); }
-  function showSuccessToast(message) { return hrToast(message, 'success', 3000); }
-  function showErrorToast(message) { return hrToast(message, 'danger', 5000); }
   function createToastContainer() {
     let container = document.getElementById('toast-container');
     if (!container) {
@@ -186,4 +243,8 @@
     }
     return container;
   }
+  function showLoadingToast(message) { return hrToast(message, 'info', 0); }
+  function hideLoadingToast(toast) { if (toast) toast.remove(); }
+  function showSuccessToast(message) { return hrToast(message, 'success', 3000); }
+  function showErrorToast(message) { return hrToast(message, 'danger', 5000); }
 </script>

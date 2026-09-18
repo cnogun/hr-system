@@ -9,7 +9,11 @@
   - 반응형 디자인 적용
   - 현대적인 카드 디자인
 -->
-<%- include('noticeHeader') %>
+<% if (typeof session !== 'undefined' && session && session.userId) { %>
+  <%- include('header') %>
+<% } else { %>
+  <%- include('noticeHeader') %>
+<% } %>
 <div class="container py-5 flex-grow-1">
   <div class="row justify-content-center">
     <div class="col-md-10">
@@ -166,4 +170,4 @@
 
 
 
-<%- include('footer') %> 
+<%- include('footer') %>
