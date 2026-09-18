@@ -136,7 +136,7 @@
   <div class="hr-topbar">
     <% if (hrLoggedIn) { %>
       <button class="hr-menu-toggle" type="button" aria-controls="hrSidebar" aria-expanded="false" aria-label="주 메뉴 열기"><i class="fa-solid fa-bars" aria-hidden="true"></i></button>
-      <div class="hr-page-label"><strong id="hrCategoryTitle">대시보드</strong><small>업무 메뉴에서 필요한 화면을 선택하세요</small></div>
+      <div class="hr-page-label"><strong id="hrCategoryTitle">대시보드</strong></div>
       <div class="hr-actions">
         <div class="hr-user"><strong><%= hrName %></strong><small><%= hrPosition || (hrAdmin ? '관리자' : '사용자') %></small></div>
         <a class="btn btn-sm hr-logout" href="/auth/logout" aria-label="로그아웃"><i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i><span class="ms-1">로그아웃</span></a>
