@@ -14,14 +14,14 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>직원 수정</title>
+  <title>직원 정보 수정</title>
 </head>
 <body>
   <%- include('header') %>
   <div class="container" style="max-width:80%; font-size:0.9em; margin-top:2rem; margin-bottom:2rem;">
     <div class="d-flex justify-content-center">
       <div style="max-width:1200px; width:100%;">
-        <h2 class="fw-bold text-center" style="margin-bottom:2rem;">기존 직원 정보 수정</h2>
+        <h2 class="fw-bold text-center" style="margin-bottom:2rem;">직원 정보 수정</h2>
         <form id="employeeForm" action="/employees/<%= employee._id %>?_method=PUT" method="POST" enctype="multipart/form-data">
           <!-- 기본정보 박스 -->
           <div class="row justify-content-center">
@@ -866,4 +866,4 @@
     }
   </style>
 </body>
-</html> 
+</html>
