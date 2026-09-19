@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { isLoggedIn } = require('../middleware/auth');
+const { isLoggedIn, adminOnly } = require('../middleware/auth');
 const upload = require('../middleware/upload');
 const DutyOrder = require('../models/DutyOrder');
 const WorkOrder = require('../models/WorkOrder');
@@ -302,7 +302,7 @@ router.get('/duty-orders', isLoggedIn, async (req, res) => {
 });
 
 // 새 인사명령 등록
-router.post('/duty-orders', isLoggedIn, upload.array('attachments', 5), async (req, res) => {
+router.post('/duty-orders', isLoggedIn, adminOnly, upload.array('attachments', 5), async (req, res) => {
   try {
     // 디버깅: 세션 정보 확인
     console.log('=== 인사명령 등록 디버깅 ===');
@@ -411,7 +411,7 @@ router.get('/duty-orders/:id', isLoggedIn, async (req, res) => {
 });
 
 // 인사명령 수정 페이지
-router.get('/duty-orders/:id/edit', isLoggedIn, async (req, res) => {
+router.get('/duty-orders/:id/edit', isLoggedIn, adminOnly, async (req, res) => {
   try {
     const dutyOrder = await DutyOrder.findById(req.params.id)
       .populate('issuedBy', 'name username')
@@ -476,7 +476,7 @@ router.get('/duty-orders/:id/edit', isLoggedIn, async (req, res) => {
 });
 
 // 인사명령 수정 처리
-router.put('/duty-orders/:id', isLoggedIn, upload.array('attachments', 5), async (req, res) => {
+router.put('/duty-orders/:id', isLoggedIn, adminOnly, upload.array('attachments', 5), async (req, res) => {
   try {
     // 디버깅: 요청 정보 로그
     console.log('=== 인사명령 수정 요청 ===');
@@ -566,7 +566,7 @@ router.put('/duty-orders/:id', isLoggedIn, upload.array('attachments', 5), async
 });
 
 // 인사명령 삭제
-router.delete('/duty-orders/:id', isLoggedIn, async (req, res) => {
+router.delete('/duty-orders/:id', isLoggedIn, adminOnly, async (req, res) => {
   try {
     const dutyOrder = await DutyOrder.findById(req.params.id);
     
@@ -1065,7 +1065,7 @@ router.get('/summary-reports', isLoggedIn, async (req, res) => {
 });
 
 // 새 요약보고서 등록
-router.post('/summary-reports', isLoggedIn, upload.array('attachments', 5), async (req, res) => {
+router.post('/summary-reports', isLoggedIn, adminOnly, upload.array('attachments', 5), async (req, res) => {
   try {
     const { 
       title, reportType, department, startDate, endDate, 
@@ -1254,7 +1254,7 @@ router.get('/summary-reports/:id', isLoggedIn, async (req, res) => {
 });
 
 // 요약보고서 상태 업데이트 (승인/반려)
-router.put('/summary-reports/:id/status', isLoggedIn, async (req, res) => {
+router.put('/summary-reports/:id/status', isLoggedIn, adminOnly, async (req, res) => {
   try {
     const { status, comment } = req.body;
     
