@@ -38,8 +38,8 @@
   ] },
   { id: 'system', label: '시스템정보', icon: 'fa-gear', items: [
     { label: '시스템알림', href: '/notice' },
-    { label: '공지 관리', href: '/notice/manage', admin: true },
-    { label: '공지 작성', href: '/notice/new', admin: true },
+
+
     { label: '통합 엑셀 관리', href: '/excelManager', admin: true },
     { label: '활동 로그 관리', href: '/auth/logs', admin: true }
   ] }
@@ -227,7 +227,38 @@
         match.setAttribute('aria-current', 'page');
       }
       selectGroup(match ? match.closest('[data-hr-panel]').dataset.hrPanel : 'home');
-      buttons.forEach(button => button.addEventListener('click', () => selectGroup(button.dataset.hrGroup)));
+      
+buttons.forEach(button => {
+  button.addEventListener('click', () => {
+    const groupId = button.dataset.hrGroup;
+
+    // 선택한 메뉴의 하위 메뉴 찾기
+    const panel = panels.find(
+      panel => panel.dataset.hrPanel === groupId
+    );
+
+    if (!panel) return;
+
+    // 실제 접근 가능한 첫 번째 페이지 찾기
+    const firstLink = panel.querySelector('a[href]');
+
+    // 준비 중인 메뉴는 기존 동작 유지
+    if (!firstLink) {
+      selectGroup(groupId);
+      return;
+    }
+
+    // 실제 페이지 이동
+    const target = firstLink.getAttribute('href');
+
+    if (window.location.pathname === target) {
+      selectGroup(groupId);
+      return;
+    }
+
+    window.location.assign(target);
+  });
+});
       toggle.addEventListener('click', () => {
         const open = !sidebar.classList.contains('is-open');
         sidebar.classList.toggle('is-open', open);

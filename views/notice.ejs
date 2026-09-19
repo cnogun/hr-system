@@ -7,6 +7,9 @@
 <main class="container py-4 py-md-5 flex-grow-1">
   <div class="d-flex align-items-center mb-4">
     <h1 class="h3 fw-bold mb-0"><i class="fa-solid fa-bullhorn text-primary me-2" aria-hidden="true"></i>시스템 알림</h1>
+    <% if (canManageNotices) { %>
+      <a href="/notice/new" class="btn btn-primary ms-auto"><i class="fa-solid fa-plus me-1" aria-hidden="true"></i>알림 작성</a>
+    <% } %>
   </div>
 
   <div class="card border-0 shadow-sm overflow-hidden">

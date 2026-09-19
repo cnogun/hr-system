@@ -65,6 +65,7 @@ router.get('/', async (req, res) => {
       notices, 
       currentPage: page,
       totalPages,
+      canManageNotices: res.locals.userRole === 'admin',
       session: req.session 
     });
   } catch (error) {
@@ -75,22 +76,6 @@ router.get('/', async (req, res) => {
         history.back();
       </script>
     `);
-  }
-});
-
-// 시스템 알림 상세 조회
-router.get('/:id', async (req, res) => {
-  if (!mongoose.isValidObjectId(req.params.id)) {
-    return res.status(404).send('시스템 알림을 찾을 수 없습니다.');
-  }
-
-  try {
-    const notice = await Notice.findById(req.params.id).populate('author', 'username');
-    if (!notice) return res.status(404).send('시스템 알림을 찾을 수 없습니다.');
-    res.render('noticeDetail', { notice, session: req.session });
-  } catch (error) {
-    console.error('시스템 알림 상세 조회 오류:', error);
-    res.status(500).send('시스템 알림을 불러오는 중 오류가 발생했습니다.');
   }
 });
 
@@ -120,7 +105,7 @@ router.post('/new', async (req, res) => {
     content: req.body.content,
     author: user._id
   });
-  res.redirect('/notice/manage');
+  res.redirect('/notice');
 });
 // 시스템 알림 수정 폼
 router.get('/:id/edit', async (req, res) => {
@@ -140,7 +125,7 @@ router.post('/:id/edit', async (req, res) => {
     title: req.body.title,
     content: req.body.content
   });
-  res.redirect('/notice/manage');
+  res.redirect('/notice');
 });
 // 시스템 알림 삭제
 router.post('/:id/delete', async (req, res) => {
@@ -148,7 +133,25 @@ router.post('/:id/delete', async (req, res) => {
   const user = await User.findById(req.session.userId);
   if (!user || user.role !== 'admin') return res.status(403).send('관리자만 접근 가능합니다.');
   await Notice.findByIdAndDelete(req.params.id);
-  res.redirect('/notice/manage');
+  res.redirect('/notice');
+});
+
+// 시스템 알림 상세 조회
+router.get('/:id', async (req, res) => {
+  if (!mongoose.isValidObjectId(req.params.id)) {
+    return res.status(404).send('시스템 알림을 찾을 수 없습니다.');
+  }
+
+  try {
+    const notice = await Notice.findById(req.params.id).populate('author', 'username');
+    if (!notice) return res.status(404).send('시스템 알림을 찾을 수 없습니다.');
+    const viewer = req.session?.userId ? await User.findById(req.session.userId).select('role') : null;
+    const canManageNotices = viewer?.role === 'admin';
+    res.render('noticeDetail', { notice, session: req.session, canManageNotices });
+  } catch (error) {
+    console.error('시스템 알림 상세 조회 오류:', error);
+    res.status(500).send('시스템 알림을 불러오는 중 오류가 발생했습니다.');
+  }
 });
 
 module.exports = router;
