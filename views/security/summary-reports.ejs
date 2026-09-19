@@ -210,7 +210,7 @@
             <div class="text-center text-muted mt-5">
               <i class="fas fa-chart-bar fa-3x mb-3"></i>
               <h5>등록된 요약보고서가 없습니다</h5>
-              <p>새로운 요약보고서를 등록해보세요.</p>
+              <p><% if (session.userRole === 'admin') { %>새로운 요약보고서를 등록해보세요.<% } else { %>새로운 요약보고서가 등록되면 이곳에서 확인할 수 있습니다.<% } %></p>
             </div>
           </div>
         <% } %>
