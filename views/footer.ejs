@@ -89,4 +89,8 @@ footer.footer {
   right: 0 !important;
   z-index: 1000 !important;
 }
+/* HR fixed footer */
+body { padding-bottom: 50px !important; }
+footer.footer { position: fixed !important; bottom: 0 !important; left: 0 !important; right: 0 !important; width: 100% !important; min-height: 50px; z-index: 1020 !important; }
+@media (min-width: 992px) { body:has(.hr-sidebar) footer.footer { left: var(--hr-side, 228px) !important; width: calc(100% - var(--hr-side, 228px)) !important; right: 0 !important; } }
 </style>
