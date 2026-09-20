@@ -1,0 +1,33 @@
+<%- include('header') %>
+<style>
+.uniform-page{width:min(100% - 32px,1320px);margin:18px auto 44px;color:#14243c}.uniform-title{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}.uniform-title h1{font-size:22px;margin:0}.uniform-card{background:#fff;border:1px solid #e2e8f0;border-radius:10px;box-shadow:0 2px 8px #0f172a09;padding:15px;margin-bottom:12px}.uniform-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.uniform-summary div{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px}.uniform-summary strong{display:block;font-size:20px}.uniform-filters{display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:8px}.uniform-table td,.uniform-table th{vertical-align:middle;white-space:nowrap}.uniform-table .name{font-weight:700}.status-ok{color:#15803d}.status-empty{color:#b45309}@media(max-width:800px){.uniform-summary,.uniform-filters{grid-template-columns:1fr}.uniform-title{align-items:flex-start;flex-direction:column}}
+</style>
+<main class="uniform-page">
+  <div class="uniform-title"><h1>직원별 유니폼 관리</h1><div><a class="btn btn-outline-primary btn-sm" href="/uniform/stats">발주 통계</a> <a class="btn btn-primary btn-sm" href="/uniform/issues">지급 이력</a></div></div>
+  <% if (typeof message !== 'undefined' && message) { %><div class="alert alert-success"><%= message %></div><% } %>
+  <section class="uniform-card uniform-summary">
+    <div><span>전체 직원</span><strong><%= employees.length %>명</strong></div>
+    <div><span>입력 완료</span><strong><%= completedCount %>명</strong></div>
+    <div><span>미입력</span><strong><%= employees.length - completedCount %>명</strong></div>
+  </section>
+  <section class="uniform-card">
+    <form class="uniform-filters" method="get" action="/uniform/manage">
+      <input class="form-control" name="search" value="<%= filters.search %>" placeholder="이름 또는 사번">
+      <select class="form-select" name="department"><option value="">전체 부서</option><% departments.forEach(function(dept){ %><option value="<%= dept %>" <%= filters.department===dept?'selected':'' %>><%= dept %></option><% }) %></select>
+      <select class="form-select" name="inputStatus"><option value="">전체 입력상태</option><option value="complete" <%= filters.inputStatus==='complete'?'selected':'' %>>입력 완료</option><option value="empty" <%= filters.inputStatus==='empty'?'selected':'' %>>미입력</option></select>
+      <button class="btn btn-primary">검색</button>
+    </form>
+  </section>
+  <section class="uniform-card table-responsive">
+    <table class="table table-hover uniform-table mb-0">
+      <thead><tr><th>직원</th><th>사번</th><th>부서</th><th>직급</th><th>입력상태</th><th>최근 지급일</th><th>관리</th></tr></thead>
+      <tbody>
+      <% if (!employees.length) { %><tr><td colspan="7" class="text-center text-muted py-4">조건에 맞는 직원이 없습니다.</td></tr><% } %>
+      <% employees.forEach(function(emp){ const complete=Boolean(emp.uniformSummerTop||emp.uniformSummerBottom||emp.uniformWinterTop||emp.safetyShoes); const latest=latestIssueMap[String(emp._id)]; %>
+        <tr><td class="name"><%= emp.name %></td><td><%= emp.empNo||'-' %></td><td><%= emp.department||'-' %></td><td><%= emp.position||'-' %></td><td class="<%= complete?'status-ok':'status-empty' %>"><%= complete?'입력 완료':'미입력' %></td><td><%= latest ? new Date(latest).toISOString().slice(0,10) : '-' %></td><td><a class="btn btn-outline-secondary btn-sm" href="/uniform/<%= emp._id %>">조회</a> <a class="btn btn-outline-primary btn-sm" href="/uniform/<%= emp._id %>/edit">수정</a> <a class="btn btn-success btn-sm" href="/uniform/<%= emp._id %>/issue">지급</a></td></tr>
+      <% }) %>
+      </tbody>
+    </table>
+  </section>
+</main>
+<%- include('footer') %>
