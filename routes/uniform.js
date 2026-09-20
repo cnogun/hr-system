@@ -516,7 +516,9 @@ router.get('/order-stats', requireLogin, requireAdmin, async (req, res) => {
       });
     });
 
+    const activeEmployeeIds = employees.map(employee => employee._id);
     const issueRows = await UniformIssue.aggregate([
+      { $match: { employee: { $in: activeEmployeeIds } } },
       { $unwind: '$items' },
       {
         $group: {
