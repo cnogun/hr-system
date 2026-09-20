@@ -486,7 +486,82 @@ router.get('/manage', requireLogin, requireAdmin, async (req, res) => {
     const filter = {};
     if (department) filter.department = department;
     if (search) {
-      const safeSearch = search.replace(/[\\^$.*+?()[\]{}|]/g, '\\// 관리자: 특정 직원 유니폼 정보 조회');
+      const safeSearch = search.replace(/[\\^$.*+?()[\]{}|]/g, '\\// 관리자: 발주 통계 (신청 수량 - 지급 완료 수량)
+router.get('/order-stats', requireLogin, requireAdmin, async (req, res) => {
+  try {
+    const itemFields = [
+      ['모자', 'cap', 'capQty'],
+      ['하복 상의', 'uniformSummerTop', 'uniformSummerTopQty'],
+      ['하복 하의', 'uniformSummerBottom', 'uniformSummerBottomQty'],
+      ['동복 상의', 'uniformWinterTop', 'uniformWinterTopQty'],
+      ['동복 하의', 'uniformWinterBottom', 'uniformWinterBottomQty'],
+      ['방한하의', 'uniformWinterPants', 'uniformWinterPantsQty'],
+      ['춘추복', 'springAutumnUniform', 'springAutumnUniformQty'],
+      ['방한외투', 'uniformWinterCoat', 'uniformWinterCoatQty'],
+      ['동점퍼', 'winterJacket', 'winterJacketQty'],
+      ['겹점퍼', 'doubleJacket', 'doubleJacketQty'],
+      ['우의', 'raincoat', 'raincoatQty'],
+      ['안전화', 'safetyShoes', 'safetyShoesQty'],
+      ['장화', 'rainBoots', 'rainBootsQty']
+    ];
+    const employees = await Employee.find({ status: { $ne: '퇴직' } }).lean();
+    const requestedMap = new Map();
+    employees.forEach(employee => {
+      itemFields.forEach(([item, sizeField, qtyField]) => {
+        const size = String(employee[sizeField] || '').trim();
+        const quantity = Number(employee[qtyField]) || 0;
+        if (!size || quantity <= 0) return;
+        const key = item + '||' + size;
+        requestedMap.set(key, (requestedMap.get(key) || 0) + quantity);
+      });
+    });
+
+    const issueRows = await UniformIssue.aggregate([
+      { $unwind: '$items' },
+      {
+        $group: {
+          _id: { item: '$items.item', size: '$items.size' },
+          issued: {
+            $sum: {
+              $cond: [
+                { $eq: ['$issueType', '반납'] },
+                { $multiply: ['$items.quantity', -1] },
+                '$items.quantity'
+              ]
+            }
+          }
+        }
+      }
+    ]);
+    const issuedMap = new Map(
+      issueRows.map(row => [row._id.item + '||' + row._id.size, Math.max(0, Number(row.issued) || 0)])
+    );
+    const keys = new Set([...requestedMap.keys(), ...issuedMap.keys()]);
+    const itemOrder = new Map(itemFields.map(([item], index) => [item, index]));
+    const rows = Array.from(keys).map(key => {
+      const separator = key.indexOf('||');
+      const item = key.slice(0, separator);
+      const size = key.slice(separator + 2);
+      const requested = requestedMap.get(key) || 0;
+      const issued = issuedMap.get(key) || 0;
+      return { item, size, requested, issued, needed: Math.max(0, requested - issued) };
+    }).sort((a, b) => (itemOrder.get(a.item) ?? 999) - (itemOrder.get(b.item) ?? 999)
+      || a.size.localeCompare(b.size, 'ko'));
+
+    const totals = rows.reduce((sum, row) => ({
+      requested: sum.requested + row.requested,
+      issued: sum.issued + row.issued,
+      needed: sum.needed + row.needed
+    }), { requested: 0, issued: 0, needed: 0 });
+
+    res.render('uniformOrderStats', { rows, totals, session: req.session });
+  } catch (error) {
+    console.error('유니폼 발주 통계 오류:', error);
+    res.status(500).send('발주 통계를 불러오는 중 오류가 발생했습니다.');
+  }
+});
+
+// 관리자: 특정 직원 유니폼 정보 조회');
       filter.$or = [
         { name: { $regex: safeSearch, $options: 'i' } },
         { empNo: { $regex: safeSearch, $options: 'i' } }
