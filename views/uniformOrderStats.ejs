@@ -1,0 +1,13 @@
+<%- include('header') %>
+<style>
+.order-page{width:min(100% - 32px,1240px);margin:18px auto 44px;color:#14243c}.order-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}.order-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}.order-summary div,.order-card{background:#fff;border:1px solid #e2e8f0;border-radius:10px;box-shadow:0 2px 8px #0f172a09}.order-summary div{padding:14px}.order-summary strong{display:block;font-size:22px}.order-card{padding:15px}.needed{font-weight:750;color:#b45309}.zero{color:#64748b}@media(max-width:700px){.order-head{align-items:flex-start;flex-direction:column}.order-summary{grid-template-columns:1fr}}
+</style>
+<main class="order-page">
+  <div class="order-head"><div><h1 class="h4 mb-1">유니폼 발주 통계</h1><p class="text-muted mb-0">재직 직원 신청 수량에서 지급 완료 수량을 제외해 발주 필요량을 계산합니다.</p></div><a class="btn btn-outline-secondary btn-sm" href="/uniform/manage">직원별 관리</a></div>
+  <section class="order-summary"><div><span>신청 수량</span><strong><%= totals.requested %>개</strong></div><div><span>지급 완료</span><strong><%= totals.issued %>개</strong></div><div><span>발주 필요</span><strong><%= totals.needed %>개</strong></div></section>
+  <section class="order-card table-responsive"><table class="table table-hover align-middle mb-0"><thead><tr><th>품목</th><th>사이즈</th><th class="text-end">신청 수량</th><th class="text-end">지급 완료</th><th class="text-end">발주 필요</th></tr></thead><tbody>
+  <% if(!rows.length){ %><tr><td colspan="5" class="text-center text-muted py-4">집계할 유니폼 정보가 없습니다.</td></tr><% } %>
+  <% rows.forEach(function(row){ %><tr><td><strong><%= row.item %></strong></td><td><%= row.size %></td><td class="text-end"><%= row.requested %></td><td class="text-end"><%= row.issued %></td><td class="text-end <%= row.needed>0?'needed':'zero' %>"><%= row.needed %></td></tr><% }) %>
+  </tbody></table></section>
+</main>
+<%- include('footer') %>

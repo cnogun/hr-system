@@ -13,6 +13,7 @@ const router = express.Router();
 const Employee = require('../models/Employee');
 const User = require('../models/User');
 const ExcelJS = require('exceljs');
+const UniformIssue = require('../models/UniformIssue');
 
 // 인증 및 본인확인 미들웨어
 function requireLogin(req, res, next) {
@@ -371,6 +372,7 @@ router.get('/stats/api', requireLogin, requireAdmin, async (req, res) => {
 
 // 유니폼 정보 조회 (본인)
 router.get('/', requireLogin, requireSelfOrAdmin, async (req, res) => {
+  if (req.session.userRole === 'admin') return res.redirect('/uniform/manage');
   // 최신 데이터를 다시 불러와서 확실히 최신 정보를 표시
   const userId = req.session.userId;
   const freshEmployee = await Employee.findOne({ userId });
@@ -472,6 +474,219 @@ router.post('/edit', requireLogin, requireSelfOrAdmin, async (req, res) => {
   } catch (error) {
     console.error('본인 유니폼 수정 오류:', error);
     res.status(500).send('유니폼 정보 수정 중 오류가 발생했습니다.');
+  }
+});
+
+// 관리자: 전체 직원 유니폼 현황
+router.get('/manage', requireLogin, requireAdmin, async (req, res) => {
+  try {
+    const search = typeof req.query.search === 'string' ? req.query.search.trim() : '';
+    const department = typeof req.query.department === 'string' ? req.query.department.trim() : '';
+    const inputStatus = typeof req.query.inputStatus === 'string' ? req.query.inputStatus : '';
+    const filter = {};
+    if (department) filter.department = department;
+    if (search) {
+      const safeSearch = search.replace(/[\\^$.*+?()[\]{}|]/g, '\\$&');
+      filter.$or = [
+        { name: { $regex: safeSearch, $options: 'i' } },
+        { empNo: { $regex: safeSearch, $options: 'i' } }
+      ];
+    }
+
+    let employees = await Employee.find(filter).sort({ department: 1, name: 1 }).lean();
+    const isComplete = employee => Boolean(
+      employee.uniformSummerTop || employee.uniformSummerBottom ||
+      employee.uniformWinterTop || employee.safetyShoes
+    );
+    if (inputStatus === 'complete') employees = employees.filter(isComplete);
+    if (inputStatus === 'empty') employees = employees.filter(employee => !isComplete(employee));
+
+    const employeeIds = employees.map(employee => employee._id);
+    const latestIssues = employeeIds.length ? await UniformIssue.aggregate([
+      { $match: { employee: { $in: employeeIds } } },
+      { $sort: { issuedAt: -1 } },
+      { $group: { _id: '$employee', issuedAt: { $first: '$issuedAt' } } }
+    ]) : [];
+    const latestIssueMap = Object.fromEntries(
+      latestIssues.map(issue => [String(issue._id), issue.issuedAt])
+    );
+    const departments = await Employee.distinct('department', { department: { $nin: [null, ''] } });
+
+    res.render('uniformManage', {
+      employees,
+      completedCount: employees.filter(isComplete).length,
+      latestIssueMap,
+      departments: departments.sort(),
+      filters: { search, department, inputStatus },
+      message: req.session.message,
+      session: req.session
+    });
+    delete req.session.message;
+  } catch (error) {
+    console.error('유니폼 직원 현황 오류:', error);
+    res.status(500).send('유니폼 직원 현황을 불러오는 중 오류가 발생했습니다.');
+  }
+});
+
+// 관리자: 지급이력 조회
+router.get('/issues', requireLogin, requireAdmin, async (req, res) => {
+  try {
+    const search = typeof req.query.search === 'string' ? req.query.search.trim() : '';
+    const department = typeof req.query.department === 'string' ? req.query.department.trim() : '';
+    const issueType = typeof req.query.issueType === 'string' ? req.query.issueType : '';
+    const month = typeof req.query.month === 'string' ? req.query.month : '';
+    const employeeFilter = {};
+    if (department) employeeFilter.department = department;
+    if (search) {
+      const safeSearch = search.replace(/[\\^$.*+?()[\]{}|]/g, '\\$&');
+      employeeFilter.$or = [
+        { name: { $regex: safeSearch, $options: 'i' } },
+        { empNo: { $regex: safeSearch, $options: 'i' } }
+      ];
+    }
+    const employees = await Employee.find(employeeFilter).select('_id');
+    const filter = { employee: { $in: employees.map(employee => employee._id) } };
+    if (issueType) filter.issueType = issueType;
+    if (/^\d{4}-\d{2}$/.test(month)) {
+      const start = new Date(month + '-01T00:00:00');
+      const end = new Date(start);
+      end.setMonth(end.getMonth() + 1);
+      filter.issuedAt = { $gte: start, $lt: end };
+    }
+    const issues = await UniformIssue.find(filter)
+      .populate('employee', 'name empNo department')
+      .populate('issuedBy', 'username')
+      .sort({ issuedAt: -1, createdAt: -1 })
+      .limit(1000);
+    const departments = await Employee.distinct('department', { department: { $nin: [null, ''] } });
+    res.render('uniformIssues', {
+      issues,
+      departments: departments.sort(),
+      filters: { search, department, issueType, month },
+      session: req.session
+    });
+  } catch (error) {
+    console.error('유니폼 지급이력 조회 오류:', error);
+    res.status(500).send('지급이력을 불러오는 중 오류가 발생했습니다.');
+  }
+});
+
+// 관리자: 직원별 지급 등록
+router.get('/:id/issue', requireLogin, requireAdmin, async (req, res) => {
+  const employee = await Employee.findById(req.params.id);
+  if (!employee) return res.status(404).send('직원을 찾을 수 없습니다.');
+  res.render('uniformIssueForm', {
+    employee,
+    today: new Date().toISOString().slice(0, 10),
+    session: req.session
+  });
+});
+
+router.post('/:id/issue', requireLogin, requireAdmin, async (req, res) => {
+  try {
+    const employee = await Employee.findById(req.params.id);
+    if (!employee) return res.status(404).send('직원을 찾을 수 없습니다.');
+    const toArray = value => Array.isArray(value) ? value : (value == null ? [] : [value]);
+    const itemNames = toArray(req.body.item);
+    const sizes = toArray(req.body.size);
+    const quantities = toArray(req.body.quantity);
+    const items = itemNames.map((item, index) => ({
+      item: String(item || '').trim(),
+      size: String(sizes[index] || '').trim(),
+      quantity: Number(quantities[index])
+    })).filter(item => item.item && item.size && Number.isInteger(item.quantity) && item.quantity > 0);
+    if (!items.length) return res.status(400).send('지급 품목, 사이즈, 수량을 정확히 입력하세요.');
+
+    await UniformIssue.create({
+      employee: employee._id,
+      issueType: req.body.issueType,
+      issuedAt: req.body.issuedAt,
+      items,
+      note: req.body.note,
+      issuedBy: req.session.userId
+    });
+    req.session.message = employee.name + '의 유니폼 지급이력이 저장되었습니다.';
+    res.redirect('/uniform/manage');
+  } catch (error) {
+    console.error('유니폼 지급이력 저장 오류:', error);
+    res.status(400).send('지급이력을 저장하지 못했습니다. 입력값을 확인하세요.');
+  }
+});
+
+// 관리자: 발주 통계 (신청 수량 - 지급 완료 수량)
+router.get('/order-stats', requireLogin, requireAdmin, async (req, res) => {
+  try {
+    const itemFields = [
+      ['모자', 'cap', 'capQty'],
+      ['하복 상의', 'uniformSummerTop', 'uniformSummerTopQty'],
+      ['하복 하의', 'uniformSummerBottom', 'uniformSummerBottomQty'],
+      ['동복 상의', 'uniformWinterTop', 'uniformWinterTopQty'],
+      ['동복 하의', 'uniformWinterBottom', 'uniformWinterBottomQty'],
+      ['방한하의', 'uniformWinterPants', 'uniformWinterPantsQty'],
+      ['춘추복', 'springAutumnUniform', 'springAutumnUniformQty'],
+      ['방한외투', 'uniformWinterCoat', 'uniformWinterCoatQty'],
+      ['동점퍼', 'winterJacket', 'winterJacketQty'],
+      ['겹점퍼', 'doubleJacket', 'doubleJacketQty'],
+      ['우의', 'raincoat', 'raincoatQty'],
+      ['안전화', 'safetyShoes', 'safetyShoesQty'],
+      ['장화', 'rainBoots', 'rainBootsQty']
+    ];
+    const employees = await Employee.find({ status: { $ne: '퇴직' } }).lean();
+    const requestedMap = new Map();
+    employees.forEach(employee => {
+      itemFields.forEach(([item, sizeField, qtyField]) => {
+        const size = String(employee[sizeField] || '').trim();
+        const quantity = Number(employee[qtyField]) || 0;
+        if (!size || quantity <= 0) return;
+        const key = item + '||' + size;
+        requestedMap.set(key, (requestedMap.get(key) || 0) + quantity);
+      });
+    });
+
+    const activeEmployeeIds = employees.map(employee => employee._id);
+    const issueRows = await UniformIssue.aggregate([
+      { $match: { employee: { $in: activeEmployeeIds } } },
+      { $unwind: '$items' },
+      {
+        $group: {
+          _id: { item: '$items.item', size: '$items.size' },
+          issued: {
+            $sum: {
+              $cond: [
+                { $eq: ['$issueType', '반납'] },
+                { $multiply: ['$items.quantity', -1] },
+                '$items.quantity'
+              ]
+            }
+          }
+        }
+      }
+    ]);
+    const issuedMap = new Map(
+      issueRows.map(row => [row._id.item + '||' + row._id.size, Math.max(0, Number(row.issued) || 0)])
+    );
+    const keys = new Set([...requestedMap.keys(), ...issuedMap.keys()]);
+    const itemOrder = new Map(itemFields.map(([item], index) => [item, index]));
+    const rows = Array.from(keys).map(key => {
+      const separator = key.indexOf('||');
+      const item = key.slice(0, separator);
+      const size = key.slice(separator + 2);
+      const requested = requestedMap.get(key) || 0;
+      const issued = issuedMap.get(key) || 0;
+      return { item, size, requested, issued, needed: Math.max(0, requested - issued) };
+    }).sort((a, b) => (itemOrder.get(a.item) ?? 999) - (itemOrder.get(b.item) ?? 999)
+      || a.size.localeCompare(b.size, 'ko'));
+
+    const totals = rows.reduce((sum, row) => ({
+      requested: sum.requested + row.requested,
+      issued: sum.issued + row.issued,
+      needed: sum.needed + row.needed
+    }), { requested: 0, issued: 0, needed: 0 });
+
+    res.render('uniformOrderStats', { rows, totals, session: req.session });
+  } catch (error) {
+    console.error('유니폼 발주 통계 오류:', error);
+    res.status(500).send('발주 통계를 불러오는 중 오류가 발생했습니다.');
   }
 });
 

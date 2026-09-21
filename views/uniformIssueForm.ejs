@@ -1,0 +1,14 @@
+<%- include('header') %>
+<style>.issue-page{width:min(100% - 32px,980px);margin:18px auto 44px}.issue-card{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:18px;box-shadow:0 2px 8px #0f172a09}.issue-row{display:grid;grid-template-columns:2fr 1fr 110px 44px;gap:8px;margin-bottom:8px}@media(max-width:700px){.issue-row{grid-template-columns:1fr}}</style>
+<main class="issue-page"><h1 class="h4 mb-3">유니폼 지급 등록</h1><section class="issue-card">
+  <div class="alert alert-light border"><strong><%= employee.name %></strong> · <%= employee.empNo||'-' %> · <%= employee.department||'-' %></div>
+  <form method="post" action="/uniform/<%= employee._id %>/issue" id="issueForm">
+    <div class="row g-3 mb-3"><div class="col-md-6"><label class="form-label">지급일</label><input class="form-control" type="date" name="issuedAt" value="<%= today %>" required></div><div class="col-md-6"><label class="form-label">처리 구분</label><select class="form-select" name="issueType" required><option>신규 지급</option><option>추가 지급</option><option>교환</option><option>반납</option></select></div></div>
+    <label class="form-label fw-bold">지급 품목</label><div id="items"></div><button class="btn btn-outline-primary btn-sm mb-3" type="button" id="addItem">품목 추가</button>
+    <div class="mb-3"><label class="form-label">비고</label><textarea class="form-control" name="note" maxlength="500" rows="3"></textarea></div>
+    <div class="d-flex justify-content-end gap-2"><a class="btn btn-outline-secondary" href="/uniform/manage">취소</a><button class="btn btn-primary" type="submit">지급이력 저장</button></div>
+  </form>
+</section></main>
+<template id="itemTemplate"><div class="issue-row"><select class="form-select" name="item[]" required><option value="">품목 선택</option><option>모자</option><option>하복 상의</option><option>하복 하의</option><option>동복 상의</option><option>동복 하의</option><option>방한하의</option><option>춘추복</option><option>방한외투</option><option>동점퍼</option><option>겹점퍼</option><option>우의</option><option>안전화</option><option>장화</option></select><input class="form-control" name="size[]" placeholder="사이즈" required><input class="form-control" name="quantity[]" type="number" min="1" value="1" required><button class="btn btn-outline-danger remove" type="button" aria-label="삭제">×</button></div></template>
+<script>(function(){const box=document.getElementById('items'),tpl=document.getElementById('itemTemplate');function add(){const row=tpl.content.cloneNode(true);row.querySelector('.remove').addEventListener('click',e=>{if(box.children.length>1)e.currentTarget.closest('.issue-row').remove()});box.appendChild(row)}document.getElementById('addItem').addEventListener('click',add);add()})();</script>
+<%- include('footer') %>
