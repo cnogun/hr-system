@@ -138,12 +138,6 @@
       font-weight: 600;
       white-space: nowrap;
     }
-    .employee-card .table input[type="checkbox"] {
-      accent-color: #2563eb;
-      width: 16px;
-      height: 16px;
-      cursor: pointer;
-    }
     body > .container .pagination { flex-wrap: wrap; gap: 4px; }
     body > .container .pagination .page-link {
       color: #2563eb;
@@ -265,15 +259,10 @@
 
         <div class="card employee-card">
           <div class="card-body p-0">
-            <form id="bulkDeleteForm" method="POST">
-              <input type="hidden" name="_method" value="DELETE">
               <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0 small text-center">
                   <thead>
                     <tr>
-                      <% if (session && session.userRole === 'admin') { %>
-                      <th style="width: 40px;" class="text-center"><input type="checkbox" id="selectAll"></th>
-                      <% } %>
                       <th style="width: 80px;" class="text-center">프로필</th>
                       <th style="width: 120px;" class="text-center">이름</th>
                       <th style="width: 100px;" class="text-center">사번</th>
@@ -282,7 +271,6 @@
                       <th style="width: 200px;" class="text-center">이메일</th>
                       <th style="width: 130px;" class="text-center">휴대폰</th>
                       <th style="width: 110px;" class="text-center">입사일</th>
-                      <th style="width: 140px;" class="text-center">관리</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -290,9 +278,6 @@
                       <% if (employees && employees.length > 0) { %>
                         <% employees.forEach(function(employee) { %>
                           <tr>
-                            <% if (session && session.userRole === 'admin') { %>
-                            <td class="text-center"><input type="checkbox" name="ids" value="<%= employee._id %>"></td>
-                            <% } %>
                             <td class="text-center">
                               <% if (employee.profileImage) { %>
                                 <img src="<%= employee.profileImage %>" alt="프로필 사진" class="rounded-circle border border-2" style="width: 48px; height: 48px; object-fit: cover;">
@@ -310,18 +295,11 @@
                             <td class="text-center small"><%= employee.email %></td>
                             <td class="text-center small"><%= employee.mobile || '-' %></td>
                             <td class="text-center small"><%= employee.hireDate.toISOString().slice(0,10) %></td>
-                            <td class="text-center">
-                              <% if (session && session.userRole === 'admin') { %>
-                                <a href="/uniform/<%= employee._id %>/edit" class="btn btn-xs btn-outline-success">유니폼</a>
-                              <% } else if (employee.userId && employee.userId.toString() === (session && session.userId)) { %>
-                                <a href="/uniform" class="btn btn-xs btn-outline-success">유니폼</a>
-                              <% } %>
-                            </td>
                           </tr>
                         <% }) %>
                       <% } else { %>
                         <tr>
-                          <td colspan="<%= session && session.userRole === 'admin' ? 10 : 9 %>" class="text-center py-4">
+                          <td colspan="8" class="text-center py-4">
                             <div class="text-muted">
                               <i class="fas fa-search fa-2x mb-2"></i>
                               <h5>검색 결과가 없습니다</h5>
@@ -335,7 +313,7 @@
                       <% } %>
                     <% } else { %>
                       <tr>
-                        <td colspan="<%= session && session.userRole === 'admin' ? 10 : 9 %>" class="text-center py-4">
+                        <td colspan="8" class="text-center py-4">
                           <div class="text-muted">
                             <i class="fas fa-search fa-3x mb-3"></i>
                             <h4 class="mb-3">직원 검색</h4>
@@ -347,7 +325,6 @@
                   </tbody>
                 </table>
               </div>
-            </form>
           </div>
         </div>
         
@@ -382,16 +359,5 @@
   
   <%- include('footer') %>
   
-  <script>
-    // 전체 선택 체크박스
-    document.getElementById('selectAll').addEventListener('change', function() {
-      const checkboxes = document.querySelectorAll('input[name="ids"]');
-      checkboxes.forEach(checkbox => {
-        checkbox.checked = this.checked;
-      });
-    });
-
-
-  </script>
 </body>
 </html>

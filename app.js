@@ -1604,7 +1604,7 @@ app.get('/notice/new', async (req, res) => {
 
 // 메인 페이지
 app.get('/', (req, res) => {
-  res.redirect('/notice');
+  res.redirect('/auth/login');
 });
 
 // 일반 직원의 시작 화면: 본인의 정보만 조회

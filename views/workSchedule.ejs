@@ -52,6 +52,43 @@
       /* 헤더 스타일 유지 */
       z-index: 1030;
     }
+
+    /* 한 화면에 더 많은 정보를 표시하는 밀도 높은 근무편성 UI */
+    .work-schedule-container { font-size: .88rem; }
+    .work-schedule-container > .row > .col-12 > .text-center { margin-bottom: 1.5rem !important; }
+    .work-schedule-container .display-4 { font-size: 2rem; }
+    .work-schedule-container .lead { font-size: 1rem; }
+    .work-schedule-container .card { margin-bottom: 1rem !important; }
+    .work-schedule-container .card-header { padding: .55rem .85rem; }
+    .work-schedule-container .card-header h5 { font-size: 1.05rem; }
+    .work-schedule-container .card-body { padding: .8rem; }
+    .work-schedule-container .form-label { margin-bottom: .25rem; }
+    .work-schedule-container .form-control,
+    .work-schedule-container .form-select { font-size: .86rem; padding-top: .35rem; padding-bottom: .35rem; }
+    .work-schedule-container textarea.form-control {
+      font-size: .8rem;
+      line-height: 1.2;
+      min-height: 68px;
+      padding: .35rem .45rem;
+    }
+    .work-schedule-container .table { font-size: .82rem; }
+    .work-schedule-container .table > :not(caption) > * > * { padding: .2rem .32rem; }
+    .work-schedule-container .table .form-select-sm {
+      min-height: 28px;
+      font-size: .8rem;
+      padding-top: .15rem;
+      padding-bottom: .15rem;
+    }
+    .work-schedule-container select[multiple] { font-size: .8rem; line-height: 1.2; }
+    #dutyRosterScroll { max-height: 62vh; overflow-y: auto; }
+    .schedule-menu .btn { min-width: 150px; }
+    .schedule-menu .btn.active { color: #fff; background: #0d6efd; border-color: #0d6efd; }
+
+    @media (max-width: 768px) {
+      .work-schedule-container { font-size: .84rem; }
+      .work-schedule-container .card-body { padding: .65rem; }
+      #dutyRosterScroll { max-height: 55vh; }
+    }
   </style>
 </head>
 <body>
@@ -71,11 +108,17 @@
           <p class="lead text-muted">팀별 근무 스케줄과 주말 인원 배정을 관리합니다.</p>
         </div>
 
+        <div class="schedule-menu d-flex flex-wrap justify-content-center gap-2 mb-3">
+          <button class="btn btn-outline-primary active" id="menuMain" type="button" onclick="showScheduleMenu('main')"><i class="fa-solid fa-clipboard-list me-1"></i>근무명단</button>
+          <button class="btn btn-outline-primary" id="menuRoster" type="button" onclick="showScheduleMenu('roster')"><i class="fa-solid fa-people-group me-1"></i>기본편성 관리</button>
+          <button class="btn btn-outline-primary" id="menuHoliday" type="button" onclick="showScheduleMenu('holiday')"><i class="fa-solid fa-flag me-1"></i>법정공휴일 관리</button>
+        </div>
+
         
         
 
         <!-- 이번주 팀 근무 형태 -->
-        <div class="card shadow-sm mb-4">
+        <div class="card shadow-sm mb-4" id="weeklyOverviewCard">
           <div class="card-header bg-info text-white">
             <h5 class="mb-0">
               <i class="fa-solid fa-users me-2"></i><span id="currentWeekInfo">이번주 팀 근무 형태</span>
@@ -108,19 +151,70 @@
           </div>
         </div>
         
+        <!-- 직원 기본 편성 관리 -->
+        <div class="card shadow-sm mb-4 d-none" id="basicRosterSection">
+          <div class="card-header bg-dark text-white">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+              <h5 class="mb-0"><i class="fa-solid fa-people-group me-2"></i>직원 기본 편성 관리</h5>
+              <button class="btn btn-light btn-sm" type="button" onclick="saveDutyRoster()"><i class="fa-solid fa-save me-1"></i>기본 편성 저장</button>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="alert alert-light border small py-2">
+              역할과 기본 조를 저장하면 일자별 근무명단이 자동 표시됩니다. 조장1은 선택조에서 제외되고 조장2·3·4가 순환합니다.
+            </div>
+            <div class="row g-2 align-items-end mb-2">
+              <div class="col-md-4">
+                <label class="form-label fw-semibold">관리할 팀</label>
+                <select class="form-select" id="rosterTeam" onchange="loadDutyRoster()">
+                  <option value="1">보안1팀</option>
+                  <option value="2">보안2팀</option>
+                  <option value="3">보안3팀</option>
+                </select>
+              </div>
+              <div class="col-md-8 text-md-end">
+                <small class="text-muted">선택조 기준: 조장 1명 + 일반 7명 + 특수 2명 = 10명</small>
+              </div>
+            </div>
+            <div class="row g-2 mb-2">
+              <div class="col-md-5">
+                <input class="form-control form-control-sm" id="rosterSearch" placeholder="사번 또는 이름 검색" oninput="filterDutyRosterRows()">
+              </div>
+              <div class="col-md-3">
+                <select class="form-select form-select-sm" id="rosterRoleFilter" onchange="filterDutyRosterRows()">
+                  <option value="all">전체 역할</option>
+                  <option value="">미분류</option>
+                  <option value="leader">조장</option>
+                  <option value="general">일반경비</option>
+                  <option value="special">특수경비</option>
+                </select>
+              </div>
+              <div class="col-md-4 d-flex justify-content-md-end align-items-center gap-2">
+                <small class="text-muted" id="rosterVisibleCount"></small>
+                <button class="btn btn-outline-primary btn-sm" type="button" onclick="applyDefaultRoleTemplate()">4/26/10 역할 배정</button>
+              </div>
+            </div>
+            <div class="table-responsive" id="dutyRosterScroll">
+              <table class="table table-sm table-hover align-middle mb-0">
+                <thead class="table-light sticky-top">
+                  <tr><th>사번</th><th>이름</th><th>역할</th><th>A/B조</th><th>1~4조</th><th>특수조</th></tr>
+                </thead>
+                <tbody id="dutyRosterBody"><tr><td colspan="6" class="text-center text-muted py-4">직원 목록을 불러오는 중입니다.</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
         <!-- 주말 근무 인원 배정 -->
-        <div class="card shadow-sm mb-4">
+        <div class="card shadow-sm mb-4 d-none" aria-hidden="true">
           <div class="card-header bg-warning text-dark">
             <div class="d-flex justify-content-between align-items-center">
               <h5 class="mb-0">
                 <i class="fa-solid fa-calendar-week me-2"></i>주말 근무 인원 배정
               </h5>
-              <div class="btn-group" role="group">
+              <div>
                 <button class="btn btn-light btn-sm" onclick="toggleWorkLogicInfo()">
                   <i class="fa-solid fa-info-circle me-1"></i>안내
-                </button>
-                <button class="btn btn-light btn-sm" onclick="generateAllTeamsPersonnel()">
-                  <i class="fa-solid fa-magic me-1"></i>전체 팀 자동생성
                 </button>
               </div>
             </div>
@@ -137,7 +231,8 @@
                     <li><strong>월~금요일:</strong> 각팀 40명 근무 (주간/초야/심야) 총 120명</li>
                     <li><strong>토요일:</strong> 주간조 30명(06:00~18:00) + 야간조 30명(18:00~06:00) = 총 60명</li>
                     <li><strong>일요일:</strong> 주간조 30명(06:00~18:00) + 야간조 30명(18:00~06:00) = 총 60명</li>
-                    <li><strong>주말 인원 배정:</strong> 각 근무 시간대별로 정확히 30명씩 배정</li>
+                    <li><strong>편성 방식:</strong> 자동입력 없이 관리자가 명단을 직접 지정하고 확정</li>
+                    <li><strong>활용:</strong> 확정된 명단은 근무명령서 자동 작성의 원본으로 사용</li>
                   </ul>
                 </div>
                 <button class="btn btn-outline-info btn-sm" onclick="toggleWorkLogicInfo()">
@@ -153,9 +248,7 @@
                   <h6 class="text-primary mb-0">
                     <i class="fa-solid fa-shield me-2"></i>보안1팀 조별 편성 명단
                   </h6>
-                  <button class="btn btn-sm btn-outline-primary" onclick="generateTeamPersonnel('team1')">
-                    <i class="fa-solid fa-magic me-1"></i>자동 생성
-                  </button>
+                  <span class="badge bg-light text-primary border">수동 관리</span>
                 </div>
                 <div class="row g-2">
                   <div class="col-md-2">
@@ -193,9 +286,7 @@
                   <h6 class="text-warning mb-0">
                     <i class="fa-solid fa-shield me-2"></i>보안2팀 조별 편성 명단
                   </h6>
-                  <button class="btn btn-sm btn-outline-warning" onclick="generateTeamPersonnel('team2')">
-                    <i class="fa-solid fa-magic me-1"></i>자동 생성
-                  </button>
+                  <span class="badge bg-light text-warning border">수동 관리</span>
                 </div>
                 <div class="row g-2">
                   <div class="col-md-2">
@@ -233,9 +324,7 @@
                   <h6 class="text-info mb-0">
                     <i class="fa-solid fa-shield me-2"></i>보안3팀 조별 편성 명단
                   </h6>
-                  <button class="btn btn-sm btn-outline-info" onclick="generateTeamPersonnel('team3')">
-                    <i class="fa-solid fa-magic me-1"></i>자동 생성
-                  </button>
+                  <span class="badge bg-light text-info border">수동 관리</span>
                 </div>
                 <div class="row g-2">
                   <div class="col-md-2">
@@ -279,8 +368,92 @@
         </div>
 
         
+        <!-- 예외 수동 편성 -->
+        <div class="card shadow-sm mb-4" id="manualAssignmentCard">
+          <div class="card-header bg-primary text-white">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+              <h5 class="mb-0"><i class="fa-solid fa-clipboard-list me-2"></i>일자별 근무명단</h5>
+              <span class="badge bg-light text-primary" id="assignmentStatus">자동 명단</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="alert alert-light border small py-2">
+              기본편성으로 명단을 자동 표시합니다. 결원·휴가·대체근무가 있을 때만 변경한 후 확정하세요.
+            </div>
+            <div class="row g-3 mb-3">
+              <div class="col-md-4">
+                <label class="form-label fw-semibold">근무일</label>
+                <input type="date" class="form-control" id="manualDate" onchange="loadManualAssignment()">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label fw-semibold">근무대</label>
+                <select class="form-select" id="manualShift" onchange="loadManualAssignment()">
+                  <option value="day">주간 06:00~18:00</option>
+                  <option value="night">야간 18:00~06:00</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label fw-semibold">팀</label>
+                <select class="form-select" id="manualTeam" onchange="loadAssignmentEmployees()">
+                  <option value="1">보안1팀</option>
+                  <option value="2">보안2팀</option>
+                  <option value="3">보안3팀</option>
+                </select>
+              </div>
+            </div>
+            <div class="row g-3">
+              <div class="col-lg-4">
+                <label class="form-label fw-semibold">조장 <span class="badge bg-secondary" id="leaderCount">0명</span></label>
+                <select class="form-select" id="manualLeaders" multiple size="8" onchange="updateManualCounts()"></select>
+                <div class="form-text">Ctrl 키를 누른 채 여러 명을 선택할 수 있습니다.</div>
+              </div>
+              <div class="col-lg-4">
+                <label class="form-label fw-semibold">일반경비 <span class="badge bg-success" id="generalCount">0명</span></label>
+                <select class="form-select" id="manualGenerals" multiple size="8" onchange="updateManualCounts()"></select>
+              </div>
+              <div class="col-lg-4">
+                <div class="d-flex justify-content-between align-items-center gap-2">
+                  <label class="form-label fw-semibold mb-1">특수경비 <span class="badge bg-warning text-dark" id="specialCount">0명</span></label>
+                  <span class="badge bg-light text-dark border mb-1">직접 선택</span>
+                </div>
+                <select class="form-select" id="manualSpecials" multiple size="8" onchange="updateManualCounts()"></select>
+                <div class="form-text" id="specialGroupGuide">기본 편성에서 지정한 특수경비조를 참고해 직접 선택합니다.</div>
+              </div>
+            </div>
+            <div class="mt-3">
+              <label class="form-label fw-semibold">변경 사유</label>
+              <input type="text" class="form-control" id="manualNote" maxlength="300" placeholder="예: 결원 대체, 특수경비 지정 변경">
+            </div>
+            <div class="d-flex flex-wrap justify-content-end gap-2 mt-3">
+              <button class="btn btn-outline-secondary" type="button" onclick="applyAutomaticAssignment(true)"><i class="fa-solid fa-wand-magic-sparkles me-1"></i>기본 명단 다시 불러오기</button>
+              <button class="btn btn-primary" type="button" onclick="saveManualAssignment()"><i class="fa-solid fa-lock me-1"></i>근무명단 확정</button>
+            </div>
+            <div class="border rounded mt-3 d-none" id="confirmedRosterPanel">
+              <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 p-2 bg-light">
+                <div>
+                  <strong><i class="fa-solid fa-user-check me-1 text-success"></i>확정 근무명단</strong>
+                  <span class="badge bg-success ms-1" id="confirmedTotalCount">0명</span>
+                  <small class="text-muted ms-2" id="confirmedMeta"></small>
+                </div>
+                <button class="btn btn-outline-success btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#confirmedRosterDetails" aria-expanded="false">
+                  전체 명단 보기
+                </button>
+              </div>
+              <div class="collapse" id="confirmedRosterDetails">
+                <div class="table-responsive" style="max-height: 360px; overflow-y: auto;">
+                  <table class="table table-sm table-hover align-middle mb-0">
+                    <thead class="table-light sticky-top"><tr><th>구분</th><th>사번</th><th>이름</th><th>기본조</th><th>상태</th></tr></thead>
+                    <tbody id="confirmedRosterBody"></tbody>
+                  </table>
+                </div>
+                <div class="small text-muted border-top p-2" id="confirmedNote"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- 주말 근무 인원 요약 -->
-        <div class="card shadow-sm mb-4">
+        <div class="card shadow-sm mb-4" id="weekendSummaryCard">
           <div class="card-header bg-success text-white">
             <h5 class="mb-0">
               <i class="fa-solid fa-calculator me-2"></i>주말 근무 인원 요약
@@ -336,7 +509,7 @@
         </div>
         
         <!-- 법정공휴일 관리 -->
-        <div class="card shadow-sm mb-4">
+        <div class="card shadow-sm mb-4 d-none" id="holidayManagementSection">
           <div class="card-header bg-danger text-white">
             <h5 class="mb-0">
               <i class="fa-solid fa-flag me-2"></i>법정공휴일 관리
@@ -391,19 +564,497 @@
          // 기본 JavaScript 초기화
      document.addEventListener('DOMContentLoaded', function() {
        console.log('근무 스케줄 관리 페이지 로드 완료');
+       mergeScheduleSummaryLayout();
+       showScheduleMenu('main');
        
        updateTeamWorkSchedule(); // 팀 근무 형태 자동 업데이트
        loadCurrentWeekInfo();
        loadHolidayList(); // 공휴일 목록 자동 로드
-       loadSavedWeekendSchedule(); // 저장된 주말 스케줄 불러오기
+       refreshWeekendSummaryFromBasicRoster(); // 기본 편성값으로 주말 요약 계산
+       const initialDate = new Date();
+       const daysToSaturday = (6 - initialDate.getDay() + 7) % 7;
+       initialDate.setDate(initialDate.getDate() + daysToSaturday);
+       document.getElementById('manualDate').value = initialDate.toISOString().slice(0, 10);
+       loadDutyRoster();
+       loadAssignmentEmployees();
        
        console.log('WorkSchedule 페이지 로드 완료');
      });
+
+    function mergeScheduleSummaryLayout() {
+      const overview = document.getElementById('weeklyOverviewCard');
+      const summary = document.getElementById('weekendSummaryCard');
+      if (!overview || !summary || document.getElementById('inlineWeekendSummary')) return;
+      const summaryRow = summary.querySelector('.card-body > .row');
+      const overviewBody = overview.querySelector('.card-body');
+      if (!summaryRow || !overviewBody) return;
+      const inline = document.createElement('div');
+      inline.id = 'inlineWeekendSummary';
+      inline.innerHTML = '<hr class="my-3"><div class="d-flex align-items-center mb-2"><i class="fa-solid fa-calculator text-success me-2"></i><strong>주말 근무 인원 요약</strong></div>';
+      inline.appendChild(summaryRow);
+      overviewBody.appendChild(inline);
+      summary.classList.add('d-none');
+    }
+
+    function showScheduleMenu(section) {
+      const visibility = {
+        weeklyOverviewCard: section === 'main',
+        manualAssignmentCard: section === 'main',
+        basicRosterSection: section === 'roster',
+        holidayManagementSection: section === 'holiday'
+      };
+      Object.entries(visibility).forEach(([id, visible]) => {
+        document.getElementById(id)?.classList.toggle('d-none', !visible);
+      });
+      document.getElementById('weekendSummaryCard')?.classList.add('d-none');
+      ['Main', 'Roster', 'Holiday'].forEach(name => {
+        const button = document.getElementById(`menu${name}`);
+        if (button) button.classList.toggle('active', name.toLowerCase() === section);
+      });
+      if (section === 'roster') loadDutyRoster();
+      if (section === 'holiday') loadHolidayList();
+    }
      
 
      
 
     
+    let assignmentEmployees = [];
+
+    function rosterSelect(className, employeeId, values, selectedValue) {
+      const changeHandler = className === 'roster-role' ? ' onchange="syncLeaderGroupState(this.closest(\'tr\')); filterDutyRosterRows()"' : '';
+      return `<select class="form-select form-select-sm ${className}" data-employee-id="${employeeId}"${changeHandler}>` +
+        values.map(item => `<option value="${item.value}" ${item.value === selectedValue ? 'selected' : ''}>${item.label}</option>`).join('') +
+        `</select>`;
+    }
+
+    async function loadDutyRoster() {
+      const body = document.getElementById('dutyRosterBody');
+      body.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">직원 목록을 불러오는 중입니다.</td></tr>';
+      try {
+        const team = document.getElementById('rosterTeam').value;
+        const response = await fetch(`/workSchedule/assignment-employees?team=${team}`);
+        const result = await response.json();
+        if (!result.success) throw new Error(result.message);
+        const roleOptions = [
+          { value: '', label: '미분류' }, { value: 'leader', label: '조장' },
+          { value: 'general', label: '일반경비' }, { value: 'special', label: '특수경비' }
+        ];
+        const abOptions = [{ value: 'none', label: '-' }, { value: 'A조', label: 'A조' }, { value: 'B조', label: 'B조' }];
+        const sundayOptions = [{ value: 'none', label: '-' }, 1, 2, 3, 4].flatMap(item =>
+          typeof item === 'number' ? [{ value: `${item}조`, label: `${item}조` }] : [item]
+        );
+        const specialOptions = [{ value: '', label: '-' }, 1, 2, 3, 4, 5].flatMap(item =>
+          typeof item === 'number' ? [{ value: String(item), label: `특수 ${item}조` }] : [item]
+        );
+        body.innerHTML = result.data.map(employee => {
+          const duty = employee.securityDuty || {};
+          const assignment = employee.weekendAssignment || {};
+          return `<tr data-employee-id="${employee._id}">
+            <td>${employee.empNo || '-'}</td><td class="fw-semibold">${employee.name}</td>
+            <td>${rosterSelect('roster-role', employee._id, roleOptions, duty.category || '')}</td>
+            <td>${rosterSelect('roster-ab', employee._id, abOptions, assignment.weekendGroup || 'none')}</td>
+            <td>${rosterSelect('roster-sunday', employee._id, sundayOptions, assignment.sundayGroup || 'none')}</td>
+            <td>${rosterSelect('roster-special', employee._id, specialOptions, duty.specialGroup ? String(duty.specialGroup) : '')}</td>
+          </tr>`;
+        }).join('') || '<tr><td colspan="6" class="text-center text-muted py-4">재직 직원이 없습니다.</td></tr>';
+        Array.from(body.querySelectorAll('tr[data-employee-id]')).forEach(syncLeaderGroupState);
+        filterDutyRosterRows();
+      } catch (error) {
+        body.innerHTML = `<tr><td colspan="6" class="text-center text-danger py-4">${error.message}</td></tr>`;
+      }
+    }
+
+    function syncLeaderGroupState(row) {
+      if (!row) return;
+      const isLeader = row.querySelector('.roster-role')?.value === 'leader';
+      const groupSelect = row.querySelector('.roster-sunday');
+      if (!groupSelect) return;
+      if (isLeader) groupSelect.value = 'none';
+      groupSelect.disabled = isLeader;
+      groupSelect.title = isLeader ? '조장은 선택조에 포함하지 않고 조장2·3·4가 자동 순환합니다.' : '';
+    }
+
+    function filterDutyRosterRows() {
+      const query = (document.getElementById('rosterSearch')?.value || '').trim().toLowerCase();
+      const role = document.getElementById('rosterRoleFilter')?.value ?? 'all';
+      const rows = Array.from(document.querySelectorAll('#dutyRosterBody tr[data-employee-id]'));
+      let visible = 0;
+      rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        const rowRole = row.querySelector('.roster-role')?.value || '';
+        const show = (!query || text.includes(query)) && (role === 'all' || rowRole === role);
+        row.classList.toggle('d-none', !show);
+        if (show) visible += 1;
+      });
+      const count = document.getElementById('rosterVisibleCount');
+      if (count) count.textContent = `${visible}/${rows.length}명 표시`;
+    }
+
+    function applyDefaultRoleTemplate() {
+      const rows = Array.from(document.querySelectorAll('#dutyRosterBody tr[data-employee-id]'));
+      if (rows.length !== 40) {
+        showResult(`기본 역할 배정은 팀원이 40명일 때만 사용할 수 있습니다. 현재 ${rows.length}명입니다.`, 'warning');
+        return;
+      }
+      rows.forEach((row, index) => {
+        const roleSelect = row.querySelector('.roster-role');
+        const specialSelect = row.querySelector('.roster-special');
+        if (index < 4) {
+          roleSelect.value = 'leader';
+          specialSelect.value = '';
+        } else if (index < 30) {
+          roleSelect.value = 'general';
+          specialSelect.value = '';
+        } else {
+          roleSelect.value = 'special';
+          specialSelect.value = String(Math.floor((index - 30) / 2) + 1);
+        }
+      });
+      filterDutyRosterRows();
+      showResult('사번 순으로 조장 4명, 일반경비 26명, 특수경비 10명(특수 1~5조 각 2명)을 입력했습니다. 확인 후 기본 편성 저장을 눌러주세요.', 'info');
+    }
+
+    async function saveDutyRoster() {
+      const rows = Array.from(document.querySelectorAll('#dutyRosterBody tr[data-employee-id]'));
+      const entries = rows.map(row => {
+        const category = row.querySelector('.roster-role').value;
+        return {
+          employeeId: row.dataset.employeeId,
+          category,
+          weekendGroup: row.querySelector('.roster-ab').value,
+          sundayGroup: category === 'leader' ? 'none' : row.querySelector('.roster-sunday').value,
+          specialGroup: row.querySelector('.roster-special').value || null
+        };
+      });
+      try {
+        const response = await fetch('/workSchedule/employee-duty-bulk', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ entries })
+        });
+        const result = await response.json();
+        if (!result.success) throw new Error(result.message);
+
+        // 저장 직후 서버에서 다시 조회해 실제 반영 여부를 확인한다.
+        const team = document.getElementById('rosterTeam').value;
+        const verifyResponse = await fetch(`/workSchedule/assignment-employees?team=${team}`);
+        const verifyResult = await verifyResponse.json();
+        if (!verifyResult.success) throw new Error('저장 후 편성 정보를 다시 확인하지 못했습니다.');
+        const savedById = new Map(verifyResult.data.map(employee => [String(employee._id), employee]));
+        const mismatch = entries.find(entry => {
+          const employee = savedById.get(String(entry.employeeId));
+          if (!employee) return true;
+          const duty = employee.securityDuty || {};
+          const assignment = employee.weekendAssignment || {};
+          return (duty.category || '') !== entry.category ||
+            (assignment.weekendGroup || 'none') !== entry.weekendGroup ||
+            (assignment.sundayGroup || 'none') !== entry.sundayGroup ||
+            String(duty.specialGroup || '') !== String(entry.specialGroup || '');
+        });
+        if (mismatch) throw new Error('일부 직원의 기본 편성이 저장값과 일치하지 않습니다. 다시 확인해주세요.');
+
+        showResult(`${result.message} 저장값 재조회까지 확인했습니다.`, 'success');
+        document.getElementById('manualTeam').value = document.getElementById('rosterTeam').value;
+        await Promise.all([loadDutyRoster(), loadAssignmentEmployees(), refreshWeekendSummaryFromBasicRoster()]);
+      } catch (error) {
+        showResult(error.message || '기본 편성을 저장하지 못했습니다.', 'danger');
+      }
+    }
+
+    async function refreshWeekendSummaryFromBasicRoster() {
+      try {
+        const responses = await Promise.all([1, 2, 3].map(team =>
+          fetch(`/workSchedule/assignment-employees?team=${team}`).then(response => response.json())
+        ));
+        if (responses.some(result => !result.success)) {
+          throw new Error('기본 편성 명단을 불러오지 못했습니다.');
+        }
+
+        responses.forEach((result, index) => {
+          const team = index + 1;
+          const employees = result.data || [];
+          const employeeLines = list => list.map(employee =>
+            `${employee.name}${employee.empNo ? ` (${employee.empNo})` : ''}`
+          ).join('\n');
+          const byWeekendGroup = group => employees.filter(employee =>
+            (employee.weekendAssignment || {}).weekendGroup === group
+          );
+          const bySundayGroup = group => employees.filter(employee =>
+            (employee.weekendAssignment || {}).sundayGroup === group
+          );
+
+          document.getElementById(`team${team}AGroup`).value = employeeLines(byWeekendGroup('A조'));
+          document.getElementById(`team${team}BGroup`).value = employeeLines(byWeekendGroup('B조'));
+          [1, 2, 3, 4].forEach(group => {
+            document.getElementById(`team${team}Group${group}`).value = employeeLines(bySundayGroup(`${group}조`));
+          });
+        });
+        calculateWeekendPersonnel();
+      } catch (error) {
+        console.error('기본 편성 기준 주말 인원 요약 오류:', error);
+        showResult(error.message || '주말 근무 인원 요약을 계산하지 못했습니다.', 'warning');
+      }
+    }
+
+    function selectedValues(id) {
+      return Array.from(document.getElementById(id).selectedOptions).map(option => option.value);
+    }
+
+    function employeeLabel(employee) {
+      const duty = employee.securityDuty || {};
+      const category = { leader: '조장', general: '일반', special: '특수' }[duty.category] || '미분류';
+      const group = duty.category === 'special' && duty.specialGroup ? ` ${duty.specialGroup}조` : '';
+      return `${employee.name}${employee.empNo ? ` (${employee.empNo})` : ''} · ${category}${group}`;
+    }
+
+    function fillEmployeeSelect(id, preferredCategory) {
+      const select = document.getElementById(id);
+      select.innerHTML = '';
+      const matchingEmployees = assignmentEmployees
+        .filter(employee => (employee.securityDuty || {}).category === preferredCategory)
+        .slice()
+        .sort((a, b) => (a.empNo || '').localeCompare(b.empNo || '', 'ko') || a.name.localeCompare(b.name, 'ko'));
+      matchingEmployees
+        .forEach(employee => {
+          const option = document.createElement('option');
+          option.value = employee._id;
+          option.textContent = employeeLabel(employee);
+          select.appendChild(option);
+        });
+      if (!matchingEmployees.length) {
+        const option = document.createElement('option');
+        option.disabled = true;
+        option.textContent = '기본 편성에서 해당 역할을 먼저 지정하세요.';
+        select.appendChild(option);
+      }
+    }
+
+    async function loadAssignmentEmployees() {
+      try {
+        const team = document.getElementById('manualTeam').value;
+        const response = await fetch(`/workSchedule/assignment-employees?team=${team}`);
+        const result = await response.json();
+        if (!result.success) throw new Error(result.message);
+        assignmentEmployees = result.data;
+        fillEmployeeSelect('manualLeaders', 'leader');
+        fillEmployeeSelect('manualGenerals', 'general');
+        fillEmployeeSelect('manualSpecials', 'special');
+        await loadManualAssignment();
+      } catch (error) {
+        showResult(error.message || '편성 대상 직원을 불러오지 못했습니다.', 'danger');
+      }
+    }
+
+    function applySelected(id, values) {
+      const selected = new Set((values || []).map(String));
+      Array.from(document.getElementById(id).options).forEach(option => {
+        option.selected = selected.has(option.value);
+      });
+    }
+
+    function updateManualCounts() {
+      const leaders = selectedValues('manualLeaders').length;
+      const generals = selectedValues('manualGenerals').length;
+      const specials = selectedValues('manualSpecials').length;
+      document.getElementById('leaderCount').textContent = `${leaders}명`;
+      document.getElementById('generalCount').textContent = `${generals}명`;
+      document.getElementById('specialCount').textContent = `${specials}명`;
+      document.getElementById('generalCount').className = 'badge bg-success';
+      document.getElementById('specialCount').className = 'badge bg-warning text-dark';
+    }
+
+    function sundayLeaderOrder(dateValue) {
+      const target = new Date(`${dateValue}T12:00:00`);
+      const anchor = new Date('2026-09-27T12:00:00'); // 조장2 순환 시작일
+      const weeks = Math.floor((target - anchor) / (7 * 24 * 60 * 60 * 1000));
+      return 2 + (((weeks % 3) + 3) % 3);
+    }
+
+    function automaticGroupFor(dateValue, shift, team) {
+      const date = new Date(`${dateValue}T12:00:00`);
+      const day = date.getDay();
+      const schedule = getTeamSchedule(Number(team), getWeekNumber(date));
+      if (day === 6) {
+        const active = (shift === 'day' && schedule === '초야') || (shift === 'night' && schedule === '심야');
+        return active ? { type: 'sunday', values: ['1조', '2조', '3조'] } : null;
+      }
+      if (day === 0) {
+        if (schedule === '주간') {
+          return { type: 'weekend', values: [shift === 'day' ? 'A조' : 'B조'] };
+        }
+        const active = (shift === 'day' && schedule === '초야') || (shift === 'night' && schedule === '심야');
+        if (!active) return null;
+        const rotatingGroup = (((getWeekNumber(date) - 1) % 4) + 4) % 4 + 1;
+        return { type: 'sunday', values: [`${rotatingGroup}조`] };
+      }
+      return null;
+    }
+
+    function applyAutomaticAssignment(showMessage = false) {
+      const dateValue = document.getElementById('manualDate').value;
+      const shift = document.getElementById('manualShift').value;
+      const team = document.getElementById('manualTeam').value;
+      if (!dateValue || !assignmentEmployees.length) return;
+      const date = new Date(`${dateValue}T12:00:00`);
+      const groupRule = automaticGroupFor(dateValue, shift, team);
+      const isIncluded = employee => {
+        if (!groupRule) return false;
+        const assignment = employee.weekendAssignment || {};
+        const value = groupRule.type === 'weekend' ? assignment.weekendGroup : assignment.sundayGroup;
+        return groupRule.values.includes(value);
+      };
+
+      const sortedLeaders = assignmentEmployees
+        .filter(employee => (employee.securityDuty || {}).category === 'leader')
+        .sort((a, b) => (a.empNo || '').localeCompare(b.empNo || '', 'ko') || a.name.localeCompare(b.name, 'ko'));
+      let leaders = [];
+      if (date.getDay() === 6 && groupRule) {
+        // 조장1은 선택조에서 제외하고 조장2·3·4가 토요일 3개 선택조를 담당한다.
+        leaders = sortedLeaders.slice(1, 4);
+      } else if (date.getDay() === 0 && groupRule) {
+        const order = sundayLeaderOrder(dateValue);
+        leaders = sortedLeaders[order - 1] ? [sortedLeaders[order - 1]] : [];
+      }
+      const selectByGroups = (category, limitPerGroup) => {
+        if (!groupRule) return [];
+        if (groupRule.type === 'weekend') {
+          return assignmentEmployees.filter(employee =>
+            (employee.securityDuty || {}).category === category && isIncluded(employee)
+          );
+        }
+        return groupRule.values.flatMap(group => assignmentEmployees
+          .filter(employee => {
+            const duty = employee.securityDuty || {};
+            const assignment = employee.weekendAssignment || {};
+            return duty.category === category && assignment.sundayGroup === group;
+          })
+          .sort((a, b) => (a.empNo || '').localeCompare(b.empNo || '', 'ko'))
+          .slice(0, limitPerGroup));
+      };
+      // 선택조 한 조는 조장 1명 + 일반 7명 + 특수 2명으로 구성한다.
+      const generals = selectByGroups('general', 7);
+      const specials = selectByGroups('special', 2);
+
+      applySelected('manualLeaders', leaders.map(employee => employee._id));
+      applySelected('manualGenerals', generals.map(employee => employee._id));
+      applySelected('manualSpecials', specials.map(employee => employee._id));
+      document.getElementById('manualNote').value = '';
+      const status = document.getElementById('assignmentStatus');
+      status.textContent = date.getDay() === 0
+        ? `자동 명단 · 조장${sundayLeaderOrder(dateValue)}`
+        : '자동 명단';
+      status.className = 'badge bg-light text-primary';
+      document.getElementById('confirmedRosterPanel').classList.add('d-none');
+      updateManualCounts();
+      if (showMessage) showResult('저장된 직원 기본편성으로 자동 명단을 다시 불러왔습니다.', 'info');
+    }
+
+    function escapeRosterText(value) {
+      return String(value ?? '').replace(/[&<>"']/g, character => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
+      })[character]);
+    }
+
+    function renderConfirmedRoster(data) {
+      const employeeById = new Map(assignmentEmployees.map(employee => [String(employee._id), employee]));
+      const categories = [
+        ['조장', data.leaders || [], 'primary'],
+        ['일반', data.generals || [], 'success'],
+        ['특수', data.specials || [], 'warning']
+      ];
+      const rows = [];
+      categories.forEach(([label, ids, color]) => {
+        ids.forEach(id => {
+          const employee = employeeById.get(String(id));
+          if (!employee) return;
+          const duty = employee.securityDuty || {};
+          const assignment = employee.weekendAssignment || {};
+          const groups = [];
+          if (duty.category === 'leader') {
+            const sortedLeaders = assignmentEmployees
+              .filter(item => (item.securityDuty || {}).category === 'leader')
+              .sort((a, b) => (a.empNo || '').localeCompare(b.empNo || '', 'ko') || a.name.localeCompare(b.name, 'ko'));
+            const leaderIndex = sortedLeaders.findIndex(item => String(item._id) === String(employee._id));
+            if (leaderIndex >= 0) groups.push(`조장${leaderIndex + 1}`);
+          }
+          if (assignment.weekendGroup && assignment.weekendGroup !== 'none') groups.push(assignment.weekendGroup);
+          if (assignment.sundayGroup && assignment.sundayGroup !== 'none') groups.push(assignment.sundayGroup);
+          if (duty.category === 'special' && duty.specialGroup) groups.push(`특수${duty.specialGroup}조`);
+          rows.push(`<tr>
+            <td><span class="badge bg-${color}${color === 'warning' ? ' text-dark' : ''}">${label}</span></td>
+            <td>${escapeRosterText(employee.empNo || '-')}</td>
+            <td class="fw-semibold">${escapeRosterText(employee.name)}</td>
+            <td>${escapeRosterText(groups.join(' · ') || '-')}</td>
+            <td><span class="text-success"><i class="fa-solid fa-check me-1"></i>확정</span></td>
+          </tr>`);
+        });
+      });
+      document.getElementById('confirmedRosterBody').innerHTML = rows.join('') ||
+        '<tr><td colspan="5" class="text-center text-muted py-3">확정된 인원이 없습니다.</td></tr>';
+      document.getElementById('confirmedTotalCount').textContent = `${rows.length}명`;
+      const updatedAt = data.updatedAt ? new Date(data.updatedAt).toLocaleString('ko-KR') : '';
+      document.getElementById('confirmedMeta').textContent = updatedAt ? `확정 ${updatedAt}` : '확정 완료';
+      document.getElementById('confirmedNote').textContent = data.note
+        ? `변경 사유: ${data.note}`
+        : '기본편성 명단을 변경 없이 확정했습니다.';
+      document.getElementById('confirmedRosterPanel').classList.remove('d-none');
+    }
+
+    async function loadManualAssignment() {
+      const date = document.getElementById('manualDate').value;
+      if (!date) return;
+      try {
+        const params = new URLSearchParams({
+          date,
+          shift: document.getElementById('manualShift').value,
+          team: document.getElementById('manualTeam').value
+        });
+        const response = await fetch(`/workSchedule/manual-assignment?${params}`);
+        const result = await response.json();
+        if (!result.success) throw new Error(result.message);
+        const data = result.data;
+        if (!data) {
+          applyAutomaticAssignment(false);
+          return;
+        }
+        applySelected('manualLeaders', data.leaders);
+        applySelected('manualGenerals', data.generals);
+        applySelected('manualSpecials', data.specials);
+        document.getElementById('manualNote').value = data.note || '';
+        const status = document.getElementById('assignmentStatus');
+        status.textContent = data.note ? '변경 후 확정 명단' : '확정 명단';
+        status.className = 'badge bg-success';
+        renderConfirmedRoster(data);
+        updateManualCounts();
+      } catch (error) {
+        showResult(error.message || '수동 편성을 불러오지 못했습니다.', 'danger');
+      }
+    }
+
+    async function saveManualAssignment() {
+      const body = {
+        date: document.getElementById('manualDate').value,
+        shift: document.getElementById('manualShift').value,
+        team: Number(document.getElementById('manualTeam').value),
+        leaders: selectedValues('manualLeaders'),
+        generals: selectedValues('manualGenerals'),
+        specials: selectedValues('manualSpecials'),
+        note: document.getElementById('manualNote').value
+      };
+      try {
+        const response = await fetch('/workSchedule/manual-assignment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        const result = await response.json();
+        if (!result.success) throw new Error(result.message);
+        showResult(result.message, 'success');
+        await loadManualAssignment();
+      } catch (error) {
+        showResult(error.message || '수동 편성을 저장하지 못했습니다.', 'danger');
+      }
+    }
+
     // 현재 주차 정보 로드
     async function loadCurrentWeekInfo() {
       try {
@@ -542,14 +1193,14 @@
         if (team === 'team1') {
            if (team1Schedule === '초야') {
              // 1팀이 초야팀일 때: 1조~4조 중 3개조 (30명) - 선택조 1개 제외
-             const dayCount = group1Count + group2Count + group3Count;
+             const dayCount = group1Count + group2Count + group3Count + 3;
             satDayTotal += dayCount;
             if (dayCount > 0) {
                satDayTeams.push(`1팀 초야 ${dayCount}명`);
             }
           } else if (team1Schedule === '심야') {
              // 1팀이 심야팀일 때: 1조~4조 중 3개조 (30명) - 선택조 1개 제외
-             const nightCount = group1Count + group2Count + group3Count;
+             const nightCount = group1Count + group2Count + group3Count + 3;
             satNightTotal += nightCount;
             if (nightCount > 0) {
                satNightTeams.push(`1팀 심야 ${nightCount}명`);
@@ -559,14 +1210,14 @@
         } else if (team === 'team2') {
            if (team2Schedule === '초야') {
              // 2팀이 초야팀일 때: 1조~4조 중 3개조 (30명) - 선택조 1개 제외
-            const dayCount = group1Count + group2Count + group3Count;
+            const dayCount = group1Count + group2Count + group3Count + 3;
             satDayTotal += dayCount;
             if (dayCount > 0) {
                satDayTeams.push(`2팀 초야 ${dayCount}명`);
             }
           } else if (team2Schedule === '심야') {
              // 2팀이 심야팀일 때: 1조~4조 중 3개조 (30명) - 선택조 1개 제외
-            const nightCount = group1Count + group2Count + group3Count;
+            const nightCount = group1Count + group2Count + group3Count + 3;
             satNightTotal += nightCount;
             if (nightCount > 0) {
                satNightTeams.push(`2팀 심야 ${nightCount}명`);
@@ -576,14 +1227,14 @@
         } else if (team === 'team3') {
            if (team3Schedule === '초야') {
              // 3팀이 초야팀일 때: 1조~4조 중 3개조 (30명) - 선택조 1개 제외
-            const dayCount = group1Count + group2Count + group3Count;
+            const dayCount = group1Count + group2Count + group3Count + 3;
             satDayTotal += dayCount;
             if (dayCount > 0) {
                satDayTeams.push(`3팀 초야 ${dayCount}명`);
             }
           } else if (team3Schedule === '심야') {
              // 3팀이 심야팀일 때: 1조~4조 중 3개조 (30명) - 선택조 1개 제외
-            const nightCount = group1Count + group2Count + group3Count;
+            const nightCount = group1Count + group2Count + group3Count + 3;
             satNightTotal += nightCount;
             if (nightCount > 0) {
                satNightTeams.push(`3팀 심야 ${nightCount}명`);
@@ -606,14 +1257,14 @@
              }
            } else if (team1Schedule === '심야') {
              // 1팀이 심야팀일 때: 2조(선택조) 10명 야간특근
-             const supportCount = group2Count;
+             const supportCount = group2Count + 1;
              sunNightTotal += supportCount;
              if (supportCount > 0) {
                sunNightTeams.push(`1팀 심야 2조 ${supportCount}명`);
              }
            } else if (team1Schedule === '초야') {
              // 1팀이 초야팀일 때: 2조(선택조) 10명 주간특근
-             const supportCount = group2Count;
+             const supportCount = group2Count + 1;
              sunDayTotal += supportCount;
              if (supportCount > 0) {
                sunDayTeams.push(`1팀 초야 2조 ${supportCount}명`);
@@ -632,14 +1283,14 @@
              }
            } else if (team2Schedule === '초야') {
              // 2팀이 초야팀일 때: 선택조 10명 (일요일 주간근무 지원)
-             const supportCount = group1Count;
+             const supportCount = group1Count + 1;
              sunDayTotal += supportCount;
              if (supportCount > 0) {
                sunDayTeams.push(`2팀 초야 1조 ${supportCount}명`);
              }
            } else if (team2Schedule === '심야') {
              // 2팀이 심야팀일 때: 선택조 10명 (일요일 야간근무 지원)
-             const supportCount = group1Count;
+             const supportCount = group1Count + 1;
              sunNightTotal += supportCount;
              if (supportCount > 0) {
                sunNightTeams.push(`2팀 심야 1조 ${supportCount}명`);
@@ -658,14 +1309,14 @@
              }
            } else if (team3Schedule === '심야') {
              // 3팀이 심야팀일 때: 선택조 10명 (일요일 야간근무 지원)
-             const supportCount = group1Count;
+             const supportCount = group1Count + 1;
              sunNightTotal += supportCount;
              if (supportCount > 0) {
                sunNightTeams.push(`3팀 심야 1조 ${supportCount}명`);
              }
            } else if (team3Schedule === '초야') {
              // 3팀이 초야팀일 때: 선택조 10명 (일요일 주간근무 지원)
-             const supportCount = group1Count;
+             const supportCount = group1Count + 1;
              sunDayTotal += supportCount;
              if (supportCount > 0) {
                sunDayTeams.push(`3팀 초야 1조 ${supportCount}명`);
@@ -708,88 +1359,6 @@
         showMessage('✅ 모든 주말 근무 인원이 목표(30명)에 맞게 배정되었습니다.', 'success');
       } else {
         showMessage(`⚠️ 주말 근무 인원이 목표(30명)와 다릅니다. 토요일 주간: ${satDayTotal}명, 야간: ${satNightTotal}명, 일요일 주간: ${sunDayTotal}명, 야간: ${sunNightTotal}명`, 'warning');
-      }
-    }
-    
-    // 팀별 조별 편성 명단 자동 생성
-    async function generateTeamPersonnel(team) {
-      try {
-        const response = await fetch(`/workSchedule/generate-personnel/${team}`, {
-          method: 'POST'
-        });
-        const result = await response.json();
-
-        if (result.success) {
-          showMessage(`${team} 팀의 조별 편성 명단이 자동 생성되었습니다.`, 'success');
-          // 생성된 명단으로 텍스트 영역 업데이트
-          document.getElementById(`${team}AGroup`).value = result.data.aGroup;
-          document.getElementById(`${team}BGroup`).value = result.data.bGroup;
-          document.getElementById(`${team}Group1`).value = result.data.group1;
-          document.getElementById(`${team}Group2`).value = result.data.group2;
-          document.getElementById(`${team}Group3`).value = result.data.group3;
-          document.getElementById(`${team}Group4`).value = result.data.group4;
-          // 인원 계산 실행
-          calculateWeekendPersonnel();
-        } else {
-          showMessage(`${team} 팀의 조별 편성 명단 자동 생성에 실패했습니다: ${result.message}`, 'danger');
-        }
-      } catch (error) {
-        console.error(`${team} 팀 자동 생성 오류:`, error);
-        showMessage(`${team} 팀 자동 생성 중 오류가 발생했습니다.`, 'danger');
-      }
-    }
-    
-    // 전체 팀 조별 편성 명단 자동 생성
-    async function generateAllTeamsPersonnel() {
-      try {
-        const response = await fetch('/workSchedule/generate-all-teams', {
-          method: 'POST'
-        });
-        
-        const result = await response.json();
-        
-        if (result.success) {
-          // 자동 생성된 데이터를 각 팀 필드에 설정
-          const data = result.data;
-          
-          // 보안1팀
-          document.getElementById('team1AGroup').value = data.team1.aGroup;
-          document.getElementById('team1BGroup').value = data.team1.bGroup;
-          document.getElementById('team1Group1').value = data.team1.group1;
-          document.getElementById('team1Group2').value = data.team1.group2;
-          document.getElementById('team1Group3').value = data.team1.group3;
-          document.getElementById('team1Group4').value = data.team1.group4;
-          
-          // 보안2팀
-          document.getElementById('team2AGroup').value = data.team2.aGroup;
-          document.getElementById('team2BGroup').value = result.data.team2.bGroup;
-          document.getElementById('team2Group1').value = data.team2.group1;
-          document.getElementById('team2Group2').value = data.team2.group2;
-          document.getElementById('team2Group3').value = data.team2.group3;
-          document.getElementById('team2Group4').value = data.team2.group4;
-          
-          // 보안3팀
-          document.getElementById('team3AGroup').value = data.team3.aGroup;
-          document.getElementById('team3BGroup').value = data.team3.bGroup;
-          document.getElementById('team3Group1').value = data.team3.group1;
-          document.getElementById('team3Group2').value = data.team3.group2;
-          document.getElementById('team3Group3').value = data.team3.group3;
-          document.getElementById('team3Group4').value = data.team3.group4;
-          
-          showMessage('모든 팀의 조별 편성 명단이 자동 생성되었습니다.', 'success');
-          
-          // 자동으로 주말 스케줄 저장 실행
-          setTimeout(() => {
-            saveWeekendSchedule();
-          }, 1000);
-          
-        } else {
-          showMessage('전체 팀 편성 명단 자동 생성에 실패했습니다: ' + result.message, 'danger');
-        }
-        
-      } catch (error) {
-        console.error('전체 팀 편성 명단 자동 생성 오류:', error);
-        showMessage('전체 팀 편성 명단 자동 생성 중 오류가 발생했습니다.', 'danger');
       }
     }
     

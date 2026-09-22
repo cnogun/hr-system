@@ -9,8 +9,16 @@
   ] },
   { id: 'people', label: '인사정보', icon: 'fa-users', items: [
     { label: '직원조회', href: '/employees' },
-    { label: '직원정보등록', href: '/employees/new', admin: true },
-    { label: '직원정보수정', href: '/employees/existing', admin: true }
+    { label: '직원정보관리', href: '/employees/manage', admin: true }
+  ] },
+  { id: 'duty', label: '직무관리', icon: 'fa-shield-halved', items: [
+    { label: '인사명령서', href: '/duty-orders', admin: true },
+    { label: '업무 일정', href: '/security/schedule', admin: true }
+  ] },
+  { id: 'uniform', label: '유니폼관리', icon: 'fa-shirt', items: [
+    { label: '직원별 유니폼', href: '/uniform', admin: true },
+    { label: '지급 관리', href: '/uniform/issues', admin: true },
+    { label: '발주 통계', href: '/uniform/order-stats', admin: true }
   ] },
   { id: 'attendance', label: '근태관리', icon: 'fa-calendar-check', items: [
     { label: '근태 입력', href: '/attendance', admin: true },
@@ -18,19 +26,11 @@
     { label: '근무 스케줄', href: '/workSchedule', admin: true }
   ] },
   { id: 'payroll', label: '급여관리', icon: 'fa-wallet', items: [], upcoming: true },
-  { id: 'duty', label: '직무관리', icon: 'fa-shield-halved', items: [
-    { label: '인사명령서', href: '/duty-orders', admin: true },
-    { label: '업무 일정', href: '/security/schedule', admin: true }
-  ] },
-  { id: 'work-info', label: '업무정보', icon: 'fa-briefcase', items: [
+  { id: 'work-info', label: '보안업무', icon: 'fa-briefcase', items: [
     { label: '근무명령서', href: '/work-orders', admin: true },
     { label: '인계사항', href: '/handovers', admin: true },
     { label: '지시사항', href: '/security/duty-orders', admin: true },
     { label: '보고서', href: '/security/summary-reports', admin: true }
-  ] },
-  { id: 'uniform', label: '유니폼관리', icon: 'fa-shirt', items: [
-    { label: '내 유니폼', href: '/uniform' },
-    { label: '유니폼 현황', href: '/uniform/stats', admin: true }
   ] },
   { id: 'community', label: '커뮤니티', icon: 'fa-comments', items: [
     { label: '자유게시판', href: '/boards' },
@@ -50,7 +50,7 @@
   { id: 'people', label: '인사정보', icon: 'fa-users', items: [
     { label: '직원찾기', href: '/directory' }
   ] },
-  { id: 'work-info', label: '업무정보', icon: 'fa-briefcase', items: [
+  { id: 'work-info', label: '보안업무', icon: 'fa-briefcase', items: [
     { label: '근무명령서', href: '/work-orders' },
     { label: '인계사항', href: '/handovers' },
     { label: '지시사항', href: '/security/duty-orders' },
@@ -227,7 +227,7 @@
         match.setAttribute('aria-current', 'page');
       }
       // 직원 상세정보 화면은 인사정보 메뉴에 속함
-const isEmployeeDetail = /^\/admin\/employees\/[^/]+$/.test(path);
+const isEmployeeDetail = /^\/admin\/employees\/[^/]+$/.test(path) || /^\/employees\/[^/]+\/edit$/.test(path);
 
 const activeGroup = isEmployeeDetail
   ? 'people'

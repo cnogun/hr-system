@@ -54,16 +54,24 @@ router.get('/', isLoggedIn, adminOnly, async (req, res) => {
 
 // 관리자 전용: 신입직원 추가 폼
 router.get('/new', isLoggedIn, adminOnly, async (req, res) => {
-  const users = await User.find({ role: 'employee' }).sort({ username: 1 });
+  const assignedUserIds = await Employee.distinct('userId');
+  const users = await User.find({ role: 'user', _id: { $nin: assignedUserIds } }).sort({ username: 1 });
   const employees = await Employee.find().sort({ name: 1 });
-  res.render('addEmployee', { users, employees, session: req.session });
+  res.render('addEmployee', { users, employees, employee: null, session: req.session });
 });
 
 // 관리자 전용: 신입직원 추가 처리
 router.post('/new', isLoggedIn, adminOnly, upload.single('profileImage'), async (req, res) => {
-  const { name, email, userId, orgType, department, position, hireDate } = req.body;
+  const { name, userId, orgType, department, position, hireDate } = req.body;
   
   try {
+    // 클라이언트 이메일 값 대신 연결 계정의 실제 이메일을 사용
+    const selectedUser = await User.findOne({ _id: userId, role: 'user' });
+    if (!selectedUser) return res.status(400).send('연결할 일반 사용자 계정을 선택해주세요.');
+    const email = selectedUser.email;
+    if (!name || !orgType || !department || !hireDate) {
+      return res.status(400).send('필수 항목을 입력해주세요.');
+    }
     // 이메일 중복 검사
     const existingEmployee = await Employee.findOne({ email: email });
     if (existingEmployee) {

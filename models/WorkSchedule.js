@@ -118,6 +118,20 @@ const workScheduleSchema = new mongoose.Schema({
       default: '평일특근'
     }
   }],
+
+  // 날짜/근무대별 수동 편성. locked=true인 값은 자동 생성으로 덮어쓰지 않습니다.
+  manualAssignments: [{
+    date: { type: String, required: true, match: /^\d{4}-\d{2}-\d{2}$/ },
+    shift: { type: String, required: true, enum: ['day', 'night'] },
+    team: { type: Number, required: true, min: 1, max: 3 },
+    leaders: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Employee' }],
+    generals: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Employee' }],
+    specials: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Employee' }],
+    locked: { type: Boolean, default: true },
+    note: { type: String, default: '', maxlength: 300 },
+    updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    updatedAt: { type: Date, default: Date.now }
+  }],
   
   // 상태
   status: {
@@ -201,4 +215,7 @@ workScheduleSchema.methods.getWorkTime = function(schedule) {
   }
 };
 
-module.exports = mongoose.model('WorkSchedule', workScheduleSchema);
+// app.js 또는 다른 라우트에서 이미 모델을 등록한 경우 기존 모델을 재사용한다.
+// nodemon 재시작이나 단계적 라우트 분리 과정에서도 OverwriteModelError를 방지한다.
+module.exports = mongoose.models.WorkSchedule ||
+  mongoose.model('WorkSchedule', workScheduleSchema);

@@ -13,11 +13,34 @@
 <head>
   <meta charset="UTF-8">
   <title><%= board.name %></title>
+  <style>
+    :root { --board-navy: #12335c; --board-blue: #1d6fb1; --board-bg: #f3f6fa; --board-border: #d9e3ef; --board-muted: #6b7f9f; }
+    body { background: var(--board-bg); color: #102f59; }
+    .board-page { width: 100% !important; max-width: 1120px; margin: 0 auto; padding: 26px 28px 52px; }
+    .board-page h2 { margin: 0; color: #082d60; font-size: 1.55rem; font-weight: 750; letter-spacing: -.02em; }
+    .board-page .card { border: 1px solid var(--board-border); border-radius: 14px; box-shadow: 0 6px 18px rgba(25, 55, 90, .045); overflow: hidden; }
+    .board-page .card-header { min-height: 54px; padding: 12px 18px; background: #fff; border-bottom: 1px solid #e5ebf3; }
+    .board-page .card-body { background: #fff; }
+    .board-page .form-control, .board-page .form-select, .board-page .input-group-text { min-height: 42px; border-color: #cad8e8; font-size: .9rem; }
+    .board-page .btn { min-height: 38px; border-radius: 8px; font-size: .86rem; font-weight: 650; }
+    .board-page .btn-primary { background: var(--board-blue); border-color: var(--board-blue); }
+    .board-page .table { color: #15365f; font-size: .86rem; }
+    .board-page .table > :not(caption) > * > * { padding: 12px 13px; border-color: #e2e9f1; vertical-align: middle; }
+    .board-page .table-light th { background: #f2f6fb; color: #31547d; font-size: .8rem; font-weight: 700; white-space: nowrap; }
+    .board-page .table tbody tr:hover > * { background: #f8fbff; }
+    .board-page .table a { color: #123f74; font-weight: 600; }
+    .post-date { white-space: nowrap; }
+    .post-select { width: 42px; text-align: center; }
+    @media (max-width: 767.98px) {
+      .board-page { width: 100%; padding: 18px 14px 38px; }
+      .board-page h2 { font-size: 1.3rem; }
+    }
+  </style>
 </head>
 <body>
   <%- include('../header') %>
   
-  <div class="container mt-4">
+  <div class="container-fluid board-page">
     <div class="row">
       <div class="col-12">
         <div class="d-flex justify-content-between align-items-center mb-4">
@@ -31,7 +54,15 @@
             <% } %>
             <%= board.name %>
           </h2>
-          <div>
+          <div class="d-flex gap-2">
+            <% if (session.userRole === 'admin') { %>
+            <a href="/boards/admin/reports" class="btn btn-outline-danger btn-sm">
+              <i class="fas fa-flag"></i> 신고 관리
+              <% if (pendingReports > 0) { %>
+                <span class="badge bg-danger ms-1"><%= pendingReports %></span>
+              <% } %>
+            </a>
+            <% } %>
             <a href="/boards" class="btn btn-secondary btn-sm">
               <i class="fas fa-arrow-left"></i> 목록
             </a>
@@ -118,21 +149,18 @@
 
         <!-- 게시글 목록 -->
         <div class="card">
+          <form id="bulkDeleteForm" method="POST" action="/boards/<%= board._id %>/posts/bulk-delete">
           <div class="card-header">
             <div class="row align-items-center">
               <div class="col-md-6">
                 <strong>총 <%= posts.length %>개의 게시글</strong>
               </div>
               <div class="col-md-6 text-end">
-                <small class="text-muted">
-                  <% if (board.writePermission === 'admin') { %>
-                    <i class="fas fa-lock"></i> 관리자만 글쓰기
-                  <% } else if (board.writePermission === 'department') { %>
-                    <i class="fas fa-users"></i> 부서원만 글쓰기
-                  <% } else { %>
-                    <i class="fas fa-globe"></i> 모든 직원 글쓰기
-                  <% } %>
-                </small>
+                <% if (session.userRole === 'admin' && posts.length > 0) { %>
+                  <button id="bulkDeleteButton" type="submit" class="btn btn-outline-danger btn-sm me-2" disabled>
+                    <i class="fas fa-trash"></i> 선택 삭제
+                  </button>
+                <% } %>
               </div>
             </div>
           </div>
@@ -141,6 +169,11 @@
               <table class="table table-hover mb-0">
                 <thead class="table-light">
                   <tr>
+                    <% if (session.userRole === 'admin') { %>
+                      <th class="post-select">
+                        <input id="selectAllPosts" class="form-check-input" type="checkbox" aria-label="게시글 전체 선택">
+                      </th>
+                    <% } %>
                     <th style="width: 10%;">번호</th>
                     <th style="width: 50%;">제목</th>
                     <th style="width: 15%;">작성자</th>
@@ -152,6 +185,11 @@
                 <tbody>
                   <% posts.forEach((post, index) => { %>
                     <tr>
+                      <% if (session.userRole === 'admin') { %>
+                        <td class="post-select">
+                          <input class="form-check-input post-checkbox" type="checkbox" name="postIds" value="<%= post._id %>" aria-label="<%= post.title %> 선택">
+                        </td>
+                      <% } %>
                       <td>
                         <% if (post.isNotice) { %>
                           <span class="badge bg-danger">공지</span>
@@ -179,13 +217,14 @@
                         <span class="text-success">👍 <%= post.likes ? post.likes.length : 0 %></span>
                         <span class="text-danger">👎 <%= post.dislikes ? post.dislikes.length : 0 %></span>
                       </td>
-                      <td><%= new Date(post.createdAt).toLocaleDateString() %></td>
+                      <td class="post-date"><%= new Date(post.createdAt).toLocaleDateString('ko-KR') %></td>
                     </tr>
                   <% }); %>
                 </tbody>
               </table>
             </div>
           </div>
+          </form>
         </div>
 
         <% if (posts.length === 0) { %>
@@ -236,5 +275,36 @@
 
 
   <%- include('../footer') %>
+  <% if (session.userRole === 'admin') { %>
+  <script>
+    (() => {
+      const form = document.getElementById('bulkDeleteForm');
+      const selectAll = document.getElementById('selectAllPosts');
+      const checkboxes = Array.from(document.querySelectorAll('.post-checkbox'));
+      const deleteButton = document.getElementById('bulkDeleteButton');
+      if (!form || !selectAll || !deleteButton) return;
+
+      const syncSelection = () => {
+        const selectedCount = checkboxes.filter(checkbox => checkbox.checked).length;
+        selectAll.checked = checkboxes.length > 0 && selectedCount === checkboxes.length;
+        selectAll.indeterminate = selectedCount > 0 && selectedCount < checkboxes.length;
+        deleteButton.disabled = selectedCount === 0;
+        deleteButton.innerHTML = `<i class="fas fa-trash"></i> 선택 삭제${selectedCount ? ` (${selectedCount})` : ''}`;
+      };
+
+      selectAll.addEventListener('change', () => {
+        checkboxes.forEach(checkbox => { checkbox.checked = selectAll.checked; });
+        syncSelection();
+      });
+      checkboxes.forEach(checkbox => checkbox.addEventListener('change', syncSelection));
+      form.addEventListener('submit', event => {
+        const selectedCount = checkboxes.filter(checkbox => checkbox.checked).length;
+        if (!selectedCount || !window.confirm(`선택한 게시글 ${selectedCount}건을 삭제하시겠습니까?\n삭제한 게시글은 복구할 수 없습니다.`)) {
+          event.preventDefault();
+        }
+      });
+    })();
+  </script>
+  <% } %>
 </body>
-</html> 
+</html>

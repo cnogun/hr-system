@@ -161,84 +161,19 @@ router.get('/', isLoggedIn, async (req, res) => {
   });
 });
 
-// 직원 추가 폼
-router.get('/new', isLoggedIn, adminOnly, async (req, res) => {
+// 통합 직원정보관리: 신규 등록 및 기존 직원 선택
+router.get('/manage', isLoggedIn, adminOnly, async (req, res) => {
   const assignedUserIds = await Employee.distinct('userId');
-  const users = await User.find({ role: 'user', _id: { $nin: assignedUserIds } }).sort({ username: 1 });
-  
-  // 헤더에 필요한 변수들 설정
-  if (req.session && req.session.userId) {
-    const User = require('../models/User');
-    const Employee = require('../models/Employee');
-    
-    const user = await User.findById(req.session.userId);
-    if (user) {
-      if (user.role === 'admin') {
-        res.locals.position = '관리자';
-        res.locals.name = user.username;
-        res.locals.department = '시스템 관리';
-        res.locals.employeePosition = '관리자';
-        res.locals.userRole = 'admin';
-      } else {
-        const employee = await Employee.findOne({ userId: req.session.userId });
-        if (employee) {
-          res.locals.position = `${employee.department || '부서미정'} / ${employee.position || '직급미정'}`;
-          res.locals.name = employee.name;
-          res.locals.department = employee.department || '부서미정';
-          res.locals.employeePosition = employee.position || '직급미정';
-          res.locals.userRole = 'user';
-        } else {
-          res.locals.position = '일반 사용자';
-          res.locals.name = user.username;
-          res.locals.department = '부서미정';
-          res.locals.employeePosition = '직급미정';
-          res.locals.userRole = 'user';
-        }
-      }
-    }
-  }
-  
-  res.render('addEmployee', { users, session: req.session });
+  const [users, employees] = await Promise.all([
+    User.find({ role: 'user', _id: { $nin: assignedUserIds } }).sort({ username: 1 }),
+    Employee.find().sort({ name: 1 })
+  ]);
+  res.render('employeeManage', { users, employees, employee: null, mode: req.query.mode === 'existing' ? 'existing' : 'new', session: req.session });
 });
 
-// 기존 직원 선택 폼
-router.get('/existing', isLoggedIn, adminOnly, async (req, res) => {
-  const employees = await Employee.find().sort({ name: 1 });
-  
-  // 헤더에 필요한 변수들 설정
-  if (req.session && req.session.userId) {
-    const User = require('../models/User');
-    const Employee = require('../models/Employee');
-    
-    const user = await User.findById(req.session.userId);
-    if (user) {
-      if (user.role === 'admin') {
-        res.locals.position = '관리자';
-        res.locals.name = user.username;
-        res.locals.department = '시스템 관리';
-        res.locals.employeePosition = '관리자';
-        res.locals.userRole = 'admin';
-      } else {
-        const employee = await Employee.findOne({ userId: req.session.userId });
-        if (employee) {
-          res.locals.position = `${employee.department || '부서미정'} / ${employee.position || '직급미정'}`;
-          res.locals.name = employee.name;
-          res.locals.department = employee.department || '부서미정';
-          res.locals.employeePosition = employee.position || '직급미정';
-          res.locals.userRole = 'user';
-        } else {
-          res.locals.position = '일반 사용자';
-          res.locals.name = user.username;
-          res.locals.department = '부서미정';
-          res.locals.employeePosition = '직급미정';
-          res.locals.userRole = 'user';
-        }
-      }
-    }
-  }
-  
-  res.render('existingEmployee', { employees, session: req.session });
-});
+// 기존 URL 호환
+router.get('/new', isLoggedIn, adminOnly, (req, res) => res.redirect('/employees/manage'));
+router.get('/existing', isLoggedIn, adminOnly, (req, res) => res.redirect('/employees/manage?mode=existing'));
 
 // 직원 추가
 router.post('/', isLoggedIn, adminOnly, upload.single('profileImage'), async (req, res) => {
@@ -472,6 +407,7 @@ router.get('/:id/edit', isLoggedIn, adminOnly, async (req, res) => {
     }
   }
   
+  if (!employeeData) return res.status(404).send('직원을 찾을 수 없습니다.');
   res.render('editEmployee', { employee: employeeData, employees, session: req.session });
 });
 

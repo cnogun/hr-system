@@ -76,6 +76,21 @@ const employeeSchema = new mongoose.Schema({
   workLocation: { type: String },
   rewardPunishment: { type: String }, // 상벌사항
 
+  // 보안근무 편성 구분 (기존 직원은 미지정 상태로 유지)
+  securityDuty: {
+    category: {
+      type: String,
+      enum: ['leader', 'general', 'special', ''],
+      default: ''
+    },
+    specialGroup: {
+      type: Number,
+      min: 1,
+      max: 5,
+      default: null
+    }
+  },
+
   // 유니폼/장구류 사이즈
   uniformSummerTop: { type: String, enum: ['', '3별대', '2별대', '별대', '특대', '대', '중'] },
   uniformSummerTopQty: { type: Number, default: 1 },
@@ -102,6 +117,18 @@ const employeeSchema = new mongoose.Schema({
   doubleJacket: { type: String, enum: ['', '3별대', '2별대', '별대', '특대', '대', '중'] }, // 겹점퍼
   doubleJacketQty: { type: Number, default: 1 },
   springAutumnUniform: { type: String, enum: ['', '3별대', '2별대', '별대', '특대', '대', '중'] },
+  springAutumnUniformQty: { type: Number, default: 1 },
+
+  // 유니폼 지급 이력 (관리자가 실제 지급한 내역)
+  uniformIssues: [{
+    itemKey: { type: String, required: true },
+    itemName: { type: String, required: true },
+    size: { type: String, default: '' },
+    quantity: { type: Number, min: 1, required: true },
+    issuedAt: { type: Date, required: true, default: Date.now },
+    note: { type: String, default: '', maxlength: 300 },
+    issuedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
+  }],
 
   // 프로필 이미지
   profileImage: { type: String },
