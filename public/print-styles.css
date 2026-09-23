@@ -590,7 +590,12 @@
     /* A4 미리보기에서 본문이 용지의 인쇄 가능 폭을 넘지 않게 한다. */
     html, body { width: 100% !important; min-width: 0 !important; }
     .container { box-sizing: border-box !important; max-width: 100% !important; width: 100% !important; margin-inline: auto !important; padding: 5mm 7mm 6mm !important; }
-    .print-title-approval h1 { font-size: 34px !important; }
+    .print-title-approval h1 {
+        font-size: 44px !important;
+        line-height: 1.15 !important;
+        margin-left: 3mm !important;
+        transform: translateY(8mm) !important;
+    }
     .form-section, .education-section { break-inside: auto !important; page-break-inside: auto !important; }
     .work-assignment-table tr, .education-section tr { break-inside: avoid !important; page-break-inside: avoid !important; }
 }
