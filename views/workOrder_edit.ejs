@@ -518,8 +518,7 @@
                             <div id="accidentItems">
                                 <!-- 사고 항목들이 여기에 동적으로 추가됩니다 -->
                             </div>
-                            <label for="accidentDetails" class="mt-2">추가 사고 내용</label>
-                            <textarea id="accidentDetails" name="personnelStatus[accidentDetails]" class="form-control" rows="2"><%= workOrder.personnelStatus?.accidentDetails || '' %></textarea>
+                            <input type="hidden" name="personnelStatus[accidentDetails]" value="<%= workOrder.personnelStatus?.accidentDetails || '' %>">
                         </div>
                     </div>
                 </div>
