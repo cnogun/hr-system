@@ -1,5 +1,6 @@
 const WorkSchedule = require('../models/WorkSchedule');
 const Employee = require('../models/Employee');
+const Holiday = require('../models/Holiday');
 
 class WorkScheduleService {
   /**
@@ -654,8 +655,15 @@ class WorkScheduleService {
    * 공휴일 여부 확인 (간단한 예시)
    */
   static async isHoliday(date) {
-    // 실제로는 공휴일 API나 데이터베이스를 사용해야 함
-    const holidays = [
+    const dateString = [
+      date.getFullYear(),
+      String(date.getMonth() + 1).padStart(2, '0'),
+      String(date.getDate()).padStart(2, '0')
+    ].join('-');
+    if (await Holiday.exists({ date: dateString })) return true;
+
+    // 등록되지 않은 고정 법정공휴일은 기본값으로도 판정한다.
+    const fixedHolidays = [
       '01-01', // 신정
       '03-01', // 삼일절
       '05-05', // 어린이날
@@ -665,9 +673,8 @@ class WorkScheduleService {
       '10-09', // 한글날
       '12-25'  // 크리스마스
     ];
-    
-    const dateString = `${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-    return holidays.includes(dateString);
+    const monthDay = dateString.slice(5);
+    return fixedHolidays.includes(monthDay);
   }
   
   /**
