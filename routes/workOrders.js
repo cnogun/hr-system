@@ -12,6 +12,18 @@
 const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
+const multer = require('multer');
+
+const templateSchema = new mongoose.Schema({
+  key: { type: String, required: true, unique: true },
+  originalName: { type: String, required: true },
+  content: { type: Buffer, required: true },
+  size: { type: Number, required: true },
+  uploadedAt: { type: Date, default: Date.now }
+});
+const WorkOrderTemplate = mongoose.models.WorkOrderTemplate || mongoose.model('WorkOrderTemplate', templateSchema);
+const uploadTemplate = multer({ storage: multer.memoryStorage(), limits: { fileSize: 2 * 1024 * 1024 } }).single('template');
+
 
 // WorkOrder 모델이 이미 존재하는지 확인하고 제거
 if (mongoose.models.WorkOrder) {
@@ -391,9 +403,12 @@ router.get('/', isLoggedIn, async (req, res) => {
     
     const total = await WorkOrder.countDocuments(filter);
     const totalPages = Math.ceil(total / limit);
+    const excelTemplate = await WorkOrderTemplate.findOne({ key: 'work-order' }).select('originalName size uploadedAt').lean();
     
     res.render('workOrderList', {
       workOrders,
+      excelTemplate,
+      templateUploaded: req.query.template === 'uploaded',
       currentPage: page,
       totalPages,
       total,
@@ -779,6 +794,44 @@ router.get('/:id/edit', isLoggedIn, adminOnly, async (req, res) => {
       message: '근무명령서 수정 폼을 불러오는 중 오류가 발생했습니다.',
       error: error
     });
+  }
+});
+
+// 관리자 지정 엑셀 양식 업로드. 최대 2MB의 .xlsx 파일만 저장합니다.
+router.post('/template', isLoggedIn, adminOnly, (req, res) => {
+  uploadTemplate(req, res, async (uploadError) => {
+    if (uploadError) {
+      return res.status(400).send(uploadError.code === 'LIMIT_FILE_SIZE' ? '엑셀 양식은 2MB 이하로 올려주세요.' : '엑셀 파일을 업로드할 수 없습니다.');
+    }
+    const file = req.file;
+    if (!file || !/\.xlsx$/i.test(file.originalname) || file.buffer.subarray(0, 4).toString('hex') !== '504b0304') {
+      return res.status(400).send('.xlsx 형식의 엑셀 양식을 선택해주세요.');
+    }
+    try {
+      await WorkOrderTemplate.findOneAndUpdate(
+        { key: 'work-order' },
+        { $set: { originalName: file.originalname, content: file.buffer, size: file.size, uploadedAt: new Date() } },
+        { upsert: true, new: true, runValidators: true }
+      );
+      res.redirect('/work-orders?template=uploaded');
+    } catch (error) {
+      console.error('근무명령서 엑셀 양식 저장 오류:', error);
+      res.status(500).send('엑셀 양식을 저장하지 못했습니다.');
+    }
+  });
+});
+
+router.get('/template/download', isLoggedIn, async (req, res) => {
+  try {
+    const template = await WorkOrderTemplate.findOne({ key: 'work-order' });
+    if (!template) return res.status(404).send('등록된 엑셀 양식이 없습니다.');
+    res.set('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.set('Content-Disposition', 'attachment; filename="work-order-template.xlsx"');
+    res.set('X-Content-Type-Options', 'nosniff');
+    res.send(template.content);
+  } catch (error) {
+    console.error('근무명령서 엑셀 양식 다운로드 오류:', error);
+    res.status(500).send('엑셀 양식을 내려받지 못했습니다.');
   }
 });
 
