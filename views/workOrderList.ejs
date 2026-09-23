@@ -55,6 +55,23 @@
         opacity: 0.9;
     }
         
+    .template-panel {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 18px;
+        margin-bottom: 18px;
+        border: 1px solid #d8e0ea;
+        border-radius: 6px;
+        background: #f8fafc;
+        font-size: 13px;
+    }
+    .template-detail { margin-top: 4px; color: #526071; }
+    .template-success { margin-bottom: 12px; color: #157347; font-size: 13px; }
+    .template-upload { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0; }
+    .template-upload input { max-width: 270px; font-size: 12px; }
+
     .filters {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -277,6 +294,31 @@
             <a href="/work-orders/new" class="btn btn-primary">새 근무명령서 작성</a>
             <% } %>
         </div>
+
+        <% if (templateUploaded) { %><div class="template-success">엑셀 양식이 저장되었습니다.</div><% } %>
+        <% if (userRole === 'admin' || excelTemplate) { %>
+        <section class="template-panel" aria-label="근무명령서 엑셀 양식">
+            <div>
+                <strong>엑셀 양식</strong>
+                <div class="template-detail">
+                    <% if (excelTemplate) { %>
+                        현재 양식: <%= excelTemplate.originalName %> · <%= new Date(excelTemplate.uploadedAt).toLocaleDateString('ko-KR') %>
+                    <% } else { %>
+                        등록된 양식이 없습니다.
+                    <% } %>
+                </div>
+            </div>
+            <% if (excelTemplate) { %>
+                <a href="/work-orders/template/download" class="btn btn-secondary">양식 다운로드</a>
+            <% } %>
+            <% if (userRole === 'admin') { %>
+                <form action="/work-orders/template" method="post" enctype="multipart/form-data" class="template-upload">
+                    <input type="file" name="template" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" aria-label="엑셀 양식 선택" required>
+                    <button type="submit" class="btn btn-primary"><%= excelTemplate ? '양식 교체' : '양식 업로드' %></button>
+                </form>
+            <% } %>
+        </section>
+        <% } %>
 
         <!-- 필터 -->
         <div class="filters">
