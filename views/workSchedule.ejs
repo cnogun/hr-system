@@ -524,7 +524,7 @@
             </div>
           </div>
           <div class="card-body">
-            <div class="small text-muted mb-2">확정명단은 날짜와 관계없이 삭제할 수 있습니다. 삭제 전 날짜와 팀을 확인해주세요.</div>
+            <div class="small text-muted mb-2">명단을 확인하거나 팀별 확정명단을 삭제할 수 있습니다.</div>
             <div class="table-responsive" style="max-height: 420px; overflow-y: auto;">
               <table class="table table-sm table-hover align-middle mb-0">
                 <thead class="table-light sticky-top">
@@ -545,6 +545,17 @@
               <thead class="table-light"><tr><th>번호</th><th>팀</th><th>구분</th><th>사번</th><th>이름</th></tr></thead>
               <tbody id="confirmedAllRosterBody"></tbody>
             </table></div></div>
+            <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button></div>
+          </div></div>
+        </div>
+        <div class="modal fade" id="confirmedDeleteModal" tabindex="-1" aria-labelledby="confirmedDeleteTitle" aria-hidden="true">
+          <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
+            <div class="modal-header"><h5 class="modal-title" id="confirmedDeleteTitle">확정명단 삭제</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button></div>
+            <div class="modal-body">
+              <p class="text-muted small mb-3">삭제할 팀을 선택하세요. 삭제한 명단은 복구할 수 없습니다.</p>
+              <div id="confirmedDeleteChoices" class="d-grid gap-2"></div>
+            </div>
             <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button></div>
           </div></div>
         </div>
@@ -1460,9 +1471,21 @@
           <td class="text-nowrap">${teamCell(mainTeam)}${!mainTeam ? '<br><small class="text-danger">미확정</small>' : ''}</td>
           <td class="text-nowrap">${teamCell(supportTeam)}${!supportTeam ? '<br><small class="text-danger">미확정</small>' : ''}</td>
           <td class="text-nowrap"><strong>전체 ${total}명</strong><br><small class="text-muted">조장 ${leader} · 일반 ${general} · 특수 ${special}</small>${teams.filter(item => item !== mainTeam && item !== supportTeam).length ? `<br><small>기타: ${teams.filter(item => item !== mainTeam && item !== supportTeam).map(teamCell).join(' · ')}</small>` : ''}${date.getDay() === 0 && (Number(mainTeam?.totalCount || 0) !== 19 || Number(supportTeam?.totalCount || 0) !== 9) ? '<br><small class="text-danger">기본편성 기준 주간팀 19명 + 지원팀 9명을 확인하세요.</small>' : ''}</td>
-          <td class="text-center text-nowrap"><button class="btn btn-outline-primary btn-sm" type="button" onclick="openConfirmedAllRoster('${group.date}', '${group.shift}')"><i class="fa-solid fa-eye me-1"></i>보기</button><div class="d-flex flex-wrap justify-content-center gap-1 mt-1">${teams.map(item => `<button class="btn btn-outline-danger btn-sm" type="button" onclick="deleteConfirmedAssignment('${item.scheduleId}', '${item.assignmentId}', '${group.date}')">보안${Number(item.team)}팀 삭제</button>`).join('')}</div></td>
+          <td class="text-center text-nowrap"><div class="d-inline-flex gap-1"><button class="btn btn-outline-primary btn-sm" type="button" onclick="openConfirmedAllRoster('${group.date}', '${group.shift}')"><i class="fa-solid fa-eye me-1"></i>보기</button><button class="btn btn-outline-danger btn-sm" type="button" onclick="openConfirmedDelete('${group.date}', '${group.shift}')"><i class="fa-solid fa-trash-can me-1"></i>삭제</button></div></td>
         </tr>`;
       }).join('');
+    }
+
+    function openConfirmedDelete(date, shift) {
+      const teams = (window.confirmedAssignmentItems || []).filter(item => item.date === date && item.shift === shift);
+      const choices = document.getElementById('confirmedDeleteChoices');
+      document.getElementById('confirmedDeleteTitle').textContent = `${date} ${shift === 'day' ? '주간' : '야간'} 확정명단 삭제`;
+      choices.innerHTML = teams.map((item, index) => `<button class="btn btn-outline-danger text-start" type="button" data-index="${index}">보안${Number(item.team)}팀 · ${Number(item.totalCount)}명 삭제</button>`).join('');
+      choices.querySelectorAll('button').forEach(button => button.addEventListener('click', () => {
+        const item = teams[Number(button.dataset.index)];
+        deleteConfirmedAssignment(item.scheduleId, item.assignmentId, date, Number(item.team));
+      }));
+      bootstrap.Modal.getOrCreateInstance(document.getElementById('confirmedDeleteModal')).show();
     }
 
     async function openConfirmedAllRoster(date, shift) {
@@ -1492,13 +1515,14 @@
       document.getElementById('manualAssignmentCard')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
-    async function deleteConfirmedAssignment(scheduleId, assignmentId, date) {
-      if (!confirm(`${date} 확정 근무명단을 삭제하시겠습니까?\n삭제한 명단은 복구할 수 없습니다.`)) return;
+    async function deleteConfirmedAssignment(scheduleId, assignmentId, date, team) {
+      if (!confirm(`${date} 보안${team}팀 확정 근무명단을 삭제하시겠습니까?\n삭제한 명단은 복구할 수 없습니다.`)) return;
       try {
         const response = await fetch(`/workSchedule/manual-assignments/${scheduleId}/${assignmentId}`, { method: 'DELETE' });
         const result = await response.json();
         if (handleHolidayAuth(response, result)) return;
         if (!result.success) throw new Error(result.message);
+        bootstrap.Modal.getInstance(document.getElementById('confirmedDeleteModal'))?.hide();
         showResult(result.message, 'success');
         await loadConfirmedAssignments(true);
       } catch (error) {
