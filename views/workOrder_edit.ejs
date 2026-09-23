@@ -1147,11 +1147,11 @@
                     <option value="근무지원조" ${accidentType === '근무지원조' ? 'selected' : ''}>근무지원조</option>
                 </select>
                 <span>:</span>
-                <textarea name="personnelStatus[absentDetails][][employeeName]" placeholder="명단 (12명까지, 쉼표 또는 줄바꿈으로 구분)" rows="3" style="flex: 1 1 420px; min-width: 220px; max-width: 650px; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; box-sizing: border-box; resize: vertical;"></textarea>
+                <input type="text" name="personnelStatus[absentDetails][][employeeName]" placeholder="명단 (쉼표로 구분해 12명까지 입력)" value="" style="flex: 1 1 100%; width: 100%; min-width: 0; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; box-sizing: border-box;">
                 <button type="button" onclick="removeAccidentItem(this)" style="background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;">삭제</button>
             `;
             
-            div.querySelector('textarea[name="personnelStatus[absentDetails][][employeeName]"]').value = personnelName;
+            div.querySelector('input[name="personnelStatus[absentDetails][][employeeName]"]').value = personnelName;
             container.appendChild(div);
         }
 
