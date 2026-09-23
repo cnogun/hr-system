@@ -1,0 +1,51 @@
+<%- include('header') %>
+<% const won = value => Number(value || 0).toLocaleString('ko-KR') + '원'; %>
+<% const fmt = value => Number(value || 0).toLocaleString('ko-KR'); %>
+<div class="container-fluid py-3" style="max-width:1500px">
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <div><h2 class="h4 mb-1">급여관리</h2><div class="text-muted small">근태시간과 급여 기준을 검토한 뒤 월 급여를 확정합니다.</div></div>
+    <form method="get" action="/payroll" class="d-flex gap-2 align-items-center"><label for="payMonth" class="text-nowrap">대상 월</label><input id="payMonth" type="month" class="form-control" name="month" value="<%= month %>" required><button class="btn btn-primary text-nowrap">조회</button></form>
+  </div>
+  <% if (notice) { %><div class="alert alert-info py-2" role="status"><%= notice %></div><% } %>
+  <ul class="nav nav-tabs mb-3" role="tablist">
+    <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#payMonthly" type="button">월별 급여</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#payRates" type="button">급여 기준</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#payLedger" type="button">급여 대장</button></li>
+  </ul>
+  <div class="tab-content">
+    <div id="payMonthly" class="tab-pane fade show active">
+      <div class="card mb-3"><div class="card-body d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <div><strong><%= month %> · <%= run?.status === 'confirmed' ? '확정' : (run ? '검토 중' : '시산 전') %></strong><div class="small text-muted">근태에 입력된 기본·연장·특근·특연·야간시간을 사용합니다. 세금·사회보험은 담당자가 확인해 입력합니다.</div></div>
+        <% if (run?.status !== 'confirmed') { %><form method="post" action="/payroll/calculate" onsubmit="return confirm('현재 근태와 급여 기준으로 다시 계산하시겠습니까?')"><input type="hidden" name="month" value="<%= month %>"><button class="btn btn-primary">급여 시산<%= run ? ' 다시 계산' : '' %></button></form><% } %>
+      </div></div>
+      <% if (run?.lines?.length) { %>
+      <div class="table-responsive"><table class="table table-sm table-hover align-middle bg-white">
+        <thead class="table-light"><tr><th>직원</th><th>근태</th><th class="text-end">기본</th><th class="text-end">연장</th><th class="text-end">특근·특연</th><th class="text-end">야간</th><th class="text-end">지급총액</th><th class="text-end">공제총액</th><th class="text-end">실지급액</th><th>검토</th></tr></thead>
+        <tbody><% run.lines.forEach(line => { %><tr>
+          <td class="text-nowrap"><strong><%= line.name %></strong><br><small class="text-muted"><%= line.department %> · <%= line.empNo %></small></td>
+          <td class="text-nowrap"><%= line.attendanceCount %>일<br><small class="text-muted"><%= line.hours.basic %>/<%= line.hours.overtime %>/<%= line.hours.special %>/<%= line.hours.specialOvertime %>/<%= line.hours.night %>시간</small></td>
+          <td class="text-end"><%= won(line.basePay) %></td><td class="text-end"><%= won(line.overtimePay) %></td>
+          <td class="text-end"><%= won(line.specialPay + line.specialOvertimePay) %></td><td class="text-end"><%= won(line.nightPay) %></td>
+          <td class="text-end"><%= won(line.gross) %></td><td class="text-end"><%= won(line.deductions) %></td><td class="text-end fw-bold"><%= won(line.net) %></td>
+          <td class="text-nowrap"><% if (run.status === 'confirmed') { %><a class="btn btn-outline-primary btn-sm" href="/payroll/payslip/<%= month %>/<%= line.employee %>">명세서</a><% } else { %><button class="btn btn-outline-primary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#edit-<%= line._id %>"><%= line.deductionsReviewed ? '검토완료' : '검토필요' %></button><% } %></td></tr>
+          <% if (run.status !== 'confirmed') { %><tr class="collapse" id="edit-<%= line._id %>"><td colspan="10" class="bg-light"><form method="post" action="/payroll/lines/<%= line._id %>" class="row g-2 align-items-end p-2"><input type="hidden" name="month" value="<%= month %>">
+            <% [['extraPay','추가 지급'],['incomeTax','소득세'],['localTax','지방소득세'],['pension','국민연금'],['health','건강보험'],['longTermCare','장기요양'],['employmentInsurance','고용보험'],['extraDeduction','기타 공제']].forEach(([key,label]) => { %><div class="col-6 col-md-3 col-xl-2"><label class="form-label small mb-1"><%= label %></label><input class="form-control form-control-sm" type="number" min="0" step="1" name="<%= key %>" value="<%= line[key] || 0 %>" required></div><% }); %>
+            <div class="col-12 col-md-6"><label class="form-label small mb-1">조정 사유·비고</label><input class="form-control form-control-sm" name="note" maxlength="300" value="<%= line.note || '' %>"></div>
+            <div class="col-12"><label><input type="checkbox" name="deductionsReviewed" <%= line.deductionsReviewed ? 'checked' : '' %>> 지급 항목과 공제액을 확인했습니다</label><button class="btn btn-primary btn-sm ms-3">검토 저장</button></div>
+          </form></td></tr><% } %>
+        <% }); %></tbody>
+      </table></div>
+      <% if (run.status !== 'confirmed') { %><div class="alert alert-warning small">확정 전 모든 직원의 근태·수당·공제 검토가 필요합니다. 확정 후에는 수정할 수 없습니다.</div><form method="post" action="/payroll/confirm" onsubmit="return confirm('급여를 최종 확정하시겠습니까? 확정 후에는 수정할 수 없습니다.')"><input type="hidden" name="month" value="<%= month %>"><button class="btn btn-success" <%= run.lines.some(l => !l.deductionsReviewed || !l.attendanceCount) ? 'disabled' : '' %>>월 급여 확정</button></form><% } %>
+      <% } else { %><div class="card"><div class="card-body text-muted">급여 기준을 등록한 뒤 급여 시산을 실행하세요.</div></div><% } %>
+    </div>
+    <div id="payRates" class="tab-pane fade"><div class="alert alert-secondary small">월 기본급 또는 기본 시급 중 하나를 입력하세요. 수당 단가는 실제 근로시간당 지급액입니다. 저장된 기준은 기존 확정 급여를 변경하지 않습니다.</div>
+      <div class="table-responsive"><table class="table table-sm align-middle bg-white"><thead class="table-light"><tr><th>직원</th><th>적용 월</th><th>월 기본급</th><th>기본 시급</th><th>연장 시급</th><th>특근 시급</th><th>특연 시급</th><th>야간 시급</th><th>고정 수당</th><th>저장</th></tr></thead><tbody>
+      <% employees.forEach(employee => { const rate = rates[String(employee._id)] || {}; %><tr><td class="text-nowrap"><strong><%= employee.name %></strong><br><small><%= employee.department || '' %></small></td><td colspan="9"><form method="post" action="/payroll/rates/<%= employee._id %>" class="d-flex gap-1 align-items-center" style="min-width:900px"><input type="hidden" name="month" value="<%= month %>"><span class="small text-nowrap" title="표시된 기준의 적용 시작 월">기존 <%= rate.effectiveFrom || '-' %></span><% [['basicMonthly','월 기본급'],['basicHourly','기본 시급'],['overtimeHourly','연장 시급'],['specialHourly','특근 시급'],['specialOvertimeHourly','특연 시급'],['nightHourly','야간 시급'],['fixedAllowance','고정 수당']].forEach(([key,label]) => { %><input class="form-control form-control-sm" type="number" min="0" step="1" name="<%= key %>" value="<%= rate[key] || 0 %>" aria-label="<%= label %>" title="<%= label %>" required><% }); %><button class="btn btn-outline-primary btn-sm text-nowrap">저장</button></form></td></tr><% }); %>
+      </tbody></table></div>
+    </div>
+    <div id="payLedger" class="tab-pane fade"><div class="card"><div class="card-body"><h3 class="h6">월별 급여 대장 · <%= month %></h3>
+      <% if (run?.status === 'confirmed') { const sum = key => run.lines.reduce((total,line) => total + Number(line[key] || 0), 0); %><p><%= run.lines.length %>명 · 지급총액 <strong><%= won(sum('gross')) %></strong> · 공제총액 <strong><%= won(sum('deductions')) %></strong> · 실지급액 <strong><%= won(sum('net')) %></strong></p><div class="small text-muted">확정일: <%= run.confirmedAt ? new Date(run.confirmedAt).toLocaleString('ko-KR') : '-' %> · 직원별 상세는 월별 급여 탭의 명세서에서 확인하세요.</div><% } else { %><p class="text-muted mb-0">급여 확정 후 대장이 표시됩니다.</p><% } %>
+    </div></div></div>
+  </div>
+</div>
+<%- include('footer') %>
