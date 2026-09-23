@@ -246,6 +246,8 @@
     .attendance-page .form-select { font-size: .84rem; }
     .attendance-page .hour-field { min-width: 58px; text-align: right; }
     .attendance-page .clock-field { min-width: 88px; font-variant-numeric: tabular-nums; }
+    .attendance-page .status-column { min-width: 150px; }
+    .attendance-page .status-select { min-width: 138px; padding-right: 1.8rem; white-space: nowrap; }
     .attendance-page .employee-name { min-width: 100px; }
     .attendance-page .note-field { min-width: 170px; }
     .attendance-page .page-actions .input-group { width: 205px; }
@@ -339,7 +341,7 @@
                       <th style="width: 100px;">이름</th>
                       <th style="width: 80px;">부서</th>
                       <th style="width: 80px;">직급</th>
-                      <th style="width: 130px;">근태 상태</th>
+                      <th class="status-column">근태 상태</th>
                       <th style="width: 80px;">출근 시간</th>
                       <th style="width: 80px;">퇴근 시간</th>
                       <th style="width: 70px;">기본</th>
@@ -370,7 +372,7 @@
                           </span>
                     </td>
                     <td class="align-middle">
-                          <select class="form-select form-select-sm" name="<%= employee._id %>_status"
+                          <select class="form-select form-select-sm status-select" name="<%= employee._id %>_status"
                             onchange="toggleTimeInputs('<%= employee._id %>')">
                         <option value="">선택</option>
                             <option value="출근(주)">출근(주)</option>
