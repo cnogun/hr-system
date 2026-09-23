@@ -73,7 +73,7 @@
         position: absolute !important;
         right: 7mm !important;
         top: 40px !important;
-        width: 234px !important;
+        width: 286px !important;
         height: 93px !important;
         visibility: visible !important;
         opacity: 1 !important;
@@ -86,7 +86,7 @@
     
     /* 결재표 통합 스타일 - 10% 크기 감소 */
     .print-only .approval-table {
-        width: 234px !important;
+        width: 286px !important;
         height: 93px !important;
         border-collapse: collapse !important;
         border: 1px solid #000 !important;
@@ -172,7 +172,7 @@
     
     /* 타이틀 행 - 너비 재조정 */
     .print-only .approval-table tr:first-child th:not(:first-child) {
-        width: 65px !important;
+        width: 62px !important;
         height: 30px !important;
         background-color: #f0f0f0 !important;
         font-weight: bold !important;
@@ -181,7 +181,7 @@
     
     /* 서명란 행 - 너비 재조정 정사각형 */
     .print-only .approval-table tr:last-child td {
-        width: 65px !important;
+        width: 62px !important;
         height: 63px !important;
         background-color: white !important;
         border: 1px solid #000 !important;
