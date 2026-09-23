@@ -71,8 +71,8 @@
     .print-only.approval-position {
         display: block !important;
         position: absolute !important;
-        right: 0px !important;
-        top: 65px !important;
+        right: 7mm !important;
+        top: 40px !important;
         width: 234px !important;
         height: 93px !important;
         visibility: visible !important;
@@ -191,7 +191,7 @@
     
     /* 근무정보 섹션 상단 간격 조정 - 결재표 아래로 배치 (공간 최적화) */
     .form-section:first-of-type {
-        margin-top: 140px !important;
+        margin-top: 110px !important;
         border-top: none !important;
         padding-top: 0px !important;
         margin-bottom: 0px !important;
@@ -553,7 +553,7 @@
         padding: 0 !important;
     }
     .section-header {
-        padding: 1.5mm 2mm !important;
+        padding: 1mm 2mm !important;
         margin-bottom: 1mm !important;
     }
     .section-content {
@@ -570,27 +570,27 @@
 
     /* 한 장 안에서 섹션 헤더와 본문에 일정한 간격을 준다. */
     .container .form-section {
-        margin-top: 4mm !important;
+        margin-top: 2mm !important;
         margin-bottom: 0 !important;
     }
     .container form > .form-section:first-child {
-        margin-top: 140px !important;
+        margin-top: 110px !important;
     }
     .container .section-header {
-        padding: 2mm 2mm !important;
-        margin-bottom: 1.5mm !important;
+        padding: 1.5mm 2mm !important;
+        margin-bottom: 1mm !important;
     }
     .container .section-content {
         padding: 1.5mm 2mm !important;
     }
     .container .education-section {
-        margin-top: 5mm !important;
+        margin-top: 2mm !important;
     }
 
     /* A4 미리보기에서 본문이 용지의 인쇄 가능 폭을 넘지 않게 한다. */
     html, body { width: 100% !important; min-width: 0 !important; }
     .container { box-sizing: border-box !important; max-width: 100% !important; width: 100% !important; margin-inline: auto !important; padding: 5mm 7mm 6mm !important; }
-    .print-title-approval h1 { font-size: 28px !important; }
+    .print-title-approval h1 { font-size: 34px !important; }
     .form-section, .education-section { break-inside: auto !important; page-break-inside: auto !important; }
     .work-assignment-table tr, .education-section tr { break-inside: avoid !important; page-break-inside: avoid !important; }
 }
