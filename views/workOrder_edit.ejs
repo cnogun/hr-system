@@ -5,10 +5,7 @@
         /* 푸터를 바디에서 분리하여 화면 하단에 고정 */
         body {
             min-height: 100vh;
-            display: flex;
-            flex-direction: column;
             margin: 0;
-            padding: 0;
             font-size: 14px;
         }
         
@@ -426,10 +423,13 @@
             color: white;
         }
         
+        /* 공통 헤더의 본문 영역 안에서 양쪽 여백을 동일하게 유지 */
+        .work-order-page { width: min(100% - 32px, 1200px); max-width: 1200px; margin-inline: auto !important; box-sizing: border-box; }
+        @media (max-width: 576px) { .work-order-page { width: calc(100% - 16px); } }
     </style>
 
 <div class="flex-grow-1">
-    <div class="container">
+    <div class="container work-order-page">
         <!-- 제목과 버튼 -->
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h1 class="mb-0">근무명령서 수정</h1>
@@ -475,7 +475,7 @@
                         <div class="form-group" style="flex: 2; min-width: 450px;">
                             <label>근무시간</label>
                             <input type="text" name="workInfo[workTime.display]" class="form-control" id="workTime" 
-                                   value="<%= workOrder.workInfo && workOrder.workInfo.workTime && workOrder.workInfo.workTime.display ? workOrder.workInfo.workTime.display : '' %>"
+                                   value="<%= workOrder.workInfo && workOrder.workInfo.workTime && workOrder.workInfo.workTime.display ? workOrder.workInfo.workTime.display : ((workOrder.workInfo.shift || '') + (workOrder.workInfo.workTime.start ? ' (' + workOrder.workInfo.workTime.start + '~' + (workOrder.workInfo.workTime.end || '') + ')' : '')) %>"
                                    placeholder="근무반을 선택하면 자동으로 입력됩니다" readonly style="width: 100%; min-width: 400px; font-size: 14px;">
                             <input type="hidden" name="workInfo[workTime.start]" id="workTimeStart" 
                                    value="<%= workOrder.workInfo && workOrder.workInfo.workTime && workOrder.workInfo.workTime.start ? workOrder.workInfo.workTime.start : '' %>">
@@ -518,6 +518,8 @@
                             <div id="accidentItems">
                                 <!-- 사고 항목들이 여기에 동적으로 추가됩니다 -->
                             </div>
+                            <label for="accidentDetails" class="mt-2">추가 사고 내용</label>
+                            <textarea id="accidentDetails" name="personnelStatus[accidentDetails]" class="form-control" rows="2"><%= workOrder.personnelStatus?.accidentDetails || '' %></textarea>
                         </div>
                     </div>
                 </div>
@@ -829,6 +831,14 @@
                             </div>
                         </div>
                     </div>
+                    <% if (workOrder.education?.generalEducation?.length) { %>
+                    <div class="form-group mt-2" style="width:100%">
+                        <label>일반 교육</label>
+                        <% workOrder.education.generalEducation.forEach(function(item) { %>
+                            <textarea name="education[generalEducation][]" class="form-control mb-2" rows="2"><%= item %></textarea>
+                        <% }); %>
+                    </div>
+                    <% } %>
                 </div>
             </div>
 
@@ -907,28 +917,16 @@
             loadEducationContent();
         }
 
-        // 사고내용 로드
+        // 저장된 문자열을 JavaScript 코드 안에 직접 삽입하지 않고 안전하게 복원합니다.
+        const savedAbsentDetails = <%- JSON.stringify(workOrder.personnelStatus?.absentDetails || []).replace(/</g, '\\u003c') %>;
+        const savedWeeklyFocus = <%- JSON.stringify(workOrder.education?.weeklyFocus || []).replace(/</g, '\\u003c') %>;
+        const savedEducationContent = <%- JSON.stringify(workOrder.education?.content || []).replace(/</g, '\\u003c') %>;
         function loadAccidentItems() {
-            <% if (workOrder.personnelStatus && workOrder.personnelStatus.absentDetails && workOrder.personnelStatus.absentDetails.length > 0) { %>
-                <% workOrder.personnelStatus.absentDetails.forEach(function(detail) { %>
-                    addAccidentItem('<%= detail.type %>', '<%= detail.employeeName %>');
-                <% }); %>
-            <% } %>
+            savedAbsentDetails.forEach(detail => addAccidentItem(detail.type || '', detail.employeeName || ''));
         }
-
-        // 교육내용 로드
         function loadEducationContent() {
-            <% if (workOrder.education && workOrder.education.weeklyFocus && workOrder.education.weeklyFocus.length > 0) { %>
-                <% workOrder.education.weeklyFocus.forEach(function(focus) { %>
-                    addWeeklyFocus('<%= focus %>');
-                <% }); %>
-            <% } %>
-            
-            <% if (workOrder.education && workOrder.education.content && workOrder.education.content.length > 0) { %>
-                <% workOrder.education.content.forEach(function(content) { %>
-                    addEducationContent('<%= content %>');
-                <% }); %>
-            <% } %>
+            savedWeeklyFocus.forEach(addWeeklyFocus);
+            savedEducationContent.forEach(addEducationContent);
         }
 
         // 근무정보 자동입력 (새 명령서 작성 시 초기화)
@@ -1147,10 +1145,11 @@
                     <option value="근무지원조" ${accidentType === '근무지원조' ? 'selected' : ''}>근무지원조</option>
                 </select>
                 <span>:</span>
-                <input type="text" name="personnelStatus[absentDetails][][employeeName]" placeholder="명단" value="${personnelName}" style="width: 150px; padding: 5px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">
+                <input type="text" name="personnelStatus[absentDetails][][employeeName]" placeholder="명단" value="" style="width: 150px; padding: 5px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">
                 <button type="button" onclick="removeAccidentItem(this)" style="background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;">삭제</button>
             `;
             
+            div.querySelector('input[name="personnelStatus[absentDetails][][employeeName]"]').value = personnelName;
             container.appendChild(div);
         }
 
@@ -1169,10 +1168,11 @@
             div.style.gap = '10px';
             
             div.innerHTML = `
-                <textarea name="education[weeklyFocus][]" placeholder="금주중점 입력" style="flex: 1; padding: 5px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; resize: vertical; min-height: 30px; max-height: 120px; font-family: inherit;">${content}</textarea>
+                <textarea name="education[weeklyFocus][]" placeholder="금주중점 입력" style="flex: 1; padding: 5px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; resize: vertical; min-height: 30px; max-height: 120px; font-family: inherit;"></textarea>
                 <button type="button" onclick="removeWeeklyFocus(this)" style="background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; margin-top: 2px;">삭제</button>
             `;
             
+            div.querySelector('textarea').value = content;
             container.appendChild(div);
             
             // 자동 크기 조정
@@ -1198,10 +1198,11 @@
             div.style.gap = '10px';
             
             div.innerHTML = `
-                <textarea name="education[content][]" placeholder="교육내용 입력" style="flex: 1; padding: 5px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; resize: vertical; min-height: 30px; max-height: 120px; font-family: inherit;">${content}</textarea>
+                <textarea name="education[content][]" placeholder="교육내용 입력" style="flex: 1; padding: 5px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; resize: vertical; min-height: 30px; max-height: 120px; font-family: inherit;"></textarea>
                 <button type="button" onclick="removeEducationContent(this)" style="background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; margin-top: 2px;">삭제</button>
             `;
             
+            div.querySelector('textarea').value = content;
             container.appendChild(div);
             
             // 자동 크기 조정
