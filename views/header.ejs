@@ -25,7 +25,11 @@
     { label: '월간 근태현황', href: '/monthlyAttendance', admin: true },
     { label: '근무 스케줄', href: '/workSchedule', admin: true }
   ] },
-  { id: 'payroll', label: '급여관리', icon: 'fa-wallet', items: [], upcoming: true },
+  { id: 'payroll', label: '급여관리', icon: 'fa-wallet', items: [
+    { label: '월별 급여', href: '/payroll', admin: true },
+    { label: '급여 기준', href: '/payroll?tab=rates', admin: true },
+    { label: '급여 대장', href: '/payroll?tab=ledger', admin: true }
+  ] },
   { id: 'work-info', label: '보안업무', icon: 'fa-briefcase', items: [
     { label: '근무명령서', href: '/work-orders', admin: true },
     { label: '인계사항', href: '/handovers', admin: true },
