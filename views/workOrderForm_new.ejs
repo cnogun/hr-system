@@ -5,10 +5,7 @@
         /* 푸터를 바디에서 분리하여 화면 하단에 고정 */
         body {
             min-height: 100vh;
-            display: flex;
-            flex-direction: column;
             margin: 0;
-            padding: 0;
         }
         
         .flex-grow-1 {
@@ -587,8 +584,8 @@
             
             /* 인쇄 시 여백 - 상하 여백 최소화, 좌우 여백 증가 */
             @page {
-                margin: 0.5cm 2cm 0.5cm 2cm !important;
-                size: A4 !important;
+                margin: 12mm 12mm 14mm 12mm;
+                size: A4;
             }
             
             /* 텍스트 영역 최적화 */
@@ -635,10 +632,12 @@
             }
         }
         
+        .work-order-page { width: min(100% - 32px, 1200px); max-width: 1200px; margin-inline: auto !important; box-sizing: border-box; }
+        @media (max-width: 576px) { .work-order-page { width: calc(100% - 16px); } }
     </style>
 
 <div class="flex-grow-1">
-    <div class="container" style="padding: 3px !important; font-size: 7px !important;">
+    <div class="container work-order-page">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h1 class="mb-0">근무명령서 작성</h1>
             <div class="btn-group">
