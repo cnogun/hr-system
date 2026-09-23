@@ -1316,7 +1316,7 @@
             div.style.alignItems = 'center';
             div.style.gap = '10px';
             div.style.width = '100%';
-            div.style.flexWrap = 'wrap';
+            div.style.flexWrap = 'nowrap';
             
             div.innerHTML = `
                 <select name="personnelStatus[absentDetails][][type]" style="width: 120px; padding: 5px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">
@@ -1334,7 +1334,7 @@
                     <option value="근무지원조" ${accidentType === '근무지원조' ? 'selected' : ''}>근무지원조</option>
                 </select>
                 <span>:</span>
-                <input type="text" name="personnelStatus[absentDetails][][employeeName]" placeholder="명단 (쉼표로 구분해 12명까지 입력)" value="" style="flex: 1 1 100%; width: 100%; min-width: 0; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; box-sizing: border-box;">
+                <input type="text" name="personnelStatus[absentDetails][][employeeName]" placeholder="명단 (쉼표로 구분해 12명까지 입력)" value="" style="flex: 1 1 auto; min-width: 0; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; box-sizing: border-box;">
                 <button type="button" onclick="removeAccidentItem(this)" style="background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;">삭제</button>
             `;
             
