@@ -42,7 +42,7 @@ router.get('/', async (req, res, next) => {
       Employee.find({ status: '재직' }).select('name empNo department').sort({ department: 1, name: 1 }).lean(),
       PayrollRate.find({ effectiveFrom: { $lte: month } }).sort({ effectiveFrom: 1 }).lean(), PayrollRun.findOne({ month }).lean()
     ]);
-    res.render('payroll', { session: req.session, month, employees, rates: Object.fromEntries(rates.map(rate => [String(rate.employee), rate])), run, notice: String(req.query.notice || '').slice(0, 200) });
+    res.render('payroll', { session: req.session, month, tab: ['rates', 'ledger'].includes(req.query.tab) ? req.query.tab : 'monthly', employees, rates: Object.fromEntries(rates.map(rate => [String(rate.employee), rate])), run, notice: String(req.query.notice || '').slice(0, 200) });
   } catch (error) { next(error); }
 });
 
@@ -55,8 +55,8 @@ router.post('/rates/:employeeId', async (req, res) => {
     const values = Object.fromEntries(fields.map(key => [key, amount(req.body[key])]));
     if (Number(Boolean(values.basicMonthly)) + Number(Boolean(values.basicHourly)) !== 1) throw new Error('월 기본급 또는 기본 시급 중 하나만 입력하세요.');
     await PayrollRate.findOneAndUpdate({ employee: req.params.employeeId, effectiveFrom: month }, { ...values, updatedBy: req.session.userId }, { upsert: true, runValidators: true });
-    redirect(res, month, '급여 기준을 저장했습니다. 기존 시산은 다시 계산해야 반영됩니다.');
-  } catch (error) { redirect(res, monthOK(month) ? month : new Date().toISOString().slice(0, 7), error.message); }
+    res.redirect(`/payroll?month=${encodeURIComponent(month)}&tab=rates&notice=${encodeURIComponent('급여 기준을 저장했습니다. 기존 시산은 다시 계산해야 반영됩니다.')}`);
+  } catch (error) { res.redirect(`/payroll?month=${encodeURIComponent(monthOK(month) ? month : new Date().toISOString().slice(0, 7))}&tab=rates&notice=${encodeURIComponent(error.message)}`); }
 });
 
 router.post('/calculate', async (req, res) => {
