@@ -191,7 +191,7 @@
     
     /* 근무정보 섹션 상단 간격 조정 - 결재표 아래로 배치 (공간 최적화) */
     .form-section:first-of-type {
-        margin-top: 110px !important;
+        margin-top: 95px !important;
         border-top: none !important;
         padding-top: 0px !important;
         margin-bottom: 0px !important;
@@ -350,21 +350,21 @@
     
     /* 근무편성 테이블 높이 조정 */
     .assignment-left table tbody tr {
-        height: 32px !important;
+        height: 28px !important;
     }
     
     .assignment-right table tbody tr {
-        height: 32px !important;
+        height: 28px !important;
     }
     
     .assignment-left td, .assignment-right td {
-        height: 32px !important;
+        height: 28px !important;
     }
     
     /* 근무편성 편성셀 내부 div 높이 */
     .assignment-left .personnel-col div,
     .assignment-right .personnel-col div {
-        height: 28px !important;
+        height: 24px !important;
         padding: 1px !important;
         background-color: #f8f9fa !important;
         border: none !important;
@@ -574,7 +574,7 @@
         margin-bottom: 0 !important;
     }
     .container form > .form-section:first-child {
-        margin-top: 110px !important;
+        margin-top: 95px !important;
     }
     .container .section-header {
         padding: 1.5mm 2mm !important;
@@ -587,6 +587,20 @@
         margin-top: 2mm !important;
     }
 
+    /* 교육 표가 페이지 끝에서 제목과 분리되지 않게 한다. */
+    .container .education-section {
+        overflow: visible !important;
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+    }
+    .container .education-section table {
+        display: table !important;
+        margin-top: 1mm !important;
+    }
+    .container .education-section tbody {
+        display: table-row-group !important;
+    }
+
     /* A4 미리보기에서 본문이 용지의 인쇄 가능 폭을 넘지 않게 한다. */
     html, body { width: 100% !important; min-width: 0 !important; }
     .container { box-sizing: border-box !important; max-width: 100% !important; width: 100% !important; margin-inline: auto !important; padding: 5mm 7mm 6mm !important; }
@@ -596,6 +610,6 @@
         margin-left: 3mm !important;
         transform: translateY(8mm) !important;
     }
-    .form-section, .education-section { break-inside: auto !important; page-break-inside: auto !important; }
+    .form-section { break-inside: auto !important; page-break-inside: auto !important; }
     .work-assignment-table tr, .education-section tr { break-inside: avoid !important; page-break-inside: avoid !important; }
 }
