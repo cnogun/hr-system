@@ -2,8 +2,8 @@
 
 @media print {
     @page {
-        margin: 20mm 20mm 10mm 15mm !important; /* 상 20mm, 하 10mm, 좌 15mm, 우 20mm */
-        size: A4 !important;
+        margin: 12mm 12mm 14mm 12mm; /* A4 인쇄 가능 영역을 좌우 대칭으로 확보 */
+        size: A4;
     }
     
     /* 브라우저 호환성을 위한 강제 스타일 */
@@ -543,4 +543,10 @@
         page-break-inside: avoid !important;
         break-inside: avoid !important;
     }
+    /* A4 미리보기에서 본문이 용지의 인쇄 가능 폭을 넘지 않게 한다. */
+    html, body { width: 100% !important; min-width: 0 !important; }
+    .container { box-sizing: border-box !important; max-width: 100% !important; width: 100% !important; margin-inline: auto !important; }
+    .print-title-approval h1 { font-size: 28px !important; }
+    .form-section, .education-section { break-inside: auto !important; page-break-inside: auto !important; }
+    .work-assignment-table tr, .education-section tr { break-inside: avoid !important; page-break-inside: avoid !important; }
 }
