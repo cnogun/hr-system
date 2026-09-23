@@ -543,9 +543,34 @@
         page-break-inside: avoid !important;
         break-inside: avoid !important;
     }
+    /* 브라우저 인쇄 여백 설정이 달라도 본문 주변에 안전 여백을 둔다. */
+    .container {
+        padding: 5mm 7mm 6mm !important;
+        box-sizing: border-box !important;
+    }
+    .form-section {
+        margin-bottom: 3mm !important;
+        padding: 0 !important;
+    }
+    .section-header {
+        padding: 1.5mm 2mm !important;
+        margin-bottom: 1mm !important;
+    }
+    .section-content {
+        padding: 1mm 2mm !important;
+    }
+    .form-section table th, .form-section table td,
+    .education-section table th, .education-section table td {
+        padding: 2px 3px !important;
+    }
+    .education-section table td {
+        text-align: left !important;
+        vertical-align: top !important;
+    }
+
     /* A4 미리보기에서 본문이 용지의 인쇄 가능 폭을 넘지 않게 한다. */
     html, body { width: 100% !important; min-width: 0 !important; }
-    .container { box-sizing: border-box !important; max-width: 100% !important; width: 100% !important; margin-inline: auto !important; }
+    .container { box-sizing: border-box !important; max-width: 100% !important; width: 100% !important; margin-inline: auto !important; padding: 5mm 7mm 6mm !important; }
     .print-title-approval h1 { font-size: 28px !important; }
     .form-section, .education-section { break-inside: auto !important; page-break-inside: auto !important; }
     .work-assignment-table tr, .education-section tr { break-inside: avoid !important; page-break-inside: avoid !important; }
