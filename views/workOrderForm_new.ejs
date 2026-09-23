@@ -1315,6 +1315,8 @@
             div.style.display = 'flex';
             div.style.alignItems = 'center';
             div.style.gap = '10px';
+            div.style.width = '100%';
+            div.style.flexWrap = 'wrap';
             
             div.innerHTML = `
                 <select name="personnelStatus[absentDetails][][type]" style="width: 120px; padding: 5px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">
@@ -1331,10 +1333,11 @@
                     <option value="근무지원조" ${accidentType === '근무지원조' ? 'selected' : ''}>근무지원조</option>
                 </select>
                 <span>:</span>
-                <input type="text" name="personnelStatus[absentDetails][][employeeName]" placeholder="명단" value="${personnelName}" style="width: 150px; padding: 5px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">
+                <textarea name="personnelStatus[absentDetails][][employeeName]" placeholder="명단 (12명까지, 쉼표 또는 줄바꿈으로 구분)" rows="3" style="flex: 1 1 420px; min-width: 220px; max-width: 650px; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; box-sizing: border-box; resize: vertical;"></textarea>
                 <button type="button" onclick="removeAccidentItem(this)" style="background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;">삭제</button>
             `;
             
+            div.querySelector('textarea[name="personnelStatus[absentDetails][][employeeName]"]').value = personnelName;
             container.appendChild(div);
         }
 
