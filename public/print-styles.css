@@ -568,6 +568,25 @@
         vertical-align: top !important;
     }
 
+    /* 한 장 안에서 섹션 헤더와 본문에 일정한 간격을 준다. */
+    .container .form-section {
+        margin-top: 4mm !important;
+        margin-bottom: 0 !important;
+    }
+    .container form > .form-section:first-child {
+        margin-top: 140px !important;
+    }
+    .container .section-header {
+        padding: 2mm 2mm !important;
+        margin-bottom: 1.5mm !important;
+    }
+    .container .section-content {
+        padding: 1.5mm 2mm !important;
+    }
+    .container .education-section {
+        margin-top: 5mm !important;
+    }
+
     /* A4 미리보기에서 본문이 용지의 인쇄 가능 폭을 넘지 않게 한다. */
     html, body { width: 100% !important; min-width: 0 !important; }
     .container { box-sizing: border-box !important; max-width: 100% !important; width: 100% !important; margin-inline: auto !important; padding: 5mm 7mm 6mm !important; }
