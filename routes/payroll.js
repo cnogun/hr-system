@@ -100,7 +100,7 @@ router.post('/calculate', async (req, res) => {
       const old = previous.get(String(line.employee));
       if (!old) continue;
       for (const key of [...deductions, 'extraPay', 'note']) line[key] = old[key];
-      line.deductionsReviewed = old.deductionsReviewed;
+      line.deductionsReviewed = false; // 근태나 기준 변경 후 반드시 다시 검토한다.
       totals(line);
     }
     await PayrollRun.findOneAndUpdate({ month, status: 'draft' }, { $set: { lines, generatedAt: new Date(), generatedBy: req.session.userId } }, { upsert: true, runValidators: true });
