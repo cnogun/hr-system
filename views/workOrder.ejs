@@ -992,13 +992,13 @@
                         </thead>
                         <tbody>
                             <tr>
-                                <td style="border: 1px solid #ddd; padding: 3.92px; text-align: center; font-size: 15px !important;">
+                                <td style="border: 1px solid #ddd; padding: 3.92px; height: 76px; vertical-align: middle; text-align: center; font-size: 15px !important;">
                                     <%= workOrder.personnelStatus ? workOrder.personnelStatus.totalPersonnel : '' %>
                                 </td>
-                                <td style="border: 1px solid #ddd; padding: 3.92px; text-align: center; font-size: 15px !important;">
+                                <td style="border: 1px solid #ddd; padding: 3.92px; height: 76px; vertical-align: middle; text-align: center; font-size: 15px !important;">
                                     <%= workOrder.personnelStatus ? workOrder.personnelStatus.absentPersonnel : '0' %>
                                 </td>
-                                <td style="border: 1px solid #ddd; padding: 3.92px; text-align: center; font-size: 12px !important;">
+                                <td style="border: 1px solid #ddd; padding: 3.92px 8px; height: 76px; vertical-align: middle; text-align: left; font-size: 12px !important;">
                                     <% if (workOrder.personnelStatus && workOrder.personnelStatus.absentDetails && workOrder.personnelStatus.absentDetails.length > 0) { %>
                                         <% 
                                         const absentDetails = workOrder.personnelStatus.absentDetails;
@@ -1012,7 +1012,7 @@
                                         <span style="color: #6c757d; font-size: 12px !important;">사고내용이 없습니다.</span>
                                     <% } %>
                                 </td>
-                                <td style="border: 1px solid #ddd; padding: 3.92px; text-align: center; font-size: 15px !important;">
+                                <td style="border: 1px solid #ddd; padding: 3.92px; height: 76px; vertical-align: middle; text-align: center; font-size: 15px !important;">
                                     <%= workOrder.personnelStatus ? workOrder.personnelStatus.currentPersonnel : '' %>
                                 </td>
                             </tr>
@@ -1351,18 +1351,16 @@
                     </thead>
                     <tbody>
                         <tr>
-                            <td style="border: 1px solid #ddd; padding: 4px; vertical-align: top; height: 60px;">
+                            <td style="border: 1px solid #ddd; padding: 4px 8px; vertical-align: top; text-align: left; height: 60px;">
                                 <% if (workOrder.education && workOrder.education.weeklyFocus && workOrder.education.weeklyFocus.length > 0) { %>
                                     <% workOrder.education.weeklyFocus.forEach((focus, index) => { %>
-                                        <div style="margin-bottom: 2px; padding: 1px; font-size: 12px; line-height: 1.2; white-space: pre-wrap; overflow-wrap: anywhere;">
-                                            <%= focus || '' %>
-                                        </div>
+                                        <div style="margin-bottom: 2px; padding: 1px; font-size: 12px; line-height: 1.2; text-align: left; white-space: pre-wrap; overflow-wrap: anywhere;"><%= focus || '' %></div>
                                     <% }); %>
                                 <% } else { %>
                                     <span style="color: #6c757d; font-size: 12px;">금주중점이 없습니다.</span>
                                 <% } %>
                             </td>
-                            <td style="border: 1px solid #ddd; padding: 4px; vertical-align: top; height: 60px;">
+                            <td style="border: 1px solid #ddd; padding: 4px 8px; vertical-align: top; text-align: left; height: 60px;">
                                 <% 
                                 // content 필드가 없으면 generalEducation 필드 사용
                                 const educationContent = workOrder.education && workOrder.education.content && workOrder.education.content.length ? 
@@ -1373,9 +1371,7 @@
                                 
                                 <% if (educationContent && educationContent.length > 0) { %>
                                     <% educationContent.forEach((content, index) => { %>
-                                        <div style="margin-bottom: 2px; padding: 1px; font-size: 12px; line-height: 1.2; white-space: pre-wrap; overflow-wrap: anywhere;">
-                                            <%= content || '' %>
-                                        </div>
+                                        <div style="margin-bottom: 2px; padding: 1px; font-size: 12px; line-height: 1.2; text-align: left; white-space: pre-wrap; overflow-wrap: anywhere;"><%= content || '' %></div>
                                     <% }); %>
                                 <% } else { %>
                                     <span style="color: #6c757d; font-size: 12px;">교육내용이 없습니다.</span>
