@@ -612,4 +612,34 @@
     }
     .form-section { break-inside: auto !important; page-break-inside: auto !important; }
     .work-assignment-table tr, .education-section tr { break-inside: avoid !important; page-break-inside: avoid !important; }
+    /* 인쇄 표를 선명한 검정 실선으로 통일한다. */
+    .container .form-section table,
+    .container .education-section table {
+        border: 1pt solid #000 !important;
+        border-collapse: collapse !important;
+        border-spacing: 0 !important;
+    }
+    .container .form-section table th,
+    .container .form-section table td,
+    .container .education-section table th,
+    .container .education-section table td {
+        border: 1pt solid #000 !important;
+    }
+    .container .assignment-left .work-assignment-table td,
+    .container .assignment-right .work-assignment-table td,
+    .container .assignment-left .work-assignment-table th,
+    .container .assignment-right .work-assignment-table th {
+        border-color: #000 !important;
+        border-width: 1pt !important;
+    }
+    .container .form-section {
+        margin-top: 5mm !important;
+    }
+    .container form > .form-section:first-child {
+        margin-top: 95px !important;
+    }
+    .container .education-section {
+        margin-top: 5mm !important;
+    }
+
 }
