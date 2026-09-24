@@ -5,10 +5,7 @@
         /* 푸터를 바디에서 분리하여 화면 하단에 고정 */
         body {
             min-height: 100vh;
-            display: flex;
-            flex-direction: column;
             margin: 0;
-            padding: 0;
         }
         
         .flex-grow-1 {
@@ -587,8 +584,8 @@
             
             /* 인쇄 시 여백 - 상하 여백 최소화, 좌우 여백 증가 */
             @page {
-                margin: 0.5cm 2cm 0.5cm 2cm !important;
-                size: A4 !important;
+                margin: 12mm 12mm 14mm 12mm;
+                size: A4;
             }
             
             /* 텍스트 영역 최적화 */
@@ -635,10 +632,12 @@
             }
         }
         
+        .work-order-page { width: min(100% - 32px, 1200px); max-width: 1200px; margin-inline: auto !important; box-sizing: border-box; }
+        @media (max-width: 576px) { .work-order-page { width: calc(100% - 16px); } }
     </style>
 
 <div class="flex-grow-1">
-    <div class="container" style="padding: 3px !important; font-size: 7px !important;">
+    <div class="container work-order-page">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h1 class="mb-0">근무명령서 작성</h1>
             <div class="btn-group">
@@ -1316,6 +1315,8 @@
             div.style.display = 'flex';
             div.style.alignItems = 'center';
             div.style.gap = '10px';
+            div.style.width = '100%';
+            div.style.flexWrap = 'nowrap';
             
             div.innerHTML = `
                 <select name="personnelStatus[absentDetails][][type]" style="width: 120px; padding: 5px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">
@@ -1326,16 +1327,18 @@
                     <option value="산재" ${accidentType === '산재' ? 'selected' : ''}>산재</option>
                     <option value="정직" ${accidentType === '정직' ? 'selected' : ''}>정직</option>
                     <option value="휴직" ${accidentType === '휴직' ? 'selected' : ''}>휴직</option>
+                    <option value="휴무" ${accidentType === '휴무' ? 'selected' : ''}>휴무</option>
                     <option value="경조" ${accidentType === '경조' ? 'selected' : ''}>경조</option>
                     <option value="결근" ${accidentType === '결근' ? 'selected' : ''}>결근</option>
                     <option value="기타" ${accidentType === '기타' ? 'selected' : ''}>기타</option>
                     <option value="근무지원조" ${accidentType === '근무지원조' ? 'selected' : ''}>근무지원조</option>
                 </select>
                 <span>:</span>
-                <input type="text" name="personnelStatus[absentDetails][][employeeName]" placeholder="명단" value="${personnelName}" style="width: 150px; padding: 5px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">
+                <input type="text" name="personnelStatus[absentDetails][][employeeName]" placeholder="명단 (쉼표로 구분해 12명까지 입력)" value="" style="flex: 1 1 auto; min-width: 0; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; box-sizing: border-box;">
                 <button type="button" onclick="removeAccidentItem(this)" style="background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;">삭제</button>
             `;
             
+            div.querySelector('input[name="personnelStatus[absentDetails][][employeeName]"]').value = personnelName;
             container.appendChild(div);
         }
 

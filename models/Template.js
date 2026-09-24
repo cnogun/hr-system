@@ -28,7 +28,9 @@ const templateSchema = new mongoose.Schema({
   templateType: {
     type: String,
     required: true,
-    enum: ['daily', 'weekly', 'monthly', 'special'],
+    enum: ['daily', 'weekly', 'monthly', 'special',
+      'summary_daily', 'summary_weekly', 'summary_monthly', 'summary_quarterly',
+      'summary_annual', 'summary_incident', 'summary_security', 'summary_maintenance'],
     default: 'daily'
   },
   priority: {

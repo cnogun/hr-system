@@ -51,6 +51,7 @@ const workOrderSchema = new mongoose.Schema({
       enum: ['주간', '초야', '심야', '주간특근', '야간특근', '휴무', '주간조', '초야조', '심야조', '주간특근조', '야간특근조']
     },
     workTime: {
+      display: String,
       start: String, // "22:00"
       end: String    // "06:00"
     }

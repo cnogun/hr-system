@@ -81,11 +81,29 @@ router.get('/admin/reports', adminOnly, async (req, res) => {
       .skip(skip)
       .limit(limit);
 
+    const postIds = reports.filter(report => report.targetType === 'post').map(report => report.targetId);
+    const commentIds = reports.filter(report => report.targetType === 'comment').map(report => report.targetId);
+    const [targetPosts, targetComments, pendingReports] = await Promise.all([
+      Post.find({ _id: { $in: postIds } }).select('title content authorName isHidden boardId'),
+      Comment.find({ _id: { $in: commentIds } }).select('content authorName isHidden postId'),
+      Report.countDocuments({ status: 'pending' })
+    ]);
+
+    const postMap = new Map(targetPosts.map(post => [post._id.toString(), post]));
+    const commentMap = new Map(targetComments.map(comment => [comment._id.toString(), comment]));
+    const reportItems = reports.map(report => ({
+      report,
+      target: report.targetType === 'post'
+        ? postMap.get(report.targetId.toString())
+        : commentMap.get(report.targetId.toString())
+    }));
+
     const totalReports = await Report.countDocuments(query);
     const totalPages = Math.ceil(totalReports / limit);
 
     res.render('boards/admin/reports', {
-      reports,
+      reportItems,
+      pendingReports,
       currentPage: parseInt(page),
       totalPages,
       status,
@@ -104,26 +122,46 @@ router.post('/admin/reports/:reportId/process', adminOnly, async (req, res) => {
     const { reportId } = req.params;
     const { action, adminNote } = req.body;
 
+    const allowedActions = ['reviewed', 'dismissed', 'hide', 'delete'];
+    if (!allowedActions.includes(action)) {
+      return res.status(400).json({ error: '올바르지 않은 처리 방식입니다.' });
+    }
+
     const report = await Report.findById(reportId);
     if (!report) {
       return res.status(404).send('신고를 찾을 수 없습니다.');
     }
 
-    report.status = action; // 'reviewed', 'resolved', 'dismissed'
-    report.adminNote = adminNote;
+    const actionLabels = {
+      reviewed: '검토중',
+      dismissed: '문제없음',
+      hide: '숨김',
+      delete: '삭제'
+    };
+
+    report.status = action === 'hide' || action === 'delete' ? 'resolved' : action;
+    report.adminNote = `[${actionLabels[action]}] ${String(adminNote || '').trim()}`.trim();
     report.processedBy = req.session.userId;
     report.processedAt = new Date();
 
-    await report.save();
-
-    // 신고가 해결된 경우 대상 게시글/댓글 숨김 처리
-    if (action === 'resolved') {
+    if (action === 'hide') {
       if (report.targetType === 'post') {
         await Post.findByIdAndUpdate(report.targetId, { isHidden: true });
       } else if (report.targetType === 'comment') {
         await Comment.findByIdAndUpdate(report.targetId, { isHidden: true });
       }
     }
+
+    if (action === 'delete') {
+      if (report.targetType === 'post') {
+        await Comment.deleteMany({ postId: report.targetId });
+        await Post.findByIdAndDelete(report.targetId);
+      } else if (report.targetType === 'comment') {
+        await Comment.findByIdAndDelete(report.targetId);
+      }
+    }
+
+    await report.save();
 
     res.json({ success: true, message: '신고가 처리되었습니다.' });
   } catch (error) {
@@ -366,6 +404,9 @@ router.get('/:boardId', isLoggedIn, async (req, res) => {
 
     const totalPosts = await Post.countDocuments(query);
     const totalPages = Math.ceil(totalPosts / limit);
+    const pendingReports = req.session.userRole === 'admin'
+      ? await Report.countDocuments({ status: 'pending' })
+      : 0;
 
     // 헤더에 필요한 변수들 설정
     if (req.session && req.session.userId) {
@@ -406,11 +447,56 @@ router.get('/:boardId', isLoggedIn, async (req, res) => {
       totalPages, 
       search, 
       sort,
+      pendingReports,
       session: req.session 
     });
   } catch (error) {
     console.error('게시글 목록 조회 오류:', error);
     res.status(500).send('게시글 목록을 불러오는 중 오류가 발생했습니다.');
+  }
+});
+
+// 관리자 게시글 선택 삭제
+router.post('/:boardId/posts/bulk-delete', adminOnly, async (req, res) => {
+  try {
+    const { boardId } = req.params;
+    const selectedIds = Array.isArray(req.body.postIds)
+      ? req.body.postIds
+      : (req.body.postIds ? [req.body.postIds] : []);
+    const postIds = [...new Set(selectedIds.filter(id => /^[a-f\d]{24}$/i.test(id)))];
+
+    if (postIds.length === 0) {
+      req.session.message = '삭제할 게시글을 선택해 주세요.';
+      return res.redirect(`/boards/${boardId}`);
+    }
+
+    const posts = await Post.find({ _id: { $in: postIds }, boardId }).select('_id title');
+    const matchedIds = posts.map(post => post._id);
+
+    if (matchedIds.length === 0) {
+      req.session.message = '삭제할 수 있는 게시글이 없습니다.';
+      return res.redirect(`/boards/${boardId}`);
+    }
+
+    await Promise.all([
+      Comment.deleteMany({ postId: { $in: matchedIds } }),
+      Report.deleteMany({ targetType: 'post', targetId: { $in: matchedIds } })
+    ]);
+    await Post.deleteMany({ _id: { $in: matchedIds }, boardId });
+
+    await Log.create({
+      userId: req.session.userId,
+      action: 'delete',
+      detail: `게시글 선택 삭제: ${posts.length}건 (${posts.map(post => post.title).join(', ')})`,
+      ip: req.ip,
+      userAgent: req.headers['user-agent']
+    });
+
+    req.session.message = `선택한 게시글 ${posts.length}건을 삭제했습니다.`;
+    res.redirect(`/boards/${boardId}`);
+  } catch (error) {
+    console.error('게시글 선택 삭제 오류:', error);
+    res.status(500).send('선택한 게시글을 삭제하는 중 오류가 발생했습니다.');
   }
 });
 
@@ -595,12 +681,17 @@ router.get('/:boardId/:postId', isLoggedIn, async (req, res) => {
       return res.status(404).send('게시글을 찾을 수 없습니다.');
     }
 
+    if (post.isHidden && req.session.userRole !== 'admin') {
+      return res.status(404).send('숨김 처리된 게시글입니다.');
+    }
+
     // 조회수 증가
     post.views += 1;
     await post.save();
 
     // 댓글 조회
-    const comments = await Comment.find({ postId })
+    const commentQuery = req.session.userRole === 'admin' ? { postId } : { postId, isHidden: false };
+    const comments = await Comment.find(commentQuery)
       .populate('author', 'username')
       .sort({ createdAt: 1 });
 

@@ -21,6 +21,14 @@
       box-shadow: 0 2px 10px rgba(0,0,0,0.1);
       border-radius: 12px;
     }
+
+    body .container.duty-order-container {
+      width: calc(100% - 32px);
+      max-width: 900px;
+      margin-left: auto;
+      margin-right: auto;
+      margin-bottom: 70px;
+    }
     
     .duty-order-container .card-header {
       border-radius: 12px 12px 0 0 !important;
@@ -53,8 +61,25 @@
     }
     
     .filter-card {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
+      background: #fff;
+    }
+
+    .duty-page-header { margin-bottom: 1rem; }
+    .duty-page-header h1 { font-size: 1.55rem; font-weight: 600; color: #1e3a5f; margin-bottom: .2rem; }
+    .duty-page-header p { font-size: .85rem; color: #64748b; margin-bottom: 0; }
+    .filter-card .card-body { padding: .75rem; }
+    .duty-filter-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)) auto; gap: .55rem; align-items: end; }
+    .duty-filter-row .form-label { display: block; margin-bottom: .25rem; font-size: .75rem; font-weight: 600; color: #475569; }
+    .duty-filter-row .form-select { min-width: 0; height: 34px; padding-top: .25rem; padding-bottom: .25rem; font-size: .82rem; }
+    .duty-filter-actions { display: flex; gap: .4rem; white-space: nowrap; }
+    .duty-filter-actions .btn { height: 34px; padding: .25rem .65rem; font-size: .8rem; }
+    @media (max-width: 700px) {
+      .duty-filter-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .duty-filter-actions { grid-column: 1 / -1; }
+    }
+    @media (max-width: 400px) {
+      .duty-filter-row { grid-template-columns: 1fr; }
+      .duty-filter-actions { grid-column: auto; }
     }
     
     .btn-action {
@@ -184,23 +209,21 @@
   <%- include('header') %>
   
   <!-- 메인 컨테이너 -->
-  <div class="container mt-4 duty-order-container">
+  <main class="container mt-4 duty-order-container">
     <div class="row">
       <div class="col-12">
         <!-- 페이지 헤더 -->
-        <div class="text-center mb-5">
-          <h1 class="display-4 text-primary mb-3">
-            인사명령서 관리
-          </h1>
-          <p class="lead text-muted">보안요원 인사명령서를 생성하고 관리합니다.</p>
+        <div class="duty-page-header">
+          <h1>인사명령서 관리</h1>
+          <p>보안요원 인사명령서를 생성하고 관리합니다.</p>
         </div>
 
         <!-- 필터 및 검색 -->
         <div class="card filter-card mb-4">
           <div class="card-body">
-            <div class="row g-3">
-              <div class="col-md-3">
-                <label class="form-label text-white">명령 유형</label>
+            <div class="duty-filter-row">
+              <div>
+                <label class="form-label" for="orderTypeFilter">명령 유형</label>
                 <select class="form-select" id="orderTypeFilter">
                   <option value="">전체</option>
                   <option value="근무배정">근무배정</option>
@@ -212,8 +235,8 @@
                   <option value="기타">기타</option>
                 </select>
               </div>
-              <div class="col-md-3">
-                <label class="form-label text-white">상태</label>
+              <div>
+                <label class="form-label" for="statusFilter">상태</label>
                 <select class="form-select" id="statusFilter">
                   <option value="">전체</option>
                   <option value="대기">대기</option>
@@ -222,8 +245,8 @@
                   <option value="취소">취소</option>
                 </select>
               </div>
-              <div class="col-md-3">
-                <label class="form-label text-white">부서</label>
+              <div>
+                <label class="form-label" for="departmentFilter">부서</label>
                 <select class="form-select" id="departmentFilter">
                   <option value="">전체</option>
                   <option value="보안1팀">보안1팀</option>
@@ -232,8 +255,8 @@
                   <option value="전체">전체</option>
                 </select>
               </div>
-              <div class="col-md-3">
-                <label class="form-label text-white">우선순위</label>
+              <div>
+                <label class="form-label" for="priorityFilter">우선순위</label>
                 <select class="form-select" id="priorityFilter">
                   <option value="">전체</option>
                   <option value="긴급">긴급</option>
@@ -242,15 +265,9 @@
                   <option value="낮음">낮음</option>
                 </select>
               </div>
-            </div>
-            <div class="row mt-3">
-              <div class="col-12 text-center">
-                <button class="btn btn-light me-2" onclick="applyFilters()">
-                  필터 적용
-                </button>
-                <button class="btn btn-outline-light" onclick="resetFilters()">
-                  초기화
-                </button>
+              <div class="duty-filter-actions">
+                <button class="btn btn-primary" type="button" onclick="applyFilters()">필터 적용</button>
+                <button class="btn btn-outline-secondary" type="button" onclick="resetFilters()">초기화</button>
               </div>
             </div>
           </div>
@@ -279,7 +296,7 @@
         </div>
       </div>
     </div>
-  </div>
+  </main>
 
   <!-- 인사명령 생성/수정 모달 -->
   <div class="modal fade" id="dutyOrderModal" tabindex="-1">
@@ -381,6 +398,8 @@
       </div>
     </div>
   </div>
+
+  <%- include('footer') %>
 
   <script>
     let currentPage = 1;

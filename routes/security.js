@@ -1307,7 +1307,7 @@ router.put('/summary-reports/:id/status', isLoggedIn, adminOnly, async (req, res
 // ===== 요약보고서 양식 관리 =====
 
 // 요약보고서 양식 업로드
-router.post('/summary-reports/templates/upload', isLoggedIn, upload.single('templateFile'), async (req, res) => {
+router.post('/summary-reports/templates/upload', isLoggedIn, adminOnly, upload.single('templateFile'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ success: false, message: '양식 파일을 선택해주세요.' });
@@ -1685,7 +1685,7 @@ router.delete('/api/notifications/:id', isLoggedIn, async (req, res) => {
 // ===== 양식 템플릿 관리 라우트 =====
 
 // 양식 업로드
-router.post('/templates/upload', isLoggedIn, upload.single('templateFile'), async (req, res) => {
+router.post('/templates/upload', isLoggedIn, adminOnly, upload.single('templateFile'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ success: false, message: '양식 파일을 선택해주세요.' });
@@ -1824,7 +1824,7 @@ router.get('/api/templates/:id/download', isLoggedIn, async (req, res) => {
 });
 
 // 양식 삭제
-router.delete('/api/templates/:id', isLoggedIn, async (req, res) => {
+router.delete('/api/templates/:id', isLoggedIn, adminOnly, async (req, res) => {
   try {
     const template = await Template.findById(req.params.id);
 
@@ -1852,7 +1852,7 @@ router.delete('/api/templates/:id', isLoggedIn, async (req, res) => {
 });
 
 // 기본 양식 설정
-router.put('/api/templates/:id/default', isLoggedIn, async (req, res) => {
+router.put('/api/templates/:id/default', isLoggedIn, adminOnly, async (req, res) => {
   try {
     const template = await Template.findById(req.params.id);
 

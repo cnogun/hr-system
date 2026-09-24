@@ -2,8 +2,8 @@
 
 @media print {
     @page {
-        margin: 20mm 20mm 10mm 15mm !important; /* 상 20mm, 하 10mm, 좌 15mm, 우 20mm */
-        size: A4 !important;
+        margin: 12mm 12mm 14mm 12mm; /* A4 인쇄 가능 영역을 좌우 대칭으로 확보 */
+        size: A4;
     }
     
     /* 브라우저 호환성을 위한 강제 스타일 */
@@ -71,9 +71,9 @@
     .print-only.approval-position {
         display: block !important;
         position: absolute !important;
-        right: 0px !important;
-        top: 65px !important;
-        width: 234px !important;
+        right: 7mm !important;
+        top: 40px !important;
+        width: 286px !important;
         height: 93px !important;
         visibility: visible !important;
         opacity: 1 !important;
@@ -86,7 +86,7 @@
     
     /* 결재표 통합 스타일 - 10% 크기 감소 */
     .print-only .approval-table {
-        width: 234px !important;
+        width: 286px !important;
         height: 93px !important;
         border-collapse: collapse !important;
         border: 1px solid #000 !important;
@@ -172,7 +172,7 @@
     
     /* 타이틀 행 - 너비 재조정 */
     .print-only .approval-table tr:first-child th:not(:first-child) {
-        width: 65px !important;
+        width: 62px !important;
         height: 30px !important;
         background-color: #f0f0f0 !important;
         font-weight: bold !important;
@@ -181,7 +181,7 @@
     
     /* 서명란 행 - 너비 재조정 정사각형 */
     .print-only .approval-table tr:last-child td {
-        width: 65px !important;
+        width: 62px !important;
         height: 63px !important;
         background-color: white !important;
         border: 1px solid #000 !important;
@@ -191,7 +191,7 @@
     
     /* 근무정보 섹션 상단 간격 조정 - 결재표 아래로 배치 (공간 최적화) */
     .form-section:first-of-type {
-        margin-top: 140px !important;
+        margin-top: 95px !important;
         border-top: none !important;
         padding-top: 0px !important;
         margin-bottom: 0px !important;
@@ -350,21 +350,21 @@
     
     /* 근무편성 테이블 높이 조정 */
     .assignment-left table tbody tr {
-        height: 32px !important;
+        height: 28px !important;
     }
     
     .assignment-right table tbody tr {
-        height: 32px !important;
+        height: 28px !important;
     }
     
     .assignment-left td, .assignment-right td {
-        height: 32px !important;
+        height: 28px !important;
     }
     
     /* 근무편성 편성셀 내부 div 높이 */
     .assignment-left .personnel-col div,
     .assignment-right .personnel-col div {
-        height: 28px !important;
+        height: 24px !important;
         padding: 1px !important;
         background-color: #f8f9fa !important;
         border: none !important;
@@ -543,4 +543,103 @@
         page-break-inside: avoid !important;
         break-inside: avoid !important;
     }
+    /* 브라우저 인쇄 여백 설정이 달라도 본문 주변에 안전 여백을 둔다. */
+    .container {
+        padding: 5mm 7mm 6mm !important;
+        box-sizing: border-box !important;
+    }
+    .form-section {
+        margin-bottom: 3mm !important;
+        padding: 0 !important;
+    }
+    .section-header {
+        padding: 1mm 2mm !important;
+        margin-bottom: 1mm !important;
+    }
+    .section-content {
+        padding: 1mm 2mm !important;
+    }
+    .form-section table th, .form-section table td,
+    .education-section table th, .education-section table td {
+        padding: 2px 3px !important;
+    }
+    .education-section table td {
+        text-align: left !important;
+        vertical-align: top !important;
+    }
+
+    /* 한 장 안에서 섹션 헤더와 본문에 일정한 간격을 준다. */
+    .container .form-section {
+        margin-top: 2mm !important;
+        margin-bottom: 0 !important;
+    }
+    .container form > .form-section:first-child {
+        margin-top: 95px !important;
+    }
+    .container .section-header {
+        padding: 1.5mm 2mm !important;
+        margin-bottom: 1mm !important;
+    }
+    .container .section-content {
+        padding: 1.5mm 2mm !important;
+    }
+    .container .education-section {
+        margin-top: 2mm !important;
+    }
+
+    /* 교육 표가 페이지 끝에서 제목과 분리되지 않게 한다. */
+    .container .education-section {
+        overflow: visible !important;
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+    }
+    .container .education-section table {
+        display: table !important;
+        margin-top: 1mm !important;
+    }
+    .container .education-section tbody {
+        display: table-row-group !important;
+    }
+
+    /* A4 미리보기에서 본문이 용지의 인쇄 가능 폭을 넘지 않게 한다. */
+    html, body { width: 100% !important; min-width: 0 !important; }
+    .container { box-sizing: border-box !important; max-width: 100% !important; width: 100% !important; margin-inline: auto !important; padding: 5mm 7mm 6mm !important; }
+    .print-title-approval h1 {
+        font-size: 44px !important;
+        line-height: 1.15 !important;
+        margin-left: 3mm !important;
+        transform: translateY(8mm) !important;
+    }
+    .form-section { break-inside: auto !important; page-break-inside: auto !important; }
+    .work-assignment-table tr, .education-section tr { break-inside: avoid !important; page-break-inside: avoid !important; }
+    /* 인쇄 표를 선명한 검정 실선으로 통일한다. */
+    .container .form-section table,
+    .container .education-section table {
+        border: 1pt solid #000 !important;
+        border-collapse: collapse !important;
+        border-spacing: 0 !important;
+    }
+    .container .form-section table th,
+    .container .form-section table td,
+    .container .education-section table th,
+    .container .education-section table td {
+        border: 1pt solid #000 !important;
+    }
+    .container .assignment-left .work-assignment-table td,
+    .container .assignment-right .work-assignment-table td,
+    .container .assignment-left .work-assignment-table th,
+    .container .assignment-right .work-assignment-table th {
+        border-color: #000 !important;
+        border-width: 1pt !important;
+    }
+    .container .form-section {
+        margin-top: 5mm !important;
+    }
+    .container form > .form-section:first-child {
+        margin-top: 95px !important;
+    }
+    .container .education-section {
+        margin-top: 5mm !important;
+    }
+
 }

@@ -905,11 +905,13 @@
                 <table class="approval-table">
                     <tr>
                         <th rowspan="2" class="approval-label">결<br>  재</th>
-                        <th>담당</th>
+                        <th>조장</th>
+                        <th>대리</th>
                         <th>과장</th>
                         <th>소장</th>
                     </tr>
                     <tr>
+                        <td class="approval-cell"></td>
                         <td class="approval-cell"></td>
                         <td class="approval-cell"></td>
                         <td class="approval-cell"></td>
@@ -992,73 +994,27 @@
                         </thead>
                         <tbody>
                             <tr>
-                                <td style="border: 1px solid #ddd; padding: 3.92px; text-align: center; font-size: 15px !important;">
+                                <td style="border: 1px solid #ddd; padding: 3.92px; height: 76px; vertical-align: middle; text-align: center; font-size: 15px !important;">
                                     <%= workOrder.personnelStatus ? workOrder.personnelStatus.totalPersonnel : '' %>
                                 </td>
-                                <td style="border: 1px solid #ddd; padding: 3.92px; text-align: center; font-size: 15px !important;">
+                                <td style="border: 1px solid #ddd; padding: 3.92px; height: 76px; vertical-align: middle; text-align: center; font-size: 15px !important;">
                                     <%= workOrder.personnelStatus ? workOrder.personnelStatus.absentPersonnel : '0' %>
                                 </td>
-                                <td style="border: 1px solid #ddd; padding: 3.92px; text-align: center; font-size: 12px !important;">
+                                <td style="border: 1px solid #ddd; padding: 3.92px 8px; height: 76px; vertical-align: middle; text-align: left; font-size: 12px !important;">
                                     <% if (workOrder.personnelStatus && workOrder.personnelStatus.absentDetails && workOrder.personnelStatus.absentDetails.length > 0) { %>
                                         <% 
-                                        // 사고내용을 원하는 순서로 정렬하고 같은 종류 통합
                                         const absentDetails = workOrder.personnelStatus.absentDetails;
-                                        
-                                        // 정렬 순서 정의
-                                        const sortOrder = ['연차1', '연차2', '기타', '정직', '병가', '산재', '휴직', '경조', '결근', '근무지원조'];
-                                        
-                                        // 같은 종류별로 그룹화
-                                        const groupedDetails = {};
-                                        absentDetails.forEach(item => {
-                                            if (!groupedDetails[item.type]) {
-                                                groupedDetails[item.type] = [];
-                                            }
-                                            groupedDetails[item.type].push(item.employeeName);
-                                        });
-                                        
-                                        // 정렬된 순서대로 통합된 결과 생성
-                                        const sortedDetails = [];
-                                        sortOrder.forEach(type => {
-                                            if (groupedDetails[type]) {
-                                                sortedDetails.push({
-                                                    type: type,
-                                                    names: groupedDetails[type].join(',')
-                                                });
-                                            }
-                                        });
-                                        
-                                        // 순서에 없는 타입들 추가
-                                        Object.keys(groupedDetails).forEach(type => {
-                                            if (!sortOrder.includes(type)) {
-                                                sortedDetails.push({
-                                                    type: type,
-                                                    names: groupedDetails[type].join(',')
-                                                });
-                                            }
-                                        });
                                         %>
-                                        <!-- 모든 데이터를 이등분하여 표시 -->
-                                        <div style="display: flex; gap: 20px; margin-bottom: 4px; font-size: 12px !important;">
-                                            <div style="flex: 1; text-align: left; font-size: 12px !important;">
-                                                <% for (let i = 0; i < Math.ceil(sortedDetails.length / 2); i++) { %>
-                                                    <div style="margin-bottom: 4px; font-size: 12px !important;">
-                                                        <%= sortedDetails[i].type %>: <%= sortedDetails[i].names %>
-                                                    </div>
-                                                <% } %>
-                                            </div>
-                                            <div style="flex: 1; text-align: left; font-size: 12px !important;">
-                                                <% for (let i = Math.ceil(sortedDetails.length / 2); i < sortedDetails.length; i++) { %>
-                                                    <div style="margin-bottom: 4px; font-size: 12px !important;">
-                                                        <%= sortedDetails[i].type %>: <%= sortedDetails[i].names %>
-                                                    </div>
-                                                <% } %>
-                                            </div>
+                                        <div style="text-align: left; font-size: 12px;">
+                                            <% absentDetails.forEach(item => { %>
+                                                <div style="margin-bottom: 4px; overflow-wrap: anywhere;"><%= item.type || '' %>: <%= item.employeeName || '' %></div>
+                                            <% }); %>
                                         </div>
                                     <% } else { %>
                                         <span style="color: #6c757d; font-size: 12px !important;">사고내용이 없습니다.</span>
                                     <% } %>
                                 </td>
-                                <td style="border: 1px solid #ddd; padding: 3.92px; text-align: center; font-size: 15px !important;">
+                                <td style="border: 1px solid #ddd; padding: 3.92px; height: 76px; vertical-align: middle; text-align: center; font-size: 15px !important;">
                                     <%= workOrder.personnelStatus ? workOrder.personnelStatus.currentPersonnel : '' %>
                                 </td>
                             </tr>
@@ -1397,21 +1353,19 @@
                     </thead>
                     <tbody>
                         <tr>
-                            <td style="border: 1px solid #ddd; padding: 4px; vertical-align: top; height: 60px;">
+                            <td style="border: 1px solid #ddd; padding: 4px 8px; vertical-align: top; text-align: left; height: 60px;">
                                 <% if (workOrder.education && workOrder.education.weeklyFocus && workOrder.education.weeklyFocus.length > 0) { %>
                                     <% workOrder.education.weeklyFocus.forEach((focus, index) => { %>
-                                        <div style="margin-bottom: 2px; padding: 1px; font-size: 12px; line-height: 1.2;">
-                                            <%= focus || '' %>
-                                        </div>
+                                        <div style="margin-bottom: 2px; padding: 1px; font-size: 12px; line-height: 1.2; text-align: left; white-space: pre-wrap; overflow-wrap: anywhere;"><%= focus || '' %></div>
                                     <% }); %>
                                 <% } else { %>
                                     <span style="color: #6c757d; font-size: 12px;">금주중점이 없습니다.</span>
                                 <% } %>
                             </td>
-                            <td style="border: 1px solid #ddd; padding: 4px; vertical-align: top; height: 60px;">
+                            <td style="border: 1px solid #ddd; padding: 4px 8px; vertical-align: top; text-align: left; height: 60px;">
                                 <% 
                                 // content 필드가 없으면 generalEducation 필드 사용
-                                const educationContent = workOrder.education && workOrder.education.content ? 
+                                const educationContent = workOrder.education && workOrder.education.content && workOrder.education.content.length ?
                                     workOrder.education.content : 
                                     (workOrder.education && workOrder.education.generalEducation ? 
                                         workOrder.education.generalEducation : []);
@@ -1419,9 +1373,7 @@
                                 
                                 <% if (educationContent && educationContent.length > 0) { %>
                                     <% educationContent.forEach((content, index) => { %>
-                                        <div style="margin-bottom: 2px; padding: 1px; font-size: 12px; line-height: 1.2;">
-                                            <%= content || '' %>
-                                        </div>
+                                        <div style="margin-bottom: 2px; padding: 1px; font-size: 12px; line-height: 1.2; text-align: left; white-space: pre-wrap; overflow-wrap: anywhere;"><%= content || '' %></div>
                                     <% }); %>
                                 <% } else { %>
                                     <span style="color: #6c757d; font-size: 12px;">교육내용이 없습니다.</span>

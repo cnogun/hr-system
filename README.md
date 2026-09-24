@@ -54,7 +54,7 @@ npm install
 ```env
 # 데이터베이스 설정
 MONGODB_URI=mongodb://localhost:27017/hr_system
-PORT=3000
+PORT=10000
 SESSION_SECRET=your-secret-key
 
 # 이메일 설정 (Gmail)
@@ -65,6 +65,7 @@ EMAIL_PASS=your-app-password
 
 # 애플리케이션 설정
 NODE_ENV=development
+APP_BASE_URL=http://localhost:10000
 ```
 
 ### 3. Gmail 앱 비밀번호 설정
@@ -121,4 +122,4 @@ npm start
 
 ## 라이센스
 
-ISC License 
+ISC License
