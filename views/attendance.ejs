@@ -231,24 +231,57 @@
       margin-right: 0.5rem;
     }
   }
+
+    /* 시스템 공통 화면과 맞춘 근태관리 전용 레이아웃 */
+    .attendance-page { max-width: 1180px; margin: 0 auto; font-size: .88rem; }
+    .attendance-page .card { border: 0; border-radius: 12px; box-shadow: 0 2px 10px rgba(15, 35, 65, .09); }
+    .attendance-page .card-header { padding: .62rem .9rem; border-radius: 12px 12px 0 0; }
+    .attendance-page .card-body { padding: .85rem; }
+    .attendance-page .page-title { font-size: 1.45rem; font-weight: 700; color: #172b4d; }
+    .attendance-page .toolbar { background: #fff; border: 1px solid #e3e8ef; border-radius: 12px; padding: .75rem; }
+    .attendance-page .table-responsive { max-height: 58vh; overflow: auto; }
+    .attendance-page thead th { position: sticky; top: 0; z-index: 2; background: #f4f7fb; white-space: nowrap; }
+    .attendance-page .table > :not(caption) > * > * { padding: .35rem .38rem; vertical-align: middle; }
+    .attendance-page .form-control,
+    .attendance-page .form-select { font-size: .84rem; }
+    .attendance-page .hour-field { min-width: 58px; text-align: right; }
+    .attendance-page .clock-field { min-width: 88px; font-variant-numeric: tabular-nums; }
+    .attendance-page .status-column { min-width: 150px; }
+    .attendance-page .status-select { min-width: 138px; padding-right: 1.8rem; white-space: nowrap; }
+    .attendance-page .employee-name { min-width: 100px; }
+    .attendance-page .note-field { min-width: 170px; }
+    .attendance-page .page-actions .input-group { width: 205px; }
+    #attendanceDateDisplay { min-width: 150px; background: #fff; cursor: pointer; }
+    .attendance-date-native { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+
+    @media (max-width: 768px) {
+      .attendance-page { padding-left: .5rem !important; padding-right: .5rem !important; }
+      .attendance-page .page-actions { width: 100%; }
+      .attendance-page .page-actions > * { flex: 1 1 auto; }
+      .attendance-page .page-actions .input-group { width: 100%; }
+      .attendance-page .table-responsive { max-height: 62vh; }
+    }
 </style>
 
-<div class="container mt-4">
+<div class="container-fluid attendance-page py-3">
   <div class="row">
     <div class="col-12">
       <!-- 페이지 헤더 -->
-      <div class="d-flex justify-content-between align-items-center mb-4">
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
         <div>
-          <h2 class="mb-1">
+          <h2 class="page-title mb-1">
             <i class="fa-solid fa-clock me-2 text-primary"></i>근태 관리
           </h2>
-          <p class="text-muted mb-0">직원들의 일일 근태를 입력하고 관리합니다.</p>
+          <p class="text-muted small mb-0">확정 근무명단과 팀 순환을 기준으로 일일 근태를 관리합니다.</p>
         </div>
-        <div class="d-flex gap-2">
-          <div class="d-flex align-items-center gap-2">
-            <input type="date" id="attendanceDate" class="form-control" value="<%= today %>">
-            <span id="selectedDayOfWeek" class="badge bg-secondary fs-6 px-3 py-2"></span>
+        <div class="d-flex flex-wrap gap-2 page-actions">
+          <div class="input-group">
+            <input type="text" id="attendanceDateDisplay" class="form-control" readonly onclick="openAttendanceDatePicker()">
+            <button type="button" class="btn btn-outline-secondary" onclick="openAttendanceDatePicker()" aria-label="날짜 선택">
+              <i class="fa-regular fa-calendar"></i>
+            </button>
           </div>
+          <input type="date" id="attendanceDate" class="attendance-date-native" value="<%= today %>" tabindex="-1">
           <button class="btn btn-primary" onclick="loadAttendanceData()">
             <i class="fa-solid fa-search me-1"></i>조회
           </button>
@@ -258,49 +291,23 @@
         </div>
       </div>
 
-        <!-- 이번주 팀 근무 형태 -->
-        <div class="card shadow-sm mb-4">
-          <div class="card-header bg-info text-white">
-            <h5 class="mb-0">
-              <i class="fa-solid fa-users me-2"></i><span id="currentWeekInfo">이번주 팀 근무 형태</span>
-            </h5>
-          </div>
-          <div class="card-body">
-            <div class="row">
-              <div class="col-md-4">
-                <div class="text-center p-3 border rounded">
-                  <h6 class="text-primary">보안1팀</h6>
-                  <span class="badge bg-success fs-6" id="team1Schedule">초야</span>
-                  <small class="d-block text-muted mt-1">14:00~22:00</small>
-                </div>
-              </div>
-              <div class="col-md-4">
-                <div class="text-center p-3 border rounded">
-                  <h6 class="text-primary">보안2팀</h6>
-                  <span class="badge bg-warning fs-6" id="team2Schedule">심야</span>
-                  <small class="d-block text-muted mt-1">22:00~06:00</small>
-                </div>
-              </div>
-              <div class="col-md-4">
-                <div class="text-center p-3 border rounded">
-                  <h6 class="text-primary">보안3팀</h6>
-                  <span class="badge bg-info fs-6" id="team3Schedule">주간</span>
-                  <small class="d-block text-muted mt-1">06:00~14:00</small>
-                </div>
-              </div>
-            </div>
-          </div>
+        <!-- 선택 날짜의 근태 입력 대상 요약 -->
+        <div class="card mb-3" id="attendanceShiftSummaryCard">
+          <div class="card-header bg-light"><h6 class="mb-0"><i class="fa-solid fa-clipboard-list me-2"></i><span id="currentWeekInfo">선택 날짜</span> · 근무 인원</h6></div>
+          <div class="card-body"><div class="row g-2" id="attendanceShiftSummary" aria-live="polite"></div>
+            <small class="text-muted d-block mt-2" id="attendanceShiftSummaryNote"></small></div>
         </div>
 
         <!-- 부서별 필터 -->
-        <div class="card shadow-sm mb-4">
+        <div class="toolbar mb-3">
           <div class="card-body">
-            <form method="GET" class="row g-3 align-items-center">
+            <form method="GET" class="row g-3 align-items-center" onsubmit="this.elements.date.value = document.getElementById('attendanceDate').value">
+              <input type="hidden" name="date" value="<%= today %>">
               <div class="col-auto">
                 <label for="departmentFilter" class="form-label fw-bold">부서 선택:</label>
               </div>
               <div class="col-auto">
-                <select name="department" id="departmentFilter" class="form-select" onchange="this.form.submit()">
+                <select name="department" id="departmentFilter" class="form-select" onchange="this.form.elements.date.value = document.getElementById('attendanceDate').value; this.form.submit()">
                   <option value="">전체 부서</option>
                   <% if (allDepartments && allDepartments.length > 0) { %>
                     <% allDepartments.forEach(dept => { %>
@@ -309,14 +316,8 @@
                   <% } %>
                 </select>
               </div>
-              <div class="col-auto">
-                <button type="submit" class="btn btn-outline-primary">
-                  <i class="fa-solid fa-filter me-1"></i>필터 적용
-                </button>
-              </div>
             </form>
         </div>
-      </div>
 
       <!-- 모바일 테이블 스크롤 안내 -->
       <div class="table-scroll-hint d-md-none">
@@ -325,7 +326,7 @@
       </div>
 
       <!-- 근태 입력 폼 -->
-      <div class="card shadow-sm">
+      <div class="card">
         <div class="card-header bg-primary text-white">
           <h5 class="mb-0">
             <i class="fa-solid fa-edit me-2"></i>근태 입력
@@ -340,7 +341,7 @@
                       <th style="width: 100px;">이름</th>
                       <th style="width: 80px;">부서</th>
                       <th style="width: 80px;">직급</th>
-                      <th style="width: 130px;">근태 상태</th>
+                      <th class="status-column">근태 상태</th>
                       <th style="width: 80px;">출근 시간</th>
                       <th style="width: 80px;">퇴근 시간</th>
                       <th style="width: 70px;">기본</th>
@@ -355,7 +356,7 @@
                 <tbody>
                   <% employees.forEach(function(employee) { %>
                   <tr>
-                    <td class="align-middle">
+                    <td class="align-middle employee-name">
                           <strong>
                             <%= employee.name %>
                           </strong>
@@ -371,7 +372,7 @@
                           </span>
                     </td>
                     <td class="align-middle">
-                          <select class="form-select form-select-sm" name="<%= employee._id %>_status"
+                          <select class="form-select form-select-sm status-select" name="<%= employee._id %>_status"
                             onchange="toggleTimeInputs('<%= employee._id %>')">
                         <option value="">선택</option>
                             <option value="출근(주)">출근(주)</option>
@@ -394,45 +395,45 @@
                       </select>
                     </td>
                     <td class="align-middle">
-                          <input type="time" class="form-control form-control-sm" name="<%= employee._id %>_checkIn"
+                          <input type="text" inputmode="numeric" placeholder="HH:mm" pattern="(?:[01]\d|2[0-3]):[0-5]\d" class="form-control form-control-sm clock-field" name="<%= employee._id %>_checkIn"
                             onchange="calculateNightTime('<%= employee._id %>')" disabled>
                         </td>
                         <td class="align-middle">
-                          <input type="time" class="form-control form-control-sm" name="<%= employee._id %>_checkOut"
+                          <input type="text" inputmode="numeric" placeholder="HH:mm" pattern="(?:[01]\d|2[0-3]):[0-5]\d" class="form-control form-control-sm clock-field" name="<%= employee._id %>_checkOut"
                             onchange="calculateNightTime('<%= employee._id %>')" disabled>
                         </td>
                         <td class="align-middle">
-                          <input type="number" class="form-control form-control-sm time-input"
+                          <input type="number" class="form-control form-control-sm time-input hour-field"
                             name="<%= employee._id %>_basic" placeholder="0" min="0" step="0.5"
                             onchange="calculateTotalTime('<%= employee._id %>')" disabled>
                         </td>
                         <td class="align-middle">
-                          <input type="number" class="form-control form-control-sm time-input"
+                          <input type="number" class="form-control form-control-sm time-input hour-field"
                             name="<%= employee._id %>_overtime" placeholder="0" min="0" step="0.5"
                             onchange="calculateTotalTime('<%= employee._id %>')" disabled>
                         </td>
                         <td class="align-middle">
-                          <input type="number" class="form-control form-control-sm time-input"
+                          <input type="number" class="form-control form-control-sm time-input hour-field"
                             name="<%= employee._id %>_special" placeholder="0" min="0" step="0.5"
                             onchange="calculateTotalTime('<%= employee._id %>')" disabled>
                         </td>
                         <td class="align-middle">
-                          <input type="number" class="form-control form-control-sm time-input"
+                          <input type="number" class="form-control form-control-sm time-input hour-field"
                             name="<%= employee._id %>_specialOvertime" placeholder="0" min="0" step="0.5"
                             onchange="calculateTotalTime('<%= employee._id %>')" disabled>
                         </td>
                         <td class="align-middle">
-                          <input type="number" class="form-control form-control-sm time-input"
+                          <input type="number" class="form-control form-control-sm time-input hour-field"
                             name="<%= employee._id %>_night" placeholder="0" min="0" step="0.5"
                             onchange="calculateTotalTime('<%= employee._id %>')" disabled>
                     </td>
                     <td class="align-middle">
-                          <input type="number" class="form-control form-control-sm" name="<%= employee._id %>_totalTime"
+                          <input type="number" class="form-control form-control-sm hour-field" name="<%= employee._id %>_totalTime"
                             placeholder="0" min="0" step="0.5" readonly style="background-color: #f8f9fa;">
                     </td>
                     <td class="align-middle">
-                          <input type="text" class="form-control form-control-sm" name="<%= employee._id %>_note"
-                            placeholder="" style="min-width: 180px; font-size: 0.875rem;">
+                          <input type="text" class="form-control form-control-sm note-field" name="<%= employee._id %>_note"
+                            placeholder="">
                     </td>
                   </tr>
                   <% }); %>
@@ -495,10 +496,12 @@ function toggleTimeInputs(employeeId) {
   const specialOvertimeInput = document.querySelector(`input[name="${employeeId}_specialOvertime"]`);
   const nightInput = document.querySelector(`input[name="${employeeId}_night"]`);
 
-      // 모든 시간 입력 필드 초기화
+      // 상태를 바꿀 때 이전 상태의 시간값이 남지 않도록 모두 초기화
       checkInInput.value = '';
       checkOutInput.value = '';
       timeInputs.forEach(input => input.value = '');
+      const totalInput = document.querySelector(`input[name="${employeeId}_totalTime"]`);
+      if (totalInput) totalInput.value = '';
       
       // 각 근태 상태별 처리
       switch (statusSelect.value) {
@@ -764,7 +767,7 @@ function toggleTimeInputs(employeeId) {
     // 모든 필드 초기화
     function clearAllFields() {
       // 모든 시간 입력 필드 비활성화 및 초기화
-      const timeInputs = document.querySelectorAll('input[type="time"], input[class*="time-input"]');
+      const timeInputs = document.querySelectorAll('input[name$="_checkIn"], input[name$="_checkOut"], input.time-input');
       timeInputs.forEach(input => {
         input.disabled = true;
         input.value = '';
@@ -964,8 +967,7 @@ async function loadAttendanceData() {
             timeFields.forEach(field => {
               const input = document.querySelector(`input[name="${employeeId}_${field}"]`);
               if (input && attendance[field] !== undefined && attendance[field] !== null && attendance[field] !== '') {
-                const formattedTime = formatTimeForInput(attendance[field]);
-                input.value = formattedTime;
+                input.value = String(attendance[field]);
               }
             });
                 
@@ -1065,6 +1067,7 @@ async function loadAttendanceData() {
     // 자동 입력된 근태 데이터를 폼에 적용
     function applyAutoAttendanceData(attendanceData) {
       console.log('자동입력 데이터 적용 시작:', attendanceData);
+      clearAllFields();
       
       // 현재 화면에 표시된 직원들의 ID 목록 가져오기
       const currentEmployeeIds = [];
@@ -1177,44 +1180,36 @@ async function loadAttendanceData() {
     }
     
     // 날짜에 따른 요일 표시 함수
+    function openAttendanceDatePicker() {
+      const picker = document.getElementById('attendanceDate');
+      if (!picker) return;
+      if (typeof picker.showPicker === 'function') picker.showPicker();
+      else picker.click();
+    }
+
     function updateDayOfWeek() {
       const dateInput = document.getElementById('attendanceDate');
-      const dayOfWeekSpan = document.getElementById('selectedDayOfWeek');
+      const display = document.getElementById('attendanceDateDisplay');
       
       if (dateInput.value) {
-        const selectedDate = new Date(dateInput.value);
+        const selectedDate = new Date(`${dateInput.value}T12:00:00`);
         const days = ['일', '월', '화', '수', '목', '금', '토'];
         const dayOfWeek = days[selectedDate.getDay()];
-        
-        // 주말인지 확인하여 색상 변경
-        if (selectedDate.getDay() === 0 || selectedDate.getDay() === 6) {
-          dayOfWeekSpan.className = 'badge bg-warning text-dark fs-6 px-3 py-2';
-        } else {
-          dayOfWeekSpan.className = 'badge bg-secondary fs-6 px-3 py-2';
-        }
-        
-        dayOfWeekSpan.textContent = dayOfWeek;
+        if (display) display.value = `${dateInput.value} (${dayOfWeek})`;
       }
     }
     
     // 주차 번호 계산 (월요일 06시부터 다음주 월요일 06시까지) - 팀 근무 순환용
     function getWeekNumber(date) {
-      // 2025년 1월 1일(수) 06:00을 기준으로 계산
-      const yearStart = new Date(2025, 0, 1, 6, 0, 0); // 2025년 1월 1일 06:00
       const targetDate = new Date(date);
-      
-      // 월요일 06:00으로 조정
       const dayOfWeek = targetDate.getDay();
       const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-      
-      const monday6am = new Date(targetDate);
-      monday6am.setDate(targetDate.getDate() - mondayOffset);
-      monday6am.setHours(6, 0, 0, 0);
-      
-      const weekDiff = Math.floor((monday6am - yearStart) / (7 * 24 * 60 * 60 * 1000));
-      const weekNumber = weekDiff + 2; // 1월 1일 수요일이 1주차, 1월 6일 월요일이 2주차
-      
-      return weekNumber;
+      const monday = new Date(targetDate);
+      monday.setDate(targetDate.getDate() - mondayOffset);
+      monday.setHours(12, 0, 0, 0);
+      const anchor = new Date('2026-09-21T12:00:00');
+      const elapsedWeeks = Math.floor((monday - anchor) / (7 * 24 * 60 * 60 * 1000));
+      return ((elapsedWeeks % 3) + 3) % 3 + 1;
     }
 
     // 표시용 주차 번호 계산 (실제 주차)
@@ -1260,10 +1255,70 @@ async function loadAttendanceData() {
       return '주간'; // 기본값
     }
 
+    function escapeAttendanceSummary(value) {
+      return String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
+    }
+
+    let attendanceSummaryRequest = 0;
+    async function updateAttendanceShiftSummary() {
+      const date = document.getElementById('attendanceDate')?.value;
+      const panel = document.getElementById('attendanceShiftSummary');
+      const note = document.getElementById('attendanceShiftSummaryNote');
+      if (!date || !panel) return;
+      const request = ++attendanceSummaryRequest;
+      const targetDate = new Date(`${date}T12:00:00`);
+      const weekday = targetDate.getDay();
+      const week = getWeekNumber(targetDate);
+      const teamFor = shift => [1, 2, 3].find(team => getTeamSchedule(team, week) === shift);
+      const teams = [];
+      if (weekday === 0) {
+        teams.push({ label: '주간', time: '06:00~18:00', main: teamFor('주간'), support: teamFor('초야'), expectedMain: 19, expectedSupport: 9, code: 'day' });
+        teams.push({ label: '야간', time: '18:00~06:00', main: teamFor('주간'), support: teamFor('심야'), expectedMain: 19, expectedSupport: 9, code: 'night' });
+      } else if (weekday === 6) {
+        teams.push({ label: '주간', time: '06:00~18:00', main: teamFor('초야'), expectedMain: 29, code: 'day' });
+        teams.push({ label: '야간', time: '18:00~06:00', main: teamFor('심야'), expectedMain: 29, code: 'night' });
+      } else {
+        [['주간', '06:00~14:00'], ['초야', '14:00~22:00'], ['심야', '22:00~06:00']].forEach(([label, time]) =>
+          teams.push({ label, time, main: teamFor(label), expectedMain: 38 }));
+      }
+      panel.innerHTML = '<div class="col-12 text-muted small">근무명단을 확인하는 중입니다.</div>';
+      let assignments = [];
+      let loadFailed = false;
+      if (weekday === 0 || weekday === 6) {
+        try {
+          const response = await fetch('/workSchedule/manual-assignments', { cache: 'no-store' });
+          const result = await response.json();
+          if (!response.ok || !result.success) throw new Error(result.message || '명단 조회 실패');
+          assignments = (result.data || []).filter(item => item.date === date);
+        } catch (error) {
+          loadFailed = true;
+        }
+      }
+      if (request !== attendanceSummaryRequest || document.getElementById('attendanceDate')?.value !== date) return;
+      panel.innerHTML = teams.map(entry => {
+        const main = assignments.find(item => item.shift === entry.code && Number(item.team) === entry.main);
+        const support = entry.support ? assignments.find(item => item.shift === entry.code && Number(item.team) === entry.support) : null;
+        const actual = Number(main?.totalCount || 0) + Number(support?.totalCount || 0);
+        const confirmed = weekday < 1 || weekday === 6;
+        const complete = confirmed && !loadFailed && main && (!entry.support || support);
+        const status = !confirmed ? '기본 근무 편성' : loadFailed ? '확정명단 조회 실패' : complete ? '확정명단' : '일부 미확정';
+        const mainLabel = `보안${entry.main}팀 ${main ? Number(main.totalCount) : entry.expectedMain}명${confirmed && !main ? ' (예정)' : ''}`;
+        const supportLabel = entry.support ? ` + 보안${entry.support}팀 지원 ${support ? Number(support.totalCount) : entry.expectedSupport}명${confirmed && !support ? ' (예정)' : ''}` : '';
+        const total = confirmed ? (main ? Number(main.totalCount) : entry.expectedMain) + (entry.support ? (support ? Number(support.totalCount) : entry.expectedSupport) : 0) : entry.expectedMain;
+        const mismatch = complete && actual !== entry.expectedMain + (entry.expectedSupport || 0);
+        return `<div class="col-md-${weekday === 0 || weekday === 6 ? '6' : '4'}"><div class="border rounded p-3 h-100">
+          <div class="d-flex justify-content-between gap-2"><strong>${entry.label} <small class="text-muted fw-normal">${entry.time}</small></strong><span class="badge ${complete && !mismatch ? 'bg-success' : confirmed ? 'bg-warning text-dark' : 'bg-secondary'}">${status}</span></div>
+          <div class="mt-2">${escapeAttendanceSummary(mainLabel + supportLabel)} <strong>총 ${total}명</strong></div>
+          ${mismatch ? `<small class="text-danger">확정 인원이 기본 편성 ${entry.expectedMain + (entry.expectedSupport || 0)}명과 다릅니다.</small>` : ''}
+        </div></div>`;
+      }).join('');
+      note.textContent = weekday === 0 || weekday === 6 ? '예정 인원은 기본 편성 기준입니다. 확정된 팀은 실제 확정 인원으로 표시합니다.' : '평일 인원은 팀 기본 편성 기준입니다.';
+    }
+
     // 팀별 근무 형태를 선택된 날짜의 주차에 따라 동적으로 계산
     function updateTeamWorkSchedule() {
       const dateInput = document.getElementById('attendanceDate');
-      const selectedDate = dateInput ? new Date(dateInput.value) : new Date();
+      const selectedDate = dateInput?.value ? new Date(`${dateInput.value}T12:00:00`) : new Date();
       const weekNumber = getWeekNumber(selectedDate);
       
       // 주차별 팀 근무 순환 로직 (평일 기준)
@@ -1283,32 +1338,7 @@ async function loadAttendanceData() {
         const day = selectedDate.getDate();
         const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
         const dayName = dayNames[selectedDate.getDay()];
-        currentWeekInfo.textContent = `${year}년 ${month}월 ${day}일(${dayName}) - ${weekNumber}주차 팀 근무 형태`;
-      }
-      
-      // UI 업데이트 - 팀 근무 형태
-      document.getElementById('team1Schedule').textContent = team1Schedule;
-      document.getElementById('team1Schedule').className = `badge ${getBadgeClass(team1Schedule)} fs-6`;
-      
-      document.getElementById('team2Schedule').textContent = team2Schedule;
-      document.getElementById('team2Schedule').className = `badge ${getBadgeClass(team2Schedule)} fs-6`;
-      
-      document.getElementById('team3Schedule').textContent = team3Schedule;
-      document.getElementById('team3Schedule').className = `badge ${getBadgeClass(team3Schedule)} fs-6`;
-      
-      // UI 업데이트 - 시간
-      const team1TimeElement = document.querySelector('.col-md-4:nth-child(1) .d-block.text-muted.mt-1');
-      const team2TimeElement = document.querySelector('.col-md-4:nth-child(2) .d-block.text-muted.mt-1');
-      const team3TimeElement = document.querySelector('.col-md-4:nth-child(3) .d-block.text-muted.mt-1');
-      
-      if (team1TimeElement) {
-        team1TimeElement.textContent = getTimeRange(team1Schedule);
-      }
-      if (team2TimeElement) {
-        team2TimeElement.textContent = getTimeRange(team2Schedule);
-      }
-      if (team3TimeElement) {
-        team3TimeElement.textContent = getTimeRange(team3Schedule);
+        currentWeekInfo.textContent = `${year}년 ${month}월 ${day}일(${dayName})`;
       }
       
       // 근태상태 자동 설정
@@ -1409,8 +1439,18 @@ async function loadAttendanceData() {
 
     // 페이지 로드 시 오늘 날짜 데이터 자동 조회 및 요일 표시
     document.addEventListener('DOMContentLoaded', function() {
+      const requestedDate = new URLSearchParams(window.location.search).get('date');
+      if (requestedDate && /^\d{4}-\d{2}-\d{2}$/.test(requestedDate)) {
+        const dateInput = document.getElementById('attendanceDate');
+        const parsed = new Date(`${requestedDate}T12:00:00`);
+        if (!Number.isNaN(parsed.getTime()) && parsed.getFullYear() === Number(requestedDate.slice(0, 4)) &&
+            parsed.getMonth() + 1 === Number(requestedDate.slice(5, 7)) && parsed.getDate() === Number(requestedDate.slice(8, 10))) {
+          dateInput.value = requestedDate;
+        }
+      }
       updateDayOfWeek(); // 초기 요일 표시
       updateTeamWorkSchedule(); // 팀 근무 형태 업데이트
+      updateAttendanceShiftSummary();
       loadAttendanceData();
     });
     
@@ -1418,6 +1458,8 @@ async function loadAttendanceData() {
     document.getElementById('attendanceDate').addEventListener('change', function() {
       updateDayOfWeek();
       updateTeamWorkSchedule();
+      updateAttendanceShiftSummary();
+      loadAttendanceData();
     });
 
 

@@ -9,11 +9,8 @@
   ] },
   { id: 'people', label: '인사정보', icon: 'fa-users', items: [
     { label: '직원조회', href: '/employees' },
-    { label: '직원정보관리', href: '/employees/manage', admin: true }
-  ] },
-  { id: 'duty', label: '직무관리', icon: 'fa-shield-halved', items: [
-    { label: '인사명령서', href: '/duty-orders', admin: true },
-    { label: '업무 일정', href: '/security/schedule', admin: true }
+    { label: '직원정보관리', href: '/employees/manage', admin: true },
+    { label: '인사명령서', href: '/duty-orders', admin: true }
   ] },
   { id: 'uniform', label: '유니폼관리', icon: 'fa-shirt', items: [
     { label: '직원별 유니폼', href: '/uniform', admin: true },
@@ -25,12 +22,16 @@
     { label: '월간 근태현황', href: '/monthlyAttendance', admin: true },
     { label: '근무 스케줄', href: '/workSchedule', admin: true }
   ] },
-  { id: 'payroll', label: '급여관리', icon: 'fa-wallet', items: [], upcoming: true },
+  { id: 'payroll', label: '급여관리', icon: 'fa-wallet', items: [
+    { label: '월별 급여', href: '/payroll', admin: true },
+    { label: '급여 기준', href: '/payroll?tab=rates', admin: true },
+    { label: '급여 대장', href: '/payroll?tab=ledger', admin: true }
+  ] },
   { id: 'work-info', label: '보안업무', icon: 'fa-briefcase', items: [
     { label: '근무명령서', href: '/work-orders', admin: true },
     { label: '인계사항', href: '/handovers', admin: true },
-    { label: '지시사항', href: '/security/duty-orders', admin: true },
-    { label: '보고서', href: '/security/summary-reports', admin: true }
+    { label: '보고서', href: '/security/summary-reports', admin: true },
+    { label: '업무 일정', href: '/security/schedule', admin: true }
   ] },
   { id: 'community', label: '커뮤니티', icon: 'fa-comments', items: [
     { label: '자유게시판', href: '/boards' },
@@ -53,7 +54,6 @@
   { id: 'work-info', label: '보안업무', icon: 'fa-briefcase', items: [
     { label: '근무명령서', href: '/work-orders' },
     { label: '인계사항', href: '/handovers' },
-    { label: '지시사항', href: '/security/duty-orders' },
     { label: '보고서', href: '/security/summary-reports' }
   ] },
   { id: 'uniform', label: '유니폼', icon: 'fa-shirt', items: [
@@ -177,9 +177,7 @@
     <% hrGroups.forEach(function(group) { %>
       <nav class="hr-submenu" id="hrSubmenu-<%= group.id %>" data-hr-panel="<%= group.id %>" aria-label="<%= group.label %> 하위 메뉴" hidden>
         <% const visibleItems = group.items.filter(function(item) { return !item.admin || hrAdmin; }); %>
-        <% if (group.upcoming) { %>
-          <p class="hr-empty">급여관리 기능은 준비 중입니다.</p>
-        <% } else if (visibleItems.length === 0) { %>
+        <% if (visibleItems.length === 0) { %>
           <p class="hr-empty">관리자 권한이 필요한 메뉴입니다.</p>
         <% } else { %>
           <% visibleItems.forEach(function(item) { %><a href="<%= item.href %>"><%= item.label %></a><% }); %>

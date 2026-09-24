@@ -216,7 +216,7 @@ app.get('/.well-known/appspecific/com.chrome.devtools.json', (req, res) => {
 
 // 관리자 업무 화면은 직접 주소를 입력해도 일반 직원에게 공개하지 않습니다.
 const adminPaths = [
-  '/admin', '/employees', '/dashboard', '/attendance', '/monthlyAttendance',
+  '/admin', '/employees', '/dashboard', '/attendance', '/monthlyAttendance', '/payroll',
   '/workSchedule', '/work-orders', '/handovers', '/security', '/duty-orders',
   '/excelManager', '/auth/logs', '/api/logs', '/api/duty-orders',
   '/api/uniform/stats', '/uniform/stats', '/notice/manage', '/notice/new'
@@ -249,6 +249,7 @@ const boardRoutes = require('./routes/boards');
 const securityRoutes = require('./routes/security');
 const attendanceRoutes = require('./routes/attendance');
 const monthlyAttendanceRoutes = require('./routes/monthlyAttendance');
+const payrollRoutes = require('./routes/payroll');
 const workOrderRoutes = require('./routes/workOrders');
 const handoverRoutes = require('./routes/handovers');
 const workScheduleRoutes = require('./routes/workSchedule');
@@ -265,6 +266,7 @@ app.use('/boards', boardRoutes);
 app.use('/security', securityRoutes);
 app.use('/attendance', attendanceRoutes);
 app.use('/monthlyAttendance', monthlyAttendanceRoutes);
+app.use('/payroll', payrollRoutes);
 app.use('/work-orders', workOrderRoutes);
 app.use('/handovers', handoverRoutes);
 app.use('/workSchedule', workScheduleRoutes);

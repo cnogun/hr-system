@@ -1,0 +1,19 @@
+<%- include('header') %>
+<% const won = n => Number(n || 0).toLocaleString('ko-KR') + '원'; %>
+<div class="container py-4" style="max-width:800px"><div class="card"><div class="card-body p-4">
+<div class="d-flex justify-content-between align-items-center mb-3"><h1 class="h4 mb-0">급여명세서 · <%= run.month %></h1><button class="btn btn-outline-secondary btn-sm d-print-none" onclick="window.print()">인쇄</button></div>
+<p>직원: <strong><%= line.name %></strong> · 사번: <%= line.empNo || '-' %> · 부서: <%= line.department || '-' %></p>
+<h2 class="h6 mt-4">지급 내역</h2><table class="table table-sm"><tbody>
+<tr><th>기본급 (<%= line.hours.basic %>시간)</th><td class="text-end"><%= won(line.basePay) %></td></tr>
+<tr><th>연장수당 (<%= line.hours.overtime %>시간 × <%= won(line.rates.overtimeHourly) %>)</th><td class="text-end"><%= won(line.overtimePay) %></td></tr>
+<tr><th>특근수당 (<%= line.hours.special %>시간 × <%= won(line.rates.specialHourly) %>)</th><td class="text-end"><%= won(line.specialPay) %></td></tr>
+<tr><th>특연수당 (<%= line.hours.specialOvertime %>시간 × <%= won(line.rates.specialOvertimeHourly) %>)</th><td class="text-end"><%= won(line.specialOvertimePay) %></td></tr>
+<tr><th>야간수당 (<%= line.hours.night %>시간 × <%= won(line.rates.nightHourly) %>)</th><td class="text-end"><%= won(line.nightPay) %></td></tr>
+<tr><th>고정 수당</th><td class="text-end"><%= won(line.rates.fixedAllowance) %></td></tr><tr><th>추가 지급</th><td class="text-end"><%= won(line.extraPay) %></td></tr><tr class="table-light"><th>지급총액</th><td class="text-end fw-bold"><%= won(line.gross) %></td></tr>
+</tbody></table><% if (line.rates.basicHourly) { %><p class="small text-muted">기본급 계산: <%= line.hours.basic %>시간 × <%= won(line.rates.basicHourly) %></p><% } else { %><p class="small text-muted">기본급 계산: 월 기본급 <%= won(line.rates.basicMonthly) %></p><% } %>
+<h2 class="h6 mt-4">공제 내역</h2><table class="table table-sm"><tbody>
+<% [['incomeTax','소득세'],['localTax','지방소득세'],['pension','국민연금'],['health','건강보험'],['longTermCare','장기요양보험'],['employmentInsurance','고용보험'],['extraDeduction','기타 공제']].forEach(([key,label]) => { %><tr><th><%= label %></th><td class="text-end"><%= won(line[key]) %></td></tr><% }); %>
+<tr class="table-light"><th>공제총액</th><td class="text-end fw-bold"><%= won(line.deductions) %></td></tr></tbody></table>
+<p class="h5 text-end">실지급액 <strong><%= won(line.net) %></strong></p><% if (line.note) { %><p class="small">비고: <%= line.note %></p><% } %>
+<a class="btn btn-outline-primary d-print-none" href="/payroll?month=<%= run.month %>">목록으로</a>
+</div></div></div><%- include('footer') %>

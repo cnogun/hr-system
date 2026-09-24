@@ -3,6 +3,7 @@ const router = express.Router();
 const WorkSchedule = require('../models/WorkSchedule');
 const WorkScheduleService = require('../services/workScheduleService');
 const Employee = require('../models/Employee');
+const Holiday = require('../models/Holiday');
 const ExcelJS = require('exceljs');
 
 // 근무 스케줄 관리 페이지 렌더링
@@ -168,62 +169,96 @@ router.post('/save-weekend', async (req, res) => {
   }
 });
 
+function requireHolidayAdmin(req, res) {
+  if (!req.session || !req.session.userId) {
+    res.status(401).json({ success: false, code: 'SESSION_EXPIRED', message: '로그인이 만료되었습니다.' });
+    return false;
+  }
+  if (req.session.userRole !== 'admin') {
+    res.status(403).json({ success: false, message: '관리자 권한이 필요합니다.' });
+    return false;
+  }
+  return true;
+}
+
+function toDateString(value) {
+  if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return [date.getUTCFullYear(), String(date.getUTCMonth() + 1).padStart(2, '0'), String(date.getUTCDate()).padStart(2, '0')].join('-');
+}
+
+// 기존 주차별 공휴일을 전용 컬렉션으로 한 번씩 안전하게 이전한다.
+async function migrateLegacyHolidays() {
+  const schedules = await WorkSchedule.find({ 'holidays.0': { $exists: true } }).select('holidays createdBy').lean();
+  const operationsByDate = new Map();
+  schedules.forEach(schedule => (schedule.holidays || []).forEach(holiday => {
+    const date = toDateString(holiday.date);
+    if (!date || !schedule.createdBy || operationsByDate.has(date)) return;
+    operationsByDate.set(date, {
+      updateOne: {
+        filter: { date },
+        update: { $setOnInsert: {
+          date,
+          name: String(holiday.name || '공휴일').trim().slice(0, 100),
+          isWeekday: new Date(`${date}T12:00:00`).getDay() >= 1 && new Date(`${date}T12:00:00`).getDay() <= 5,
+          specialWorkType: ['평일특근', '다음날특근'].includes(holiday.specialWorkType) ? holiday.specialWorkType : '평일특근',
+          createdBy: schedule.createdBy
+        } },
+        upsert: true
+      }
+    });
+  }));
+  const operations = [...operationsByDate.values()];
+  if (operations.length) await Holiday.bulkWrite(operations, { ordered: false });
+}
+
+// 전체 공휴일 목록 조회
+router.get('/holidays', async (req, res) => {
+  try {
+    if (!req.session || !req.session.userId) {
+      return res.status(401).json({ success: false, code: 'SESSION_EXPIRED', message: '로그인이 만료되었습니다.' });
+    }
+    await migrateLegacyHolidays();
+    const holidays = await Holiday.find().sort({ date: 1 }).lean();
+    console.log(`공휴일 목록 조회 완료: ${holidays.length}개`);
+    res.set('Cache-Control', 'no-store');
+    res.json({ success: true, data: holidays });
+  } catch (error) {
+    console.error('공휴일 목록 조회 오류:', error);
+    res.status(500).json({ success: false, message: '공휴일 목록을 불러오지 못했습니다.' });
+  }
+});
+
 // 공휴일 추가
 router.post('/add-holiday', async (req, res) => {
   try {
-    // 세션 확인
-    if (!req.session || !req.session.userId) {
-      return res.status(401).json({ success: false, message: '로그인이 필요합니다.' });
-    }
-
-    // 관리자 권한 확인
-    if (req.session.userRole !== 'admin') {
-      return res.status(403).json({ success: false, message: '관리자 권한이 필요합니다.' });
-    }
-
-    const { date, name, specialWorkType } = req.body;
-    
-    if (!date || !name) {
+    if (!requireHolidayAdmin(req, res)) return;
+    const { date, name, specialWorkType = '평일특근' } = req.body;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date || '') || !String(name || '').trim()) {
       return res.status(400).json({ success: false, message: '공휴일과 공휴일명을 입력해주세요.' });
     }
-    
-    // 현재 주차 스케줄 찾기
-    const today = new Date();
-    const weekStart = WorkScheduleService.getWeekStart(today);
-    const weekEnd = WorkScheduleService.getWeekEnd(today);
-    
-    let schedule = await WorkSchedule.findOne({
-      weekStartDate: weekStart,
-      weekEndDate: weekEnd,
-      status: 'active'
-    });
-    
-    if (!schedule) {
-      // 스케줄이 없으면 생성
-      schedule = await WorkScheduleService.createCurrentWeekSchedule(req.session.userId);
+    if (!['평일특근', '다음날특근'].includes(specialWorkType)) {
+      return res.status(400).json({ success: false, message: '특근 처리 값이 올바르지 않습니다.' });
     }
-    
-    // 공휴일 정보 추가
-    const holidayDate = new Date(date);
+    if (await Holiday.exists({ date })) {
+      return res.status(409).json({ success: false, message: '이미 등록된 날짜입니다.' });
+    }
+    const holidayDate = new Date(`${date}T12:00:00`);
     const isWeekday = holidayDate.getDay() >= 1 && holidayDate.getDay() <= 5;
-    
-    schedule.holidays.push({
-      date: holidayDate,
-      name: name,
-      isWeekday: isWeekday,
-      specialWorkType: specialWorkType
+    const holiday = await Holiday.create({
+      date,
+      name: String(name).trim(),
+      isWeekday,
+      specialWorkType,
+      createdBy: req.session.userId
     });
-    
-    await schedule.save();
-    
-    res.json({ 
-      success: true, 
-      message: '공휴일이 추가되었습니다.',
-      data: schedule
-    });
-    
+    res.status(201).json({ success: true, message: '공휴일이 추가되었습니다.', data: holiday });
   } catch (error) {
     console.error('공휴일 추가 오류:', error);
+    if (error && error.code === 11000) {
+      return res.status(409).json({ success: false, message: '이미 등록된 날짜입니다.' });
+    }
     res.status(500).json({ success: false, message: '공휴일 추가 중 오류가 발생했습니다.' });
   }
 });
@@ -297,53 +332,23 @@ router.get('/weekend-attendance-status', async (req, res) => {
 });
 
 // 공휴일 삭제
-router.delete('/delete-holiday/:holidayId', async (req, res) => {
+async function deleteHoliday(req, res) {
   try {
-    // 세션 확인
-    if (!req.session || !req.session.userId) {
-      return res.status(401).json({ success: false, message: '로그인이 필요합니다.' });
-    }
-
-    // 관리자 권한 확인
-    if (req.session.userRole !== 'admin') {
-      return res.status(403).json({ success: false, message: '관리자 권한이 필요합니다.' });
-    }
-
-    const { holidayId } = req.params;
-    
-    // 현재 주차 스케줄 찾기
-    const today = new Date();
-    const weekStart = WorkScheduleService.getWeekStart(today);
-    const weekEnd = WorkScheduleService.getWeekEnd(today);
-    
-    const schedule = await WorkSchedule.findOne({
-      weekStartDate: weekStart,
-      weekEndDate: weekEnd,
-      status: 'active'
-    });
-    
-    if (!schedule) {
-      return res.status(404).json({ success: false, message: '현재 주차 스케줄을 찾을 수 없습니다.' });
-    }
-
-    // 공휴일 삭제
-    schedule.holidays = schedule.holidays.filter(holiday => 
-      holiday._id.toString() !== holidayId
-    );
-
-    await schedule.save();
-
-    res.json({ 
-      success: true, 
-      message: '공휴일이 삭제되었습니다.',
-      data: schedule
-    });
-    
+    if (!requireHolidayAdmin(req, res)) return;
+    const holiday = await Holiday.findByIdAndDelete(req.params.holidayId);
+    if (!holiday) return res.status(404).json({ success: false, message: '공휴일을 찾을 수 없습니다.' });
+    res.json({ success: true, message: '공휴일이 삭제되었습니다.' });
   } catch (error) {
     console.error('공휴일 삭제 오류:', error);
+    if (error && error.name === 'CastError') {
+      return res.status(400).json({ success: false, message: '공휴일 정보가 올바르지 않습니다.' });
+    }
     res.status(500).json({ success: false, message: '공휴일 삭제 중 오류가 발생했습니다.' });
   }
-});
+}
+
+router.delete('/holidays/:holidayId', deleteHoliday);
+router.delete('/delete-holiday/:holidayId', deleteHoliday); // 기존 주소 호환
 
 // 편성 인원 현황 조회
 router.get('/assignment-counts', async (req, res) => {
@@ -1202,7 +1207,7 @@ router.put('/employee-duty/:employeeId', async (req, res) => {
         'securityDuty.category': category,
         'securityDuty.specialGroup': group,
         'weekendAssignment.weekendGroup': weekendGroup,
-        'weekendAssignment.sundayGroup': sundayGroup
+        'weekendAssignment.sundayGroup': category === 'general' ? sundayGroup : 'none'
       } },
       { new: true, runValidators: true }
     ).select('_id empNo name position securityDuty');
@@ -1232,7 +1237,7 @@ router.post('/employee-duty-bulk', async (req, res) => {
     for (const entry of entries) {
       const category = entry.category || '';
       const weekendGroup = entry.weekendGroup || 'none';
-      const sundayGroup = category === 'leader' ? 'none' : (entry.sundayGroup || 'none');
+      const sundayGroup = category === 'general' ? (entry.sundayGroup || 'none') : 'none';
       const specialGroup = category === 'special' ? Number(entry.specialGroup) : null;
       if (!/^[a-f\d]{24}$/i.test(entry.employeeId || '') ||
           !['', 'leader', 'general', 'special'].includes(category) ||
@@ -1265,6 +1270,97 @@ function normalizeIds(ids) {
   return [...new Set(Array.isArray(ids) ? ids.filter(id => /^[a-f\d]{24}$/i.test(id)) : [])];
 }
 
+// 전체 확정 근무명단 목록
+router.get('/manual-assignments', async (req, res) => {
+  try {
+    if (!req.session || !req.session.userId) {
+      return res.status(401).json({ success: false, code: 'SESSION_EXPIRED', message: '로그인이 만료되었습니다.' });
+    }
+    if (req.session.userRole !== 'admin') {
+      return res.status(403).json({ success: false, message: '관리자 권한이 필요합니다.' });
+    }
+
+    const schedules = await WorkSchedule.find({ 'manualAssignments.0': { $exists: true } })
+      .select('manualAssignments')
+      .lean();
+    const assignments = schedules.flatMap(schedule => (schedule.manualAssignments || []).map(assignment => ({
+      scheduleId: String(schedule._id),
+      assignmentId: String(assignment._id),
+      date: assignment.date,
+      shift: assignment.shift,
+      team: assignment.team,
+      leaderCount: (assignment.leaders || []).length,
+      generalCount: (assignment.generals || []).length,
+      specialCount: (assignment.specials || []).length,
+      totalCount: (assignment.leaders || []).length + (assignment.generals || []).length + (assignment.specials || []).length,
+      note: assignment.note || '',
+      updatedAt: assignment.updatedAt
+    }))).sort((a, b) => b.date.localeCompare(a.date) || b.team - a.team || b.shift.localeCompare(a.shift)).slice(0, 500);
+
+    res.set('Cache-Control', 'no-store');
+    res.json({ success: true, data: assignments });
+  } catch (error) {
+    console.error('확정 근무명단 목록 조회 오류:', error);
+    res.status(500).json({ success: false, message: '확정 근무명단 목록을 불러오지 못했습니다.' });
+  }
+});
+
+// 날짜와 관계없이 확정 근무명단 삭제
+router.get('/manual-assignments/roster', async (req, res) => {
+  try {
+    if (!req.session || !req.session.userId) return res.status(401).json({ success: false, message: '로그인이 필요합니다.' });
+    if (req.session.userRole !== 'admin') return res.status(403).json({ success: false, message: '관리자 권한이 필요합니다.' });
+    const { date, shift } = req.query;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date || '') || !['day', 'night'].includes(shift)) {
+      return res.status(400).json({ success: false, message: '근무일 또는 근무대가 올바르지 않습니다.' });
+    }
+    const schedules = await WorkSchedule.find({ 'manualAssignments.date': date }).select('manualAssignments').lean();
+    const assignments = schedules.flatMap(schedule => (schedule.manualAssignments || [])
+      .filter(item => item.date === date && item.shift === shift));
+    const ids = [...new Set(assignments.flatMap(item => [...(item.leaders || []), ...(item.generals || []), ...(item.specials || [])].map(String)))];
+    const employees = await Employee.find({ _id: { $in: ids } }).select('_id empNo name').lean();
+    const byId = new Map(employees.map(employee => [String(employee._id), employee]));
+    const rows = assignments.flatMap(item => [
+      ['조장', item.leaders || []], ['일반', item.generals || []], ['특수', item.specials || []]
+    ].flatMap(([category, memberIds]) => memberIds.map(id => {
+      const employee = byId.get(String(id));
+      return { team: item.team, category, empNo: employee?.empNo || '-', name: employee?.name || '직원 정보 없음' };
+    })));
+    res.set('Cache-Control', 'no-store');
+    res.json({ success: true, data: rows.sort((a, b) => a.team - b.team || ['조장', '일반', '특수'].indexOf(a.category) - ['조장', '일반', '특수'].indexOf(b.category) || String(a.empNo).localeCompare(String(b.empNo), 'ko')) });
+  } catch (error) {
+    console.error('전체 확정 근무명단 조회 오류:', error);
+    res.status(500).json({ success: false, message: '전체 확정 근무명단을 불러오지 못했습니다.' });
+  }
+});
+
+// 날짜와 관계없이 확정 근무명단 삭제
+router.delete('/manual-assignments/:scheduleId/:assignmentId', async (req, res) => {
+  try {
+    if (!req.session || !req.session.userId) {
+      return res.status(401).json({ success: false, code: 'SESSION_EXPIRED', message: '로그인이 만료되었습니다.' });
+    }
+    if (req.session.userRole !== 'admin') {
+      return res.status(403).json({ success: false, message: '관리자 권한이 필요합니다.' });
+    }
+    const { scheduleId, assignmentId } = req.params;
+    if (!/^[a-f\d]{24}$/i.test(scheduleId) || !/^[a-f\d]{24}$/i.test(assignmentId)) {
+      return res.status(400).json({ success: false, message: '확정명단 정보가 올바르지 않습니다.' });
+    }
+    const schedule = await WorkSchedule.findById(scheduleId);
+    const assignment = schedule && schedule.manualAssignments.id(assignmentId);
+    if (!assignment) {
+      return res.status(404).json({ success: false, message: '확정 근무명단을 찾을 수 없습니다.' });
+    }
+    schedule.manualAssignments.pull({ _id: assignmentId });
+    await schedule.save();
+    res.json({ success: true, message: '지난 확정 근무명단을 삭제했습니다.' });
+  } catch (error) {
+    console.error('확정 근무명단 삭제 오류:', error);
+    res.status(500).json({ success: false, message: '확정 근무명단을 삭제하지 못했습니다.' });
+  }
+});
+
 // 날짜/근무대별 수동 편성 저장 (자동 재생성 시 보호)
 router.post('/manual-assignment', async (req, res) => {
   try {
@@ -1296,6 +1392,24 @@ router.post('/manual-assignment', async (req, res) => {
       return res.status(400).json({ success: false, message: '해당 팀의 재직 직원만 편성할 수 있습니다.' });
     }
 
+    let support = null;
+    if (req.body.support) {
+      const entry = req.body.support;
+      const supportTeam = Number(entry.team);
+      const supportLeaders = normalizeIds(entry.leaders);
+      const supportGenerals = normalizeIds(entry.generals);
+      const supportSpecials = normalizeIds(entry.specials);
+      const supportIds = [...supportLeaders, ...supportGenerals, ...supportSpecials];
+      if (dayOfWeek !== 0 || ![1, 2, 3].includes(supportTeam) || supportTeam === teamNumber ||
+          supportLeaders.length !== 1 || supportGenerals.length !== 6 || supportSpecials.length !== 2 ||
+          new Set(supportIds).size !== 9 || new Set([...allIds, ...supportIds]).size !== allIds.length + 9) {
+        return res.status(400).json({ success: false, message: '일요일 지원조 편성이 올바르지 않습니다.' });
+      }
+      const validSupport = await Employee.countDocuments({ _id: { $in: supportIds }, status: '재직', department: `보안${supportTeam}팀` });
+      if (validSupport !== 9) return res.status(400).json({ success: false, message: '지원조 직원을 확인해주세요.' });
+      support = { team: supportTeam, leaders: supportLeaders, generals: supportGenerals, specials: supportSpecials };
+    }
+
     const targetDate = new Date(`${date}T12:00:00`);
     const weekStart = WorkScheduleService.getWeekStart(targetDate);
     const weekEnd = WorkScheduleService.getWeekEnd(targetDate);
@@ -1319,11 +1433,18 @@ router.post('/manual-assignment', async (req, res) => {
       locked: true, note: String(note).trim().slice(0, 300),
       updatedBy: req.session.userId, updatedAt: new Date()
     });
+    if (support && !(schedule.manualAssignments || []).some(item =>
+      item.date === date && item.shift === shift && item.team === support.team)) {
+      schedule.manualAssignments.push({
+        date, shift, ...support, locked: true, note: '',
+        updatedBy: req.session.userId, updatedAt: new Date()
+      });
+    }
     await schedule.save();
 
     res.json({
       success: true,
-      message: `근무명단이 확정되었습니다. 조장 ${leaders.length}명, 일반 ${generals.length}명, 특수 ${specials.length}명`,
+      message: `근무명단이 확정되었습니다. 조장 ${leaders.length}명, 일반 ${generals.length}명, 특수 ${specials.length}명${support ? ' · 미확정 지원팀도 함께 확정했습니다.' : ''}`,
       data: { leaders: leaders.length, generals: generals.length, specials: specials.length }
     });
   } catch (error) {

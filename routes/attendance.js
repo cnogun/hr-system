@@ -2,25 +2,47 @@ const express = require('express');
 const router = express.Router();
 const Employee = require('../models/Employee');
 const WorkSchedule = require('../models/WorkSchedule');
+const WorkScheduleService = require('../services/workScheduleService');
 const ExcelJS = require('exceljs');
 
 // 주차 번호 계산 함수
 function getWeekNumber(date) {
-  const yearStart = new Date(2025, 0, 1, 6, 0, 0); // 2025년 1월 1일 06:00
   const targetDate = new Date(date);
-  
-  // 월요일 06:00으로 조정
-  const dayOfWeek = targetDate.getDay();
-  const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-  
-  const monday6am = new Date(targetDate);
-  monday6am.setDate(targetDate.getDate() - mondayOffset);
-  monday6am.setHours(6, 0, 0, 0);
-  
-  const weekDiff = Math.floor((monday6am - yearStart) / (7 * 24 * 60 * 60 * 1000));
-  const weekNumber = weekDiff + 2; // 1월 1일 수요일이 1주차, 1월 6일 월요일이 2주차
-  
-  return weekNumber;
+  const mondayOffset = targetDate.getDay() === 0 ? 6 : targetDate.getDay() - 1;
+  const monday = new Date(targetDate);
+  monday.setDate(targetDate.getDate() - mondayOffset);
+  monday.setHours(12, 0, 0, 0);
+
+  // 2026-09-21 주간을 순환 1주차로 고정하고 1→2→3주차를 반복합니다.
+  const anchor = new Date('2026-09-21T12:00:00');
+  const elapsedWeeks = Math.floor((monday - anchor) / (7 * 24 * 60 * 60 * 1000));
+  return ((elapsedWeeks % 3) + 3) % 3 + 1;
+}
+
+function getWeekdaySchedule(teamNumber, rotationWeek) {
+  const schedules = {
+    1: ['초야', '주간', '심야'],
+    2: ['심야', '초야', '주간'],
+    3: ['주간', '심야', '초야']
+  };
+  return schedules[teamNumber]?.[rotationWeek - 1] || null;
+}
+
+function attendanceBySchedule(schedule) {
+  const presets = {
+    '주간': { status: '출근(주)', checkIn: '06:00', checkOut: '14:00', basic: 8, night: 0, note: '평일주간' },
+    '초야': { status: '출근(초)', checkIn: '14:00', checkOut: '22:00', basic: 8, night: 0, note: '평일 초야' },
+    '심야': { status: '출근(심)', checkIn: '22:00', checkOut: '06:00', basic: 8, night: 8, note: '평일 심야' }
+  };
+  const preset = presets[schedule];
+  if (!preset) return null;
+  return { ...preset, overtime: 0, special: 0, specialOvertime: 0 };
+}
+
+function calculateTotal(data) {
+  const number = value => Number(value) || 0;
+  return number(data.basic) + number(data.overtime) +
+    number(data.special) * 1.5 + number(data.specialOvertime) * 2 + number(data.night) * 0.5;
 }
 
 // 근태 상태에 따라 비고란 자동 설정 함수
@@ -119,7 +141,7 @@ router.post('/save', async (req, res) => {
       return res.status(400).json({ success: false, message: '필수 데이터가 누락되었습니다.' });
     }
 
-    // 각 직원의 근태 정보 업데이트
+    // 각 직원의 근태 정보 업데이트. 미선택 행은 기존 값을 제거합니다.
     for (const employeeId in attendanceData) {
       const data = attendanceData[employeeId];
       
@@ -131,16 +153,20 @@ router.post('/save', async (req, res) => {
               status: data.status,
               checkIn: data.checkIn || '',
               checkOut: data.checkOut || '',
-              basic: data.basic || '',
-              overtime: data.overtime || '',
-              special: data.special || '',
-              specialOvertime: data.specialOvertime || '',
-              night: data.night || '',
-              totalTime: data.totalTime || '',
+              basic: Number(data.basic) || 0,
+              overtime: Number(data.overtime) || 0,
+              special: Number(data.special) || 0,
+              specialOvertime: Number(data.specialOvertime) || 0,
+              night: Number(data.night) || 0,
+              totalTime: calculateTotal(data),
               note: data.note || '',
               updatedAt: new Date()
             }
           }
+        });
+      } else {
+        await Employee.findByIdAndUpdate(employeeId, {
+          $unset: { [`attendance.${date}`]: 1 }
         });
       }
     }
@@ -231,8 +257,94 @@ router.post('/auto-schedule', async (req, res) => {
   }
 });
 
-// 근태 자동 입력
+// 확정 근무명단과 평일 3주 순환을 기준으로 한 근태 자동 입력
 router.post('/auto-attendance', async (req, res) => {
+  try {
+    if (!req.session?.userId) {
+      return res.status(401).json({ success: false, message: '로그인이 필요합니다.' });
+    }
+    if (req.session.userRole !== 'admin') {
+      return res.status(403).json({ success: false, message: '관리자 권한이 필요합니다.' });
+    }
+
+    const { date, department = '' } = req.body;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date || '')) {
+      return res.status(400).json({ success: false, message: '올바른 날짜가 필요합니다.' });
+    }
+
+    const targetDate = new Date(`${date}T12:00:00`);
+    const dayOfWeek = targetDate.getDay();
+    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+    const query = { status: '재직' };
+    if (department) query.department = department;
+    const employees = await Employee.find(query).sort({ department: 1, empNo: 1, name: 1 });
+    const autoAttendanceData = {};
+
+    if (isWeekend) {
+      const schedules = await WorkSchedule.find({
+        status: 'active',
+        manualAssignments: { $elemMatch: { date, locked: true } }
+      }).select('manualAssignments');
+
+      const assignments = schedules.flatMap(schedule => (schedule.manualAssignments || []).filter(item =>
+        item.date === date && item.locked
+      ));
+
+      if (!assignments.length) {
+        return res.status(409).json({
+          success: false,
+          message: `${date} 확정 근무명단이 없습니다. 근무 스케줄에서 명단을 먼저 확정해주세요.`
+        });
+      }
+
+      const dayIds = new Set();
+      const nightIds = new Set();
+      assignments.forEach(assignment => {
+        const target = assignment.shift === 'night' ? nightIds : dayIds;
+        [...(assignment.leaders || []), ...(assignment.generals || []), ...(assignment.specials || [])]
+          .forEach(id => target.add(String(id)));
+      });
+
+      employees.forEach(employee => {
+        const employeeId = String(employee._id);
+        const isDay = dayIds.has(employeeId);
+        const isNight = nightIds.has(employeeId);
+        if (isDay || isNight) {
+          const data = isNight
+            ? { status: '출근(야특)', checkIn: '18:00', checkOut: '06:00', basic: 8, overtime: 0, special: 8, specialOvertime: 4, night: 8, note: '확정명단 야간특근' }
+            : { status: '출근(주특)', checkIn: '06:00', checkOut: '18:00', basic: 8, overtime: 0, special: 8, specialOvertime: 4, night: 0, note: '확정명단 주간특근' };
+          autoAttendanceData[employeeId] = { ...data, totalTime: calculateTotal(data) };
+        } else if (/^보안[1-3]팀$/.test(employee.department || '')) {
+          autoAttendanceData[employeeId] = {
+            status: '정기휴무', checkIn: '', checkOut: '', basic: 0, overtime: 0,
+            special: 0, specialOvertime: 0, night: 0, totalTime: 0, note: '주말 비근무'
+          };
+        }
+      });
+    } else {
+      const rotationWeek = getWeekNumber(targetDate);
+      employees.forEach(employee => {
+        const teamMatch = (employee.department || '').match(/^보안([1-3])팀$/);
+        if (!teamMatch) return;
+        const schedule = getWeekdaySchedule(Number(teamMatch[1]), rotationWeek);
+        const data = attendanceBySchedule(schedule);
+        if (data) autoAttendanceData[String(employee._id)] = { ...data, totalTime: calculateTotal(data) };
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: `${date} 근태 ${Object.keys(autoAttendanceData).length}건을 자동 입력했습니다.`,
+      data: autoAttendanceData
+    });
+  } catch (error) {
+    console.error('근태 자동 입력 오류:', error);
+    return res.status(500).json({ success: false, message: '근태 자동 입력 중 오류가 발생했습니다.' });
+  }
+});
+
+// 이전 자동입력 로직은 호환성 확인용으로 보존하되 일반 요청에서는 사용하지 않습니다.
+router.post('/auto-attendance-legacy', async (req, res) => {
   try {
     // 세션 확인
     if (!req.session || !req.session.userId) {
