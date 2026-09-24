@@ -185,11 +185,9 @@
             <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newWorkOrderModal">
               <i class="fas fa-plus me-1"></i>새 명령서
             </button>
-            <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#templateModal">
-              <i class="fas fa-file-upload me-1"></i>양식 업로드
-            </button>
+            <% if (session.userRole === 'admin') { %><a class="btn btn-outline-primary" href="/excelManager?tab=security"><i class="fas fa-folder-open me-1"></i>양식 관리</a><% } %>
             <button class="btn btn-info" onclick="openTemplateManager()">
-              <i class="fas fa-folder-open me-1"></i>양식 관리
+              <i class="fas fa-file-alt me-1"></i>양식 사용
             </button>
             <button class="btn btn-outline-secondary" data-bs-toggle="collapse" data-bs-target="#filterCollapse">
               <i class="fas fa-filter me-1"></i>필터
@@ -594,9 +592,6 @@
                       </button>
                       <button class="btn btn-sm btn-outline-info" onclick="downloadTemplate('${template._id}')">
                         <i class="fas fa-download me-1"></i>다운로드
-                      </button>
-                      <button class="btn btn-sm btn-outline-danger" onclick="deleteTemplate('${template._id}')">
-                        <i class="fas fa-trash me-1"></i>삭제
                       </button>
                     </div>
                   </div>

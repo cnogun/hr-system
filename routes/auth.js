@@ -26,6 +26,7 @@ router.get('/register', (req, res) => {
 
 // 비밀번호 검증 함수
 function validatePassword(password) {
+  if (typeof password !== 'string') return { isValid: false, requirements: {} };
   const requirements = {
     length: password.length >= 8,
     uppercase: /[A-Z]/.test(password),
@@ -196,10 +197,10 @@ router.get('/forgot', (req, res) => {
 
 // 이메일 전송 함수
 async function sendPasswordResetEmail(email, resetUrl) {
-  const transporter = nodemailer.createTransporter({
+  const transporter = nodemailer.createTransport({
     host: process.env.EMAIL_HOST || 'smtp.gmail.com',
-    port: process.env.EMAIL_PORT || 587,
-    secure: false,
+    port: Number(process.env.EMAIL_PORT) || 587,
+    secure: Number(process.env.EMAIL_PORT) === 465,
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS,
@@ -237,14 +238,17 @@ async function sendPasswordResetEmail(email, resetUrl) {
 // 비밀번호 찾기 처리
 router.post('/forgot', async (req, res) => {
   try {
-    const { email } = req.body;
+    const email = typeof req.body.email === 'string' ? req.body.email.trim().toLowerCase() : '';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) {
+      return res.status(400).json({ success: false, message: '올바른 이메일 주소를 입력해 주세요.' });
+    }
+    const response = { success: true, message: '등록된 이메일이라면 비밀번호 재설정 링크를 보내드립니다.' };
     const user = await User.findOne({ email });
-    
-    if (!user) {
-      return res.status(400).json({ 
-        success: false, 
-        message: '등록되지 않은 이메일입니다.' 
-      });
+    if (!user) return res.status(200).json(response);
+
+    const baseUrl = process.env.APP_BASE_URL || (process.env.NODE_ENV === 'production' ? '' : `http://localhost:${process.env.PORT || 10000}`);
+    if (!/^https?:\/\/[^/]+$/i.test(baseUrl) || (process.env.NODE_ENV === 'production' && !baseUrl.startsWith('https://'))) {
+      throw new Error('APP_BASE_URL 설정이 필요합니다.');
     }
 
     // 기존 토큰 삭제
@@ -254,15 +258,12 @@ router.post('/forgot', async (req, res) => {
     const resetToken = await PasswordReset.createToken(email);
     
     // 재설정 URL 생성
-    const resetUrl = `${req.protocol}://${req.get('host')}/auth/reset/${resetToken.token}`;
+    const resetUrl = `${baseUrl}/auth/reset/${resetToken.token}`;
     
     // 이메일 전송
     await sendPasswordResetEmail(email, resetUrl);
 
-    res.status(200).json({ 
-      success: true, 
-      message: '비밀번호 재설정 링크가 이메일로 전송되었습니다.' 
-    });
+    res.status(200).json(response);
 
   } catch (error) {
     console.error('비밀번호 찾기 오류:', error);
@@ -275,6 +276,7 @@ router.post('/forgot', async (req, res) => {
 
 // 비밀번호 재설정 페이지
 router.get('/reset/:token', async (req, res) => {
+  res.set('Referrer-Policy', 'no-referrer');
   try {
     const { token } = req.params;
     const resetToken = await PasswordReset.verifyToken(token);
