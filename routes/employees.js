@@ -52,7 +52,8 @@ const upload = multer({ storage });
 // 직원 목록 (검색/정렬/페이징)
 router.get('/', isLoggedIn, async (req, res) => {
   const { search, department, position, sort, order, page = 1, limit = 10 } = req.query;
-  const query = {};
+  const includeRetired = req.query.includeRetired === '1';
+  const query = includeRetired ? {} : { status: { $ne: '퇴직' } };
   
   // 디버깅을 위한 로그 추가
   console.log('검색 파라미터:', { search, department, position, sort, order, page, limit });
@@ -94,10 +95,10 @@ router.get('/', isLoggedIn, async (req, res) => {
   }
   
   // 부서/직급 목록 추출(필터용)
-  const departments = await Employee.distinct('department');
+  const departments = await Employee.distinct('department', includeRetired ? {} : { status: { $ne: '퇴직' } });
   // 직급 목록을 원하는 순서로 정의하고 데이터베이스에서 가져온 직급과 합치기 (빈 값 제외)
   const orderedPositions = ['인턴', '사원', '주임', '대리', '과장', '차장', '팀장', '실장', '임원'];
-  const dbPositions = await Employee.distinct('position');
+  const dbPositions = await Employee.distinct('position', includeRetired ? {} : { status: { $ne: '퇴직' } });
   const positions = [...new Set([...orderedPositions, ...dbPositions])].filter(pos => pos && pos.trim() !== '');
   const totalPages = Math.ceil(total / limit);
   console.log('템플릿에 전달할 데이터:');
