@@ -287,6 +287,12 @@
     </style>
 
 <div class="container mt-4">
+        <% if (workOrderMessages && workOrderMessages.success) { %>
+        <div class="alert alert-success" role="status"><%= workOrderMessages.success %></div>
+        <% } %>
+        <% if (workOrderMessages && workOrderMessages.error) { %>
+        <div class="alert alert-danger" role="alert"><%= workOrderMessages.error %></div>
+        <% } %>
         <!-- 헤더 -->
         <div class="header">
             <div class="title">근무명령서 목록</div>
@@ -294,27 +300,6 @@
             <a href="/work-orders/new" class="btn btn-primary">새 근무명령서 작성</a>
             <% } %>
         </div>
-
-        <% if (userRole === 'admin' || excelTemplate) { %>
-        <section class="template-panel" aria-label="근무명령서 엑셀 양식">
-            <div>
-                <strong>엑셀 양식</strong>
-                <div class="template-detail">
-                    <% if (excelTemplate) { %>
-                        현재 양식: <%= excelTemplate.originalName %> · <%= new Date(excelTemplate.uploadedAt).toLocaleDateString('ko-KR') %>
-                    <% } else { %>
-                        등록된 양식이 없습니다.
-                    <% } %>
-                </div>
-            </div>
-            <% if (excelTemplate) { %>
-                <a href="/work-orders/template/download" class="btn btn-secondary">양식 다운로드</a>
-            <% } %>
-            <% if (userRole === 'admin') { %>
-                <a href="/excelManager?tab=security" class="btn btn-primary">양식 관리</a>
-            <% } %>
-        </section>
-        <% } %>
 
         <!-- 필터 -->
         <div class="filters">
