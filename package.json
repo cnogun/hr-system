@@ -28,6 +28,7 @@
     "exceljs": "^4.4.0",
     "express": "^5.1.0",
     "express-session": "^1.18.2",
+    "jszip": "^3.10.2",
     "method-override": "^3.0.0",
     "mongodb": "^6.18.0",
     "mongoose": "^8.16.4",
