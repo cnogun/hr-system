@@ -54,7 +54,6 @@ router.get('/current-week', async (req, res) => {
     // 현재 주차 스케줄 조회
     const schedule = await WorkSchedule.findOne({
       weekStartDate: weekStart,
-      weekEndDate: weekEnd,
       status: 'active'
     });
     
@@ -120,7 +119,6 @@ router.post('/save-weekend', async (req, res) => {
     
     let schedule = await WorkSchedule.findOne({
       weekStartDate: weekStart,
-      weekEndDate: weekEnd,
       status: 'active'
     });
     
@@ -201,7 +199,7 @@ async function migrateLegacyHolidays() {
         update: { $setOnInsert: {
           date,
           name: String(holiday.name || '공휴일').trim().slice(0, 100),
-          isWeekday: new Date(`${date}T12:00:00`).getDay() >= 1 && new Date(`${date}T12:00:00`).getDay() <= 5,
+          isWeekday: new Date(`${date}T12:00:00+09:00`).getDay() >= 1 && new Date(`${date}T12:00:00+09:00`).getDay() <= 5,
           specialWorkType: ['평일특근', '다음날특근'].includes(holiday.specialWorkType) ? holiday.specialWorkType : '평일특근',
           createdBy: schedule.createdBy
         } },
@@ -244,7 +242,7 @@ router.post('/add-holiday', async (req, res) => {
     if (await Holiday.exists({ date })) {
       return res.status(409).json({ success: false, message: '이미 등록된 날짜입니다.' });
     }
-    const holidayDate = new Date(`${date}T12:00:00`);
+    const holidayDate = new Date(`${date}T12:00:00+09:00`);
     const isWeekday = holidayDate.getDay() >= 1 && holidayDate.getDay() <= 5;
     const holiday = await Holiday.create({
       date,
@@ -1373,7 +1371,11 @@ router.post('/manual-assignment', async (req, res) => {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date || '') || !['day', 'night'].includes(shift) || ![1, 2, 3].includes(teamNumber)) {
       return res.status(400).json({ success: false, message: '날짜, 근무대 또는 팀 정보가 올바르지 않습니다.' });
     }
-    const dayOfWeek = new Date(`${date}T12:00:00`).getDay();
+    const dayOfWeek = new Date(`${date}T12:00:00Z`).getUTCDay();
+    const checkedDate = new Date(`${date}T12:00:00Z`);
+    if (Number.isNaN(checkedDate.getTime()) || checkedDate.toISOString().slice(0, 10) !== date) {
+      return res.status(400).json({ success: false, message: '존재하지 않는 날짜입니다.' });
+    }
     if (![0, 6].includes(dayOfWeek)) {
       return res.status(400).json({ success: false, message: '주말 근무 편성은 토요일과 일요일만 저장할 수 있습니다.' });
     }
@@ -1382,6 +1384,16 @@ router.post('/manual-assignment', async (req, res) => {
     const generals = normalizeIds(req.body.generals);
     const specials = normalizeIds(req.body.specials);
     const allIds = [...leaders, ...generals, ...specials];
+    if (!allIds.length) {
+      return res.status(400).json({ success: false, message: '빈 명단은 확정할 수 없습니다.' });
+    }
+    if (!String(note).trim() && (dayOfWeek === 6
+      ? leaders.length !== 3 || generals.length !== 18 || specials.length !== 8
+      : !((leaders.length === 2 && generals.length === 12 && specials.length === 5) ||
+          (leaders.length === 1 && generals.length === 6 && specials.length === 2)))) {
+      return res.status(400).json({ success: false, message: '기본 인원과 다릅니다. 기본편성을 확인하거나 변경 사유를 입력해주세요.' });
+    }
+
     if (new Set(allIds).size !== allIds.length) {
       return res.status(400).json({ success: false, message: '한 직원을 두 개 이상의 구분에 중복 지정할 수 없습니다.' });
     }
@@ -1410,10 +1422,20 @@ router.post('/manual-assignment', async (req, res) => {
       support = { team: supportTeam, leaders: supportLeaders, generals: supportGenerals, specials: supportSpecials };
     }
 
-    const targetDate = new Date(`${date}T12:00:00`);
+    // Compare with every saved opposite shift, including legacy week records.
+    const opposite = await WorkSchedule.find({
+      'manualAssignments': { $elemMatch: { date, shift: shift === 'day' ? 'night' : 'day' } }
+    }).select('manualAssignments').lean();
+    const selectedIds = new Set([...allIds, ...(support ? [...support.leaders, ...support.generals, ...support.specials] : [])].map(String));
+    const overlap = opposite.some(record => (record.manualAssignments || []).some(entry =>
+      entry.date === date && entry.shift !== shift &&
+      [...(entry.leaders || []), ...(entry.generals || []), ...(entry.specials || [])].some(id => selectedIds.has(String(id)))));
+    if (overlap) return res.status(400).json({ success: false, message: '같은 날짜의 주간·야간에 중복 편성된 직원이 있습니다. 기존 명단을 먼저 확인해주세요.' });
+
+    const targetDate = new Date(`${date}T12:00:00+09:00`);
     const weekStart = WorkScheduleService.getWeekStart(targetDate);
     const weekEnd = WorkScheduleService.getWeekEnd(targetDate);
-    let schedule = await WorkSchedule.findOne({ weekStartDate: weekStart, weekEndDate: weekEnd, status: 'active' });
+    let schedule = await WorkSchedule.findOne({ weekStartDate: weekStart, status: 'active' });
     if (!schedule) {
       schedule = new WorkSchedule({
         weekStartDate: weekStart,
@@ -1463,10 +1485,9 @@ router.get('/manual-assignment', async (req, res) => {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date || '')) {
       return res.status(400).json({ success: false, message: '날짜가 올바르지 않습니다.' });
     }
-    const targetDate = new Date(`${date}T12:00:00`);
+    const targetDate = new Date(`${date}T12:00:00+09:00`);
     const schedule = await WorkSchedule.findOne({
       weekStartDate: WorkScheduleService.getWeekStart(targetDate),
-      weekEndDate: WorkScheduleService.getWeekEnd(targetDate),
       status: 'active'
     }).lean();
     const assignment = schedule && (schedule.manualAssignments || []).find(item =>
@@ -1490,10 +1511,9 @@ router.get('/command-source', async (req, res) => {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date || '') || !['day', 'night'].includes(shift) || ![1, 2, 3].includes(team)) {
       return res.status(400).json({ success: false, message: '근무명령서 조회 조건이 올바르지 않습니다.' });
     }
-    const targetDate = new Date(`${date}T12:00:00`);
+    const targetDate = new Date(`${date}T12:00:00+09:00`);
     const schedule = await WorkSchedule.findOne({
       weekStartDate: WorkScheduleService.getWeekStart(targetDate),
-      weekEndDate: WorkScheduleService.getWeekEnd(targetDate),
       status: 'active'
     }).populate('manualAssignments.leaders manualAssignments.generals manualAssignments.specials', 'empNo name department position');
     const assignment = schedule && schedule.manualAssignments.find(item =>

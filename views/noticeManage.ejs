@@ -10,12 +10,14 @@
 -->
 <%- include('header') %>
 <div class="container py-5">
+  <% if (typeof error !== 'undefined' && error) { %><div class="alert alert-danger" role="alert"><%= error %></div><% } %>
   <div class="row mb-4">
     <div class="col-12 d-flex justify-content-between align-items-center">
              <h2 class="fw-bold mb-0">시스템 알림 관리</h2>
        <a href="/notice/new" class="btn btn-primary">시스템 알림 작성</a>
     </div>
   </div>
+  <p class="text-secondary small mb-3">게시기간은 일 단위로 설정합니다. 일찍 내리려면 ‘게시종료’를 누르세요.</p>
   <div class="card shadow-sm">
     <div class="card-body p-0">
       <div class="table-responsive">
@@ -25,6 +27,7 @@
               <th>제목</th>
               <th>작성자</th>
               <th>작성일</th>
+              <th>게시기간 (한국 시간)</th>
               <th>관리</th>
             </tr>
           </thead>
@@ -35,6 +38,21 @@
                 <td><%= notice.author?.username || notice.author?.email || '-' %></td>
                 <td><%= notice.createdAt.toISOString().slice(0,10) %></td>
                 <td>
+                  <div class="d-flex align-items-center gap-1 flex-wrap">
+                    <input type="date" class="form-control form-control-sm" style="width: 142px" name="publishStart" form="publish-<%= notice._id %>" aria-label="게시 시작일" value="<%= notice.publishStart ? new Date(notice.publishStart.getTime() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10) : '' %>">
+                    <span>~</span>
+                    <input type="date" class="form-control form-control-sm" style="width: 142px" name="publishEnd" form="publish-<%= notice._id %>" aria-label="게시 종료일" value="<%= notice.publishEnd ? new Date(notice.publishEnd.getTime() - 15 * 60 * 60 * 1000).toISOString().slice(0, 10) : '' %>">
+                  </div>
+                </td>
+                <td>
+                  <form id="publish-<%= notice._id %>" action="/notice/<%= notice._id %>/publication" method="POST" class="d-inline">
+                    <button type="submit" class="btn btn-sm btn-primary">게시 설정 저장</button>
+                  </form>
+                  <% if (notice.publishEnd && notice.publishEnd > new Date()) { %>
+                    <form action="/notice/<%= notice._id %>/publication/stop" method="POST" class="d-inline">
+                      <button type="submit" class="btn btn-sm btn-outline-warning" onclick="return confirm('이 공지의 로그인 전 게시를 지금 종료할까요?')">게시종료</button>
+                    </form>
+                  <% } %>
                   <a href="/notice/<%= notice._id %>/edit" class="btn btn-sm btn-outline-primary">수정</a>
                   <form action="/notice/<%= notice._id %>/delete" method="POST" style="display:inline;">
                     <button type="submit" class="btn btn-sm btn-outline-danger ms-1" onclick="return confirm('정말 삭제하시겠습니까?')">삭제</button>

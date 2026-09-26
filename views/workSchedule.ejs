@@ -1085,17 +1085,17 @@
       return sequence[index];
     }
 
-    // 주간팀은 일요일 주간 조장1·2 / 야간 조장3·4로 시작하고,
-    // 같은 팀이 3주 뒤 다시 주간팀이 되면 두 조장 묶음을 서로 바꾼다.
-    function sundayDayTeamLeaderIndexes(dateValue, shift) {
-      const target = new Date(`${dateValue}T12:00:00`);
-      const anchor = new Date('2026-09-27T12:00:00');
-      const weeks = Math.floor((target - anchor) / (7 * 24 * 60 * 60 * 1000));
-      const threeWeekTurn = Math.floor(weeks / 3);
-      const swapped = ((threeWeekTurn % 2) + 2) % 2 === 1;
-      const dayIndexes = swapped ? [2, 3] : [0, 1];
-      const nightIndexes = swapped ? [0, 1] : [2, 3];
-      return shift === 'day' ? dayIndexes : nightIndexes;
+    // 모든 역할은 저장된 A/B 편성을 함께 교대한다.
+    function sundayMainGroup(dateValue, shift) {
+      const weeks = Math.floor((Date.parse(`${dateValue}T12:00:00Z`) - Date.parse('2026-09-27T12:00:00Z')) / 604800000);
+      const swapped = ((Math.floor(weeks / 3) % 2) + 2) % 2 === 1;
+      return (shift === 'day') !== swapped ? 'A조' : 'B조';
+    }
+
+    // 2026-09-20 특수1조를 기준으로 매주 1~5조 순환.
+    function sundaySpecialGroup(dateValue) {
+      const weeks = Math.floor((Date.parse(`${dateValue}T12:00:00Z`) - Date.parse('2026-09-20T12:00:00Z')) / 604800000);
+      return ((weeks % 5) + 5) % 5 + 1;
     }
 
     function automaticGroupFor(dateValue, shift, team) {
@@ -1111,7 +1111,7 @@
       }
       if (day === 0) {
         if (schedule === '주간') {
-          return { type: 'weekend', values: [shift === 'day' ? 'A조' : 'B조'] };
+          return { type: 'weekend', values: [sundayMainGroup(dateValue, shift)] };
         }
         const active = (shift === 'day' && schedule === '초야') || (shift === 'night' && schedule === '심야');
         if (!active) return null;
@@ -1139,12 +1139,12 @@
       const mainTeam = teams.find(team => getTeamSchedule(team, weekNumber) === '주간');
       const supportSchedule = shift === 'day' ? '초야' : '심야';
       const supportTeam = teams.find(team => getTeamSchedule(team, weekNumber) === supportSchedule);
-      const mainGroup = shift === 'day' ? 'A조' : 'B조';
+      const mainGroup = sundayMainGroup(dateValue, shift);
       const supportGroup = sundaySupportGroup(dateValue);
       const currentType = selectedTeam === mainTeam
         ? `현재 표시: 주간팀 보안${mainTeam}팀 ${mainGroup} 19명`
         : selectedTeam === supportTeam
-          ? `현재 표시: 지원팀 보안${supportTeam}팀 ${supportGroup}조 9명`
+          ? `현재 표시: 지원팀 보안${supportTeam}팀 일반${supportGroup}조·특수${sundaySpecialGroup(dateValue)}조 9명`
           : `현재 표시: 보안${selectedTeam}팀은 이 근무대 비근무`;
 
       panel.innerHTML = `
@@ -1154,7 +1154,7 @@
             <span class="ms-2">주간팀 보안${mainTeam}팀 ${mainGroup} 19명
               <small class="text-muted">(조장2·일반12·특수5)</small></span>
             <span class="mx-1">+</span>
-            <span>지원팀 보안${supportTeam}팀 ${supportGroup}조 9명
+            <span>지원팀 보안${supportTeam}팀 일반${supportGroup}조·특수${sundaySpecialGroup(dateValue)}조 9명
               <small class="text-muted">(조장1·일반6·특수2)</small></span>
           </div>
           <span class="badge ${selectedTeam === mainTeam ? 'bg-primary' : selectedTeam === supportTeam ? 'bg-success' : 'bg-secondary'}">${currentType}</span>
@@ -1194,9 +1194,7 @@
       } else if (date.getDay() === 0 && groupRule) {
         const schedule = getTeamSchedule(Number(team), getWeekNumber(date));
         if (schedule === '주간') {
-          leaders = sundayDayTeamLeaderIndexes(dateValue, shift)
-            .map(index => sortedLeaders[index])
-            .filter(Boolean);
+          leaders = sortedLeaders.filter(isIncluded);
         } else {
           const order = sundayLeaderOrder(dateValue);
           leaders = sortedLeaders[order - 1] ? [sortedLeaders[order - 1]] : [];
@@ -1207,17 +1205,18 @@
         .sort((a, b) => (a.empNo || '').localeCompare(b.empNo || '', 'ko') || a.name.localeCompare(b.name, 'ko'));
 
       // 일반경비는 일반 1~4조, 특수경비는 특수 1~5조를 각각 기준으로 사용한다.
-      // 저장된 조 편성이 정확히 6/2가 아니어도 지원조는 반드시 일반6·특수2로 맞춘다.
-      // 선택조에 속한 직원을 우선하고, 부족하면 같은 역할의 다른 직원으로 채운다.
+      // 다른 조에서 임의 충원하지 않고 저장된 편성을 사용한다.
       const supportMembers = (category, limit, supportGroup) => {
         const all = sortedByCategory(category);
-        const supportGroupNumber = Number(String(supportGroup).replace('조', ''));
+        const supportDate = new Date(date);
+        if (supportDate.getDay() === 6) supportDate.setDate(supportDate.getDate() + 1);
+        const supportGroupNumber = sundaySpecialGroup(supportDate.toISOString().slice(0, 10));
         const preferred = all.filter(employee => category === 'special'
           ? Number((employee.securityDuty || {}).specialGroup) === supportGroupNumber
           : (employee.weekendAssignment || {}).sundayGroup === supportGroup
         );
         const preferredIds = new Set(preferred.map(employee => String(employee._id)));
-        return preferred.concat(all.filter(employee => !preferredIds.has(String(employee._id)))).slice(0, limit);
+        return preferred.slice(0, limit);
       };
 
       let generals = [];
@@ -1246,10 +1245,10 @@
         sunday.setDate(sunday.getDate() + 1);
         status.textContent = `기본 명단 · 일요일 지원조 제외`;
       } else if (date.getDay() === 0 && groupRule?.type === 'weekend') {
-        const mainGroup = shift === 'day' ? 'A조' : 'B조';
+        const mainGroup = sundayMainGroup(dateValue, shift);
         status.textContent = `주간팀 ${mainGroup} · 19명 (조장2·일반12·특수5)`;
       } else if (date.getDay() === 0 && groupRule?.type === 'sunday') {
-        status.textContent = `지원팀 ${groupRule.values[0]} · 9명 (조장1·일반6·특수2)`;
+        status.textContent = `지원팀 일반${groupRule.values[0]}·특수${sundaySpecialGroup(dateValue)}조 · 9명 (조장1·일반6·특수2)`;
       } else if (date.getDay() === 0) {
         status.textContent = '해당 근무대 비근무팀';
       } else {
@@ -1386,10 +1385,10 @@
               const preferred = (category, limit) => {
                 const all = sorted(category);
                 const first = all.filter(item => category === 'special'
-                  ? Number(item.securityDuty?.specialGroup) === Number(group.replace('조', ''))
+                  ? Number(item.securityDuty?.specialGroup) === sundaySpecialGroup(body.date)
                   : item.weekendAssignment?.sundayGroup === group);
                 const used = new Set(first.map(item => String(item._id)));
-                return first.concat(all.filter(item => !used.has(String(item._id)))).slice(0, limit).map(item => item._id);
+                return first.slice(0, limit).map(item => item._id);
               };
               const leader = sorted('leader')[sundayLeaderOrder(body.date) - 1];
               body.support = { team: supportTeam, leaders: leader ? [leader._id] : [], generals: preferred('general', 6), specials: preferred('special', 2) };
@@ -1643,6 +1642,8 @@
       const currentWeekSunday = new Date(today);
       currentWeekSunday.setDate(today.getDate() + (today.getDay() === 0 ? 0 : 7 - today.getDay()));
       const supportGroupNumber = sundaySupportGroup(currentWeekSunday.toISOString().slice(0, 10));
+      const dayGroup = sundayMainGroup(currentWeekSunday.toISOString().slice(0, 10), 'day');
+      const nightGroup = dayGroup === 'A조' ? 'B조' : 'A조';
 
        console.log(`현재 ${weekNumber}주차 팀 근무 형태:`, {
          '1팀': team1Schedule,
@@ -1664,6 +1665,8 @@
          // A조, B조는 일요일 근무용 (각 19명)
         const aGroupCount = aGroup.split('\n').filter(line => line.trim()).length;
         const bGroupCount = bGroup.split('\n').filter(line => line.trim()).length;
+        const dayGroupCount = dayGroup === 'A조' ? aGroupCount : bGroupCount;
+        const nightGroupCount = dayGroup === 'A조' ? bGroupCount : aGroupCount;
 
          // 1조, 2조, 3조, 4조는 지원조 선택 기준 (각 9명)
         const group1Count = group1.split('\n').filter(line => line.trim()).length;
@@ -1737,13 +1740,13 @@
          if (team === 'team1') {
            if (team1Schedule === '주간') {
              // 1팀이 주간팀일 때: A조 또는 B조 20명
-             sunDayTotal += aGroupCount;
-             if (aGroupCount > 0) {
-               sunDayTeams.push(`1팀 주간 A조 ${aGroupCount}명`);
+             sunDayTotal += dayGroupCount;
+             if (dayGroupCount > 0) {
+               sunDayTeams.push(`1팀 주간 ${dayGroup} ${dayGroupCount}명`);
              }
-             sunNightTotal += bGroupCount;
-             if (bGroupCount > 0) {
-               sunNightTeams.push(`1팀 주간 B조 ${bGroupCount}명`);
+             sunNightTotal += nightGroupCount;
+             if (nightGroupCount > 0) {
+               sunNightTeams.push(`1팀 주간 ${nightGroup} ${nightGroupCount}명`);
              }
            } else if (team1Schedule === '심야') {
              // 1팀이 심야팀일 때: 2조(선택조) 10명 야간특근
@@ -1763,13 +1766,13 @@
          } else if (team === 'team2') {
            if (team2Schedule === '주간') {
              // 2팀이 주간팀일 때: A조/B조 20명씩
-             sunDayTotal += aGroupCount;
-             if (aGroupCount > 0) {
-               sunDayTeams.push(`2팀 주간 A조 ${aGroupCount}명`);
+             sunDayTotal += dayGroupCount;
+             if (dayGroupCount > 0) {
+               sunDayTeams.push(`2팀 주간 ${dayGroup} ${dayGroupCount}명`);
              }
-             sunNightTotal += bGroupCount;
-             if (bGroupCount > 0) {
-               sunNightTeams.push(`2팀 주간 B조 ${bGroupCount}명`);
+             sunNightTotal += nightGroupCount;
+             if (nightGroupCount > 0) {
+               sunNightTeams.push(`2팀 주간 ${nightGroup} ${nightGroupCount}명`);
              }
            } else if (team2Schedule === '초야') {
              // 2팀이 초야팀일 때: 선택조 10명 (일요일 주간근무 지원)
@@ -1789,13 +1792,13 @@
          } else if (team === 'team3') {
            if (team3Schedule === '주간') {
              // 3팀이 주간팀일 때: A조/B조 20명씩
-             sunDayTotal += aGroupCount;
-             if (aGroupCount > 0) {
-               sunDayTeams.push(`3팀 주간 A조 ${aGroupCount}명`);
+             sunDayTotal += dayGroupCount;
+             if (dayGroupCount > 0) {
+               sunDayTeams.push(`3팀 주간 ${dayGroup} ${dayGroupCount}명`);
              }
-             sunNightTotal += bGroupCount;
-             if (bGroupCount > 0) {
-               sunNightTeams.push(`3팀 주간 B조 ${bGroupCount}명`);
+             sunNightTotal += nightGroupCount;
+             if (nightGroupCount > 0) {
+               sunNightTeams.push(`3팀 주간 ${nightGroup} ${nightGroupCount}명`);
              }
            } else if (team3Schedule === '심야') {
              // 3팀이 심야팀일 때: 선택조 10명 (일요일 야간근무 지원)

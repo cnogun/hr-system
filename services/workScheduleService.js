@@ -18,7 +18,6 @@ class WorkScheduleService {
       // 기존 스케줄이 있는지 확인
       const existingSchedule = await WorkSchedule.findOne({
         weekStartDate: weekStart,
-        weekEndDate: weekEnd,
         status: 'active'
       });
       
@@ -52,60 +51,23 @@ class WorkScheduleService {
   /**
    * 주차 번호 계산 (2025년 1월 1일 기준)
    */
-  static getWeekNumber(date) {
-    const yearStart = new Date(2025, 0, 1, 6, 0, 0); // 2025년 1월 1일 06:00
-    const targetDate = new Date(date);
-    
-    // 월요일 06:00으로 조정
-    const dayOfWeek = targetDate.getDay();
-    const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-    
-    const monday6am = new Date(targetDate);
-    monday6am.setDate(targetDate.getDate() - mondayOffset);
-    monday6am.setHours(6, 0, 0, 0);
-    
-    const weekDiff = Math.floor((monday6am - yearStart) / (7 * 24 * 60 * 60 * 1000));
-    return weekDiff + 2; // 1월 1일 수요일이 1주차, 1월 6일 월요일이 2주차
-  }
-  
-  /**
-   * 주차 시작일 계산 (월요일 06:00)
-   * 규칙: 평일 = 월요일 06:00 ~ 토요일 06:00, 휴일 = 토요일 06:00 ~ 월요일 06:00
-   * 토요일이라고 지칭하면 휴일로 인식 (날짜 기준)
-   */
+  // Korean calendar dates; retain the existing UTC-06:00 week key for DB compatibility.
   static getWeekStart(date) {
-    const targetDate = new Date(date);
-    const dayOfWeek = targetDate.getDay(); // 0: 일요일, 1: 월요일, ..., 6: 토요일
-    
-    // 월요일까지의 오프셋 계산
-    let mondayOffset;
-    if (dayOfWeek === 0) { // 일요일 - 이전 주 월요일
-      mondayOffset = 6;
-    } else if (dayOfWeek === 1) { // 월요일 - 같은 주 월요일
-      mondayOffset = 0;
-    } else { // 화요일~토요일 - 같은 주 월요일
-      mondayOffset = dayOfWeek - 1;
-    }
-    
-    // 월요일 날짜 계산 (UTC 기준으로 계산하여 시간대 문제 방지)
-    const mondayDate = new Date(targetDate);
-    mondayDate.setUTCDate(targetDate.getUTCDate() - mondayOffset);
-    mondayDate.setUTCHours(6, 0, 0, 0);
-    
-    return mondayDate;
+    const day = typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date)
+      ? date : new Date(new Date(date).getTime() + 9 * 3600000).toISOString().slice(0, 10);
+    const monday = new Date(`${day}T06:00:00Z`);
+    monday.setUTCDate(monday.getUTCDate() - ((monday.getUTCDay() + 6) % 7));
+    return monday;
   }
-  
-  /**
-   * 주차 종료일 계산 (다음주 월요일 06:00)
-   */
+
+  static getWeekNumber(date) {
+    return Math.floor((this.getWeekStart(date) - Date.parse('2025-01-01T06:00:00Z')) / 604800000) + 2;
+  }
+
   static getWeekEnd(date) {
-    const weekStart = this.getWeekStart(date);
-    const weekEnd = new Date(weekStart);
-    weekEnd.setDate(weekStart.getDate() + 7); // 7일 후 (다음주 월요일)
-    weekEnd.setHours(6, 0, 0, 0); // 06:00으로 설정
-    return weekEnd;
+    return new Date(this.getWeekStart(date).getTime() + 604800000);
   }
-  
+
   /**
    * 특정 날짜의 근무 형태 자동 설정
    */
