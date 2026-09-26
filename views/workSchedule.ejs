@@ -2073,18 +2073,20 @@
       
       let team1Schedule, team2Schedule, team3Schedule;
       
-      // 휴일인지 확인 (토요일 또는 일요일)
+      // 주말 카드도 아래 인원 요약과 같은 주간 순환 기준을 사용한다.
       if (dayOfWeek === 0 || dayOfWeek === 6) {
-        // 휴일 근무: 특근 형태
-        if (dayOfWeek === 6) { // 토요일
-          team1Schedule = '휴무';      // 보안1팀: 휴무
-          team2Schedule = '주간특근';  // 보안2팀: 주간특근 (06:00~18:00)
-          team3Schedule = '야간특근';  // 보안3팀: 야간특근 (18:00~06:00)
-        } else { // 일요일
-          team1Schedule = '주간특근';  // 보안1팀: 주간특근 (06:00~18:00)
-          team2Schedule = '야간특근';  // 보안2팀: 야간특근 (18:00~06:00)
-          team3Schedule = '휴무';      // 보안3팀: 휴무
-        }
+        const weekendSchedule = team => {
+          const weekdayShift = getTeamSchedule(team, weekNumber);
+          if (dayOfWeek === 6) {
+            return weekdayShift === '초야' ? '주간특근' :
+              weekdayShift === '심야' ? '야간특근' : '휴무';
+          }
+          return weekdayShift === '초야' ? '주간특근' :
+            weekdayShift === '심야' ? '야간특근' : '주간·야간특근';
+        };
+        team1Schedule = weekendSchedule(1);
+        team2Schedule = weekendSchedule(2);
+        team3Schedule = weekendSchedule(3);
         
         console.log('=== 휴일 근무 형태 (특근) ===');
         console.log(`${dayOfWeek === 6 ? '토요일' : '일요일'} 휴일 근무: 1팀=${team1Schedule}, 2팀=${team2Schedule}, 3팀=${team3Schedule}`);
@@ -2143,6 +2145,7 @@
         case '초야': return 'bg-success';
         case '주간특근': return 'bg-primary';
         case '야간특근': return 'bg-danger';
+        case '주간·야간특근': return 'bg-primary';
         case '휴무': return 'bg-secondary';
         default: return 'bg-secondary';
       }
@@ -2156,6 +2159,7 @@
         case '초야': return '14:00~22:00';
         case '주간특근': return '06:00~18:00';
         case '야간특근': return '18:00~06:00';
+        case '주간·야간특근': return '06:00~18:00 / 18:00~06:00';
         case '휴무': return '휴무';
         default: return '00:00~00:00';
       }
