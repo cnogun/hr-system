@@ -13,6 +13,26 @@ const mongoose = require('mongoose');
 const Notice = require('../models/Notice');
 const User = require('../models/User');
 
+// 날짜 입력은 한국 시간의 하루 전체로 해석합니다.
+function parseKoreanDay(value, endOfDay = false) {
+  if (!value) return null;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) throw new Error('게시 날짜 형식이 올바르지 않습니다.');
+  const date = new Date(`${value}T00:00:00+09:00`);
+  if (Number.isNaN(date.getTime()) || new Date(date.getTime() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10) !== value) {
+    throw new Error('유효한 게시 날짜를 입력해 주세요.');
+  }
+  if (endOfDay) date.setUTCDate(date.getUTCDate() + 1);
+  return date;
+}
+
+function publicationFrom(body) {
+  const publishStart = parseKoreanDay(body.publishStart);
+  const publishEnd = parseKoreanDay(body.publishEnd, true);
+  if (Boolean(publishStart) !== Boolean(publishEnd)) throw new Error('게시 시작일과 종료일을 모두 입력하거나 모두 비워 주세요.');
+  if (publishStart && publishEnd && publishStart >= publishEnd) throw new Error('게시 종료일은 시작일 이후여야 합니다.');
+  return { showOnLogin: Boolean(publishStart && publishEnd), publishStart, publishEnd };
+}
+
 // 공지사항 목록(최신순)
 router.get('/', async (req, res) => {
   try {
@@ -95,17 +115,53 @@ router.get('/new', async (req, res) => {
   if (!user || user.role !== 'admin') return res.status(403).send('관리자만 접근 가능합니다.');
   res.render('noticeForm', { notice: null, session: req.session });
 });
+// 목록에서 로그인 전 공지 노출과 게시기간을 바로 설정
+router.post('/:id/publication', async (req, res) => {
+  if (!req.session.userId) return res.redirect('/auth/login');
+  const user = await User.findById(req.session.userId);
+  if (!user || user.role !== 'admin') return res.status(403).send('관리자만 접근 가능합니다.');
+  if (!mongoose.isValidObjectId(req.params.id)) return res.status(404).send('공지사항을 찾을 수 없습니다.');
+  try {
+    const publication = publicationFrom(req.body);
+    const notice = await Notice.findById(req.params.id).select('_id');
+    if (!notice) return res.status(404).send('공지사항을 찾을 수 없습니다.');
+    await Notice.findByIdAndUpdate(notice._id, { ...publication, updatedAt: new Date() }, { runValidators: true });
+    res.redirect('/notice/manage');
+  } catch (error) {
+    const notices = await Notice.find().sort({ createdAt: -1 }).populate('author', 'username email');
+    res.status(400).render('noticeManage', { notices, session: req.session, error: error.message });
+  }
+});
+router.post('/:id/publication/stop', async (req, res) => {
+  if (!req.session.userId) return res.redirect('/auth/login');
+  const user = await User.findById(req.session.userId);
+  if (!user || user.role !== 'admin') return res.status(403).send('관리자만 접근 가능합니다.');
+  if (!mongoose.isValidObjectId(req.params.id)) return res.status(404).send('공지사항을 찾을 수 없습니다.');
+  const notice = await Notice.findById(req.params.id);
+  if (!notice) return res.status(404).send('공지사항을 찾을 수 없습니다.');
+  const now = new Date();
+  notice.publishStart = null;
+  notice.publishEnd = null;
+  notice.showOnLogin = false;
+  notice.updatedAt = now;
+  await notice.save();
+  res.redirect('/notice/manage');
+});
 // 시스템 알림 작성 처리
 router.post('/new', async (req, res) => {
   if (!req.session.userId) return res.redirect('/auth/login');
   const user = await User.findById(req.session.userId);
   if (!user || user.role !== 'admin') return res.status(403).send('관리자만 접근 가능합니다.');
-  await Notice.create({
-    title: req.body.title,
-    content: req.body.content,
-    author: user._id
-  });
-  res.redirect('/notice');
+  try {
+    await Notice.create({
+      title: req.body.title,
+      content: req.body.content,
+      author: user._id
+    });
+    res.redirect('/notice/manage');
+  } catch (error) {
+    res.status(400).render('noticeForm', { notice: { ...req.body, showOnLogin: req.body.showOnLogin === 'on' }, session: req.session, error: error.message, isNew: true });
+  }
 });
 // 시스템 알림 수정 폼
 router.get('/:id/edit', async (req, res) => {
@@ -121,11 +177,16 @@ router.post('/:id/edit', async (req, res) => {
   if (!req.session.userId) return res.redirect('/auth/login');
   const user = await User.findById(req.session.userId);
   if (!user || user.role !== 'admin') return res.status(403).send('관리자만 접근 가능합니다.');
-  await Notice.findByIdAndUpdate(req.params.id, {
-    title: req.body.title,
-    content: req.body.content
-  });
-  res.redirect('/notice');
+  try {
+    await Notice.findByIdAndUpdate(req.params.id, {
+      title: req.body.title,
+      content: req.body.content,
+      updatedAt: new Date()
+    }, { runValidators: true });
+    res.redirect('/notice/manage');
+  } catch (error) {
+    res.status(400).render('noticeForm', { notice: { ...req.body, _id: req.params.id, showOnLogin: req.body.showOnLogin === 'on' }, session: req.session, error: error.message });
+  }
 });
 // 시스템 알림 삭제
 router.post('/:id/delete', async (req, res) => {

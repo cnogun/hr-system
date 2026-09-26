@@ -1344,7 +1344,6 @@ router.get('/api/schedule/:date/:team', isLoggedIn, async (req, res) => {
     
     const currentSchedule = await WorkSchedule.findOne({
       weekStartDate: weekStart,
-      weekEndDate: weekEnd,
       status: 'active'
     });
     
@@ -1386,20 +1385,11 @@ router.get('/api/schedule/:date/:team', isLoggedIn, async (req, res) => {
 
 // 주차 시작일 계산 (월요일 06:00)
 function getWeekStart(date) {
-  const day = date.getDay();
-  const diff = date.getDate() - day + (day === 0 ? -6 : 1);
-  const weekStart = new Date(date.setDate(diff));
-  weekStart.setHours(6, 0, 0, 0);
-  return weekStart;
+  return require('../services/workScheduleService').getWeekStart(date);
 }
 
-// 주차 종료일 계산 (다음주 월요일 06:00)
 function getWeekEnd(date) {
-  const weekStart = getWeekStart(date);
-  const weekEnd = new Date(weekStart);
-  weekEnd.setDate(weekStart.getDate() + 7);
-  weekEnd.setHours(6, 0, 0, 0);
-  return weekEnd;
+  return require('../services/workScheduleService').getWeekEnd(date);
 }
 
 // WorkSchedule에서 팀별 스케줄 추출

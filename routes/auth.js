@@ -18,6 +18,29 @@ const nodemailer = require('nodemailer');
 const crypto = require('crypto');
 const Log = require('../models/Log');
 const Employee = require('../models/Employee');
+const Notice = require('../models/Notice');
+
+async function renderLogin(req, res, message = null, status = 200) {
+  let loginNotices = [];
+  try {
+    const now = new Date();
+    loginNotices = await Notice.find({
+      publishStart: { $lte: now },
+      publishEnd: { $gt: now }
+    }).sort({ createdAt: -1 }).lean();
+  } catch (error) {
+    console.error('로그인 공지 조회 오류:', error);
+  }
+  if (status === 200 && loginNotices.length) {
+    // 닫기 직후 한 번만 로그인 폼을 보여주고, 다음 방문에는 게시 공지를 다시 표시합니다.
+    if (req.session.skipLoginNoticeOnce) {
+      delete req.session.skipLoginNoticeOnce;
+    } else {
+      return res.render('loginNotices', { notices: loginNotices });
+    }
+  }
+  return res.status(status).render('login', { message });
+}
 
 // 회원가입 폼
 router.get('/register', (req, res) => {
@@ -82,9 +105,23 @@ router.post('/register', async (req, res) => {
 
 // 로그인 폼
 router.get('/login', (req, res) => {
-  res.render('login', { message: req.query.registered === '1'
+  return renderLogin(req, res, req.query.registered === '1'
     ? '계정이 생성되었습니다. 관리자가 직원 정보에 연결하면 로그인할 수 있습니다.'
-    : req.query.pending === '1' ? '직원 정보와 연결되지 않은 계정은 관리자의 등록 후 로그인할 수 있습니다.' : null });
+    : req.query.pending === '1' ? '직원 정보와 연결되지 않은 계정은 관리자의 등록 후 로그인할 수 있습니다.' : null);
+});
+
+router.post('/login/notices/close', async (req, res) => {
+  try {
+    const now = new Date();
+    const notices = await Notice.find({
+      publishStart: { $lte: now }, publishEnd: { $gt: now }
+    }).select('_id').lean();
+    if (notices.length) req.session.skipLoginNoticeOnce = true;
+    res.redirect('/auth/login');
+  } catch (error) {
+    console.error('공지 확인 처리 오류:', error);
+    res.status(500).send('공지 확인 중 오류가 발생했습니다. 다시 시도해 주세요.');
+  }
 });
 
 // 로그인 처리
@@ -129,7 +166,7 @@ router.post('/login', async (req, res) => {
     if (user.role !== 'admin') {
       employee = await Employee.findOne({ userId: user._id });
       if (!employee) {
-        return res.status(403).render('login', { message: '관리자가 직원 정보에 계정을 연결한 뒤 로그인할 수 있습니다.' });
+        return renderLogin(req, res, '관리자가 직원 정보에 계정을 연결한 뒤 로그인할 수 있습니다.', 403);
       }
     }
 
@@ -170,7 +207,7 @@ router.post('/login', async (req, res) => {
     
   } catch (error) {
     console.error('로그인 처리 오류:', error);
-    res.status(500).render('login', { message: '로그인 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.' });
+    return renderLogin(req, res, '로그인 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.', 500);
   }
 });
 

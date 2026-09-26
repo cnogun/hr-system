@@ -14,6 +14,10 @@ const noticeSchema = new mongoose.Schema({
   title: { type: String, required: true },
   content: { type: String, required: true },
   author: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  showOnLogin: { type: Boolean, default: false },
+  publishStart: { type: Date, default: null },
+  publishEnd: { type: Date, default: null },
+  updatedAt: { type: Date, default: Date.now },
   createdAt: { type: Date, default: Date.now }
 });
 
