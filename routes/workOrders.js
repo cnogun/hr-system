@@ -13,6 +13,8 @@ const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
 const multer = require('multer');
+const { createHash } = require('crypto');
+const { fillWorkOrderTemplate, getTemplateLocations, validateWorkOrderTemplate, assignmentName, templateBytes, hasLeader, shiftDisplay } = require('../services/workOrderExcel');
 
 const templateSchema = new mongoose.Schema({
   key: { type: String, required: true, unique: true },
@@ -23,6 +25,36 @@ const templateSchema = new mongoose.Schema({
 });
 const WorkOrderTemplate = mongoose.models.WorkOrderTemplate || mongoose.model('WorkOrderTemplate', templateSchema);
 const uploadTemplate = multer({ storage: multer.memoryStorage(), limits: { fileSize: 2 * 1024 * 1024 } }).single('template');
+const locationAliases = {
+  '교육원중문': '물류센터문', '선적중문': '선적문',
+  '5의장중문': '5의장문', '시트1중문': '시트1주차장문',
+  '엔진4부': '엔진4문'
+};
+const cleanAssignment = (value, region, location) => assignmentName(value, region, location);
+const templateVersion = content => createHash('sha256').update(templateBytes(content)).digest('hex');
+const uploadFileName = value => {
+  const name = String(value || '');
+  if (/[가-힣]/.test(name)) return name;
+  const decoded = Buffer.from(name, 'latin1').toString('utf8');
+  return /[가-힣]/.test(decoded) ? decoded : name;
+};
+const canonicalLocation = value => locationAliases[value] || value;
+const lookupAssignment = (assignments, location) => (assignments || []).find(item => item.location === location) ||
+  (assignments || []).find(item => canonicalLocation(item.location) === location);
+async function currentTemplateLocations() {
+  const template = await WorkOrderTemplate.findOne({ key: 'work-order' }).select('content').lean();
+  if (!template) throw new Error('근무명령서 엑셀 양식을 먼저 업로드해주세요.');
+  return getTemplateLocations(template.content);
+}
+async function orderTemplate(order) {
+  if (order.templateContent) return order.templateContent;
+  const template = await WorkOrderTemplate.findOne({ key: 'work-order' }).select('content').lean();
+  if (!template) throw new Error('근무명령서 엑셀 양식을 먼저 업로드해주세요.');
+  return template.content;
+}
+async function orderTemplateLocations(order) {
+  return getTemplateLocations(await orderTemplate(order));
+}
 
 
 // WorkOrder 모델이 이미 존재하는지 확인하고 제거
@@ -32,6 +64,8 @@ if (mongoose.models.WorkOrder) {
 
 // 스키마를 직접 정의하여 모델 생성
 const workOrderSchema = new mongoose.Schema({
+  // Keep the exact uploaded form used when this order was saved.
+  templateContent: Buffer,
   // 기본 정보
   title: {
     type: String,
@@ -254,7 +288,7 @@ workOrderSchema.virtual('formattedWorkInfo').get(function() {
   
   const timeInfo = startTime && endTime ? `(${startTime}~${endTime})` : '';
   
-  return `${year}. ${month}. ${day}(${dayOfWeek}) ${team} ${shift}${timeInfo}`;
+  return `${year}. ${month}. ${day}(${dayOfWeek}) ${team} ${shiftDisplay(this.workInfo)}`;
 });
 
 // 가상 필드: 결원 사유 요약
@@ -403,12 +437,10 @@ router.get('/', isLoggedIn, async (req, res) => {
     
     const total = await WorkOrder.countDocuments(filter);
     const totalPages = Math.ceil(total / limit);
-    const excelTemplate = await WorkOrderTemplate.findOne({ key: 'work-order' }).select('originalName size uploadedAt').lean();
     
     res.render('workOrderList', {
+      workOrderMessages: { success: req.flash('success')[0], error: req.flash('error')[0] },
       workOrders,
-      excelTemplate,
-      templateUploaded: req.query.template === 'uploaded',
       currentPage: page,
       totalPages,
       total,
@@ -432,6 +464,9 @@ router.get('/', isLoggedIn, async (req, res) => {
 // 근무명령서 작성 폼
 router.get('/new', isLoggedIn, adminOnly, async (req, res) => {
   try {
+    const template = await WorkOrderTemplate.findOne({ key: 'work-order' }).select('content').lean();
+    if (!template) throw new Error('근무명령서 엑셀 양식을 먼저 업로드해주세요.');
+    const templateLocations = await getTemplateLocations(template.content);
     // findAssignmentData 함수 정의
     const findAssignmentData = (workAssignment, location, field) => {
       if (!workAssignment || !Array.isArray(workAssignment)) return '';
@@ -440,6 +475,9 @@ router.get('/new', isLoggedIn, adminOnly, async (req, res) => {
     };
 
     res.render('workOrderForm_new', {
+      templateLocations,
+      templateVersion: templateVersion(template.content),
+      hasLeader,
       workOrder: null,
       user: req.session.user,
       userRole: req.session.userRole,
@@ -544,28 +582,14 @@ router.post('/', isLoggedIn, adminOnly, async (req, res) => {
     const workAssignments = [];
     
     
-    // 모든 위치 정의
-    const locations = [
-      { key: '해안입문', region: '해안지역' },
-      { key: '해안출문', region: '해안지역' },
-      { key: '기술교육원문', region: '해안지역' },
-      { key: '교육원중문', region: '해안지역' },
-      { key: '성내주차장문', region: '해안지역' },
-      { key: '성내주차장초소', region: '해안지역' },
-      { key: '선적중문', region: '해안지역' },
-      { key: '5의장중문', region: '해안지역' },
-      { key: '아산로중문', region: '해안지역' },
-      { key: '항만순찰', region: '해안지역' },
-      { key: '성내문', region: '성내지역' },
-      { key: '차량검색소', region: '성내지역' },
-      { key: '시트1문', region: '시트지역' },
-      { key: '시트1중문', region: '시트지역' },
-      { key: '시트1주차장초소', region: '시트지역' },
-      { key: '시트3문', region: '시트지역' },
-      { key: '코일주차장', region: '시트지역' },
-      { key: '엔진4부', region: '매암동지역' },
-      { key: '야적장초소', region: '매암동지역' }
-    ];
+    const template = await WorkOrderTemplate.findOne({ key: 'work-order' }).select('content').lean();
+    if (!template) throw new Error('근무명령서 엑셀 양식을 먼저 업로드해주세요.');
+    if (req.body.templateVersion !== templateVersion(template.content)) {
+      throw new Error('작성 중 양식이 변경되었습니다. 작성 페이지를 새로 열고 명단을 확인해주세요.');
+    }
+    const locations = (await getTemplateLocations(template.content)).flat().map(item => ({
+      key: item.location, region: item.region
+    }));
     
     // workAssignment 객체에서 데이터 수집
     if (req.body.workAssignment) {
@@ -574,22 +598,22 @@ router.post('/', isLoggedIn, adminOnly, async (req, res) => {
         
         // 새로운 방식: assignment 객체가 있는 경우
         if (assignmentData && assignmentData.assignment) {
-          const teamLeader = assignmentData.assignment.teamLeader || '';
-          const supervisor = assignmentData.assignment.supervisor || '';
+          const teamLeader = cleanAssignment(assignmentData.assignment.teamLeader, location.region, location.key);
+          const supervisor = cleanAssignment(assignmentData.assignment.supervisor, location.region, location.key);
           const members = [];
           
           // 대원 데이터 수집 (members 배열)
           if (assignmentData.assignment.members) {
             for (let i = 0; i < 10; i++) { // 최대 10명까지
               const member = assignmentData.assignment.members[i];
-              members[i] = typeof member === 'string' ? member.trim() : '';
+              members[i] = cleanAssignment(member, location.region, location.key);
             }
           }
           
           // 데이터가 있는 경우만 추가
           if (teamLeader || supervisor || members.some(Boolean)) {
             workAssignments.push({
-              region: assignmentData.region || location.region,
+              region: location.region,
               location: location.key,
               assignment: {
                 teamLeader: teamLeader,
@@ -606,7 +630,7 @@ router.post('/', isLoggedIn, adminOnly, async (req, res) => {
           // 배열에서 대원 이름들 추출 (앞의 2개 요소가 대원 이름)
           for (let i = 0; i < assignmentData.length - 2; i++) {
             const member = assignmentData[i];
-            members[i] = typeof member === 'string' ? member.trim() : '';
+            members[i] = cleanAssignment(member, location.region, location.key);
           }
           
           // 데이터가 있는 경우만 추가
@@ -627,14 +651,14 @@ router.post('/', isLoggedIn, adminOnly, async (req, res) => {
     
     // 기존 방식도 지원 (하위 호환성)
     locations.forEach(location => {
-      const teamLeader = req.body[`teamLeader_${location.key}`] || '';
-      const supervisor = req.body[`supervisor_${location.key}`] || '';
+      const teamLeader = cleanAssignment(req.body[`teamLeader_${location.key}`], location.region, location.key);
+      const supervisor = cleanAssignment(req.body[`supervisor_${location.key}`], location.region, location.key);
       const members = [];
       
       // 대원 데이터 수집 (member_위치명_0, member_위치명_1, ...)
       for (let i = 0; i < 10; i++) { // 최대 10명까지
         const member = req.body[`member_${location.key}_${i}`];
-        members[i] = typeof member === 'string' ? member.trim() : '';
+        members[i] = cleanAssignment(member, location.region, location.key);
       }
       
       // 기존 방식으로 데이터가 있고, 아직 추가되지 않은 경우만 추가
@@ -674,6 +698,7 @@ router.post('/', isLoggedIn, adminOnly, async (req, res) => {
       throw new Error('인원 현황이 올바르지 않습니다.');
     }
     
+    workOrderData.templateContent = template.content;
     const workOrder = new WorkOrder(workOrderData);
     await workOrder.save();
     
@@ -702,9 +727,10 @@ router.post('/', isLoggedIn, adminOnly, async (req, res) => {
       errorMessage = '데이터 타입 오류: ' + error.message;
     } else if (error.code === 11000) {
       errorMessage = '중복된 데이터가 있습니다.';
+    } else if (error.message.startsWith('작성 중 양식이 변경되었습니다.')) {
+      errorMessage = error.message;
     }
     
-    req.flash('error', errorMessage);
     
     // 사용자가 입력한 데이터를 유지하기 위해 workOrder 객체 생성
     const workOrderWithData = {
@@ -761,27 +787,37 @@ router.get('/:id/edit', isLoggedIn, adminOnly, async (req, res) => {
         error: { status: 404 }
       });
     }
+    const templateLocations = await orderTemplateLocations(workOrder);
+    templateLocations.forEach(side => side.forEach(item => {
+      const members = lookupAssignment(workOrder.workAssignment, item.location)?.assignment?.members || [];
+      item.memberCount = Math.max(item.memberCount, members.findLastIndex(Boolean) + 1);
+    }));
     
     // workAssignment 데이터 구조 디버깅
     
     // findAssignmentData 함수 정의
     const findAssignmentData = (workAssignment, location, field, index) => {
       if (!workAssignment || !Array.isArray(workAssignment)) return '';
-      const assignment = workAssignment.find(item => item.location === location);
+      const assignment = lookupAssignment(workAssignment, location);
       if (!assignment || !assignment.assignment) return '';
       
       if (index !== undefined) {
         // members 배열의 특정 인덱스 접근
         if (field === 'members' && Array.isArray(assignment.assignment[field])) {
-          return assignment.assignment[field][index] || '';
+          return cleanAssignment(assignment.assignment[field][index], assignment.region, location);
         }
         return assignment.assignment[field] && assignment.assignment[field][index] ? assignment.assignment[field][index] : '';
       }
       
-      return assignment.assignment[field] || '';
+      return ['supervisor', 'teamLeader'].includes(field)
+        ? cleanAssignment(assignment.assignment[field], assignment.region, location)
+        : assignment.assignment[field] || '';
     };
 
     res.render('workOrder_edit', {
+      workOrderMessages: { success: req.flash('success')[0], error: req.flash('error')[0] },
+      templateLocations,
+      hasLeader,
       workOrder,
       user: req.session.user,
       userRole: req.session.userRole,
@@ -808,15 +844,17 @@ router.post('/template', isLoggedIn, adminOnly, (req, res) => {
       return res.status(400).send('.xlsx 형식의 엑셀 양식을 선택해주세요.');
     }
     try {
+      await getTemplateLocations(file.buffer);
+      await validateWorkOrderTemplate(file.buffer);
       await WorkOrderTemplate.findOneAndUpdate(
         { key: 'work-order' },
-        { $set: { originalName: file.originalname, content: file.buffer, size: file.size, uploadedAt: new Date() } },
+        { $set: { originalName: uploadFileName(file.originalname), content: file.buffer, size: file.size, uploadedAt: new Date() } },
         { upsert: true, new: true, runValidators: true }
       );
       res.redirect('/excelManager?tab=security&uploaded=1');
     } catch (error) {
       console.error('근무명령서 엑셀 양식 저장 오류:', error);
-      res.status(500).send('엑셀 양식을 저장하지 못했습니다.');
+      res.status(400).send(`엑셀 양식을 적용할 수 없습니다: ${error.message}`);
     }
   });
 });
@@ -825,6 +863,7 @@ router.get('/template/info', isLoggedIn, adminOnly, async (req, res) => {
   try {
     const template = await WorkOrderTemplate.findOne({ key: 'work-order' })
       .select('originalName size uploadedAt').lean();
+    if (template) template.originalName = uploadFileName(template.originalName);
     res.json({ success: true, template });
   } catch (error) {
     console.error('근무명령서 엑셀 양식 조회 오류:', error);
@@ -843,6 +882,30 @@ router.get('/template/download', isLoggedIn, async (req, res) => {
   } catch (error) {
     console.error('근무명령서 엑셀 양식 다운로드 오류:', error);
     res.status(500).send('엑셀 양식을 내려받지 못했습니다.');
+  }
+});
+
+// 저장된 명령서 내용을 업로드된 원본 엑셀 양식에 채워 인쇄용 파일로 전달합니다.
+router.get('/:id/print', isLoggedIn, async (req, res) => {
+  if (!mongoose.isValidObjectId(req.params.id)) return res.status(400).send('잘못된 근무명령서 번호입니다.');
+  try {
+    const order = await WorkOrder.findById(req.params.id).lean();
+    if (!order) return res.status(404).send('근무명령서를 찾을 수 없습니다.');
+    const content = await fillWorkOrderTemplate(await orderTemplate(order), order);
+    const date = order.workInfo && order.workInfo.date
+      ? new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit' })
+        .formatToParts(new Date(order.workInfo.date))
+        .filter(part => ['year', 'month', 'day'].includes(part.type)).map(part => part.value).join('-')
+      : 'undated';
+    res.set('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.set('Content-Disposition', `attachment; filename="work-order-${date}.xlsx"`);
+    res.set('Cache-Control', 'no-store');
+    res.set('X-Content-Type-Options', 'nosniff');
+    res.send(Buffer.from(content));
+  } catch (error) {
+    console.error('근무명령서 인쇄용 엑셀 생성 오류:', error);
+    res.status(400).send(error.message.includes('편성 칸에는 최대')
+      ? error.message : '인쇄용 근무명령서를 만들지 못했습니다. 업로드된 양식을 확인해주세요.');
   }
 });
 
@@ -873,6 +936,11 @@ router.get('/:id', isLoggedIn, async (req, res) => {
         error: { status: 404 }
       });
     }
+    const templateLocations = await orderTemplateLocations(workOrder);
+    templateLocations.forEach(side => side.forEach(item => {
+      item.members = (lookupAssignment(workOrder.workAssignment, item.location)?.assignment?.members || [])
+        .map(name => cleanAssignment(name, item.region, item.location)).filter(Boolean);
+    }));
     
     // workAssignment 데이터 구조 디버깅
     
@@ -916,7 +984,7 @@ router.get('/:id', isLoggedIn, async (req, res) => {
     // findAssignmentData 함수 정의
     const findAssignmentData = (workAssignment, location, field, index) => {
       if (!workAssignment || !Array.isArray(workAssignment)) return '';
-      const assignment = workAssignment.find(item => item.location === location);
+      const assignment = lookupAssignment(workAssignment, location);
       if (!assignment || !assignment.assignment) return '';
       
       
@@ -932,6 +1000,9 @@ router.get('/:id', isLoggedIn, async (req, res) => {
     };
     
     res.render('workOrder', {
+      workOrderMessages: { success: req.flash('success')[0], error: req.flash('error')[0] },
+      templateLocations,
+      hasLeader,
       workOrder,
       findAssignmentData: findAssignmentData,
       user: req.session.user,
@@ -1043,50 +1114,32 @@ const updateWorkOrder = async (req, res) => {
     const workAssignments = [];
     
     
-    // 모든 위치 정의
-    const locations = [
-      { key: '해안입문', region: '해안지역' },
-      { key: '해안출문', region: '해안지역' },
-      { key: '기술교육원문', region: '해안지역' },
-      { key: '교육원중문', region: '해안지역' },
-      { key: '성내주차장문', region: '해안지역' },
-      { key: '성내주차장초소', region: '해안지역' },
-      { key: '선적중문', region: '해안지역' },
-      { key: '5의장중문', region: '해안지역' },
-      { key: '아산로중문', region: '해안지역' },
-      { key: '항만순찰', region: '해안지역' },
-      { key: '성내문', region: '성내지역' },
-      { key: '차량검색소', region: '성내지역' },
-      { key: '시트1문', region: '시트지역' },
-      { key: '시트1중문', region: '시트지역' },
-      { key: '시트1주차장초소', region: '시트지역' },
-      { key: '시트3문', region: '시트지역' },
-      { key: '코일주차장', region: '시트지역' },
-      { key: '엔진4부', region: '매암동지역' },
-      { key: '야적장초소', region: '매암동지역' }
-    ];
-    
+    // 편집 화면과 같은 업로드 양식의 근무지만 저장합니다.
+    const locations = (await orderTemplateLocations(workOrder)).flat().map(item => ({
+      key: item.location, region: item.region
+    }));
+
     // workAssignment 객체에서 데이터 수집 (새로운 방식)
     if (req.body.workAssignment) {
       locations.forEach(location => {
         const assignmentData = req.body.workAssignment[location.key];
         if (assignmentData && assignmentData.assignment) {
-          const teamLeader = assignmentData.assignment.teamLeader || '';
-          const supervisor = assignmentData.assignment.supervisor || '';
+          const teamLeader = cleanAssignment(assignmentData.assignment.teamLeader, location.region, location.key);
+          const supervisor = cleanAssignment(assignmentData.assignment.supervisor, location.region, location.key);
           const members = [];
           
           // 대원 데이터 수집 (members 배열)
           if (assignmentData.assignment.members) {
             for (let i = 0; i < 10; i++) { // 최대 10명까지
               const member = assignmentData.assignment.members[i];
-              members[i] = typeof member === 'string' ? member.trim() : '';
+              members[i] = cleanAssignment(member, location.region, location.key);
             }
           }
           
           // 데이터가 있는 경우만 추가
           if (teamLeader || supervisor || members.some(Boolean)) {
             workAssignments.push({
-              region: assignmentData.region || location.region,
+              region: location.region,
               location: location.key,
               assignment: {
                 teamLeader: teamLeader,
@@ -1123,21 +1176,22 @@ const updateWorkOrder = async (req, res) => {
     
     // 각 발견된 위치별로 데이터 수집
     foundLocations.forEach(locationKey => {
-      const teamLeader = req.body[`teamLeader_${locationKey}`] || '';
-      const supervisor = req.body[`supervisor_${locationKey}`] || '';
+      const locationInfo = locations.find(loc => loc.key === locationKey);
+      if (!locationInfo) return;
+      const region = locationInfo.region;
+      const teamLeader = cleanAssignment(req.body[`teamLeader_${locationKey}`], region, locationKey);
+      const supervisor = cleanAssignment(req.body[`supervisor_${locationKey}`], region, locationKey);
       const members = [];
       
       
       // 대원 데이터 수집 (member_위치명_0, member_위치명_1, ...)
       for (let i = 0; i < 10; i++) { // 최대 10명까지
         const member = req.body[`member_${locationKey}_${i}`];
-        members[i] = typeof member === 'string' ? member.trim() : '';
+        members[i] = cleanAssignment(member, region, locationKey);
       }
       
       
       // 지역 정보 찾기 (기존 locations 배열에서)
-      const locationInfo = locations.find(loc => loc.key === locationKey);
-      const region = locationInfo ? locationInfo.region : '기타지역';
       
       
       // 기존 방식으로 데이터가 있고, 아직 추가되지 않은 경우만 추가
@@ -1159,8 +1213,8 @@ const updateWorkOrder = async (req, res) => {
     
     // 화면에 없는 과거 근무지는 수정만으로 삭제하지 않습니다.
     for (const previous of workOrder.workAssignment || []) {
-      if (!locations.some(location => location.key === previous.location) &&
-          !workAssignments.some(item => item.location === previous.location)) workAssignments.push(previous);
+      if (!locations.some(location => location.key === canonicalLocation(previous.location)) &&
+          !workAssignments.some(item => item.location === canonicalLocation(previous.location))) workAssignments.push(previous);
     }
     updateData.workAssignment = workAssignments;
     
@@ -1172,6 +1226,7 @@ const updateWorkOrder = async (req, res) => {
       };
     }
     
+    if (!workOrder.templateContent) updateData.templateContent = await orderTemplate(workOrder);
     const updatedWorkOrder = await WorkOrder.findByIdAndUpdate(req.params.id, updateData, { new: true });
     
     // 로그 기록

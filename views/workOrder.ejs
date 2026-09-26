@@ -888,6 +888,12 @@
     </style>
 
     <div class="container">
+        <% if (workOrderMessages && workOrderMessages.success) { %>
+        <div class="alert alert-success" role="status"><%= workOrderMessages.success %></div>
+        <% } %>
+        <% if (workOrderMessages && workOrderMessages.error) { %>
+        <div class="alert alert-danger" role="alert"><%= workOrderMessages.error %></div>
+        <% } %>
         <!-- 제목 (보기페이지용) -->
         <div class="d-flex justify-content-between align-items-center mb-4 print-title-approval">
             <h1 class="mb-0">근무명령서</h1>
@@ -896,7 +902,7 @@
                 <% if (userRole === 'admin') { %>
                 <a href="/work-orders/<%= workOrder._id %>/edit" class="btn btn-warning">수정</a>
                 <% } %>
-                <button type="button" class="btn btn-info print-btn" onclick="window.print()">인쇄</button>
+                <a href="/work-orders/<%= workOrder._id %>/print" class="btn btn-info print-btn" title="업로드된 양식에 저장 데이터를 채운 엑셀 파일 내려받기">인쇄</a>
             </div>
         </div>
         
@@ -954,7 +960,7 @@
                                     if (workInfo.workTime) {
                                         if (workInfo.workTime.display) {
                                             // display 형식이 "초야조(14:00~22:00)" 형태인 경우
-                                            displayText += ` ${workInfo.workTime.display}`;
+                                            displayText += ` ${String(workInfo.workTime.display).replace(/주간특근(?:근무|조)?/g, '주간조').replace(/야간특근(?:근무|조)?/g, '야간조').replace(/주간근무/g, '주간조').replace(/초야근무/g, '초야조').replace(/심야근무/g, '심야조')}`;
                                         } else if (workInfo.workTime.start && workInfo.workTime.end) {
                                             // display가 없으면 start/end로 조합
                                             let shiftName = workInfo.workTime.shift;
@@ -1023,322 +1029,35 @@
                         </div>
                     </div>
                     
-            <!-- 근무 편성 -->
+            <!-- 근무 편성: 업로드된 양식의 근무지 -->
             <div class="form-section">
                 <div class="section-header">■ 근무 편성</div>
                 <div class="section-content">
                     <div class="assignment-container">
-                        <!-- 왼쪽 영역 (해안지역) -->
-                        <div class="assignment-left">
-                            <table class="work-assignment-table" style="table-layout: fixed; vertical-align: middle; font-size: 14px;">
-                        <thead>
-                            <tr style="height: 40px;">
-                                        <th class="region-col" style="vertical-align: middle;">지역</th>
-                                        <th class="location-col" style="vertical-align: middle;">보안근무지</th>
-                                        <th class="personnel-col" style="vertical-align: middle;">편성</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                                    <!-- 해안입문 (조장, 대원3명) - 2행으로 분리 -->
-                                    <tr style="height: 40px;">
-                                        <td rowspan="13" class="region-col" style="text-align: center; vertical-align: middle;">해안<br>지역</td>
-                                        <td rowspan="2" class="location-col" style="vertical-align: middle; text-align: center;">해안입문</td>
-                                        <td class="personnel-col" style="width: 300px; text-align: center; vertical-align: middle;">
-                                                <div style="padding: 5px; background-color: #f8f9fa; border: none; border-radius: 3px; height: 20px; display: flex; align-items: center; width: 100%;">
-                                                    <div style="width: 100%; text-align: left; padding-left: 10px;">조장: <%= workOrder ? findAssignmentData(workOrder.workAssignment, '해안입문', 'supervisor') : '' %></div>
-                                                </div>
+                        <% templateLocations.forEach((side, sideIndex) => { %>
+                        <div class="<%= sideIndex === 0 ? 'assignment-left' : 'assignment-right' %>">
+                            <table class="work-assignment-table">
+                                <thead><tr><th class="region-col">지역</th><th class="location-col">보안근무지</th><th class="personnel-col">편성</th></tr></thead>
+                                <tbody>
+                                    <% side.forEach(item => { %>
+                                    <tr>
+                                        <% if (item.regionSpan) { %><td class="region-col" rowspan="<%= item.regionSpan %>"><%= item.region %></td><% } %>
+                                        <td class="location-col"><%= item.location %></td>
+                                        <td class="personnel-col">
+                                            <% const leader = findAssignmentData(workOrder.workAssignment, item.location, 'supervisor'); %>
+                                            <% if (hasLeader(item.location) && leader) { %><div>조장: <%= leader %></div><% } %>
+                                            <% const names = item.members; %>
+                                            <div><%= names.join('   ') %></div>
                                         </td>
                                     </tr>
-                                    <tr style="height: 40px;">
-                                        <td class="personnel-col" style="width: 300px; text-align: center; vertical-align: middle;">
-                                                <div style="padding: 5px; background-color: #f8f9fa; border: none; border-radius: 3px; height: 20px; display: flex; align-items: center; justify-content: center;">
-                                                    <div style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;">
-                                                        <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '해안입문', 'members', 0) : '' %></div>
-                                                        <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '해안입문', 'members', 1) : '' %></div>
-                                                        <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '해안입문', 'members', 2) : '' %></div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                    </tr>
-                            
-                                    <!-- 해안출문 (대원3명) -->
-                                    <tr style="height: 40px;">
-                                        <td class="location-col" style="vertical-align: middle;">해안출문</td>
-                                        <td class="personnel-col" style="width: 300px; text-align: center; vertical-align: middle;">
-                                            <div style="padding: 5px; background-color: #f8f9fa; border: none; border-radius: 3px; height: 20px; display: flex; align-items: center; justify-content: center;">
-                                                <div style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;">
-                                                    <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '해안출문', 'members', 0) : '' %></div>
-                                                    <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '해안출문', 'members', 1) : '' %></div>
-                                                    <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '해안출문', 'members', 2) : '' %></div>
-                                    </div>
-                                </div>
-                                        </td>
-                            </tr>
-                            
-                                    <!-- 기술교육원문 (조장, 대원2명) - 2행으로 분리 -->
-                                    <tr style="height: 40px;">
-                                        <td rowspan="2" class="location-col" style="vertical-align: middle; text-align: center;">기술교육원문</td>
-                                        <td class="personnel-col" style="width: 300px; text-align: center; vertical-align: middle; border-bottom: none !important;">
-                                                <div style="padding: 5px; background-color: #f8f9fa; border: none; border-radius: 3px; height: 20px; display: flex; align-items: center; width: 100%;">
-                                                    <div style="width: 100%; text-align: left; padding-left: 10px;">조장: <%= workOrder ? findAssignmentData(workOrder.workAssignment, '기술교육원문', 'supervisor') : '' %></div>
-                                                </div>
-                                        </td>
-                                    </tr>
-                                    <tr style="height: 40px;">
-                                        <td class="personnel-col" style="width: 300px; text-align: center; vertical-align: middle; border-top: none !important;">
-                                                <div style="padding: 5px; background-color: #f8f9fa; border: none; border-radius: 3px; height: 20px; display: flex; align-items: center; justify-content: center;">
-                                                    <div style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;">
-                                                        <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '기술교육원문', 'members', 0) : '' %></div>
-                                                        <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '기술교육원문', 'members', 1) : '' %></div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                    </tr>
-                            
-                                    <!-- 교육원중문 (대원1명) -->
-                                    <tr style="height: 40px;">
-                                        <td class="location-col" style="vertical-align: middle;">교육원중문</td>
-                                        <td class="personnel-col" style="width: 300px; text-align: center; vertical-align: middle;">
-                                            <div style="padding: 5px; background-color: #f8f9fa; border: none; border-radius: 3px; height: 20px; display: flex; align-items: center; justify-content: center;">
-                                                <div style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;">
-                                                    <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '교육원중문', 'members', 0) : '' %></div>
-                                                    <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '교육원중문', 'members', 1) : '' %></div>
-                                </div>
-                                </div>
-                                        </td>
-                            </tr>
-                            
-                                    <!-- 성내주차장문 (대원1명) -->
-                                    <tr style="height: 40px;">
-                                        <td class="location-col" style="vertical-align: middle;">성내주차장문</td>
-                                        <td class="personnel-col" style="width: 300px; text-align: center; vertical-align: middle;">
-                                            <div style="padding: 5px; background-color: #f8f9fa; border: none; border-radius: 3px; height: 20px; display: flex; align-items: center; justify-content: center;">
-                                                <div style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;">
-                                                    <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '성내주차장문', 'members', 0) : '' %></div>
-                                                    <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '성내주차장문', 'members', 1) : '' %></div>
-                                </div>
-                                </div>
-                                        </td>
-                            </tr>
-                            
-                                    <!-- 성내주차장초소 (대원1명) -->
-                                    <tr style="height: 40px;">
-                                        <td class="location-col" style="vertical-align: middle;">성내주차장<br>초소</td>
-                                        <td class="personnel-col" style="width: 300px; text-align: center; vertical-align: middle;">
-                                            <div style="padding: 5px; background-color: #f8f9fa; border: none; border-radius: 3px; height: 20px; display: flex; align-items: center; justify-content: center;">
-                                                <div style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;">
-                                                    <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '성내주차장초소', 'members', 0) : '' %></div>
-                                                    <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '성내주차장초소', 'members', 1) : '' %></div>
-                                </div>
-                                </div>
-                                        </td>
-                            </tr>
-                            
-                                    <!-- 선적중문 (대원2명) -->
-                                    <tr style="height: 40px;">
-                                        <td class="location-col" style="vertical-align: middle;">선적중문</td>
-                                        <td class="personnel-col" style="width: 300px; text-align: center; vertical-align: middle;">
-                                            <div style="padding: 5px; background-color: #f8f9fa; border: none; border-radius: 3px; height: 20px; display: flex; align-items: center; justify-content: center;">
-                                                <div style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;">
-                                                    <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '선적중문', 'members', 0) : '' %></div>
-                                                    <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '선적중문', 'members', 1) : '' %></div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                    </tr>
-                            
-                                    <!-- 5의장중문 (대원2명) -->
-                                    <tr style="height: 40px;">
-                                        <td class="location-col" style="vertical-align: middle;">5의장중문</td>
-                                        <td class="personnel-col" style="width: 300px; text-align: center; vertical-align: middle;">
-                                            <div style="padding: 5px; background-color: #f8f9fa; border: none; border-radius: 3px; height: 20px; display: flex; align-items: center; justify-content: center;">
-                                                <div style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;">
-                                                    <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '5의장중문', 'members', 0) : '' %></div>
-                                                    <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '5의장중문', 'members', 1) : '' %></div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                    </tr>
-                            
-                                    <!-- 아산로중문 (대원2명) -->
-                                    <tr style="height: 40px;">
-                                        <td class="location-col" style="vertical-align: middle;">아산로중문</td>
-                                        <td class="personnel-col" style="width: 300px; text-align: center; vertical-align: middle;">
-                                            <div style="padding: 5px; background-color: #f8f9fa; border: none; border-radius: 3px; height: 20px; display: flex; align-items: center; justify-content: center;">
-                                                <div style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;">
-                                                    <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '아산로중문', 'members', 0) : '' %></div>
-                                                    <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '아산로중문', 'members', 1) : '' %></div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                    </tr>
-                            
-                                    <!-- 항만순찰 (대원2명, 1행) -->
-                                    <tr style="height: 40px;">
-                                        <td class="location-col" style="vertical-align: middle;">항만순찰</td>
-                                        <td class="personnel-col" style="width: 300px; text-align: center; vertical-align: middle;">
-                                            <div style="padding: 5px; background-color: #f8f9fa; border: none; border-radius: 3px; height: 20px; display: flex; align-items: center; justify-content: center;">
-                                                <div style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;">
-                                                    <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '항만순찰', 'members', 0) : '' %></div>
-                                                    <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '항만순찰', 'members', 1) : '' %></div>
-                                </div>
-                                </div>
-                                        </td>
-                            </tr>
-
+                                    <% }) %>
                                 </tbody>
                             </table>
-                                </div>
-                        
-                        <!-- 오른쪽 영역 (성내/시트/매암동지역) -->
-                        <div class="assignment-right">
-                            <table class="work-assignment-table" style="table-layout: fixed; vertical-align: middle; font-size: 14px;">
-                                <thead>
-                                    <tr style="height: 40px;">
-                                        <th class="region-col" style="vertical-align: middle;">지역</th>
-                                        <th class="location-col" style="vertical-align: middle;">보안근무지</th>
-                                        <th class="personnel-col" style="vertical-align: middle;">편성</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <!-- 성내지역 통합 (성내문 2줄 + 차량검색소 1줄) -->
-                                    <tr style="height: 40px;">
-                                        <td rowspan="3" class="region-col" style="text-align: center; vertical-align: middle;">성내<br>지역</td>
-                                        <td rowspan="2" class="location-col" style="vertical-align: middle; text-align: center;">성내문</td>
-                                        <td class="personnel-col" style="width: 300px; text-align: center; vertical-align: middle;">
-                                            <div style="padding: 5px; background-color: #f8f9fa; border: none; border-radius: 3px; height: 20px; display: flex; align-items: center; justify-content: center;">
-                                                <div style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;">
-                                                    <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '성내문', 'members', 0) : '' %></div>
-                                                    <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '성내문', 'members', 1) : '' %></div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    <tr style="height: 40px;">
-                                        <td class="personnel-col" style="width: 300px; text-align: center; vertical-align: middle;">
-                                            <div style="padding: 5px; background-color: #f8f9fa; border: none; border-radius: 3px; height: 20px; display: flex; align-items: center; justify-content: center;">
-                                                <div style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;">
-                                                    <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '성내문', 'members', 2) : '' %></div>
-                                                    <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '성내문', 'members', 3) : '' %></div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    <tr style="height: 40px;">
-                                        <td class="location-col" style="vertical-align: middle;">차량검색소</td>
-                                        <td class="personnel-col" style="width: 300px; text-align: center; vertical-align: middle;">
-                                            <div style="padding: 5px; background-color: #f8f9fa; border: none; border-radius: 3px; height: 20px; display: flex; align-items: center; justify-content: center;">
-                                                <div style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;">
-                                                    <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '차량검색소', 'teamLeader') : '' %></div>
-                                                    <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '차량검색소', 'supervisor') : '' %></div>
-                                                    <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '차량검색소', 'members', 0) : '' %></div>
-                                                    <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '차량검색소', 'members', 1) : '' %></div>
-                                                </div>
-                                            </div>
-                                        </td>
-                            </tr>
-
-                                    <!-- 시트지역 통합 (시트1문부터 코일주차장까지) -->
-                                    <tr style="height: 40px;">
-                                        <td rowspan="6" class="region-col" style="text-align: center; vertical-align: middle;">시트<br>지역</td>
-                                        <td rowspan="2" class="location-col" style="vertical-align: middle; text-align: center;">시트1문</td>
-                                        <td class="personnel-col" style="width: 300px; text-align: center; vertical-align: middle; border-bottom: none !important;">
-                                                <div style="padding: 5px; background-color: #f8f9fa; border: none; border-radius: 3px; height: 20px; display: flex; align-items: center; width: 100%;">
-                                                    <div style="width: 100%; text-align: left; padding-left: 10px;">조장: <%= workOrder ? findAssignmentData(workOrder.workAssignment, '시트1문', 'supervisor') : '' %></div>
-                                                </div>
-                                        </td>
-                                    </tr>
-                                    <tr style="height: 40px;">
-                                        <td class="personnel-col" style="width: 300px; text-align: center; vertical-align: middle; border-top: none !important;">
-                                                <div style="padding: 5px; background-color: #f8f9fa; border: none; border-radius: 3px; height: 20px; display: flex; align-items: center; justify-content: center;">
-                                                    <div style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;">
-                                                        <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '시트1문', 'members', 0) : '' %></div>
-                                                        <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '시트1문', 'members', 1) : '' %></div>
-                                                        <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '시트1문', 'members', 2) : '' %></div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    <tr style="height: 40px;">
-                                        <td class="location-col" style="vertical-align: middle;">시트1중문</td>
-                                        <td class="personnel-col" style="width: 300px; text-align: center; vertical-align: middle;">
-                                            <div style="padding: 5px; background-color: #f8f9fa; border: none; border-radius: 3px; height: 20px; display: flex; align-items: center; justify-content: center;">
-                                                <div style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;">
-                                                    <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '시트1중문', 'members', 0) : '' %></div>
-                                                    <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '시트1중문', 'members', 1) : '' %></div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    <tr style="height: 20px;">
-                                        <td class="location-col" style="vertical-align: middle;">시트1주차장<br>초소</td>
-                                        <td class="personnel-col" style="width: 300px; text-align: center; vertical-align: middle;">
-                                            <div style="padding: 5px; background-color: #f8f9fa; border: none; border-radius: 3px; height: 20px; display: flex; align-items: center; justify-content: center;">
-                                                <div style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;">
-                                                    <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '시트1주차장초소', 'members', 0) : '' %></div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    <tr style="height: 20px;">
-                                        <td class="location-col" style="vertical-align: middle;">시트3문</td>
-                                        <td class="personnel-col" style="width: 300px; text-align: center; vertical-align: middle;">
-                                            <div style="padding: 5px; background-color: #f8f9fa; border: none; border-radius: 3px; height: 20px; display: flex; align-items: center; justify-content: center;">
-                                                <div style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;">
-                                                    <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '시트3문', 'members', 0) : '' %></div>
-                                                    <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '시트3문', 'members', 1) : '' %></div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    <tr style="height: 20px;">
-                                        <td class="location-col" style="vertical-align: middle;">코일주차장</td>
-                                        <td class="personnel-col" style="width: 300px; text-align: center; vertical-align: middle;">
-                                            <div style="padding: 5px; background-color: #f8f9fa; border: none; border-radius: 3px; height: 20px; display: flex; align-items: center; justify-content: center;">
-                                                <div style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;">
-                                                    <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '코일주차장', 'members', 0) : '' %></div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                    </tr>
-
-                                    <!-- 매암동지역 통합 (엔진4문부터 야적장초소까지) -->
-                                    <tr style="height: 20px;">
-                                        <td rowspan="3" class="region-col" style="text-align: center; vertical-align: middle;">매암동<br>지역</td>
-                                        <td rowspan="2" class="location-col" style="vertical-align: middle; text-align: center;">엔진4문</td>
-                                        <td class="personnel-col" style="width: 300px; text-align: center; vertical-align: middle; border-bottom: none !important;">
-                                                <div style="padding: 5px; background-color: #f8f9fa; border: none; border-radius: 3px; height: 20px; display: flex; align-items: center; width: 100%;">
-                                                    <div style="width: 100%; text-align: left; padding-left: 10px;">조장: <%= workOrder ? findAssignmentData(workOrder.workAssignment, '엔진4부', 'supervisor') : '' %></div>
-                                                </div>
-                                        </td>
-                                    </tr>
-                                    <tr style="height: 20px;">
-                                        <td class="personnel-col" style="width: 300px; text-align: center; vertical-align: middle; border-top: none !important;">
-                                                <div style="padding: 5px; background-color: #f8f9fa; border: none; border-radius: 3px; height: 20px; display: flex; align-items: center; justify-content: center;">
-                                                    <div style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;">
-                                                        <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '엔진4부', 'members', 0) : '' %></div>
-                                                        <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '엔진4부', 'members', 1) : '' %></div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    <tr style="height: 20px;">
-                                        <td class="location-col" style="vertical-align: middle;">야적장초소</td>
-                                        <td class="personnel-col" style="width: 300px; text-align: center; vertical-align: middle;">
-                                            <div style="padding: 5px; background-color: #f8f9fa; border: none; border-radius: 3px; height: 20px; display: flex; align-items: center; justify-content: center;">
-                                                <div style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;">
-                                                    <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '야적장초소', 'members', 0) : '' %></div>
-                                                    <div><%= workOrder ? findAssignmentData(workOrder.workAssignment, '야적장초소', 'members', 1) : '' %></div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                    </tr>
-                        </tbody>
-                    </table>
                         </div>
+                        <% }) %>
                     </div>
                 </div>
-        </div>
+            </div>
 
         <!-- 직무 교육 -->
         <div class="form-section education-section">
