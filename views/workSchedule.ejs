@@ -528,7 +528,7 @@
             <div class="table-responsive" style="max-height: 420px; overflow-y: auto;">
               <table class="table table-sm table-hover align-middle mb-0">
                 <thead class="table-light sticky-top">
-                  <tr><th>근무일</th><th>근무대</th><th>주간팀/인원</th><th>지원팀/인원</th><th>전체 구성</th><th class="text-center">관리</th></tr>
+                  <tr><th>근무일</th><th>근무대</th><th>본근무팀/인원</th><th>지원팀/인원</th><th>전체 구성</th><th class="text-center">관리</th></tr>
                 </thead>
                 <tbody id="confirmedAssignmentsListBody">
                   <tr><td colspan="6" class="text-center text-muted py-4">확정명단을 불러오는 중입니다.</td></tr>
@@ -1452,9 +1452,17 @@
         const date = new Date(`${group.date}T12:00:00`);
         const day = ['일', '월', '화', '수', '목', '금', '토'][date.getDay()];
         const weekNumber = getWeekNumber(date);
-        const mainTeamNumber = [1, 2, 3].find(team => getTeamSchedule(team, weekNumber) === '주간');
+        // 토요일은 초야팀/심야팀이 본근무팀이며, 지원팀은 일요일에만 편성한다.
+        const isSunday = date.getDay() === 0;
+        const isSaturday = date.getDay() === 6;
+        const mainSchedule = isSaturday
+          ? (group.shift === 'day' ? '초야' : '심야')
+          : (isSunday || group.shift === 'day' ? '주간' : '심야');
+        const mainTeamNumber = [1, 2, 3].find(team => getTeamSchedule(team, weekNumber) === mainSchedule);
         const supportSchedule = group.shift === 'day' ? '초야' : '심야';
-        const supportTeamNumber = [1, 2, 3].find(team => getTeamSchedule(team, weekNumber) === supportSchedule);
+        const supportTeamNumber = isSunday
+          ? [1, 2, 3].find(team => getTeamSchedule(team, weekNumber) === supportSchedule)
+          : null;
         const teams = group.teams.sort((a, b) => Number(a.team) - Number(b.team));
         const mainTeam = teams.find(item => Number(item.team) === mainTeamNumber);
         const supportTeam = teams.find(item => Number(item.team) === supportTeamNumber);
@@ -1469,7 +1477,7 @@
           <td class="fw-semibold text-nowrap">${escapeRosterText(group.date)} (${day})</td>
           <td><span class="badge ${group.shift === 'day' ? 'bg-primary' : 'bg-dark'}">${group.shift === 'day' ? '주간' : '야간'}</span></td>
           <td class="text-nowrap">${teamCell(mainTeam)}${!mainTeam ? '<br><small class="text-danger">미확정</small>' : ''}</td>
-          <td class="text-nowrap">${teamCell(supportTeam)}${!supportTeam ? '<br><small class="text-danger">미확정</small>' : ''}</td>
+          <td class="text-nowrap">${teamCell(supportTeam)}${isSunday && !supportTeam ? '<br><small class="text-danger">미확정</small>' : ''}</td>
           <td class="text-nowrap"><strong>전체 ${total}명</strong><br><small class="text-muted">조장 ${leader} · 일반 ${general} · 특수 ${special}</small>${teams.filter(item => item !== mainTeam && item !== supportTeam).length ? `<br><small>기타: ${teams.filter(item => item !== mainTeam && item !== supportTeam).map(teamCell).join(' · ')}</small>` : ''}${date.getDay() === 0 && (Number(mainTeam?.totalCount || 0) !== 19 || Number(supportTeam?.totalCount || 0) !== 9) ? '<br><small class="text-danger">기본편성 기준 주간팀 19명 + 지원팀 9명을 확인하세요.</small>' : ''}</td>
           <td class="text-center text-nowrap"><div class="d-inline-flex gap-1"><button class="btn btn-outline-primary btn-sm" type="button" onclick="openConfirmedAllRoster('${group.date}', '${group.shift}')"><i class="fa-solid fa-eye me-1"></i>보기</button><button class="btn btn-outline-danger btn-sm" type="button" onclick="openConfirmedDelete('${group.date}', '${group.shift}')"><i class="fa-solid fa-trash-can me-1"></i>삭제</button></div></td>
         </tr>`;
